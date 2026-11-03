@@ -1,6 +1,6 @@
 # Perception
 
-Bustle's perception module (`addons/bustle/modules/perception/`) is how every actor senses every other actor. It uses one set of rules for sight, hearing and light, whoever is looking and whoever is looked at. This page covers the headless core: plain `RefCounted` and `Resource` classes with no nodes and no physics. The perceiver and perceivable components, the awareness list and its queries come in a later change.
+Bustle's perception module (`addons/bustle/modules/perception/`) is how every actor senses every other actor. It uses one set of rules for sight, hearing and light, whoever is looking and whoever is looked at. Everything here is headless: plain `RefCounted` and `Resource` classes with no nodes and no physics. The host casts its own sight rays. Node components that wrap the world, and the performance bench, come in a later change.
 
 Every default number is PROPOSED tuning. A project supplies its own resources.
 
@@ -67,3 +67,53 @@ UNAWARE ──level ≥ suspicious_at──▶ SUSPICIOUS ──level ≥ alert_
 ```
 
 A heard `BustleNoiseEvent` raises the level to at least `suspicious_at`, moves the last known position to the event, and makes an unaware or searching observer suspicious.
+
+## The world, actors and awareness
+
+- **`BustlePerceptionActor`:** one actor. It has:
+  - `id`, a stable id the host supplies (opaque to Bustle);
+  - `position` (eyes and ears) and `forward`;
+  - `profile` (null: it perceives nothing, but can still be perceived) and `perceivable`;
+  - `visibility`, `noise_radius`, `carries_light` and `group` (for dispositions);
+  - its `awareness`.
+
+  The host keeps the fields current. Any actor can perceive any actor, with the same rules and numbers.
+- **`BustleAwareness`:** one perceiver's awareness list. It holds one `BustleDetectionMeter` per target id, made the first time the target is sensed or heard. Its methods are `entry(id)`, `entries()`, `forget(id)` and `export_state()` / `import_state(data, profile)`, and it has a `state_changed(target_id, old, new)` signal.
+- **`BustleAwarenessEntry`:** a snapshot of one target in the list:
+  - `target_id`, `state`, `confidence` (the meter level) and `last_known_position` / `has_last_known`;
+  - `seen_now`, `heard_now` and `perceived_now()`;
+  - `freshness`, the seconds since the target was last sensed.
+- **`BustlePerceptionWorld`:** the registry and the ticker.
+  - `add_actor`, `remove_actor` (every perceiver forgets the removed actor), `actor(id)` and `actor_ids()`.
+  - `line_of_sight`: the host's `func(from, to, perceiver_id, target_id) -> bool`. Unset, nothing blocks.
+  - `tick(delta)` senses every perceiver whose turn it is. `sense(perceiver, delta)` senses one perceiver at once.
+  - `broadcast(event, source_id)` sends a one-off sound to every hearer in reach. It lands on the meter for the actor that made it, else the event's `source_id`, else `NOISE_ID`.
+  - Signal `perception_changed(perceiver_id, target_id, old_state, new_state)`, **on state changes only**. Memory and other systems can follow it instead of polling.
+
+### Queries
+
+| Query | Answers |
+| --- | --- |
+| `known_nearby(x, r)` | The targets X knows about (not unaware) whose last known position is within `r` of X. |
+| `last_known(x, y)` | Where X last sensed Y (a `Vector3`), or `null`. |
+| `perceives(x, y)` | Did X see or hear Y at its last sense? |
+| `perceivers_of(y)` | Every perceiver that senses Y now. |
+| `awareness(x)` | X's whole awareness list (`BustleAwarenessEntry`s, sorted by id). |
+| `known_with(x, disposition)` | The targets X knows about that it regards as hostile, neutral or friendly (for example, who to fight). |
+| `disposition_between(a, b)` | How A regards B. |
+
+## Throttling
+
+Each perceiver senses at its profile's `perception_hz` (default 10; 0 or less means every tick). Its first turn is staggered by a stable hash of its id, so perceivers don't all sense on the same tick. On its turn it senses with the time since its last turn. A target is skipped while it is beyond both sight range and hearing reach and the perceiver has no meter for it. Once there is a meter, it keeps ticking, so it decays. The sight ray is cast only for a target in range, in the cone, visible, and lit enough for the profile (`rays_last_tick` counts them).
+
+## Dispositions
+
+- **`BustleDispositionPort`** (in `ports/`) answers `disposition(a_id, a_group, b_id, b_group)` with `HOSTILE`, `NEUTRAL` or `FRIENDLY`. A host plugs in its own source by extending it. The standalone default is neutral everywhere, or reads a table if given one.
+- **`BustleDispositionTable`** (`Resource`, in `society/`):
+  - `groups` holds `"a>b"` rules for groups and `actors` holds `"a>b"` rules for actors; actor rules win;
+  - `symmetric` (default on) lets a missing `"a>b"` fall back to `"b>a"`;
+  - `same_group` covers two members of one group, and `default_disposition` covers anything unlisted.
+
+  Changing a `.tres` value makes two actors hostile or neutral to each other with no code change.
+
+Set `world.disposition` to the port to use.
