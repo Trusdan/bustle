@@ -12,6 +12,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
   - `BustleSenseTarget`, `BustlePerceptionProfile` (with `sight_light` and `perception_hz`) and `BustleDetectionMeter` (with `seen_now`, `heard_now`, `since_sensed` and `sight_cone`).
 
   See `docs/perception.md`.
+- The perception world:
+  - `BustlePerceptionWorld`: any actor perceives any actor, with throttled and staggered senses and sight rays only for candidates. It has the queries `known_nearby`, `last_known`, `perceives`, `perceivers_of`, `awareness` and `known_with`, plus `broadcast` and `perception_changed`;
+  - `BustlePerceptionActor`, `BustleAwareness` and `BustleAwarenessEntry`.
+- Dispositions: `BustleDispositionPort` (`ports/`, neutral by default) and `BustleDispositionTable` (`society/`).
 
 ## [0.1.0] - 2026-11-02
 
