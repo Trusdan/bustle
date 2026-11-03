@@ -123,6 +123,16 @@ jobs:
             | grep -E '^(Scripts|Tests|Passing Tests|Asserts) ' | tr -s ' ' | paste -sd ',' -)"
           echo "::notice title=GUT on Ubuntu::${totals}"
 
+      # The perception bench (docs/perf.md). A report only: shared runners' timings vary.
+      - name: Perception bench (report only)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          out="$(godot --headless --path . -s res://bench/perception_bench.gd 2>&1 | tr -d '\r' | grep -E '^perception bench: [0-9]' || true)"
+          echo "$out"
+          echo "::notice title=Perception bench::${out}"
+          [[ "$out" == *": OK" ]]
+
       # docs/api/ is generated from the ## doc comments; fail if a comment changed without
       # regenerating it (run tools/gen_api_docs.sh and commit the result).
       - name: API docs are up to date

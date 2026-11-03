@@ -16,6 +16,8 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
   - `BustlePerceptionWorld`: any actor perceives any actor, with throttled and staggered senses and sight rays only for candidates. It has the queries `known_nearby`, `last_known`, `perceives`, `perceivers_of`, `awareness` and `known_with`, plus `broadcast` and `perception_changed`;
   - `BustlePerceptionActor`, `BustleAwareness` and `BustleAwarenessEntry`.
 - Dispositions: `BustleDispositionPort` (`ports/`, neutral by default) and `BustleDispositionTable` (`society/`).
+- Scene components: `BustlePerceptionSystem` (ticks the world, physics sight rays), `BustlePerceiver` and `BustlePerceivable`.
+- The perception bench (`bench/perception_bench.gd`) and `docs/perf.md`. 40 actors average under 1.0 ms per frame.
 
 ## [0.1.0] - 2026-11-02
 

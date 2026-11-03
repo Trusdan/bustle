@@ -7,7 +7,7 @@ extends RefCounted
 ## sight-ray check ([member line_of_sight]) and calls [method tick].
 ##
 ## Each perceiver senses at its profile's [member BustlePerceptionProfile.perception_hz], with
-## its phase staggered by its id so perceivers don't all sense on the same tick. It keeps one
+## its phase staggered evenly by the order actors were added, so perceivers don't all sense on the same tick. It keeps one
 ## [BustleDetectionMeter] per target ([BustleAwareness]). A target is skipped while it is beyond
 ## both sight range and hearing reach and has no meter yet. The ray is cast only for a target in
 ## range, in the cone, visible and lit enough for the profile.
@@ -31,6 +31,8 @@ var sensed_last_tick: int = 0
 
 ## The awareness key for a broadcast sound with no source.
 const NOISE_ID := &"noise"
+## Rounding slack for the throttle.
+const _EPSILON := 0.000001
 
 var _actors: Dictionary = {}
 var _order: Array[StringName] = []
@@ -46,6 +48,14 @@ func add_actor(actor: BustlePerceptionActor) -> BustlePerceptionActor:
 	if not actor.awareness.state_changed.is_connected(_on_state_changed.bind(actor.id)):
 		actor.awareness.state_changed.connect(_on_state_changed.bind(actor.id))
 	return actor
+
+
+## Restarts actor [param id]'s throttle with its staggered phase (after its profile changed).
+## @experimental
+func reschedule(id: StringName) -> void:
+	var found := actor(id)
+	if found != null:
+		found._due = found.period() * _phase(id)
 
 
 ## Removes the actor [param id] and every perceiver's meter for it.
@@ -78,12 +88,13 @@ func tick(delta: float) -> void:
 		var perceiver: BustlePerceptionActor = _actors[id]
 		if not perceiver.perceives():
 			continue
+		var period := perceiver.period()
 		perceiver._due -= delta
-		if perceiver._due > 0.0:
+		if perceiver._due > _EPSILON:
 			continue
-		var elapsed := perceiver.period() - perceiver._due if perceiver.period() > 0.0 else delta
-		perceiver._due = perceiver.period()
-		sense(perceiver, maxf(elapsed, delta))
+		# Keep the remainder so the rate doesn't drift; never build a backlog.
+		perceiver._due = maxf(perceiver._due + period, 0.0)
+		sense(perceiver, period if period > 0.0 else delta)
 
 
 ## Senses every target from [param perceiver] once, as if [param delta] seconds passed. [method tick]
@@ -225,6 +236,7 @@ func _on_state_changed(target_id: StringName, old: BustleDetectionMeter.State, n
 	perception_changed.emit(perceiver_id, target_id, old, new)
 
 
-## A stable fraction 0..1 from [param id], so each perceiver's phase is the same every run.
-static func _phase(id: StringName) -> float:
-	return float(String(id).hash() & 0xFFFF) / 65536.0
+## A fraction 0..1 for [param id]'s phase: its place in the actor order times the golden ratio,
+## so perceivers spread evenly over the period and the spread is the same every run.
+func _phase(id: StringName) -> float:
+	return fposmod(float(_order.find(id)) * 0.6180339887, 1.0)
