@@ -2,7 +2,7 @@
 
 A generic addon for living non-player populations in Godot 4 (4.7 or newer): the people of a place and their daily life. MIT licensed.
 
-**Status: 0.1.0 is the project scaffold only.** It has the addon layout, the optional Wyrd bridge's shell, the tests, a demo skeleton and CI. The features come in later releases.
+**Status: 0.2.1.** It has the project scaffold (0.1.0) and the perception module (0.2.0): senses for every actor, awareness queries and dispositions. More features come in later releases.
 
 ## Layout
 
