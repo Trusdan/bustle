@@ -2,6 +2,17 @@
 
 All notable changes to Bustle. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Before 1.0, any minor version may change the API. Every public class is marked `@experimental` until then.
 
+## [Unreleased]
+
+### Added
+
+- The perception module's headless core (`addons/bustle/modules/perception/`):
+  - `BustleStealthRules`, `BustleVisibilityModel` and `BustleNoiseModel` with `BustleNoiseEvent`;
+  - `BustleLightProbe`, `BustleLightSample`, `BustleLightSource` and `BustlePointLightProbe`;
+  - `BustleSenseTarget`, `BustlePerceptionProfile` (with `sight_light` and `perception_hz`) and `BustleDetectionMeter` (with `seen_now`, `heard_now`, `since_sensed` and `sight_cone`).
+
+  See `docs/perception.md`.
+
 ## [0.1.0] - 2026-11-02
 
 The project scaffold.
