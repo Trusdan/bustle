@@ -31,6 +31,7 @@ tools/run_tests.sh          # import the project and run GUT headless (Godot fro
 tools/gen_api_docs.sh       # regenerate docs/api/ after changing doc comments
 tools/check_wyrd_pin.sh     # check addons/wyrd/ against tools/wyrd-pin.env
 tools/test_check_hygiene.sh # self-test of the content-hygiene check
+godot --headless --path . -s res://bench/perception_bench.gd  # perception performance (docs/perf.md)
 ```
 
 CI runs on Ubuntu and Windows, runs the core alone with the bridge and Wyrd removed, checks the API docs and that the editor loads the project cleanly, and checks every change against a private deny-list of terms.

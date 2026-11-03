@@ -8,7 +8,7 @@ Inherits: `RefCounted`
 
 Every actor's senses in one place, with the same rules for whoever looks and whoever is looked at. Headless: the host adds [BustlePerceptionActor](BustlePerceptionActor.md)s, keeps their fields current, supplies a sight-ray check (`line_of_sight`) and calls `tick()`.
 
-Each perceiver senses at its profile's `BustlePerceptionProfile.perception_hz`, with its phase staggered by its id so perceivers don't all sense on the same tick. It keeps one [BustleDetectionMeter](BustleDetectionMeter.md) per target ([BustleAwareness](BustleAwareness.md)). A target is skipped while it is beyond both sight range and hearing reach and has no meter yet. The ray is cast only for a target in range, in the cone, visible and lit enough for the profile.  The queries (`known_nearby()`, `last_known()`, `perceives()`, `perceivers_of()`, `awareness()`, `known_with()`) read the latest senses.
+Each perceiver senses at its profile's `BustlePerceptionProfile.perception_hz`, with its phase staggered evenly by the order actors were added, so perceivers don't all sense on the same tick. It keeps one [BustleDetectionMeter](BustleDetectionMeter.md) per target ([BustleAwareness](BustleAwareness.md)). A target is skipped while it is beyond both sight range and hearing reach and has no meter yet. The ray is cast only for a target in range, in the cone, visible and lit enough for the profile.  The queries (`known_nearby()`, `last_known()`, `perceives()`, `perceivers_of()`, `awareness()`, `known_with()`) read the latest senses.
 
 ## Signals
 
@@ -73,6 +73,14 @@ func add_actor(actor: BustlePerceptionActor) -> BustlePerceptionActor
 ```
 
 Adds `actor` (replacing one with the same id) and returns it.
+
+### `reschedule`
+
+```gdscript
+func reschedule(id: StringName) -> void
+```
+
+Restarts actor `id`'s throttle with its staggered phase (after its profile changed).
 
 ### `remove_actor`
 

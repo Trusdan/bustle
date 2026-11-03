@@ -1,6 +1,6 @@
 # Perception
 
-Bustle's perception module (`addons/bustle/modules/perception/`) is how every actor senses every other actor. It uses one set of rules for sight, hearing and light, whoever is looking and whoever is looked at. Everything here is headless: plain `RefCounted` and `Resource` classes with no nodes and no physics. The host casts its own sight rays. Node components that wrap the world, and the performance bench, come in a later change.
+Bustle's perception module (`addons/bustle/modules/perception/`) is how every actor senses every other actor. It uses one set of rules for sight, hearing and light, whoever is looking and whoever is looked at. The rules and the world are headless: plain `RefCounted` and `Resource` classes with no nodes and no physics, and the host casts its own sight rays. Three node components wrap them for scenes (see "In a scene" below). Performance is covered in `docs/perf.md`.
 
 Every default number is PROPOSED tuning. A project supplies its own resources.
 
@@ -117,3 +117,16 @@ Each perceiver senses at its profile's `perception_hz` (default 10; 0 or less me
   Changing a `.tres` value makes two actors hostile or neutral to each other with no code change.
 
 Set `world.disposition` to the port to use.
+
+## In a scene
+
+- **`BustlePerceptionSystem`** (`Node`, group `bustle_perception_system`):
+  - runs one `BustlePerceptionWorld`;
+  - each physics frame (`step(delta)`) copies the components' state into the world, ticks it and casts the sight rays with physics (`sight_mask`, excluding the perceiver's and target's own bodies);
+  - passes on `perception_changed` and records `last_tick_usec`.
+
+  Put one in the scene or make it an autoload.
+- **`BustlePerceiver`** (`Node3D`, at the actor's eyes, facing its −Z): `actor_id` (default: the parent's name), `profile`, `group`, and `awareness()`.
+- **`BustlePerceivable`** (`Node3D`, about chest height): `actor_id`, `visibility`, `noise_radius`, `carries_light` and `group`. Its owner keeps them current, for example from `BustleVisibilityModel` and `BustleNoiseModel`.
+
+A perceiver and a perceivable with the same id are one actor: the perceiver's position is used both for its senses and for being sensed, and the perceivable's group wins. Both find the first system in the tree unless their `system_path` points at one. They unregister when they leave the tree, and the actor leaves the world when neither component is left.
