@@ -2,7 +2,13 @@
 
 All notable changes to Bustle. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Before 1.0, any minor version may change the API. Every public class is marked `@experimental` until then.
 
-## [Unreleased]
+## [0.2.1] - 2026-11-03
+
+### Fixed
+
+- The version strings for the 0.2.0 release: `addons/bustle/VERSION`, `addons/bustle/plugin.cfg`, `BustleInfo.VERSION` and the Wyrd bridge's `VERSION` and `plugin.cfg` still said 0.1.0. They now say 0.2.1. No code changes.
+
+## [0.2.0] - 2026-11-02
 
 ### Added
 
