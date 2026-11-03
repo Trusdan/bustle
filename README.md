@@ -13,7 +13,7 @@ A generic addon for living non-player populations in Godot 4 (4.7 or newer): the
 | `addons/bustle/society/` | How the members of a population relate to each other. |
 | `addons/bustle/ports/` | The interfaces a host project implements to connect Bustle to its world. |
 | `addons/bustle/debug/` | Tools for inspecting a running population. |
-| `addons/bustle/modules/` | Optional features, each usable on its own. |
+| `addons/bustle/modules/` | Optional features, each usable on its own. `perception/`: senses for every actor ([docs/perception.md](docs/perception.md)). |
 | `addons/bustle_wyrd/` | Optional bridge to the [Wyrd](https://github.com/Trusdan/wyrd) narrative engine, pinned to Wyrd 1.0.0. |
 | `addons/wyrd/` | A test-only copy of Wyrd 1.0.0 for the bridge tests (`tools/wyrd-pin.env`). Not part of a release. |
 | `addons/gut/` | Vendored [GUT](https://github.com/bitwes/Gut) 9.7.1, for the tests only. |
