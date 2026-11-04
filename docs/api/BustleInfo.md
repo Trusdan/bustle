@@ -13,7 +13,7 @@ Facts about the installed Bustle addon.
 ### `VERSION`
 
 ```gdscript
-const VERSION = "0.2.1"
+const VERSION = "0.2.2"
 ```
 
 The addon's version. It must match `VERSION` and `plugin.cfg` in this folder; a test checks all three.

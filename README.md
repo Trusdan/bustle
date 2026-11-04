@@ -2,7 +2,7 @@
 
 A generic addon for living non-player populations in Godot 4 (4.7 or newer): the people of a place and their daily life. MIT licensed.
 
-**Status: 0.2.1.** It has the project scaffold (0.1.0) and the perception module (0.2.0): senses for every actor, awareness queries and dispositions. More features come in later releases.
+**Status: 0.2.2.** It has the project scaffold (0.1.0) and the perception module (0.2.0): senses for every actor, awareness queries and dispositions. More features come in later releases.
 
 ## Layout
 
@@ -14,15 +14,15 @@ A generic addon for living non-player populations in Godot 4 (4.7 or newer): the
 | `addons/bustle/ports/` | The interfaces a host project implements to connect Bustle to its world. |
 | `addons/bustle/debug/` | Tools for inspecting a running population. |
 | `addons/bustle/modules/` | Optional features, each usable on its own. `perception/`: senses for every actor ([docs/perception.md](docs/perception.md)). |
-| `addons/bustle_wyrd/` | Optional bridge to the [Wyrd](https://github.com/Trusdan/wyrd) narrative engine, pinned to Wyrd 1.0.0. |
-| `addons/wyrd/` | A test-only copy of Wyrd 1.0.0 for the bridge tests (`tools/wyrd-pin.env`). Not part of a release. |
+| `addons/bustle_wyrd/` | Optional bridge to the [Wyrd](https://github.com/Trusdan/wyrd) narrative engine, pinned to Wyrd 1.0.1. |
+| `addons/wyrd/` | A test-only copy of Wyrd 1.0.1 for the bridge tests (`tools/wyrd-pin.env`). Not part of a release. |
 | `addons/gut/` | Vendored [GUT](https://github.com/bitwes/Gut) 9.7.1, for the tests only. |
 | `demo/` | A small neutral demo (a skeleton in 0.1.0). |
 | `docs/api/` | The API reference, generated from the `##` doc comments. |
 
 ## Install
 
-Copy `addons/bustle/` into your project's `addons/` folder and enable **Bustle** under Project Settings → Plugins. If you also use Wyrd 1.0.0, you can copy `addons/bustle_wyrd/` too.
+Copy `addons/bustle/` into your project's `addons/` folder and enable **Bustle** under Project Settings → Plugins. If you also use Wyrd 1.0.1, you can copy `addons/bustle_wyrd/` too.
 
 ## Develop
 

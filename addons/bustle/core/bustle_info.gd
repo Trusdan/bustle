@@ -8,7 +8,7 @@ extends RefCounted
 
 ## The addon's version. It must match [code]VERSION[/code] and [code]plugin.cfg[/code] in this
 ## folder; a test checks all three.
-const VERSION: String = "0.2.1"
+const VERSION: String = "0.2.2"
 ## The addon's folders and what each one is for.
 const FOLDERS: Dictionary = {
 	"core": "Plain data and rules with no nodes, tested headless.",
