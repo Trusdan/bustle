@@ -2,6 +2,12 @@
 
 All notable changes to Bustle. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Before 1.0, any minor version may change the API. Every public class is marked `@experimental` until then.
 
+## [0.2.2] - 2026-11-04
+
+### Changed
+
+- The Wyrd bridge now supports Wyrd 1.0.1. The test-only vendored Wyrd copy moved to v1.0.1. No API changes.
+
 ## [0.2.1] - 2026-11-03
 
 ### Fixed

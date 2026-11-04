@@ -11,7 +11,7 @@ extends RefCounted
 ## refers to this folder.
 
 ## The exact Wyrd release this bridge is written for.
-const WYRD_VERSION: String = "1.0.0"
+const WYRD_VERSION: String = "1.0.1"
 ## Where Wyrd keeps its version.
 const WYRD_VERSION_FILE: String = "res://addons/wyrd/VERSION"
 
