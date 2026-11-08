@@ -16,6 +16,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 - `BustleModifierSet`: keyed numbers that sources add to and multiply, applied in sorted source order, with `fill_context` for the scorer's need weights and tag multipliers.
 - `BustleGoalLibrary.find` and `BustleGoalDef.fail_cooldown_minutes`.
 - Action sequences (`addons/bustle/core/brain/actions/`): `BustleActionStep` (action, params, on fail RETRY/SKIP/ABORT, `max_retries` after the first attempt), `BustleActionSequence`, `BustleActionContext`, `BustleActionHandler` and `BustleSequenceRunner`. The runner does at most one handler tick and one start per tick, cleans up an unfinished attempt exactly once, interrupts and resumes (restarting the step), and saves and restores a step mid-way. Built-in `wait` and `idle` actions run for game minutes.
+- `BustleBrain`, `BustleSenses` and `BustleIntent`: a headless brain whose `tick(delta, senses)` scores, chooses with hysteresis, runs the chosen goal's sequence (`BustleGoalDef.sequence`, with the chosen option on `BustleActionContext.option_id`) and returns a typed intent with its reasons and the step's output. A failed sequence cools its goal down. The generator is seeded once from a fixed 64-bit FNV-1a of the world seed and agent id (`seed_for`), and `export_state`/`import_state` save the generator, keeper, runner and running goal so a run continues identically; a state that doesn't fit is refused without half-restoring.
 
 ## [0.2.2] - 2026-11-04
 

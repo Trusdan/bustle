@@ -105,10 +105,10 @@ Registers `handler` for `action`, replacing any earlier one.
 ### `start`
 
 ```gdscript
-func start(p_sequence: BustleActionSequence, agent_id: StringName, now_minutes: int) -> void
+func start(p_sequence: BustleActionSequence, agent_id: StringName, now_minutes: int, option_id: StringName = &"") -> void
 ```
 
-Starts `p_sequence` for `agent_id`, cleaning up anything still running first. An empty sequence succeeds at once.
+Starts `p_sequence` for `agent_id` (using `option_id`, if the goal chose one), cleaning up anything still running first. An empty sequence succeeds at once.
 
 ### `tick`
 

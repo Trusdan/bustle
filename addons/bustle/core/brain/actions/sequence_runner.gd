@@ -53,14 +53,15 @@ func register(action: StringName, handler: BustleActionHandler) -> void:
 	_handlers[action] = handler
 
 
-## Starts [param p_sequence] for [param agent_id], cleaning up anything still running first. An
-## empty sequence succeeds at once.
+## Starts [param p_sequence] for [param agent_id] (using [param option_id], if the goal chose one),
+## cleaning up anything still running first. An empty sequence succeeds at once.
 ## @experimental
-func start(p_sequence: BustleActionSequence, agent_id: StringName, now_minutes: int) -> void:
+func start(p_sequence: BustleActionSequence, agent_id: StringName, now_minutes: int, option_id: StringName = &"") -> void:
 	cancel()
 	sequence = p_sequence
 	context = BustleActionContext.new()
 	context.agent_id = agent_id
+	context.option_id = option_id
 	context.now_minutes = now_minutes
 	failure = {}
 	step_index = 0
@@ -128,7 +129,7 @@ func export_state() -> Dictionary:
 	return {
 		"state": int(state), "step": step_index, "attempt": attempt, "active": _active,
 		"failure": failure.duplicate(true), "data": context.data.duplicate(true),
-		"agent": String(context.agent_id), "now": context.now_minutes,
+		"agent": String(context.agent_id), "option": String(context.option_id), "now": context.now_minutes,
 	}
 
 
@@ -148,6 +149,7 @@ func import_state(p_sequence: BustleActionSequence, saved: Dictionary) -> bool:
 		return false
 	context = BustleActionContext.new()
 	context.agent_id = StringName(str(saved.get("agent", "")))
+	context.option_id = StringName(str(saved.get("option", "")))
 	context.now_minutes = int(saved.get("now", 0))
 	context.data = (saved["data"] as Dictionary).duplicate(true) if saved.has("data") else {}
 	failure = (saved["failure"] as Dictionary).duplicate(true) if saved.has("failure") else {}
