@@ -8,7 +8,7 @@ Inherits: `RefCounted`
 
 The registry of a population: every agent's [BustleNpcState](BustleNpcState.md), independent of any scene, the ports the host plugs in, and saving and loading the whole population.
 
-- **Archetypes.** A host registers each archetype once (`register_archetype()`) with the goal library and scoring config its agents share. An agent is added with an archetype; saves store only the archetype's id, never a resource path, so loading never loads files. - **Bodies** are optional and come and go (`BustleNpcState.attach_body()`); the state stays. - **Saving.** `export_state()` gives plain data with a `SCHEMA` version and the agents sorted by id. `import_state()` checks everything first and then replaces the population all at once; anything wrong (a malformed payload, another schema version, a repeated id, an unknown archetype, a brain state that doesn't fit) returns a [BustleImportReport](BustleImportReport.md) and changes nothing. Only the current schema is accepted; older versions have no migration yet. - `state_hash()` is a SHA-256 of the canonical export, for checking round trips.
+- **Archetypes.** A host registers each archetype once (`register_archetype()`) with the goal library and scoring config its agents share. An agent is added with an archetype; saves store only the archetype's id, never a resource path, so loading never loads files. - **Bodies** are optional and come and go (`BustleNpcState.attach_body()`); the state stays. - **Saving.** `export_state()` gives plain data with a `SCHEMA` version and the agents sorted by id. 64-bit numbers (the world seed and each brain's `world_seed` and `rng_state`) are written as decimal strings so they stay exact through JSON; on import they may be decimal strings or ints. `import_state()` checks everything first and then replaces the population all at once; anything wrong (a malformed payload, another schema version, a repeated id, an unknown archetype, a brain state that doesn't fit) returns a [BustleImportReport](BustleImportReport.md) and changes nothing. Only the current schema is accepted; older versions have no migration yet. - `state_hash()` is a SHA-256 of the canonical export, for checking round trips.
 
 ## Constants
 
@@ -118,4 +118,12 @@ Replaces the population with `saved`, all or nothing. Bodies attached to agents 
 func state_hash() -> String
 ```
 
-A SHA-256 of the canonical (sorted, full-precision) export.
+A SHA-256 of the canonical export: sorted keys, full precision, and whole-number floats up to 2^53 written as ints, so a state that went through JSON (which reads whole numbers back as floats) hashes the same.
+
+### `to_int64`
+
+```gdscript
+static func to_int64(value: Variant) -> Variant
+```
+
+`value` as a 64-bit int when it is an int or a decimal string of one (an optional minus and digits, in range); otherwise null.

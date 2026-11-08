@@ -107,6 +107,8 @@ func test_export_then_import_gives_an_identical_state_hash() -> void:
 	assert_eq(two.state_hash(), one.state_hash())
 	assert_eq(two.export_state(), saved)
 	assert_eq(two.world_seed, 5)
+	assert_eq(saved["world_seed"], "5", "64-bit numbers are written as decimal strings")
+	assert_typeof(saved["agents"][0]["brain"]["rng_state"], TYPE_STRING)
 	var senses := BustleSenses.new()
 	senses.now_minutes = 39
 	assert_eq(two.get_agent(&"ann").brain.tick(0.1, senses).to_dictionary(),
@@ -173,3 +175,42 @@ func _agent_with(source: Dictionary, key: String, value: Variant) -> Dictionary:
 	var out := source.duplicate(true)
 	out["agents"][0][key] = value
 	return out
+
+
+func test_64_bit_numbers_survive_a_json_round_trip_exactly() -> void:
+	var big := 9007199254740993 # 2^53 + 1: not exact as a JSON float
+	var society := BustleSociety.new(big)
+	society.register_archetype(&"baker", _library(&"bake"))
+	society.add_agent(&"ann", &"baker")
+	var senses := BustleSenses.new()
+	senses.now_minutes = 3
+	society.get_agent(&"ann").brain.tick(0.1, senses)
+	var text := JSON.stringify(society.export_state())
+	var copy := _society()
+	var report := copy.import_state(JSON.parse_string(text))
+	assert_true(report.ok, str(report.errors))
+	assert_eq(copy.world_seed, big)
+	assert_eq(copy.get_agent(&"ann").brain.export_state()["rng_state"],
+		society.get_agent(&"ann").brain.export_state()["rng_state"], "the generator state is exact")
+	assert_eq(copy.state_hash(), society.state_hash())
+	senses.now_minutes = 40
+	assert_eq(copy.get_agent(&"ann").brain.tick(0.1, senses).to_dictionary(),
+		society.get_agent(&"ann").brain.tick(0.1, senses).to_dictionary(), "and carries on alike")
+
+
+func test_64_bit_fields_accept_ints_or_decimal_strings_and_refuse_others() -> void:
+	assert_eq(BustleSociety.to_int64("-9223372036854775808"), -9223372036854775808)
+	assert_eq(BustleSociety.to_int64("9223372036854775807"), 9223372036854775807)
+	assert_eq(BustleSociety.to_int64(12), 12)
+	assert_eq(BustleSociety.to_int64("007"), 7)
+	for bad: Variant in ["9223372036854775808", "1.5", "+4", "--4", "", "x", 1.0, null]:
+		assert_null(BustleSociety.to_int64(bad), "refused: %s" % [bad])
+	var society := _populated()
+	var saved := society.export_state()
+	saved["world_seed"] = int(saved["world_seed"])
+	saved["agents"][0]["brain"]["rng_state"] = int(saved["agents"][0]["brain"]["rng_state"])
+	assert_true(_society().import_state(saved).ok, "plain ints are accepted too")
+	var hash := society.state_hash()
+	assert_false(society.import_state(_agent_with(society.export_state(), "brain", {"rng_state": "1e5"})).ok)
+	assert_false(society.import_state(_with(society.export_state(), "world_seed", "12.5")).ok)
+	assert_eq(society.state_hash(), hash)

@@ -10,7 +10,9 @@ extends RefCounted
 ##   store only the archetype's id, never a resource path, so loading never loads files.
 ## - **Bodies** are optional and come and go ([method BustleNpcState.attach_body]); the state stays.
 ## - **Saving.** [method export_state] gives plain data with a [constant SCHEMA] version and the
-##   agents sorted by id. [method import_state] checks everything first and then replaces the
+##   agents sorted by id. 64-bit numbers (the world seed and each brain's [code]world_seed[/code]
+##   and [code]rng_state[/code]) are written as decimal strings so they stay exact through JSON;
+##   on import they may be decimal strings or ints. [method import_state] checks everything first and then replaces the
 ##   population all at once; anything wrong (a malformed payload, another schema version, a repeated
 ##   id, an unknown archetype, a brain state that doesn't fit) returns a [BustleImportReport] and
 ##   changes nothing. Only the current schema is accepted; older versions have no migration yet.
@@ -106,9 +108,9 @@ func export_state() -> Dictionary:
 			"id": String(id), "archetype": String(state.archetype), "group": String(state.group),
 			"area": String(state.area),
 			"position": [state.position.x, state.position.y, state.position.z] if state.has_position else null,
-			"data": state.data.duplicate(true), "brain": state.brain.export_state(),
+			"data": state.data.duplicate(true), "brain": _brain_out(state.brain.export_state()),
 		})
-	return {"schema": SCHEMA, "world_seed": world_seed, "agents": agents}
+	return {"schema": SCHEMA, "world_seed": str(world_seed), "agents": agents}
 
 
 ## Replaces the population with [param saved], all or nothing. Bodies attached to agents that are
@@ -120,17 +122,20 @@ func import_state(saved: Variant) -> BustleImportReport:
 		report.fail("the payload isn't a dictionary")
 		return report
 	var payload := saved as Dictionary
-	if typeof(payload.get("schema")) != TYPE_INT:
+	var schema: Variant = payload.get("schema")
+	if typeof(schema) == TYPE_FLOAT and is_finite(schema) and schema == floorf(schema) and absf(schema) < 1e9:
+		schema = int(schema) # JSON reads whole numbers back as floats
+	if typeof(schema) != TYPE_INT:
 		report.fail("no schema version")
 		return report
-	report.schema = payload["schema"]
+	report.schema = schema
 	if report.schema != SCHEMA:
 		report.fail("schema %d isn't supported (this is %d)" % [report.schema, SCHEMA])
 		return report
-	if typeof(payload.get("world_seed")) != TYPE_INT or not payload.get("agents") is Array:
+	var seed: Variant = to_int64(payload.get("world_seed"))
+	if seed == null or not payload.get("agents") is Array:
 		report.fail("world_seed or agents is missing or malformed")
 		return report
-	var seed: int = payload["world_seed"]
 	var staged: Dictionary[StringName, BustleNpcState] = {}
 	var index := 0
 	for entry: Variant in payload["agents"]:
@@ -154,10 +159,12 @@ func import_state(saved: Variant) -> BustleImportReport:
 	return report
 
 
-## A SHA-256 of the canonical (sorted, full-precision) export.
+## A SHA-256 of the canonical export: sorted keys, full precision, and whole-number floats up to
+## 2^53 written as ints, so a state that went through JSON (which reads whole numbers back as
+## floats) hashes the same.
 ## @experimental
 func state_hash() -> String:
-	return JSON.stringify(export_state(), "", true, true).sha256_text()
+	return JSON.stringify(_canonical_value(export_state()), "", true, true).sha256_text()
 
 
 func _make(id: StringName, archetype_id: StringName, group: StringName) -> BustleNpcState:
@@ -206,9 +213,64 @@ func _stage(entry: Variant, seed: int, report: BustleImportReport, index: int) -
 	if has_position:
 		state.position = Vector3(position[0], position[1], position[2])
 		state.has_position = true
-	if not state.brain.import_state(saved["brain"]):
+	var brain := (saved["brain"] as Dictionary).duplicate(true)
+	for key: String in ["world_seed", "rng_state"]:
+		if brain.has(key):
+			var value: Variant = to_int64(brain[key])
+			if value == null:
+				report.fail("%s (%s): the brain's %s isn't a 64-bit integer" % [where, id, key])
+				return null
+			brain[key] = value
+	if not state.brain.import_state(brain):
 		report.fail("%s (%s): the brain state doesn't fit its archetype" % [where, id])
 		return null
+	return state
+
+
+## [param value] as a 64-bit int when it is an int or a decimal string of one (an optional minus
+## and digits, in range); otherwise null.
+## @experimental
+static func to_int64(value: Variant) -> Variant:
+	if typeof(value) == TYPE_INT:
+		return value
+	if not value is String:
+		return null
+	var text := value as String
+	var digits := text.trim_prefix("-")
+	if digits.is_empty() or not digits.is_valid_int() or digits.begins_with("+") or digits.begins_with("-") \
+			or digits.length() > 19:
+		return null
+	var number := text.to_int()
+	return number if str(number) == _canonical(text) else null
+
+
+static func _canonical(text: String) -> String:
+	var negative := text.begins_with("-")
+	var digits := text.trim_prefix("-").lstrip("0")
+	if digits.is_empty():
+		return "0"
+	return ("-" if negative else "") + digits
+
+
+static func _canonical_value(value: Variant) -> Variant:
+	match typeof(value):
+		TYPE_FLOAT:
+			var f: float = value
+			return int(f) if is_finite(f) and f == floorf(f) and absf(f) <= 9007199254740992.0 else f
+		TYPE_DICTIONARY:
+			var out := {}
+			for key: Variant in value:
+				out[key] = _canonical_value(value[key])
+			return out
+		TYPE_ARRAY:
+			return (value as Array).map(_canonical_value)
+	return value
+
+
+static func _brain_out(state: Dictionary) -> Dictionary:
+	for key: String in ["world_seed", "rng_state"]:
+		if typeof(state.get(key)) == TYPE_INT:
+			state[key] = str(state[key])
 	return state
 
 
