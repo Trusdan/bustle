@@ -9,6 +9,13 @@ extends RefCounted
 
 ## The chosen goal ([code]idle[/code] for the fallback).
 var goal_id: StringName = &""
+## The running order's id, or empty when a self-chosen goal (or nothing) runs.
+var order_id: StringName = &""
+## True while a player controls the agent: the brain chose nothing.
+var player_controlled: bool = false
+## Orders that ended this tick, each [code]{order, outcome, reason}[/code] (see
+## [BustleOrderQueue]).
+var order_results: Array[Dictionary] = []
 ## The chosen option, or empty.
 var option_id: StringName = &""
 ## The goal's band.
@@ -47,7 +54,9 @@ var reasons: Array[Dictionary] = []
 ## @experimental
 func to_dictionary() -> Dictionary:
 	return {
-		"goal": goal_id, "option": option_id, "band": band, "score": score, "idle": idle, "action": action,
+		"goal": goal_id, "order": order_id, "player_controlled": player_controlled,
+		"order_results": order_results.duplicate(true), "option": option_id, "band": band, "score": score,
+		"idle": idle, "action": action,
 		"move_to": move_to if has_move_to else null, "speed": speed, "face": face if has_face else null,
 		"attack_target": attack_target, "use_affordance": use_affordance, "talk_to": talk_to,
 		"animation": animation, "failure": failure.duplicate(true), "reasons": reasons.duplicate(true),

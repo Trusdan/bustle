@@ -96,6 +96,22 @@ func agent_ids() -> StringName[]
 
 Every agent's id, sorted.
 
+### `order`
+
+```gdscript
+func order(agent_id: StringName, p_order: BustleOrder) -> StringName
+```
+
+Gives agent `agent_id` `order` (see `BustleBrain.order()`). Returns an empty reason when it was queued, otherwise why not (`no_agent` for an unknown agent).
+
+### `cancel_order`
+
+```gdscript
+func cancel_order(agent_id: StringName, order_id: StringName) -> bool
+```
+
+Cancels agent `agent_id`'s order `order_id`, queued or running. False when there is no such agent or order.
+
 ### `export_state`
 
 ```gdscript
