@@ -16,8 +16,8 @@ extends RefCounted
 ##   the radius plus [member BustleSimRingConfig.hysteresis], and a change waits until
 ##   [member BustleSimRingConfig.min_dwell_seconds] have passed since the last one.
 ## - **By area** (the agent's area relative to the player's changed): the change applies at once,
-##   except going OFF_SCREEN, which waits until the area has been out of reach for
-##   [member BustleSimRingConfig.light_to_offscreen_delay_seconds].
+##   FULL to OFF_SCREEN included, except LIGHT to OFF_SCREEN, which waits until the area has been
+##   out of reach for [member BustleSimRingConfig.light_to_offscreen_delay_seconds].
 ## - A new agent gets its ring at once.
 ## @experimental
 
@@ -74,7 +74,7 @@ func update(delta: float) -> void:
 			entry["zone"] = zone
 			continue
 		var allowed: bool
-		if wanted == Ring.OFF_SCREEN:
+		if current == Ring.LIGHT and wanted == Ring.OFF_SCREEN:
 			allowed = float(entry["away"]) >= config.light_to_offscreen_delay_seconds - 1e-9
 		elif zone == _Zone.HERE and entry["zone"] == _Zone.HERE and not interior:
 			allowed = float(entry["held"]) >= config.min_dwell_seconds - 1e-9

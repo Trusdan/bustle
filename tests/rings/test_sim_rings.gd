@@ -98,7 +98,7 @@ func test_a_change_by_distance_waits_five_seconds_either_way() -> void:
 	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.FULL)
 
 
-func test_area_changes_apply_at_once_except_going_off_screen_which_waits_ten_seconds() -> void:
+func test_area_changes_apply_at_once_full_to_off_screen_included() -> void:
 	_agent(&"a", &"square", Vector3.ZERO)
 	_rings.update(0.0)
 	_world.areas[&"a"] = &"lane"
@@ -108,18 +108,27 @@ func test_area_changes_apply_at_once_except_going_off_screen_which_waits_ten_sec
 	_rings.update(0.0)
 	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.FULL, "back into the player's area: at once")
 	_world.areas[&"a"] = &"hill"
+	_rings.update(0.0)
+	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.OFF_SCREEN, "FULL to out of reach: at once")
+	_world.areas[&"a"] = &"lane"
+	_rings.update(0.0)
+	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.LIGHT, "off-screen to light: at once")
+
+
+func test_light_to_off_screen_waits_ten_seconds_and_re_entry_resets_it() -> void:
+	_agent(&"a", &"lane", Vector3.ZERO)
+	_rings.update(0.0)
+	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.LIGHT)
+	_world.areas[&"a"] = &"hill"
 	_rings.update(9.9)
-	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.FULL, "out of reach 9.9 s: not yet")
+	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.LIGHT, "9.9 s out of reach: held")
 	_world.areas[&"a"] = &"lane"
 	_rings.update(0.1)
 	_world.areas[&"a"] = &"hill"
 	_rings.update(9.9)
-	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.LIGHT, "stepping back in restarts the wait")
+	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.LIGHT, "re-entry reset the wait")
 	_rings.update(0.1)
-	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.OFF_SCREEN, "10 s out of reach")
-	_world.areas[&"a"] = &"lane"
-	_rings.update(0.0)
-	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.LIGHT, "off-screen to light: at once")
+	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.OFF_SCREEN, "10.0 s out of reach")
 
 
 func test_an_interior_puts_everyone_in_it_in_full() -> void:

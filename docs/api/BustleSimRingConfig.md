@@ -40,7 +40,7 @@ After a ring change, a change by distance waits this long (real seconds).
 var light_to_offscreen_delay_seconds: float = 10.0
 ```
 
-An agent whose area stops being the player's or a neighbour's goes OFF_SCREEN only after this long (real seconds), so stepping through a door and back doesn't thrash.
+A LIGHT agent whose area stops being the player's or a neighbour's goes OFF_SCREEN only after this long (real seconds), so stepping through a door and back doesn't thrash. FULL to OFF_SCREEN by area applies at once.
 
 ### `full_whole_interior`
 
