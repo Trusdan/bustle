@@ -44,6 +44,14 @@ func player_position() -> Vector3
 
 Where the player is. Default: the origin.
 
+### `is_interior`
+
+```gdscript
+func is_interior(_area: StringName) -> bool
+```
+
+True when `_area` is an interior (a building or cave the player sees all of at once). Default: false.
+
 ### `neighbour_areas`
 
 ```gdscript
