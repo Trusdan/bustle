@@ -17,6 +17,9 @@ extends Resource
 @export var min_score: float = 0.0
 ## Game minutes it is kept before a candidate in the same or a lower band may replace it.
 @export var min_commit_minutes: int = 0
+## Game minutes after it fails before it can be chosen again (see [BustleChoiceKeeper]). Even at
+## zero it can't be chosen again in the same game minute it failed.
+@export var fail_cooldown_minutes: int = 0
 ## Hard preconditions. Each is a dictionary with a [code]kind[/code]: [code]input[/code] (with an
 ## [code]input[/code] key) passes when that input is present, finite and above zero; any other kind is asked
 ## of the context's precondition check.

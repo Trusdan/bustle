@@ -25,3 +25,12 @@ func problems() -> PackedStringArray:
 			if consideration == null or consideration.curve == null:
 				out.append("goal %s has a consideration with no curve" % goal.id)
 	return out
+
+
+## The first goal with [param id], or null.
+## @experimental
+func find(id: StringName) -> BustleGoalDef:
+	for goal: BustleGoalDef in goals:
+		if goal != null and goal.id == id:
+			return goal
+	return null
