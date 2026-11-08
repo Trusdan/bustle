@@ -27,3 +27,11 @@ func problems() -> PackedStringArray
 ```
 
 What is wrong with the library: empty or repeated ids, and missing curves. Empty when it is fine.
+
+### `find`
+
+```gdscript
+func find(id: StringName) -> BustleGoalDef
+```
+
+The first goal with `id`, or null.
