@@ -9,7 +9,8 @@ extends RefCounted
 ## and to 0 at or past [member boredom_threshold], so the scorer stops picking a kind it is bored of
 ## and turns to another. An option's kind is its first tag that is one of [member kinds].
 ## [br][br]
-## The defaults are a starting point, not tuning: a host sets its own.
+## The defaults are a starting point, not tuning: a host sets its own. Tuning that isn't a finite
+## number counts as 0 (the threshold as 1), and tolerances stay within 0 to 1.
 ## @experimental
 
 ## The need that leisure meets.
@@ -35,7 +36,8 @@ func tolerance(kind: StringName) -> float:
 ## True when [param kind] is at or past the boredom threshold.
 ## @experimental
 func is_bored(kind: StringName) -> bool:
-	return tolerance(kind) >= boredom_threshold - 1e-9
+	var threshold := clampf(boredom_threshold, 0.0, 1.0) if is_finite(boredom_threshold) else 1.0
+	return tolerance(kind) >= threshold - 1e-9
 
 
 ## How much of its relief an option of [param kind] still gives: [code]1 − tolerance[/code], or 0
@@ -73,7 +75,7 @@ func adjust(ad: BustleAdvertisement) -> BustleAdvertisement:
 func use(kind: StringName) -> float:
 	var factor := relief_factor(kind)
 	if kinds.has(kind):
-		_tolerance[kind] = clampf(tolerance(kind) + maxf(tolerance_per_use, 0.0), 0.0, 1.0)
+		_tolerance[kind] = clampf(tolerance(kind) + _rate(tolerance_per_use), 0.0, 1.0)
 	return factor
 
 
@@ -82,7 +84,9 @@ func use(kind: StringName) -> float:
 func advance(minutes: float) -> void:
 	if not is_finite(minutes) or minutes <= 0.0:
 		return
-	var fall := maxf(tolerance_decay_per_day, 0.0) * minutes / 1440.0
+	var fall := _rate(tolerance_decay_per_day) * minutes / 1440.0
+	if not is_finite(fall):
+		return
 	for kind: StringName in _tolerance.keys():
 		var left := tolerance(kind) - fall
 		if left <= 0.0:
@@ -111,8 +115,12 @@ func import_state(saved: Variant) -> bool:
 	var data: Dictionary = saved["tolerance"]
 	for key: Variant in data:
 		var value: Variant = data[key]
-		if not (value is float or value is int) or not is_finite(float(value)):
+		if not (key is String or key is StringName) or not (value is float or value is int) or not is_finite(float(value)):
 			return false
-		staged[StringName(str(key))] = clampf(float(value), 0.0, 1.0)
+		staged[StringName(key)] = clampf(float(value), 0.0, 1.0)
 	_tolerance = staged
 	return true
+
+
+static func _rate(value: float) -> float:
+	return maxf(value, 0.0) if is_finite(value) else 0.0

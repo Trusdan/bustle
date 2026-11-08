@@ -21,9 +21,10 @@ A `BustleNeedSet` holds one agent's needs.
 
 - `advance(minutes, conditions, modifiers)` moves every pressure on, then clamps it to 0..1. The changes are linear, so one long step equals many short ones under the same conditions (off-screen agents use this).
 - **Conditions** are plain names the host passes each step, such as `awake`, `asleep`, `alone`, `in_company` and `crowded`.
-- **Profile:** the modifier `need.<id>.rate` (base 1) scales how fast a need rises. It never changes how fast it falls.
+- **Profile:** the modifier `need.<id>.rate` (base 1) scales how fast a need rises. It never changes how fast it falls, whether the fall is a negative base rate or recovery under a condition.
+- **Order:** conditions count once each and are summed in sorted order, so the same set gives the same result however it is listed. A host splits a step wherever the conditions change.
 - **Using an option:** `relieve(id, amount)` lowers a pressure and `raise(id, amount)` raises one (a side effect).
-- `fill_inputs(inputs)` writes `need.<id>` for every need into the senses' inputs.
+- `fill_inputs(inputs)` writes `need.<id>` for every need into the senses' inputs, and erases the inputs of needs the set has removed, so a reused dictionary never scores a lost need. Other inputs are left alone.
 - `add_need` and `remove_need` let traits add needs.
 - `export_state` and `import_state` save and load plain data. A host can keep it in `BustleNpcState.data`.
 
@@ -52,4 +53,4 @@ Both rows come only from data and modifiers.
 - **Recovery:** `advance(minutes)` lowers every tolerance by `tolerance_decay_per_day` per game day (default 0.5).
 - **Scoring:** `adjust(ad)` scales an option's leisure relief by `1 − tolerance`. At or past `boredom_threshold` (default 0.75) the relief drops to 0, so the scorer turns to another kind.
 
-With the defaults, a kind still gives relief on its third use in a day and none on the fourth. The defaults are a starting point; a host sets its own.
+With the defaults, uses of one kind in a row (no time between them) give full, then 0.75, then 0.5 relief, and none on the fourth. Time between uses lowers the tolerance, so spaced uses go on giving relief. The defaults are a starting point; a host sets its own. Tuning that isn't a finite number is ignored.

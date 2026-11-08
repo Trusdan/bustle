@@ -60,6 +60,8 @@ func test_tolerance_falls_with_time_and_saves() -> void:
 	assert_true(other.import_state(JSON.parse_string(JSON.stringify(saved))))
 	assert_almost_eq(other.tolerance(&"walk"), 0.5, 1e-6)
 	assert_false(other.import_state({"tolerance": {"walk": NAN}}))
+	assert_false(other.import_state({"tolerance": {"walk": 0.1, 3: 0.2}}), "a key that isn't a string")
+	assert_almost_eq(other.tolerance(&"walk"), 0.5, 1e-6, "a refused import changes nothing")
 	assert_false(other.import_state("nope"))
 	_leisure.advance(2880.0)
 	assert_eq(_leisure.tolerance(&"walk"), 0.0, "fully recovered")
@@ -75,6 +77,38 @@ func test_adjust_leaves_other_needs_and_the_original_alone() -> void:
 	assert_eq(adjusted.relief[&"company"], 0.4, "only leisure is scaled")
 	assert_eq(ad.relief[&"leisure"], 1.0, "the original is a copy")
 	assert_eq(_leisure.kind_of(ad), &"music")
+
+
+func test_spaced_uses_decay_between_and_steps_are_equivalent() -> void:
+	for i in 4:
+		_leisure.use(&"walk")
+		_leisure.advance(720.0)
+	assert_false(_leisure.is_bored(&"walk"), "spaced half a day apart, a fourth use isn't blocked")
+	var one := BustleLeisure.new()
+	var many := BustleLeisure.new()
+	for l: BustleLeisure in [one, many]:
+		l.kinds = [&"walk"]
+		l.use(&"walk")
+		l.use(&"walk")
+	one.advance(600.0)
+	for i in 600:
+		many.advance(1.0)
+	assert_almost_eq(many.tolerance(&"walk"), one.tolerance(&"walk"), 1e-6)
+
+
+func test_tuning_that_isnt_finite_is_safe() -> void:
+	_leisure.tolerance_per_use = NAN
+	_leisure.tolerance_decay_per_day = INF
+	_leisure.boredom_threshold = NAN
+	assert_eq(_leisure.use(&"walk"), 1.0)
+	assert_eq(_leisure.tolerance(&"walk"), 0.0, "NAN per use adds nothing")
+	_leisure.tolerance_per_use = 0.6
+	_leisure.use(&"walk")
+	_leisure.advance(1.0)
+	assert_eq(_leisure.tolerance(&"walk"), 0.6, "an infinite decay is ignored")
+	assert_false(_leisure.is_bored(&"walk"), "a NAN threshold counts as 1")
+	_leisure.boredom_threshold = -5.0
+	assert_true(_leisure.is_bored(&"walk"), "a threshold below 0 counts as 0")
 
 
 func _best(library: BustleGoalLibrary, ads: Array[BustleAdvertisement]) -> StringName:

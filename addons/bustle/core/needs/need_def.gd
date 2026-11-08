@@ -9,7 +9,7 @@ extends Resource
 ## Each game hour the pressure changes by [member rate_per_hour] × the agent's
 ## [code]need.<id>.rate[/code] modifier (only while one of [member rises_when] holds, or always when
 ## that is empty), plus [member condition_rates] for every condition that holds. The rate modifier
-## scales the rise only, never a fall.
+## scales the rises only, never a fall (a negative base rate or condition rate).
 ## @experimental
 
 ## Its id: the scorer reads its pressure as the input [code]need.<id>[/code].
@@ -28,25 +28,33 @@ extends Resource
 @export_range(0.0, 1.0) var start: float = 0.0
 
 
-## The change in pressure per game hour under [param conditions], with the rise scaled by
-## [param rate_mult]. Non-finite numbers count as 0.
+## The change in pressure per game hour under [param conditions]. Every positive part (the base
+## rate while it applies, and positive condition rates) is scaled by [param rate_mult]; negative
+## parts (a negative base rate, recovery under a condition) never are. Conditions are summed once
+## each, in sorted order, so the same set gives the same number however it is listed. Non-finite
+## numbers count as 0, and a result that isn't finite is 0.
 ## @experimental
 func rate_under(conditions: Array[StringName], rate_mult: float = 1.0) -> float:
-	var rate := 0.0
-	var rising := rises_when.is_empty()
-	for condition: StringName in rises_when:
-		if conditions.has(condition):
-			rising = true
-			break
-	if rising:
-		rate += _finite(rate_per_hour) * maxf(_finite(rate_mult), 0.0)
+	var mult := maxf(_finite(rate_mult), 0.0)
 	var held: Array[StringName] = []
 	for condition: StringName in conditions:
-		if condition_rates.has(condition) and not held.has(condition):
+		if not held.has(condition):
 			held.append(condition)
-			var extra := _finite(condition_rates[condition])
-			rate += extra * maxf(_finite(rate_mult), 0.0) if extra > 0.0 else extra
-	return rate
+	held.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
+	var rising := rises_when.is_empty()
+	for condition: StringName in rises_when:
+		if held.has(condition):
+			rising = true
+			break
+	var rate := _scaled(_finite(rate_per_hour), mult) if rising else 0.0
+	for condition: StringName in held:
+		if condition_rates.has(condition):
+			rate += _scaled(_finite(condition_rates[condition]), mult)
+	return _finite(rate)
+
+
+static func _scaled(change: float, mult: float) -> float:
+	return change * mult if change > 0.0 else change
 
 
 static func _finite(value: float) -> float:

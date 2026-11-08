@@ -30,6 +30,8 @@ const CROWD_TOLERANCE_KEY := &"social.crowd_tolerance"
 
 var _defs: Dictionary[StringName, BustleNeedDef] = {}
 var _pressures: Dictionary[StringName, float] = {}
+# Needs this set had and removed: their inputs are erased by fill_inputs.
+var _removed: Array[StringName] = []
 
 
 ## Adds [param def] at its [member BustleNeedDef.start] pressure (a trait adding a need, for
@@ -40,13 +42,15 @@ func add_need(def: BustleNeedDef) -> bool:
 		return false
 	_defs[def.id] = def
 	_pressures[def.id] = clampf(BustleNeedDef._finite(def.start), 0.0, 1.0)
+	_removed.erase(def.id)
 	return true
 
 
 ## Removes need [param id].
 ## @experimental
 func remove_need(id: StringName) -> void:
-	_defs.erase(id)
+	if _defs.erase(id) and not _removed.has(id):
+		_removed.append(id)
 	_pressures.erase(id)
 
 
@@ -89,8 +93,9 @@ func advance(minutes: float, conditions: Array[StringName], modifiers: BustleMod
 	var hours := minutes / 60.0
 	for id: StringName in ids():
 		var mult := modifiers.value(StringName("need.%s.rate" % id), 1.0) if modifiers != null else 1.0
-		var rate := _defs[id].rate_under(conditions, mult)
-		_pressures[id] = clampf(_pressures[id] + rate * hours, 0.0, 1.0)
+		var change := _defs[id].rate_under(conditions, mult) * hours
+		if is_finite(change):
+			_pressures[id] = clampf(_pressures[id] + change, 0.0, 1.0)
 
 
 ## Lowers need [param id] by [param amount] (using something that meets it). Ignored for an unknown
@@ -108,9 +113,13 @@ func raise(id: StringName, amount: float) -> void:
 		_pressures[id] = clampf(_pressures[id] + amount, 0.0, 1.0)
 
 
-## Writes each pressure into [param inputs] as [code]need.<id>[/code] (for [member BustleSenses.inputs]).
+## Writes each pressure into [param inputs] as [code]need.<id>[/code] (for [member BustleSenses.inputs]),
+## and erases the inputs of needs this set has removed, so a reused dictionary never keeps scoring
+## a need the agent no longer has. Other inputs are left alone.
 ## @experimental
 func fill_inputs(inputs: Dictionary[StringName, float]) -> void:
+	for id: StringName in _removed:
+		inputs.erase(StringName("need.%s" % id))
 	for id: StringName in ids():
 		inputs[StringName("need.%s" % id)] = _pressures[id]
 
@@ -154,7 +163,7 @@ func export_state() -> Dictionary:
 
 ## Restores pressures from [method export_state]. Needs the set doesn't have are skipped, and needs
 ## missing from [param saved] keep their pressure. False (and nothing changes) when the data is
-## malformed: not a dictionary, or a pressure that isn't a finite number.
+## malformed: not a dictionary, a key that isn't a string, or a pressure that isn't a finite number.
 ## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("pressures") is Dictionary:
@@ -163,9 +172,9 @@ func import_state(saved: Variant) -> bool:
 	var staged: Dictionary[StringName, float] = {}
 	for key: Variant in pressures:
 		var value: Variant = pressures[key]
-		if not (value is float or value is int) or not is_finite(float(value)):
+		if not (key is String or key is StringName) or not (value is float or value is int) or not is_finite(float(value)):
 			return false
-		var id := StringName(str(key))
+		var id := StringName(key)
 		if _defs.has(id):
 			staged[id] = clampf(float(value), 0.0, 1.0)
 	for id: StringName in staged:

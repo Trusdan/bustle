@@ -131,7 +131,7 @@ Raises need `id` by `amount` (a side effect). Ignored as for `relieve()`.
 func fill_inputs(inputs: Dictionary[StringName, float]) -> void
 ```
 
-Writes each pressure into `inputs` as `need.<id>` (for `BustleSenses.inputs`).
+Writes each pressure into `inputs` as `need.<id>` (for `BustleSenses.inputs`), and erases the inputs of needs this set has removed, so a reused dictionary never keeps scoring a need the agent no longer has. Other inputs are left alone.
 
 ### `apply_curves`
 
@@ -171,4 +171,4 @@ The pressures as plain data: `{"pressures": {id: value}}`, ids sorted.
 func import_state(saved: Variant) -> bool
 ```
 
-Restores pressures from `export_state()`. Needs the set doesn't have are skipped, and needs missing from `saved` keep their pressure. False (and nothing changes) when the data is malformed: not a dictionary, or a pressure that isn't a finite number.
+Restores pressures from `export_state()`. Needs the set doesn't have are skipped, and needs missing from `saved` keep their pressure. False (and nothing changes) when the data is malformed: not a dictionary, a key that isn't a string, or a pressure that isn't a finite number.
