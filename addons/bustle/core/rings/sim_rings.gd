@@ -18,7 +18,16 @@ extends RefCounted
 ## - **By area** (the agent's area relative to the player's changed): the change applies at once,
 ##   FULL to OFF_SCREEN included, except LIGHT to OFF_SCREEN, which waits until the area has been
 ##   out of reach for [member BustleSimRingConfig.light_to_offscreen_delay_seconds].
-## - A new agent gets its ring at once.
+## - A new agent gets its ring at once, or the ring it was saved with
+##   ([member BustleNpcState.sim_ring]), so after a load an agent in the hysteresis band stays FULL.
+## - **Bodies** (with [member BustleSimRingConfig.manage_bodies]): an agent that becomes FULL gets a
+##   body from [method BustleWorldPort.spawn_body] at its last position. If that spot is within
+##   [member BustleSimRingConfig.no_pop_in_distance] of the player and in view
+##   ([method BustleWorldPort.is_in_view]), the body appears at the nearest spot out of view
+##   within that distance of it instead (checked at 8 bearings and 4 distances, nearest first);
+##   if there is none, or the agent has no known position, the spawn waits and is retried on later
+##   updates. An agent that stops being FULL has its position kept and its body freed
+##   ([method BustleWorldPort.free_body]).
 ## @experimental
 
 ## The rings.
@@ -26,6 +35,11 @@ enum Ring { FULL, LIGHT, OFF_SCREEN }
 
 ## Agent [param id] moved from ring [param old] to [param new].
 signal ring_changed(id: StringName, old: Ring, new: Ring)
+## Agent [param id] got a body at [param position]; [param moved] when that isn't its last
+## position (it would have appeared in view).
+signal body_spawned(id: StringName, position: Vector3, moved: bool)
+## Agent [param id]'s body was freed.
+signal body_freed(id: StringName)
 
 ## The society it sorts.
 var society: BustleSociety
@@ -65,13 +79,21 @@ func update(delta: float) -> void:
 		var entry: Dictionary = _agents.get(id, {})
 		var current: int = entry.get("ring", -1)
 		var wanted := _wanted(state, zone, interior, player, current)
-		if entry.is_empty():
+		if entry.is_empty() and state.sim_ring >= Ring.FULL and state.sim_ring <= Ring.OFF_SCREEN:
+			entry = {"ring": state.sim_ring, "zone": zone, "held": config.min_dwell_seconds,
+				"away": config.light_to_offscreen_delay_seconds, "entered": now}
+			_agents[id] = entry
+			current = state.sim_ring
+			wanted = _wanted(state, zone, interior, player, current)
+		elif entry.is_empty():
 			_agents[id] = {"ring": wanted, "zone": zone, "held": 0.0, "away": 0.0, "entered": now}
+			_set_ring(state, -1, wanted, player)
 			continue
 		entry["held"] = float(entry["held"]) + step
 		entry["away"] = float(entry["away"]) + step if zone == _Zone.AWAY else 0.0
 		if wanted == current:
 			entry["zone"] = zone
+			_set_ring(state, current, current, player)
 			continue
 		var allowed: bool
 		if current == Ring.LIGHT and wanted == Ring.OFF_SCREEN:
@@ -85,7 +107,10 @@ func update(delta: float) -> void:
 			entry["zone"] = zone
 			entry["held"] = 0.0
 			entry["entered"] = now
+			_set_ring(state, current, wanted, player)
 			ring_changed.emit(id, current as Ring, wanted as Ring)
+		else:
+			_set_ring(state, current, current, player)
 	for id: StringName in _agents.keys():
 		if not present.has(id):
 			_agents.erase(id)
@@ -110,6 +135,50 @@ func counts() -> Dictionary:
 	for entry: Dictionary in _agents.values():
 		out[Ring.keys()[entry["ring"]]] += 1
 	return out
+
+
+# Records the ring on the state and spawns or frees the body to match.
+func _set_ring(state: BustleNpcState, old: int, new: int, player: Vector3) -> void:
+	state.sim_ring = new
+	if not config.manage_bodies:
+		return
+	if new == Ring.FULL and state.body() == null:
+		_spawn(state, player)
+	elif new != Ring.FULL and old == Ring.FULL and state.body() != null:
+		state.detach_body()
+		society.ports.world.free_body(state.id)
+		body_freed.emit(state.id)
+
+
+func _spawn(state: BustleNpcState, player: Vector3) -> void:
+	if not state.has_position:
+		return
+	var world := society.ports.world
+	var spot := state.position
+	var moved := false
+	if spot.distance_to(player) <= config.no_pop_in_distance and world.is_in_view(spot):
+		var found := false
+		for ring_index in range(1, 5):
+			var reach := config.no_pop_in_distance * ring_index / 4.0
+			for bearing in 8:
+				var angle := bearing * TAU / 8.0
+				var candidate := state.position + Vector3(cos(angle), 0.0, sin(angle)) * reach
+				if not world.is_in_view(candidate):
+					spot = candidate
+					found = true
+					break
+			if found:
+				break
+		if not found:
+			return
+		moved = true
+	var body := world.spawn_body(state.id, Transform3D(Basis(), spot))
+	if body == null:
+		return
+	state.position = spot
+	state.has_position = true
+	state.attach_body(body)
+	body_spawned.emit(state.id, spot, moved)
 
 
 func _wanted(state: BustleNpcState, zone: _Zone, interior: bool, player: Vector3, current: int) -> int:

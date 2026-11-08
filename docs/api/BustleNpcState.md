@@ -74,6 +74,22 @@ var brain: BustleBrain
 
 Its brain.
 
+### `sim_ring`
+
+```gdscript
+var sim_ring: int = -1
+```
+
+Its simulation ring (`BustleSimRings.Ring`), or -1 before it is first sorted. Saved, so a load restores it.
+
+### `last_update_minute`
+
+```gdscript
+var last_update_minute: int = -1
+```
+
+The game minute it was last simulated, or -1. Saved; catch-up runs from here.
+
 ## Methods
 
 ### `body`

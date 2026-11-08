@@ -30,6 +30,26 @@ class FakeWorld:
 	func is_interior(area: StringName) -> bool:
 		return interiors.has(area)
 
+	## Positions with x above this are in view.
+	var view_from_x := INF
+	var spawned: Array = []
+	var freed: Array[StringName] = []
+	var holder: Node
+	var bodies: Array[Node3D] = []
+
+	func is_in_view(position: Vector3) -> bool:
+		return position.x > view_from_x
+
+	func spawn_body(id: StringName, xf: Transform3D) -> Node3D:
+		spawned.append([id, xf.origin])
+		var body := Node3D.new()
+		holder.add_child(body)
+		bodies.append(body)
+		return body
+
+	func free_body(id: StringName) -> void:
+		freed.append(id)
+
 
 var _society: BustleSociety
 var _world: FakeWorld
@@ -40,8 +60,15 @@ func before_each() -> void:
 	_society = BustleSociety.new()
 	_society.register_archetype(&"villager", BustleGoalLibrary.new())
 	_world = FakeWorld.new()
+	_world.holder = self
 	assert_true(_society.set_port(&"world", _world))
 	_rings = BustleSimRings.new(_society)
+
+
+func after_each() -> void:
+	for body: Node3D in _world.bodies:
+		if is_instance_valid(body):
+			body.free()
 
 
 func _agent(id: StringName, area: StringName, position: Variant = null) -> BustleNpcState:
@@ -169,7 +196,10 @@ func test_a_scripted_walk_past_and_rapid_reversal_change_rings_no_faster_than_th
 		assert_true(changes[i] - changes[i - 1] >= 5.0 - 1e-6, "changes %.1f s and %.1f s apart enough" % [changes[i - 1], changes[i]])
 
 
-func test_ring_changes_leave_agent_state_untouched() -> void:
+func test_ring_changes_leave_agent_state_untouched_apart_from_the_ring() -> void:
+	var config := BustleSimRingConfig.new()
+	config.manage_bodies = false
+	_rings = BustleSimRings.new(_society, config)
 	var a := _agent(&"a", &"square", Vector3(1, 0, 2))
 	a.data = {"kept": [1, 2]}
 	a.area = &"square"
@@ -179,17 +209,17 @@ func test_ring_changes_leave_agent_state_untouched() -> void:
 	add_child_autofree(body)
 	a.attach_body(body)
 	body.global_position = Vector3(1, 0, 2)
-	var hash := _society.state_hash()
-	var brain := a.brain.export_state()
 	var seen: Array = []
 	_rings.ring_changed.connect(func(_id: StringName, _old: int, new: int) -> void: seen.append(new))
 	_rings.update(0.0)
+	var hash := _society.state_hash()
+	var brain := a.brain.export_state()
 	for area: StringName in [&"lane", &"hill", &"lane", &"square"]:
 		_world.areas[&"a"] = area
 		_rings.update(10.0)
 	var R := BustleSimRings.Ring
 	assert_eq(seen, [R.LIGHT, R.OFF_SCREEN, R.LIGHT, R.FULL], "FULL, LIGHT, OFF_SCREEN and back")
-	assert_eq(_society.state_hash(), hash)
+	assert_eq(_society.state_hash(), hash, "back in FULL: the saved state matches, ring included")
 	assert_eq(a.brain.export_state(), brain)
 	assert_eq([a.body(), a.data, a.position], [body, {"kept": [1, 2]}, Vector3(1, 0, 2)])
 
@@ -209,3 +239,91 @@ func test_entry_minutes_come_from_the_clock_and_removed_agents_are_dropped() -> 
 	_society.remove_agent(&"a")
 	_rings.update(0.0)
 	assert_eq([_rings.entered_minutes(&"a"), _rings.counts()["OFF_SCREEN"]], [-1, 1])
+
+
+func test_a_promoted_agent_gets_a_body_at_its_last_position_and_loses_it_when_demoted() -> void:
+	var a := _agent(&"a", &"lane", Vector3(30, 0, 0))
+	_rings.update(0.0)
+	assert_eq(_world.spawned, [], "LIGHT: no body")
+	_world.areas[&"a"] = &"square"
+	_rings.update(0.0)
+	assert_eq(_world.spawned, [[&"a", Vector3(30, 0, 0)]], "spawned at its last position")
+	var body := a.body()
+	assert_not_null(body)
+	body.global_position = Vector3(32, 0, 1)
+	_world.areas[&"a"] = &"lane"
+	_rings.update(0.0)
+	assert_eq(_world.freed, [&"a"])
+	assert_null(a.body())
+	assert_eq(a.position, Vector3(32, 0, 1), "its position was kept")
+
+
+func test_no_body_pops_into_view_near_the_player() -> void:
+	_world.view_from_x = 5.0
+	_agent(&"seen_close", &"lane", Vector3(10, 0, 0))
+	_agent(&"seen_far", &"lane", Vector3(25, 0, 0))
+	_agent(&"unseen", &"lane", Vector3(-10, 0, 0))
+	_rings.update(0.0)
+	var moved: Dictionary = {}
+	_rings.body_spawned.connect(func(id: StringName, at: Vector3, was_moved: bool) -> void: moved[id] = [at, was_moved])
+	for id: StringName in [&"seen_close", &"seen_far", &"unseen"]:
+		_world.areas[id] = &"square"
+	_rings.update(0.0)
+	assert_eq(moved[&"unseen"], [Vector3(-10, 0, 0), false], "out of view: its own spot")
+	assert_eq(moved[&"seen_far"], [Vector3(25, 0, 0), false], "in view but beyond 20 m: its own spot")
+	assert_true(moved[&"seen_close"][1], "in view within 20 m: moved")
+	var at: Vector3 = moved[&"seen_close"][0]
+	assert_true(at.x <= 5.0, "to a spot out of view")
+	assert_almost_eq(at.distance_to(Vector3(10, 0, 0)), 5.0, 1e-4, "the nearest out-of-view spot: 5 m away, at x = 5")
+
+
+func test_a_spawn_with_nowhere_out_of_view_waits_and_retries() -> void:
+	_world.view_from_x = -INF
+	var a := _agent(&"a", &"square", Vector3(3, 0, 0))
+	_rings.update(0.0)
+	assert_eq([_rings.ring_of(&"a"), _world.spawned.size()], [BustleSimRings.Ring.FULL, 0], "FULL, but no body yet")
+	_world.view_from_x = INF
+	_rings.update(0.1)
+	assert_eq(_world.spawned, [[&"a", Vector3(3, 0, 0)]], "spawned once out of view")
+	assert_not_null(a.body())
+	var b := _agent(&"b", &"square")
+	_rings.update(0.1)
+	assert_null(b.body(), "no known position: no body")
+
+
+func test_the_ring_is_saved_and_restored_so_the_hysteresis_band_holds() -> void:
+	var config := BustleSimRingConfig.new()
+	config.manage_bodies = false
+	_rings = BustleSimRings.new(_society, config)
+	var a := _agent(&"a", &"square", Vector3(10, 0, 0))
+	_rings.update(0.0)
+	a.position = Vector3(70, 0, 0)
+	a.last_update_minute = 480
+	_rings.update(1.0)
+	assert_eq(a.sim_ring, BustleSimRings.Ring.FULL)
+	var saved := _society.export_state()
+	assert_eq([saved["agents"][0]["sim_ring"], saved["agents"][0]["last_update_minute"]], [0, 480])
+	var loaded := BustleSociety.new()
+	loaded.register_archetype(&"villager", BustleGoalLibrary.new())
+	assert_true(loaded.import_state(JSON.parse_string(JSON.stringify(saved))).ok)
+	loaded.set_port(&"world", _world)
+	var after := BustleSimRings.new(loaded, config)
+	after.update(0.0)
+	assert_eq(after.ring_of(&"a"), BustleSimRings.Ring.FULL, "70 m stays FULL after a load")
+	assert_eq(loaded.get_agent(&"a").last_update_minute, 480)
+	var fresh := BustleSimRings.new(_society_without_rings(saved), config)
+	fresh.update(0.0)
+	assert_eq(fresh.ring_of(&"a"), BustleSimRings.Ring.LIGHT, "without the saved ring 70 m would be LIGHT")
+	var bad: Dictionary = saved.duplicate(true)
+	bad["agents"][0]["sim_ring"] = 3
+	assert_false(loaded.import_state(bad).ok)
+
+
+func _society_without_rings(saved: Dictionary) -> BustleSociety:
+	var copy: Dictionary = saved.duplicate(true)
+	copy["agents"][0].erase("sim_ring")
+	var out := BustleSociety.new()
+	out.register_archetype(&"villager", BustleGoalLibrary.new())
+	assert_true(out.import_state(copy).ok, "older saves without the fields still load")
+	out.set_port(&"world", _world)
+	return out

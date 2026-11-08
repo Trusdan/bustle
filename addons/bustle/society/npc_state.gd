@@ -24,6 +24,11 @@ var has_position: bool = false
 var data: Dictionary = {}
 ## Its brain.
 var brain: BustleBrain
+## Its simulation ring ([enum BustleSimRings.Ring]), or -1 before it is first sorted. Saved, so a
+## load restores it.
+var sim_ring: int = -1
+## The game minute it was last simulated, or -1. Saved; catch-up runs from here.
+var last_update_minute: int = -1
 
 var _body: WeakRef = null
 

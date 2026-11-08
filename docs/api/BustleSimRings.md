@@ -8,7 +8,7 @@ Inherits: `RefCounted`
 
 Sorts a society's agents into simulation rings by where they are relative to the player, using the society's world and clock ports. It only classifies: a ring change touches nothing in the agent's state. Areas come first, metres second.
 
-- **FULL:** in the player's area, and either within `BustleSimRingConfig.full_radius` of the player (outdoors) or anywhere in it (an interior, with `BustleSimRingConfig.full_whole_interior`). - **LIGHT:** in the player's outdoor area but farther (or with no known position), or in an area next to the player's. - **OFF_SCREEN:** anywhere else. - **By distance** (outdoors, in the player's area): a FULL agent stays FULL until it is beyond the radius plus `BustleSimRingConfig.hysteresis`, and a change waits until `BustleSimRingConfig.min_dwell_seconds` have passed since the last one. - **By area** (the agent's area relative to the player's changed): the change applies at once, FULL to OFF_SCREEN included, except LIGHT to OFF_SCREEN, which waits until the area has been out of reach for `BustleSimRingConfig.light_to_offscreen_delay_seconds`. - A new agent gets its ring at once.
+- **FULL:** in the player's area, and either within `BustleSimRingConfig.full_radius` of the player (outdoors) or anywhere in it (an interior, with `BustleSimRingConfig.full_whole_interior`). - **LIGHT:** in the player's outdoor area but farther (or with no known position), or in an area next to the player's. - **OFF_SCREEN:** anywhere else. - **By distance** (outdoors, in the player's area): a FULL agent stays FULL until it is beyond the radius plus `BustleSimRingConfig.hysteresis`, and a change waits until `BustleSimRingConfig.min_dwell_seconds` have passed since the last one. - **By area** (the agent's area relative to the player's changed): the change applies at once, FULL to OFF_SCREEN included, except LIGHT to OFF_SCREEN, which waits until the area has been out of reach for `BustleSimRingConfig.light_to_offscreen_delay_seconds`. - A new agent gets its ring at once, or the ring it was saved with (`BustleNpcState.sim_ring`), so after a load an agent in the hysteresis band stays FULL. - **Bodies** (with `BustleSimRingConfig.manage_bodies`): an agent that becomes FULL gets a body from `BustleWorldPort.spawn_body()` at its last position. If that spot is within `BustleSimRingConfig.no_pop_in_distance` of the player and in view (`BustleWorldPort.is_in_view()`), the body appears at the nearest spot out of view within that distance of it instead (checked at 8 bearings and 4 distances, nearest first); if there is none, or the agent has no known position, the spawn waits and is retried on later updates. An agent that stops being FULL has its position kept and its body freed (`BustleWorldPort.free_body()`).
 
 ## Signals
 
@@ -19,6 +19,22 @@ signal ring_changed(id: StringName, old: int, new: int)
 ```
 
 Agent `id` moved from ring `old` to `new`.
+
+### `body_spawned`
+
+```gdscript
+signal body_spawned(id: StringName, position: Vector3, moved: bool)
+```
+
+Agent `id` got a body at `position`; `moved` when that isn't its last position (it would have appeared in view).
+
+### `body_freed`
+
+```gdscript
+signal body_freed(id: StringName)
+```
+
+Agent `id`'s body was freed.
 
 ## Constants
 

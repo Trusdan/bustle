@@ -125,6 +125,7 @@ func export_state() -> Dictionary:
 			"area": String(state.area),
 			"position": [state.position.x, state.position.y, state.position.z] if state.has_position else null,
 			"data": state.data.duplicate(true), "brain": _brain_out(state.brain.export_state()),
+			"sim_ring": state.sim_ring, "last_update_minute": state.last_update_minute,
 		})
 	return {"schema": SCHEMA, "world_seed": str(world_seed), "agents": agents}
 
@@ -237,6 +238,14 @@ func _stage(entry: Variant, seed: int, report: BustleImportReport, index: int) -
 				report.fail("%s (%s): the brain's %s isn't a 64-bit integer" % [where, id, key])
 				return null
 			brain[key] = value
+	for key: String in ["sim_ring", "last_update_minute"]:
+		var value: Variant = saved.get(key, -1)
+		if typeof(value) == TYPE_FLOAT and is_finite(value) and value == floorf(value):
+			value = int(value)
+		if typeof(value) != TYPE_INT or value < -1 or (key == "sim_ring" and value > 2):
+			report.fail("%s (%s): %s isn't valid" % [where, id, key])
+			return null
+		state.set(key, value)
 	if not state.brain.import_state(brain):
 		report.fail("%s (%s): the brain state doesn't fit its archetype" % [where, id])
 		return null
