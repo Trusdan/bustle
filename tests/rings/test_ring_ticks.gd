@@ -1,0 +1,144 @@
+# Copyright (c) 2026 Corey Patrick Jones (github.com/Trusdan)
+extends GutTest
+## Ring ticks and catch-up: how often each ring thinks, OFF_SCREEN phases, catch-up capped at seven
+## game days with the rest summarised, determinism, and catch-up on leaving OFF_SCREEN.
+
+
+## Areas set by the test; everyone not listed is far away.
+class Areas:
+	extends BustleWorldPort
+	var areas: Dictionary = {}
+
+	func area_of(id: StringName) -> StringName:
+		return areas.get(id, &"far")
+
+	func player_area() -> StringName:
+		return &"square"
+
+	func neighbour_areas(area: StringName) -> Array[StringName]:
+		var out: Array[StringName] = []
+		if area == &"square":
+			out.append(&"lane")
+		return out
+
+
+var _society: BustleSociety
+var _world: Areas
+var _rings: BustleSimRings
+var _thinks: Array = []
+
+
+func before_each() -> void:
+	_society = BustleSociety.new(9)
+	_society.register_archetype(&"villager", _library())
+	_world = Areas.new()
+	_society.set_port(&"world", _world)
+	_rings = _make_rings(_society)
+	_thinks = []
+
+
+func _library() -> BustleGoalLibrary:
+	var library := BustleGoalLibrary.new()
+	for id: StringName in [&"a", &"b", &"c"]:
+		var goal := BustleGoalDef.new()
+		goal.id = id
+		goal.band = BustleBands.PERSONAL
+		library.goals.append(goal)
+	return library
+
+
+func _make_rings(society: BustleSociety) -> BustleSimRings:
+	var config := BustleSimRingConfig.new()
+	config.manage_bodies = false
+	var rings := BustleSimRings.new(society, config)
+	rings.senses_provider = func(id: StringName, ring: int, minute: int) -> BustleSenses:
+		_thinks.append([id, ring, minute])
+		return BustleSenses.new()
+	return rings
+
+
+func _count(id: StringName) -> int:
+	return _thinks.filter(func(t: Array) -> bool: return t[0] == id).size()
+
+
+func test_full_thinks_twice_a_second_and_light_once() -> void:
+	var near := _society.add_agent(&"near", &"villager")
+	near.position = Vector3.ZERO
+	near.has_position = true
+	_world.areas[&"near"] = &"square"
+	_world.areas[&"next"] = &"lane"
+	_society.add_agent(&"next", &"villager")
+	for i in 100:
+		_rings.tick(0.1)
+	assert_eq(_count(&"near"), 20, "FULL: 2 Hz over 10 s")
+	assert_eq(_count(&"next"), 10, "LIGHT: 1 Hz over 10 s")
+	assert_eq(near.last_update_minute, 0)
+
+
+func test_off_screen_thinks_hourly_at_spread_phases() -> void:
+	for i in 200:
+		_society.add_agent(StringName("far_%d" % i), &"villager")
+	_rings.tick(0.0)
+	var minutes: Dictionary = {}
+	for id: StringName in _society.agent_ids():
+		minutes[_society.get_agent(id).last_update_minute] = true
+	assert_gt(minutes.size(), 30, "phases are spread across the hour")
+	for m in 120:
+		_society.ports.clock.advance(1)
+		_rings.tick(0.0)
+	for id: StringName in _society.agent_ids():
+		assert_eq(_count(id), 2, "%s thought twice in two hours" % id)
+	assert_true(_thinks.all(func(t: Array) -> bool: return t[1] == BustleSimRings.Ring.OFF_SCREEN))
+
+
+func test_catch_up_simulates_whole_hours_up_to_the_cap() -> void:
+	var a := _society.add_agent(&"a", &"villager")
+	a.last_update_minute = 0
+	_society.ports.clock.advance(3 * 1440 + 30)
+	var report := _rings.catch_up(&"a")
+	assert_eq(report, {"agent": &"a", "from": 0, "to": 3 * 1440 + 30, "ticks": 72,
+		"simulated_minutes": 72 * 60, "skipped_minutes": 0})
+	assert_eq(a.last_update_minute, 3 * 1440, "the leftover 30 minutes carry over")
+	assert_eq(_rings.catch_up(&"a")["ticks"], 0, "nothing more to do")
+
+
+func test_a_long_absence_is_capped_at_seven_days_and_summarised() -> void:
+	var a := _society.add_agent(&"a", &"villager")
+	a.last_update_minute = 100
+	var summaries: Array = []
+	_rings.summary_hook = func(id: StringName, report: Dictionary) -> void: summaries.append([id, report["skipped_minutes"]])
+	_society.ports.clock.advance(365 * 1440 + 100)
+	var report := _rings.catch_up(&"a")
+	assert_eq(report["ticks"], 168, "7 days of hourly thinking, no more")
+	assert_eq(_count(&"a"), 168)
+	assert_eq(report["skipped_minutes"], (365 - 7) * 1440)
+	assert_eq(summaries, [[&"a", (365 - 7) * 1440]])
+	assert_eq(_thinks[0][2], 100 + (365 - 7) * 1440 + 60, "the most recent week is the one simulated")
+	assert_eq(a.last_update_minute, 365 * 1440 + 100)
+
+
+func test_catch_up_is_deterministic() -> void:
+	var hashes: Array = []
+	for run in 2:
+		var society := BustleSociety.new(4)
+		society.register_archetype(&"villager", _library())
+		var a := society.add_agent(&"a", &"villager")
+		a.last_update_minute = 0
+		society.ports.clock.advance(10 * 1440)
+		_make_rings(society).catch_up(&"a")
+		hashes.append(society.state_hash())
+	assert_eq(hashes[0], hashes[1])
+
+
+func test_leaving_off_screen_catches_up_first() -> void:
+	var a := _society.add_agent(&"a", &"villager")
+	_rings.tick(0.0)
+	a.last_update_minute = 0
+	_society.ports.clock.advance(5 * 60)
+	var caught: Array = []
+	_rings.caught_up.connect(func(id: StringName, report: Dictionary) -> void: caught.append([id, report["ticks"]]))
+	_world.areas[&"a"] = &"lane"
+	_rings.tick(0.0)
+	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.LIGHT)
+	assert_eq(caught, [[&"a", 5]])
+	assert_eq(a.last_update_minute, 300)

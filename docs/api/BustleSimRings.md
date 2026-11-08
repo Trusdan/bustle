@@ -36,6 +36,14 @@ signal body_freed(id: StringName)
 
 Agent `id`'s body was freed.
 
+### `caught_up`
+
+```gdscript
+signal caught_up(id: StringName, report: Dictionary)
+```
+
+Agent `id` was caught up; see `catch_up()` for `report`.
+
 ## Constants
 
 ### `FULL`
@@ -76,6 +84,30 @@ const AWAY = 2
 
 ## Properties
 
+### `senses_provider`
+
+```gdscript
+var senses_provider: Callable = Callable()
+```
+
+`func(id: StringName, ring: Ring, minute: int) -> BustleSenses`, what an agent senses when its brain thinks in `tick()` or `catch_up()`. Unset: senses with only the time.
+
+### `summary_hook`
+
+```gdscript
+var summary_hook: Callable = Callable()
+```
+
+`func(id: StringName, report: Dictionary) -> void`, called when catch-up skipped time beyond the cap, so modules can apply what the skipped time did in summary.
+
+### `last_timings`
+
+```gdscript
+var last_timings: Dictionary = {...}
+```
+
+Microseconds the last `tick()` spent on each ring's thinking: `{FULL, LIGHT, OFF_SCREEN}`.
+
 ### `society`
 
 ```gdscript
@@ -93,6 +125,22 @@ var config: BustleSimRingConfig
 The thresholds.
 
 ## Methods
+
+### `tick`
+
+```gdscript
+func tick(delta: float) -> void
+```
+
+Re-sorts every agent (see `update()`) and then lets each think as its ring allows: FULL every 1 / `BustleSimRingConfig.full_brain_hz` real seconds, LIGHT every 1 / `BustleSimRingConfig.light_rate_hz`, and OFF_SCREEN once each `BustleSimRingConfig.offscreen_interval_game_minutes` of game time, at a fixed phase per agent so they don't all think in the same frame (FULL and LIGHT are staggered the same way). An agent coming out of OFF_SCREEN is caught up first. Each think sets `BustleNpcState.last_update_minute`.
+
+### `catch_up`
+
+```gdscript
+func catch_up(id: StringName) -> Dictionary
+```
+
+Brings agent `id` up to the clock's minute with OFF_SCREEN thinking from its `BustleNpcState.last_update_minute`: one think per `BustleSimRingConfig.offscreen_interval_game_minutes`, for at most `BustleSimRingConfig.catch_up_cap_game_days`. The most recent time is simulated; anything older is summarised (passed to `summary_hook`) rather than run. Deterministic for the same state and senses. Returns `{agent, from, to, ticks, simulated_minutes, skipped_minutes}` and emits `caught_up` when anything happened.
 
 ### `update`
 

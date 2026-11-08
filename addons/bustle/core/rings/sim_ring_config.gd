@@ -21,6 +21,14 @@ extends Resource
 @export var full_whole_interior: bool = true
 ## A body never appears in view within this distance of the player (metres).
 @export var no_pop_in_distance: float = 20.0
+## How often a FULL agent's brain thinks (real hertz).
+@export var full_brain_hz: float = 2.0
+## How often a LIGHT agent's brain thinks (real hertz).
+@export var light_rate_hz: float = 1.0
+## How often an OFF_SCREEN agent's brain thinks (game minutes).
+@export var offscreen_interval_game_minutes: int = 60
+## Catch-up simulates at most this many game days; anything older is summarised.
+@export var catch_up_cap_game_days: int = 7
 ## When true, [BustleSimRings] spawns a body when an agent becomes FULL and frees it when it stops
 ## being FULL, through the world port.
 @export var manage_bodies: bool = true
