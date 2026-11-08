@@ -2,6 +2,17 @@
 
 All notable changes to Bustle. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Before 1.0, any minor version may change the API. Every public class is marked `@experimental` until then.
 
+## [Unreleased]
+
+### Added
+
+- The utility scorer's headless core (`addons/bustle/core/brain/`):
+  - `BustleBands`: priority bands as spaced whole numbers; only the highest band with an eligible candidate is chosen from.
+  - `BustleInputs`: the fixed input families (`need`, `trait`, `opinion`, `memory`, `distance`, `schedule`, `role`, `fact`, `time`, `health`, `threat`) and `is_valid_input`.
+  - `BustleConsideration`, `BustleGoalDef` (band, base weight, `min_score`, `min_commit_minutes`, preconditions, considerations, `uses_advertisements`) and `BustleGoalLibrary` (with `problems()`).
+  - `BustleAdvertisement`, `BustleScoringConfig` and `BustleScoreContext`.
+  - `BustleUtilityScorer`: goal scores, the signed advertisement score, eligibility with reasons, stable ordering, the 10%-of-best window and a uniform seeded pick, with an IDLE fallback; `BustleCandidate` holds each result.
+
 ## [0.2.2] - 2026-11-04
 
 ### Changed
