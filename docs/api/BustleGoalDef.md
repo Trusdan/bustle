@@ -74,6 +74,14 @@ var considerations: BustleConsideration[] = []
 
 The factors of its score.
 
+### `sequence`
+
+```gdscript
+var sequence: BustleActionSequence
+```
+
+The plan it runs once chosen. Without one, the agent just holds the goal.
+
 ### `uses_advertisements`
 
 ```gdscript

@@ -26,5 +26,7 @@ extends Resource
 @export var preconditions: Array[Dictionary] = []
 ## The factors of its score.
 @export var considerations: Array[BustleConsideration] = []
+## The plan it runs once chosen. Without one, the agent just holds the goal.
+@export var sequence: BustleActionSequence
 ## When true it makes one candidate per advertisement in the context, instead of one candidate.
 @export var uses_advertisements: bool = false

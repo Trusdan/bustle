@@ -18,6 +18,14 @@ var agent_id: StringName = &""
 
 The agent.
 
+### `option_id`
+
+```gdscript
+var option_id: StringName = &""
+```
+
+The option the goal chose (for example an object to use), or empty.
+
 ### `params`
 
 ```gdscript

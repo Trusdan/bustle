@@ -8,6 +8,8 @@ extends RefCounted
 
 ## The agent.
 var agent_id: StringName = &""
+## The option the goal chose (for example an object to use), or empty.
+var option_id: StringName = &""
 ## The step's parameters.
 var params: Dictionary = {}
 ## The game minute of this tick.
