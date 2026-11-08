@@ -36,6 +36,14 @@ func player_area() -> StringName
 
 The area the player is in.
 
+### `player_position`
+
+```gdscript
+func player_position() -> Vector3
+```
+
+Where the player is. Default: the origin.
+
 ### `neighbour_areas`
 
 ```gdscript

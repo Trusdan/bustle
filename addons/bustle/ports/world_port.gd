@@ -26,6 +26,12 @@ func player_area() -> StringName:
 	return DEFAULT_AREA
 
 
+## Where the player is. Default: the origin.
+## @experimental
+func player_position() -> Vector3:
+	return Vector3.ZERO
+
+
 ## The areas next to [param _area]. Default: none.
 ## @experimental
 func neighbour_areas(_area: StringName) -> Array[StringName]:
