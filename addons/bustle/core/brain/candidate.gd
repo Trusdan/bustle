@@ -27,7 +27,9 @@ var fallback: bool = false
 var reasons: Array[Dictionary] = []
 
 
-## The fallback chosen when no candidate is eligible: IDLE, scoring zero.
+## The fallback chosen when no candidate is eligible: IDLE, scoring zero. It is a sentinel, the one
+## exception to the rule that eligible means a score above zero; it is never put into a pick
+## window with authored goals.
 ## @experimental
 static func idle_fallback() -> BustleCandidate:
 	var out := BustleCandidate.new()

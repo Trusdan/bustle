@@ -248,3 +248,77 @@ func test_the_library_reports_repeated_ids_and_the_scorer_uses_the_first() -> vo
 	var found := _scorer.evaluate(library, _context(), _config)
 	assert_eq(found.size(), 1)
 	assert_eq(found[0].band, BustleBands.PERSONAL)
+
+
+func test_an_input_precondition_must_be_finite_and_above_zero() -> void:
+	var goal := _goal(&"eat", BustleBands.PERSONAL)
+	goal.preconditions = [{"kind": &"input", "input": &"memory.food_known"}]
+	for value: float in [INF, -INF, NAN]:
+		var found := _scorer.evaluate(_library([goal]), _context({"memory.food_known": value}), _config)
+		assert_false(found[0].eligible, "%s can't enable a goal" % value)
+		assert_has(_kinds(found[0]), &"not_finite")
+	assert_true(_scorer.evaluate(_library([goal]), _context({"memory.food_known": 1.0}), _config)[0].eligible)
+	assert_false(_scorer.evaluate(_library([goal]), _context({"memory.food_known": 0.0}), _config)[0].eligible)
+	goal.preconditions = [{"kind": &"input", "input": &"Memory.food"}]
+	var bad := _scorer.evaluate(_library([goal]), _context({"Memory.food": 1.0}), _config)
+	assert_false(bad[0].eligible)
+	assert_has(_kinds(bad[0]), &"invalid_input")
+
+
+func test_advertisement_inputs_are_checked_before_clamping_or_sampling() -> void:
+	var goal := _goal(&"use", BustleBands.PERSONAL)
+	goal.uses_advertisements = true
+	var context := _context({"need.food": INF})
+	context.advertisements = [BustleAdvertisement.new(&"table", {&"food": 1.0})]
+	var found := _scorer.evaluate(_library([goal]), context, _config)
+	assert_false(found[0].eligible, "INF pressure isn't clamped into a score of 1")
+	assert_has(_kinds(found[0]), &"not_finite")
+	context = _context({"need.Food": 1.0})
+	context.advertisements = [BustleAdvertisement.new(&"table", {&"Food": 1.0})]
+	found = _scorer.evaluate(_library([goal]), context, _config)
+	assert_false(found[0].eligible, "a malformed need isn't scored")
+	assert_has(_kinds(found[0]), &"invalid_input")
+	context = _context({"need.food": 0.5})
+	context.advertisements = [BustleAdvertisement.new(&"table", {&"food": 1.0}, {&"rest": 1.0})]
+	found = _scorer.evaluate(_library([goal]), context, _config)
+	assert_true(found[0].eligible, "an absent need, relief or side effect, still adds nothing")
+	assert_eq(_kinds(found[0]).count(&"no_need"), 1)
+
+
+func test_non_finite_distance_and_mood_are_refused_with_curves_set() -> void:
+	_config.distance_curve = _line(0, 1, 10, 0)
+	_config.mood_curves[&"social"] = _line(0, 0.5, 100, 1.5)
+	var far := BustleAdvertisement.new(&"porch", {&"company": 1.0}, {}, [&"social"], INF)
+	var reasons: Array[Dictionary] = []
+	assert_true(is_nan(_scorer.advertisement_score(far, _context({"need.company": 0.5}), _config, reasons)))
+	assert_eq(reasons.back()["what"], &"distance")
+	var near := BustleAdvertisement.new(&"porch", {&"company": 1.0}, {}, [&"social"], 5.0)
+	reasons.clear()
+	assert_true(is_nan(_scorer.advertisement_score(near, _context({"need.company": 0.5, "mood": NAN}), _config, reasons)))
+	assert_eq(reasons.back()["what"], BustleInputs.MOOD)
+
+
+func test_the_score_doesnt_depend_on_the_order_needs_and_tags_were_given() -> void:
+	var context := _context({"need.a": 0.3, "need.b": 0.7, "need.c": 0.9})
+	context.tag_mults = {&"x": 1.1, &"y": 0.7, &"z": 1.3}
+	var one := BustleAdvertisement.new(&"o", {&"a": 0.1, &"b": 0.2, &"c": 0.3}, {&"c": 0.4}, [&"x", &"y", &"z"])
+	var two := BustleAdvertisement.new(&"o", {&"c": 0.3, &"a": 0.1, &"b": 0.2}, {&"c": 0.4}, [&"z", &"x", &"y"])
+	assert_eq(_scorer.advertisement_score(one, context, _config), _scorer.advertisement_score(two, context, _config),
+		"exactly equal, not just close")
+
+
+func test_a_score_equal_to_min_score_is_eligible() -> void:
+	var goal := _goal(&"shift", BustleBands.DUTY, [], 0.5)
+	goal.min_score = 0.5
+	assert_true(_scorer.evaluate(_library([goal]), _context(), _config)[0].eligible)
+
+
+func test_a_repeated_option_is_recorded_on_the_first() -> void:
+	var goal := _goal(&"use", BustleBands.PERSONAL)
+	goal.uses_advertisements = true
+	var context := _context({"need.company": 0.5})
+	context.advertisements = [BustleAdvertisement.new(&"porch", {&"company": 1.0}), BustleAdvertisement.new(&"porch", {&"company": 9.0})]
+	var found := _scorer.evaluate(_library([goal]), context, _config)
+	assert_eq(found.size(), 1)
+	assert_almost_eq(found[0].raw_score, 0.5, 1e-6, "the first one is used")
+	assert_has(_kinds(found[0]), &"duplicate_option")

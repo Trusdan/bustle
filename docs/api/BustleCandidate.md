@@ -82,4 +82,4 @@ The breakdown: one dictionary per factor or problem, each with a `kind`.
 static func idle_fallback() -> BustleCandidate
 ```
 
-The fallback chosen when no candidate is eligible: IDLE, scoring zero.
+The fallback chosen when no candidate is eligible: IDLE, scoring zero. It is a sentinel, the one exception to the rule that eligible means a score above zero; it is never put into a pick window with authored goals.

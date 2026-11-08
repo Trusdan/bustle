@@ -56,7 +56,7 @@ Game minutes it is kept before a candidate in the same or a lower band may repla
 var preconditions: Dictionary[] = []
 ```
 
-Hard preconditions. Each is a dictionary with a `kind`: `input` (with an `input` key) passes when that input is present and above zero; any other kind is asked of the context's precondition check.
+Hard preconditions. Each is a dictionary with a `kind`: `input` (with an `input` key) passes when that input is present, finite and above zero; any other kind is asked of the context's precondition check.
 
 ### `considerations`
 

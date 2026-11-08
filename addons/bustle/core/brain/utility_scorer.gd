@@ -11,9 +11,14 @@ extends RefCounted
 ##   [code]need_value = Σ relief(o,n)·curve_n(p_n)·w_n − Σ adds(o,n)·curve_n(p_n + 0.2)·w_n[/code],
 ##   then [code]× Π tag_mult × distance_falloff × mood_mod × expected_thought_gain[/code]. It is
 ##   signed. [code]p_n[/code] is the input [code]need.<n>[/code]; a need the agent doesn't have adds
-##   nothing. Needs and tags are taken in sorted order.
+##   nothing. Needs and tags are taken in sorted order. Every number it consumes (need names and
+##   pressures, relief and side effects, weights, multipliers, distance, mood, the preview) is checked
+##   before any clamping or curve sampling: a malformed or non-finite one makes the score NAN, with
+##   a reason, so the candidate is ineligible.
 ## - **A goal that uses advertisements** makes one candidate per option, scored
 ##   [code]goal score × advertisement score[/code].
+## - **Repeated options:** a goal's first advertisement for an option id is used; each repeat adds a
+##   [code]duplicate_option[/code] reason to that first candidate.
 ## - **Eligible** means the preconditions pass, the numbers are finite, and the raw score is above
 ##   zero and at least the goal's [member BustleGoalDef.min_score].
 ## - **Choosing:** only the highest band with an eligible candidate counts. Within it, every
@@ -43,9 +48,14 @@ func evaluate(library: BustleGoalLibrary, context: BustleScoreContext, config: B
 			continue
 		var options := {}
 		for ad: BustleAdvertisement in context.advertisements:
-			if ad != null and not options.has(ad.option_id):
-				options[ad.option_id] = true
-				out.append(_candidate(goal, ad.option_id, context, config, ad))
+			if ad == null:
+				continue
+			if options.has(ad.option_id):
+				(options[ad.option_id] as BustleCandidate).reasons.append({"kind": &"duplicate_option", "option": ad.option_id})
+				continue
+			var candidate := _candidate(goal, ad.option_id, context, config, ad)
+			options[ad.option_id] = candidate
+			out.append(candidate)
 	sort(out)
 	return out
 
@@ -121,6 +131,9 @@ func advertisement_score(ad: BustleAdvertisement, context: BustleScoreContext, c
 	needs.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	for need: StringName in needs:
 		var key := StringName("need." + String(need))
+		if not BustleInputs.is_valid_input(key):
+			reasons.append({"kind": &"invalid_input", "input": key})
+			return NAN
 		if not context.inputs.has(key):
 			reasons.append({"kind": &"no_need", "need": need})
 			continue
@@ -128,6 +141,9 @@ func advertisement_score(ad: BustleAdvertisement, context: BustleScoreContext, c
 		var weight: float = context.need_weights.get(need, 1.0)
 		var relief: float = ad.relief.get(need, 0.0)
 		var adds: float = ad.adds.get(need, 0.0)
+		if not (is_finite(pressure) and is_finite(weight) and is_finite(relief) and is_finite(adds)):
+			reasons.append({"kind": &"not_finite", "what": key})
+			return NAN
 		var term := relief * _need_curve(config, need, pressure) * weight \
 				- adds * _need_curve(config, need, pressure + SIDE_EFFECT_STEP) * weight
 		reasons.append({"kind": &"need", "need": need, "value": term})
@@ -136,17 +152,32 @@ func advertisement_score(ad: BustleAdvertisement, context: BustleScoreContext, c
 	var tags := ad.tags.duplicate()
 	tags.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	for tag: StringName in tags:
-		factor *= float(context.tag_mults.get(tag, 1.0))
+		var mult := float(context.tag_mults.get(tag, 1.0))
+		if not is_finite(mult):
+			reasons.append({"kind": &"not_finite", "what": StringName("tag." + String(tag))})
+			return NAN
+		factor *= mult
+	if not is_finite(ad.distance):
+		reasons.append({"kind": &"not_finite", "what": &"distance"})
+		return NAN
 	var distance := config.distance_curve.sample(ad.distance) if config.distance_curve != null else 1.0
 	var mood := 1.0
 	if context.inputs.has(BustleInputs.MOOD):
+		var mood_input: float = context.inputs[BustleInputs.MOOD]
 		for tag: StringName in tags:
 			var curve: Curve = config.mood_curves.get(tag, null)
-			if curve != null:
-				mood *= curve.sample(context.inputs[BustleInputs.MOOD])
+			if curve == null:
+				continue
+			if not is_finite(mood_input):
+				reasons.append({"kind": &"not_finite", "what": BustleInputs.MOOD})
+				return NAN
+			mood *= curve.sample(mood_input)
 	var preview := 1.0
 	if config.expected_thought_gain.is_valid():
 		preview = float(config.expected_thought_gain.call(ad, context))
+	if not (is_finite(need_value) and is_finite(distance) and is_finite(mood) and is_finite(preview)):
+		reasons.append({"kind": &"not_finite", "what": &"factors"})
+		return NAN
 	reasons.append({"kind": &"factors", "tags": factor, "distance": distance, "mood": mood, "preview": preview})
 	var score := need_value * factor * distance * mood * preview
 	return score if is_finite(score) else NAN
@@ -217,7 +248,13 @@ func _preconditions_pass(goal: BustleGoalDef, context: BustleScoreContext, reaso
 		var passed := false
 		if kind == &"input":
 			var key := StringName(str(precondition.get("input", "")))
-			passed = BustleInputs.is_valid_input(key) and float(context.inputs.get(key, 0.0)) > 0.0
+			if not BustleInputs.is_valid_input(key):
+				reasons.append({"kind": &"invalid_input", "input": key})
+				return false
+			if context.inputs.has(key) and not is_finite(context.inputs[key]):
+				reasons.append({"kind": &"not_finite", "what": key})
+				return false
+			passed = float(context.inputs.get(key, 0.0)) > 0.0
 		elif context.precondition_check.is_valid():
 			passed = bool(context.precondition_check.call(goal.id, precondition))
 		if not passed:

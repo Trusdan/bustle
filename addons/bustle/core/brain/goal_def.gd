@@ -18,7 +18,7 @@ extends Resource
 ## Game minutes it is kept before a candidate in the same or a lower band may replace it.
 @export var min_commit_minutes: int = 0
 ## Hard preconditions. Each is a dictionary with a [code]kind[/code]: [code]input[/code] (with an
-## [code]input[/code] key) passes when that input is present and above zero; any other kind is asked
+## [code]input[/code] key) passes when that input is present, finite and above zero; any other kind is asked
 ## of the context's precondition check.
 @export var preconditions: Array[Dictionary] = []
 ## The factors of its score.
