@@ -15,6 +15,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 - `BustleChoiceKeeper`: hysteresis around the scorer. The current choice gets ×1.15 momentum on its selection score (eligibility still uses the raw score), is kept while inside the pick window and through its goal's `min_commit_minutes`, and is interrupted at once by a strictly higher band. Failed goals cool down (`BustleGoalDef.fail_cooldown_minutes`, and at least the minute they failed). Its state exports and imports as plain data.
 - `BustleModifierSet`: keyed numbers that sources add to and multiply, applied in sorted source order, with `fill_context` for the scorer's need weights and tag multipliers.
 - `BustleGoalLibrary.find` and `BustleGoalDef.fail_cooldown_minutes`.
+- Action sequences (`addons/bustle/core/brain/actions/`): `BustleActionStep` (action, params, on fail RETRY/SKIP/ABORT, `max_retries` after the first attempt), `BustleActionSequence`, `BustleActionContext`, `BustleActionHandler` and `BustleSequenceRunner`. The runner does at most one handler tick and one start per tick, cleans up an unfinished attempt exactly once, interrupts and resumes (restarting the step), and saves and restores a step mid-way. Built-in `wait` and `idle` actions run for game minutes.
 
 ## [0.2.2] - 2026-11-04
 
