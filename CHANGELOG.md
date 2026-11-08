@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+
+- The needs engine (`addons/bustle/core/needs/`, see `docs/needs.md`): `BustleNeedDef` (a need as data: base rate per game hour, the conditions it rises under, per-condition changes, response curve, start) and `BustleNeedSet` (one agent's pressures from 0 to 1, advanced linearly by game minutes under host-named conditions, the `need.<id>.rate` modifier scaling the rise only, relief and side effects, `need.<id>` inputs and curves for the scorer, export and import). The social pair through `social_conditions` (alone, in company, crowded) and the `social.crowd_tolerance` modifier (base 6). `BustleLeisure`: leisure kinds with per-kind tolerance that builds with use, decays per game day and, at the boredom threshold, removes a kind's relief so the scorer picks another.
+
 ## [0.3.0] - 2026-11-08
 
 The headless simulation core: the scorer, brain, ports, society registry, orders, debug tools and simulation rings. The perception module is unchanged.
