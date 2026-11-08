@@ -26,6 +26,19 @@ func player_area() -> StringName:
 	return DEFAULT_AREA
 
 
+## Where the player is. Default: the origin.
+## @experimental
+func player_position() -> Vector3:
+	return Vector3.ZERO
+
+
+## True when [param _area] is an interior (a building or cave the player sees all of at once).
+## Default: false.
+## @experimental
+func is_interior(_area: StringName) -> bool:
+	return false
+
+
 ## The areas next to [param _area]. Default: none.
 ## @experimental
 func neighbour_areas(_area: StringName) -> Array[StringName]:
