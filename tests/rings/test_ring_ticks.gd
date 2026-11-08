@@ -15,6 +15,17 @@ class Areas:
 	func player_area() -> StringName:
 		return &"square"
 
+	var holder: Node
+	var bodies: Array[Node3D] = []
+
+	func spawn_body(_id: StringName, _xf: Transform3D) -> Node3D:
+		if holder == null:
+			return null
+		var body := Node3D.new()
+		holder.add_child(body)
+		bodies.append(body)
+		return body
+
 	func neighbour_areas(area: StringName) -> Array[StringName]:
 		var out: Array[StringName] = []
 		if area == &"square":
@@ -142,3 +153,62 @@ func test_leaving_off_screen_catches_up_first() -> void:
 	assert_eq(_rings.ring_of(&"a"), BustleSimRings.Ring.LIGHT)
 	assert_eq(caught, [[&"a", 5]])
 	assert_eq(a.last_update_minute, 300)
+
+
+func test_a_save_and_load_carries_on_exactly_as_if_never_saved() -> void:
+	var runs: Array = []
+	for saving in [false, true]:
+		_thinks = []
+		var society := _town(4)
+		var rings := _make_rings(society)
+		for m in 90:
+			society.ports.clock.advance(1)
+			rings.tick(0.0)
+		if saving:
+			var loaded := BustleSociety.new(1)
+			loaded.register_archetype(&"villager", _library())
+			assert_true(loaded.import_state(JSON.parse_string(JSON.stringify(society.export_state()))).ok)
+			loaded.set_port(&"world", society.ports.world)
+			loaded.ports.clock.advance(90)
+			society = loaded
+			rings = _make_rings(society)
+		for m in 150:
+			society.ports.clock.advance(1)
+			rings.tick(0.0)
+		runs.append([society.state_hash(), _thinks.size()])
+	assert_eq(runs[0], runs[1], "the same state and the same number of thinks")
+
+
+func test_a_promoted_agent_is_caught_up_before_its_body_appears() -> void:
+	var society := _town(1)
+	var config := BustleSimRingConfig.new()
+	var rings := BustleSimRings.new(society, config)
+	var order: Array = []
+	rings.caught_up.connect(func(id: StringName, _r: Dictionary) -> void: order.append([&"caught_up", id]))
+	rings.body_spawned.connect(func(id: StringName, _p: Vector3, _m: bool) -> void: order.append([&"body", id]))
+	rings.tick(0.0)
+	var a := society.get_agent(&"villager_0")
+	a.last_update_minute = 0
+	a.position = Vector3.ZERO
+	a.has_position = true
+	society.ports.clock.advance(10 * 1440)
+	(society.ports.world as Areas).holder = self
+	(society.ports.world as Areas).areas[&"villager_0"] = &"square"
+	rings.tick(0.0)
+	assert_eq(rings.ring_of(&"villager_0"), BustleSimRings.Ring.FULL)
+	assert_eq(order.map(func(o: Array) -> StringName: return o[0]), [&"caught_up", &"body"],
+		"promoted from OFF_SCREEN: the missed week is replayed before the body appears")
+	assert_eq(a.last_update_minute, 10 * 1440)
+	assert_not_null(a.body())
+	for body: Node3D in (society.ports.world as Areas).bodies:
+		body.free()
+
+
+func _town(count: int) -> BustleSociety:
+	var society := BustleSociety.new(1)
+	society.register_archetype(&"villager", _library())
+	var areas := Areas.new()
+	society.set_port(&"world", areas)
+	for i in count:
+		society.add_agent(StringName("villager_%d" % i), &"villager")
+	return society

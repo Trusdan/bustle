@@ -44,7 +44,7 @@ CI runs it on Ubuntu as a report only (`continue-on-error`), like the perception
 **Measured** (2026-11-08, Godot 4.7.2 headless, Linux cloud machine):
 
 ```
-rings bench: 40 LIGHT, 200 OFF_SCREEN, 7200 frames (120 real s, 60 game min), Godot 4.7.2-stable (official): LIGHT average 0.144 ms p99 0.473 ms (budget 0.3), OFF_SCREEN average 0.238 ms p99 0.588 ms (budget 0.5): OK
+rings bench: 40 LIGHT, 200 OFF_SCREEN, 7200 frames (120 real s, 60 game min), Godot 4.7.2-stable (official): LIGHT average 0.150 ms p99 0.521 ms (budget 0.3), OFF_SCREEN average 0.221 ms p99 0.536 ms (budget 0.5): OK
 ```
 
 What keeps it cheap:

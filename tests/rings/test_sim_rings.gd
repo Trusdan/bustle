@@ -203,6 +203,7 @@ func test_ring_changes_leave_agent_state_untouched_apart_from_the_ring() -> void
 	var a := _agent(&"a", &"square", Vector3(1, 0, 2))
 	a.data = {"kept": [1, 2]}
 	a.area = &"square"
+	a.last_update_minute = 0
 	var senses := BustleSenses.new()
 	a.brain.tick(0.1, senses)
 	var body := Node3D.new()
@@ -322,8 +323,10 @@ func test_the_ring_is_saved_and_restored_so_the_hysteresis_band_holds() -> void:
 func _society_without_rings(saved: Dictionary) -> BustleSociety:
 	var copy: Dictionary = saved.duplicate(true)
 	copy["agents"][0].erase("sim_ring")
+	copy["agents"][0].erase("last_update_minute")
 	var out := BustleSociety.new()
 	out.register_archetype(&"villager", BustleGoalLibrary.new())
 	assert_true(out.import_state(copy).ok, "older saves without the fields still load")
+	assert_eq([out.get_agent(&"a").sim_ring, out.get_agent(&"a").last_update_minute], [-1, -1])
 	out.set_port(&"world", _world)
 	return out

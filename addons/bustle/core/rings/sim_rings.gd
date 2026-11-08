@@ -3,8 +3,11 @@ class_name BustleSimRings
 extends RefCounted
 
 ## Sorts a society's agents into simulation rings by where they are relative to the player, using
-## the society's world and clock ports. It only classifies: a ring change touches nothing in the
-## agent's state. Areas come first, metres second.
+## the society's world and clock ports, and runs each ring. Areas come first, metres second. A ring
+## change touches only the agent's [member BustleNpcState.sim_ring] and, with
+## [member BustleSimRingConfig.manage_bodies], its body (which may move its saved position to where
+## the body was or appears); [method tick] and [method catch_up] also let its brain think and set
+## [member BustleNpcState.last_update_minute]. Nothing else in its state changes.
 ##
 ## - **FULL:** in the player's area, and either within [member BustleSimRingConfig.full_radius]
 ##   of the player (outdoors) or anywhere in it (an interior, with
@@ -18,6 +21,8 @@ extends RefCounted
 ## - **By area** (the agent's area relative to the player's changed): the change applies at once,
 ##   FULL to OFF_SCREEN included, except LIGHT to OFF_SCREEN, which waits until the area has been
 ##   out of reach for [member BustleSimRingConfig.light_to_offscreen_delay_seconds].
+## - **Leaving OFF_SCREEN** (in [method update] as in [method tick]): the agent is caught up
+##   ([method catch_up]) as it changes ring, before its body appears.
 ## - A new agent gets its ring at once, or the ring it was saved with
 ##   ([member BustleNpcState.sim_ring]), so after a load an agent in the hysteresis band stays FULL.
 ## - **Bodies** (with [member BustleSimRingConfig.manage_bodies]): an agent that becomes FULL gets a
@@ -74,16 +79,12 @@ func _init(p_society: BustleSociety = null, p_config: BustleSimRingConfig = null
 ## FULL every 1 / [member BustleSimRingConfig.full_brain_hz] real seconds, LIGHT every
 ## 1 / [member BustleSimRingConfig.light_rate_hz], and OFF_SCREEN once each
 ## [member BustleSimRingConfig.offscreen_interval_game_minutes] of game time, at a fixed phase per
-## agent so they don't all think in the same frame (FULL and LIGHT are staggered the same way). An
-## agent coming out of OFF_SCREEN is caught up
-## first. Each think sets [member BustleNpcState.last_update_minute].
+## agent so they don't all think in the same frame (FULL and LIGHT are staggered the same way). Each
+## think sets [member BustleNpcState.last_update_minute].
 ## @experimental
 func tick(delta: float) -> void:
 	if society == null:
 		return
-	var before: Dictionary = {}
-	for id: StringName in _agents:
-		before[id] = _agents[id]["ring"]
 	update(delta)
 	var now := society.ports.clock.now_minutes()
 	var spent := {"FULL": 0, "LIGHT": 0, "OFF_SCREEN": 0}
@@ -94,8 +95,6 @@ func tick(delta: float) -> void:
 		var state := society.get_agent(id)
 		var ring: int = entry["ring"]
 		var started := Time.get_ticks_usec()
-		if before.get(id, -1) == Ring.OFF_SCREEN and ring != Ring.OFF_SCREEN:
-			catch_up(id)
 		if ring == Ring.OFF_SCREEN:
 			if state.last_update_minute < 0:
 				state.last_update_minute = now - _phase(id)
@@ -253,6 +252,8 @@ func _phase(id: StringName) -> int:
 # Records the ring on the state and spawns or frees the body to match.
 func _set_ring(state: BustleNpcState, old: int, new: int, player: Vector3) -> void:
 	state.sim_ring = new
+	if old == Ring.OFF_SCREEN and new != Ring.OFF_SCREEN:
+		catch_up(state.id)
 	if not config.manage_bodies:
 		return
 	if new == Ring.FULL and state.body() == null:
