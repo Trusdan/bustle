@@ -3,8 +3,11 @@ class_name BustleSimRings
 extends RefCounted
 
 ## Sorts a society's agents into simulation rings by where they are relative to the player, using
-## the society's world and clock ports. It only classifies: a ring change touches nothing in the
-## agent's state. Areas come first, metres second.
+## the society's world and clock ports, and runs each ring. Areas come first, metres second. A ring
+## change touches only the agent's [member BustleNpcState.sim_ring] and, with
+## [member BustleSimRingConfig.manage_bodies], its body (which may move its saved position to where
+## the body was or appears); [method tick] and [method catch_up] also let its brain think and set
+## [member BustleNpcState.last_update_minute]. Nothing else in its state changes.
 ##
 ## - **FULL:** in the player's area, and either within [member BustleSimRingConfig.full_radius]
 ##   of the player (outdoors) or anywhere in it (an interior, with
@@ -18,6 +21,8 @@ extends RefCounted
 ## - **By area** (the agent's area relative to the player's changed): the change applies at once,
 ##   FULL to OFF_SCREEN included, except LIGHT to OFF_SCREEN, which waits until the area has been
 ##   out of reach for [member BustleSimRingConfig.light_to_offscreen_delay_seconds].
+## - **Leaving OFF_SCREEN** (in [method update] as in [method tick]): the agent is caught up
+##   ([method catch_up]) as it changes ring, before its body appears.
 ## - A new agent gets its ring at once, or the ring it was saved with
 ##   ([member BustleNpcState.sim_ring]), so after a load an agent in the hysteresis band stays FULL.
 ## - **Bodies** (with [member BustleSimRingConfig.manage_bodies]): an agent that becomes FULL gets a
@@ -40,6 +45,18 @@ signal ring_changed(id: StringName, old: Ring, new: Ring)
 signal body_spawned(id: StringName, position: Vector3, moved: bool)
 ## Agent [param id]'s body was freed.
 signal body_freed(id: StringName)
+## Agent [param id] was caught up; see [method catch_up] for [param report].
+signal caught_up(id: StringName, report: Dictionary)
+
+## [code]func(id: StringName, ring: Ring, minute: int) -> BustleSenses[/code], what an agent senses
+## when its brain thinks in [method tick] or [method catch_up]. Unset: senses with only the time.
+var senses_provider: Callable = Callable()
+## [code]func(id: StringName, report: Dictionary) -> void[/code], called when catch-up skipped time
+## beyond the cap, so modules can apply what the skipped time did in summary.
+var summary_hook: Callable = Callable()
+## Microseconds the last [method tick] spent on each ring's thinking:
+## [code]{FULL, LIGHT, OFF_SCREEN}[/code].
+var last_timings: Dictionary = {"FULL": 0, "LIGHT": 0, "OFF_SCREEN": 0}
 
 ## The society it sorts.
 var society: BustleSociety
@@ -56,6 +73,85 @@ var _agents: Dictionary[StringName, Dictionary] = {}
 func _init(p_society: BustleSociety = null, p_config: BustleSimRingConfig = null) -> void:
 	society = p_society
 	config = p_config if p_config != null else BustleSimRingConfig.new()
+
+
+## Re-sorts every agent (see [method update]) and then lets each think as its ring allows:
+## FULL every 1 / [member BustleSimRingConfig.full_brain_hz] real seconds, LIGHT every
+## 1 / [member BustleSimRingConfig.light_rate_hz], and OFF_SCREEN once each
+## [member BustleSimRingConfig.offscreen_interval_game_minutes] of game time, at a fixed phase per
+## agent so they don't all think in the same frame (FULL and LIGHT are staggered the same way). Each
+## think sets [member BustleNpcState.last_update_minute].
+## @experimental
+func tick(delta: float) -> void:
+	if society == null:
+		return
+	update(delta)
+	var now := society.ports.clock.now_minutes()
+	var spent := {"FULL": 0, "LIGHT": 0, "OFF_SCREEN": 0}
+	for id: StringName in society.agent_ids():
+		var entry: Dictionary = _agents.get(id, {})
+		if entry.is_empty():
+			continue
+		var state := society.get_agent(id)
+		var ring: int = entry["ring"]
+		var started := Time.get_ticks_usec()
+		if ring == Ring.OFF_SCREEN:
+			if state.last_update_minute < 0:
+				state.last_update_minute = now - _phase(id)
+			if now - state.last_update_minute >= config.offscreen_interval_game_minutes:
+				state.last_update_minute += config.offscreen_interval_game_minutes
+				_think(state, Ring.OFF_SCREEN, state.last_update_minute, config.offscreen_interval_game_minutes * 60.0)
+		else:
+			var hz := config.full_brain_hz if ring == Ring.FULL else config.light_rate_hz
+			var wait := 1.0 / maxf(hz, 0.001)
+			if not entry.has("think"):
+				# A fixed per-agent offset so agents in a ring don't all think in the same frame.
+				entry["think"] = wait * (1.0 - posmod(BustleBrain.seed_for(society.world_seed, id), 1000) / 1000.0)
+			entry["think"] = float(entry["think"]) + maxf(delta, 0.0)
+			if float(entry["think"]) >= wait - 1e-9:
+				entry["think"] = 0.0
+				state.last_update_minute = now
+				_think(state, ring, now, wait)
+		spent[Ring.keys()[ring]] += Time.get_ticks_usec() - started
+	last_timings = spent
+
+
+## Brings agent [param id] up to the clock's minute with OFF_SCREEN thinking from its
+## [member BustleNpcState.last_update_minute]: one think per
+## [member BustleSimRingConfig.offscreen_interval_game_minutes], for at most
+## [member BustleSimRingConfig.catch_up_cap_game_days]. The most recent time is simulated; anything
+## older is summarised (passed to [member summary_hook]) rather than run. Deterministic for the same
+## state and senses. Returns [code]{agent, from, to, ticks, simulated_minutes, skipped_minutes}[/code]
+## and emits [signal caught_up] when anything happened.
+## @experimental
+func catch_up(id: StringName) -> Dictionary:
+	var state := society.get_agent(id) if society != null else null
+	var now := society.ports.clock.now_minutes() if society != null else 0
+	var report := {"agent": id, "from": -1, "to": now, "ticks": 0, "simulated_minutes": 0, "skipped_minutes": 0}
+	if state == null:
+		return report
+	var interval := maxi(config.offscreen_interval_game_minutes, 1)
+	if state.last_update_minute < 0:
+		state.last_update_minute = now
+		return report
+	report["from"] = state.last_update_minute
+	var elapsed := now - state.last_update_minute
+	if elapsed < interval:
+		return report
+	var ticks := mini(elapsed / interval, maxi(config.catch_up_cap_game_days, 0) * 1440 / interval)
+	var skipped := elapsed - elapsed % interval - ticks * interval
+	var minute := state.last_update_minute + skipped
+	for i in ticks:
+		minute += interval
+		_think(state, Ring.OFF_SCREEN, minute, interval * 60.0)
+	state.last_update_minute = minute
+	report["ticks"] = ticks
+	report["simulated_minutes"] = ticks * interval
+	report["skipped_minutes"] = skipped
+	if skipped > 0 and summary_hook.is_valid():
+		summary_hook.call(id, report)
+	caught_up.emit(id, report)
+	return report
 
 
 ## Re-sorts every agent after [param delta] real seconds.
@@ -137,9 +233,27 @@ func counts() -> Dictionary:
 	return out
 
 
+func _think(state: BustleNpcState, ring: int, minute: int, seconds: float) -> void:
+	var senses: BustleSenses = null
+	if senses_provider.is_valid():
+		senses = senses_provider.call(state.id, ring, minute)
+	if senses == null:
+		senses = BustleSenses.new()
+	senses.now_minutes = minute
+	state.brain.tick(seconds, senses)
+
+
+# A fixed per-agent offset (in game minutes) so OFF_SCREEN agents don't all think together.
+func _phase(id: StringName) -> int:
+	var interval := maxi(config.offscreen_interval_game_minutes, 1)
+	return posmod(BustleBrain.seed_for(society.world_seed, id), interval)
+
+
 # Records the ring on the state and spawns or frees the body to match.
 func _set_ring(state: BustleNpcState, old: int, new: int, player: Vector3) -> void:
 	state.sim_ring = new
+	if old == Ring.OFF_SCREEN and new != Ring.OFF_SCREEN:
+		catch_up(state.id)
 	if not config.manage_bodies:
 		return
 	if new == Ring.FULL and state.body() == null:

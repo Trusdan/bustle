@@ -58,6 +58,38 @@ var no_pop_in_distance: float = 20.0
 
 A body never appears in view within this distance of the player (metres).
 
+### `full_brain_hz`
+
+```gdscript
+var full_brain_hz: float = 2.0
+```
+
+How often a FULL agent's brain thinks (real hertz).
+
+### `light_rate_hz`
+
+```gdscript
+var light_rate_hz: float = 1.0
+```
+
+How often a LIGHT agent's brain thinks (real hertz).
+
+### `offscreen_interval_game_minutes`
+
+```gdscript
+var offscreen_interval_game_minutes: int = 60
+```
+
+How often an OFF_SCREEN agent's brain thinks (game minutes).
+
+### `catch_up_cap_game_days`
+
+```gdscript
+var catch_up_cap_game_days: int = 7
+```
+
+Catch-up simulates at most this many game days; anything older is summarised.
+
 ### `manage_bodies`
 
 ```gdscript
