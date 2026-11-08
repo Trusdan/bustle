@@ -11,7 +11,7 @@ func test_the_version_is_the_same_in_all_three_places() -> void:
 	assert_eq(cfg.load(ADDON.path_join("plugin.cfg")), OK)
 	assert_eq(file, BustleInfo.VERSION, "VERSION")
 	assert_eq(str(cfg.get_value("plugin", "version")), BustleInfo.VERSION, "plugin.cfg")
-	assert_eq(BustleInfo.version_parts(), PackedInt32Array([0, 2, 2]))
+	assert_eq(BustleInfo.version_parts(), PackedInt32Array([0, 3, 0]))
 
 
 func test_every_folder_exists_and_is_described() -> void:

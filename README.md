@@ -2,7 +2,7 @@
 
 A generic addon for living non-player populations in Godot 4 (4.7 or newer): the people of a place and their daily life. MIT licensed.
 
-**Status: 0.2.2.** It has the project scaffold (0.1.0) and the perception module (0.2.0): senses for every actor, awareness queries and dispositions. More features come in later releases.
+**Status: 0.3.0.** It has the project scaffold (0.1.0), the perception module (0.2.0: senses for every actor, awareness queries and dispositions) and the headless simulation core (0.3.0: the utility scorer, brains with action sequences, the host ports, the society registry with save and load, orders, debug tools and simulation rings). More features come in later releases.
 
 ## Layout
 
