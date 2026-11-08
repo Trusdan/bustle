@@ -70,6 +70,13 @@ var orders := BustleOrderQueue.new()
 var autonomy: Autonomy = Autonomy.FULL
 ## True while a player controls the agent directly. Set it with [method set_player_controlled].
 var player_controlled: bool = false
+## The senses of the last tick, or null. Kept by reference for inspection; not saved.
+var last_senses: BustleSenses
+## The scorer's candidates from the last tick, as scored (empty under player control). Kept by
+## reference for inspection; not saved.
+var last_candidates: Array[BustleCandidate] = []
+## The intent of the last tick, or null. Not saved.
+var last_intent: BustleIntent
 
 var _rng := RandomNumberGenerator.new()
 var _scorer := BustleUtilityScorer.new()
@@ -123,6 +130,13 @@ static func seed_for(p_world_seed: int, p_agent_id: StringName) -> int:
 ## Thinks for one tick of [param delta] seconds and returns what the agent should do.
 ## @experimental
 func tick(delta: float, senses: BustleSenses) -> BustleIntent:
+	last_senses = senses
+	last_candidates = []
+	last_intent = _think(delta, senses)
+	return last_intent
+
+
+func _think(delta: float, senses: BustleSenses) -> BustleIntent:
 	if player_controlled:
 		var held := BustleIntent.new()
 		held.player_controlled = true
@@ -144,6 +158,7 @@ func tick(delta: float, senses: BustleSenses) -> BustleIntent:
 				tags.append(tag)
 	modifiers.fill_context(context, needs, tags)
 	var candidates := _scorer.evaluate(library, context, config)
+	last_candidates = candidates
 	var top := _apply_autonomy(candidates)
 	var front := orders.front()
 	if front != null and BustleOrderQueue.band_of(front) >= top:

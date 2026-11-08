@@ -134,6 +134,30 @@ var player_controlled: bool = false
 
 True while a player controls the agent directly. Set it with `set_player_controlled()`.
 
+### `last_senses`
+
+```gdscript
+var last_senses: BustleSenses
+```
+
+The senses of the last tick, or null. Kept by reference for inspection; not saved.
+
+### `last_candidates`
+
+```gdscript
+var last_candidates: BustleCandidate[] = []
+```
+
+The scorer's candidates from the last tick, as scored (empty under player control). Kept by reference for inspection; not saved.
+
+### `last_intent`
+
+```gdscript
+var last_intent: BustleIntent
+```
+
+The intent of the last tick, or null. Not saved.
+
 ## Methods
 
 ### `order`
