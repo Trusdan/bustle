@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-08
+
+The headless simulation core: the scorer, brain, ports, society registry, orders, debug tools and simulation rings. The perception module is unchanged.
+
 ### Added
 
 - The utility scorer's headless core (`addons/bustle/core/brain/`):
