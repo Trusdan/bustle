@@ -16,6 +16,20 @@ extends RefCounted
 ##    intent carries the failure; the next tick chooses again.
 ## 5. The intent holds the choice, its reasons and the running step's output.
 ##
+## **Orders.** [method order] queues a [BustleOrder] (see [BustleOrderQueue]). The front order runs
+## when its band ([constant BustleBands.ORDERED], or [constant BustleBands.FORCED] when forced) is at
+## least the best self-chosen band; otherwise it waits at the front, paused. While an order runs,
+## the self-chosen goal's sequence is interrupted; when the order ends, that goal resumes (its step
+## starting again) if it is still eligible and in the highest eligible band, and is dropped
+## otherwise. Finished orders are reported on the intent and by [signal BustleOrderQueue.finished].
+##
+## **Autonomy.** [member autonomy] limits self-chosen goals between orders: FULL and NORMAL use the
+## whole scorer, LOW only URGENT and CRITICAL goals, OFF none at all (orders only; with no order, the
+## IDLE fallback). The brain runs no needs itself, so whatever updates an agent's inputs carries on.
+##
+## **Player control.** While [member player_controlled] is on the brain never chooses: the intent
+## only says so. Turning it on cancels the running goal and every order, and orders are refused.
+##
 ## **Seeding.** The generator is seeded once, from [method seed_for] (a fixed FNV-1a hash of the
 ## world seed and the agent id, the same on every platform), and its state is saved with the brain,
 ## so a run repeats exactly from the same seed and inputs.
@@ -23,6 +37,18 @@ extends RefCounted
 
 ## The saved-state layout version.
 const STATE_VERSION := 1
+
+## How much an agent chooses for itself between orders.
+enum Autonomy {
+	## Orders only.
+	OFF,
+	## Only URGENT and CRITICAL goals.
+	LOW,
+	## The whole scorer.
+	NORMAL,
+	## The whole scorer (agents not expected to get orders).
+	FULL,
+}
 
 ## The agent's id.
 var agent_id: StringName = &""
@@ -38,6 +64,12 @@ var keeper := BustleChoiceKeeper.new()
 var runner := BustleSequenceRunner.new()
 ## The world seed it was made with.
 var world_seed: int = 0
+## The agent's orders.
+var orders := BustleOrderQueue.new()
+## How much it chooses for itself between orders.
+var autonomy: Autonomy = Autonomy.FULL
+## True while a player controls the agent directly. Set it with [method set_player_controlled].
+var player_controlled: bool = false
 
 var _rng := RandomNumberGenerator.new()
 var _scorer := BustleUtilityScorer.new()
@@ -53,6 +85,25 @@ func _init(p_agent_id: StringName = &"", p_library: BustleGoalLibrary = null,
 	config = p_config if p_config != null else BustleScoringConfig.new()
 	world_seed = p_world_seed
 	_rng.seed = seed_for(world_seed, agent_id)
+	orders.runner.share_handlers_with(runner)
+
+
+## Queues [param order]. Returns an empty reason when queued, otherwise why it is impossible (also
+## reported through the queue).
+## @experimental
+func order(p_order: BustleOrder) -> StringName:
+	if player_controlled:
+		return orders.refuse(p_order, &"player_controlled")
+	return orders.submit(p_order)
+
+
+## Turns direct player control on or off. Turning it on cancels the running goal and every order.
+## @experimental
+func set_player_controlled(on: bool) -> void:
+	if on and not player_controlled:
+		_stop()
+		orders.clear(&"player_controlled")
+	player_controlled = on
 
 
 ## The generator seed for [param p_agent_id] in a world seeded [param p_world_seed]: 64-bit FNV-1a
@@ -72,6 +123,11 @@ static func seed_for(p_world_seed: int, p_agent_id: StringName) -> int:
 ## Thinks for one tick of [param delta] seconds and returns what the agent should do.
 ## @experimental
 func tick(delta: float, senses: BustleSenses) -> BustleIntent:
+	if player_controlled:
+		var held := BustleIntent.new()
+		held.player_controlled = true
+		held.order_results = orders.take_results()
+		return held
 	var context := BustleScoreContext.new()
 	context.inputs = senses.inputs
 	context.advertisements = senses.advertisements
@@ -88,8 +144,17 @@ func tick(delta: float, senses: BustleSenses) -> BustleIntent:
 				tags.append(tag)
 	modifiers.fill_context(context, needs, tags)
 	var candidates := _scorer.evaluate(library, context, config)
-	var choice := keeper.choose(candidates, library, config, _rng, senses.now_minutes)
+	var top := _apply_autonomy(candidates)
+	var front := orders.front()
+	if front != null and BustleOrderQueue.band_of(front) >= top:
+		return _run_order(delta, senses, front)
+	if orders.is_started():
+		orders.pause()
+	var choice := _resumed(candidates, top, senses.now_minutes)
+	if choice == null:
+		choice = keeper.choose(candidates, library, config, _rng, senses.now_minutes)
 	var intent := BustleIntent.new()
+	intent.order_results = orders.take_results()
 	intent.goal_id = choice.goal_id
 	intent.option_id = choice.option_id
 	intent.band = choice.band
@@ -109,6 +174,8 @@ func tick(delta: float, senses: BustleSenses) -> BustleIntent:
 			_running_option = choice.option_id
 	if _running_goal == &"":
 		return intent
+	if runner.state == BustleSequenceRunner.State.INTERRUPTED:
+		runner.resume(senses.now_minutes)
 	intent.action = runner.sequence.steps[runner.step_index].action if runner.state == BustleSequenceRunner.State.RUNNING else &""
 	var state := runner.tick(delta, senses.now_minutes)
 	intent.read_output(runner.context.output)
@@ -126,6 +193,7 @@ func tick(delta: float, senses: BustleSenses) -> BustleIntent:
 func export_state() -> Dictionary:
 	return {
 		"version": STATE_VERSION, "agent": String(agent_id), "world_seed": world_seed,
+		"autonomy": int(autonomy), "player_controlled": player_controlled,
 		"rng_state": _rng.state, "keeper": keeper.export_state(), "runner": runner.export_state(),
 		"running_goal": String(_running_goal), "running_option": String(_running_option),
 	}
@@ -155,9 +223,61 @@ func import_state(saved: Dictionary) -> bool:
 	_rng.seed = seed_for(world_seed, agent_id)
 	_rng.state = saved["rng_state"]
 	keeper.import_state(saved["keeper"])
+	var level := int(saved.get("autonomy", Autonomy.FULL))
+	autonomy = (level if level >= Autonomy.OFF and level <= Autonomy.FULL else Autonomy.FULL) as Autonomy
+	player_controlled = saved.get("player_controlled", false) == true
 	_running_goal = goal_name
 	_running_option = StringName(str(saved.get("running_option", "")))
 	return true
+
+
+# Makes self-chosen candidates the autonomy level rules out ineligible. Returns the highest
+# eligible band left, or -1.
+func _apply_autonomy(candidates: Array[BustleCandidate]) -> int:
+	var top := -1
+	for candidate: BustleCandidate in candidates:
+		var allowed := autonomy == Autonomy.NORMAL or autonomy == Autonomy.FULL \
+				or (autonomy == Autonomy.LOW and candidate.band >= BustleBands.URGENT)
+		if candidate.eligible and not allowed:
+			candidate.eligible = false
+			candidate.reasons.append({"kind": &"autonomy", "level": autonomy})
+		if candidate.eligible:
+			top = maxi(top, candidate.band)
+	return top
+
+
+# The paused goal, when it should resume: still eligible and in the highest eligible band. Drops
+# it otherwise.
+func _resumed(candidates: Array[BustleCandidate], top: int, now_minutes: int) -> BustleCandidate:
+	if _running_goal == &"" or runner.state != BustleSequenceRunner.State.INTERRUPTED:
+		return null
+	for candidate: BustleCandidate in candidates:
+		if candidate.goal_id == _running_goal and candidate.option_id == _running_option \
+				and candidate.eligible and candidate.band == top:
+			candidate.reasons.append({"kind": &"resumed"})
+			keeper.goal_id = candidate.goal_id
+			keeper.option_id = candidate.option_id
+			keeper.band = candidate.band
+			return candidate
+	_stop()
+	return null
+
+
+func _run_order(delta: float, senses: BustleSenses, front: BustleOrder) -> BustleIntent:
+	if runner.state == BustleSequenceRunner.State.RUNNING:
+		runner.interrupt()
+	var intent := BustleIntent.new()
+	intent.order_id = front.id
+	intent.option_id = front.option_id
+	intent.band = BustleOrderQueue.band_of(front)
+	intent.reasons = [{"kind": &"order", "forced": front.forced}]
+	if not front.sequence.steps.is_empty():
+		var index := orders.runner.step_index if orders.is_started() else 0
+		intent.action = front.sequence.steps[index].action
+	orders.run(delta, senses.now_minutes, agent_id)
+	intent.read_output(orders.runner.context.output)
+	intent.order_results = orders.take_results()
+	return intent
 
 
 func _stop() -> void:

@@ -26,6 +26,22 @@ const URGENT = 80
 
 Pressing matters: investigate a noise, help someone in trouble, eat when starving.
 
+### `ORDERED`
+
+```gdscript
+const ORDERED = 70
+```
+
+A player or quest order: below urgent self-care, above duty.
+
+### `FORCED`
+
+```gdscript
+const FORCED = 110
+```
+
+A forced order: above everything, danger included.
+
 ### `DUTY`
 
 ```gdscript

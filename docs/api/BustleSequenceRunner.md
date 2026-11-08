@@ -102,6 +102,22 @@ func register(action: StringName, handler: BustleActionHandler) -> void
 
 Registers `handler` for `action`, replacing any earlier one.
 
+### `has_handler`
+
+```gdscript
+func has_handler(action: StringName) -> bool
+```
+
+True when an action handler is registered for `action`.
+
+### `share_handlers_with`
+
+```gdscript
+func share_handlers_with(source: BustleSequenceRunner) -> void
+```
+
+Uses `source`'s handlers (the same registrations, shared from now on) instead of this runner's own.
+
 ### `start`
 
 ```gdscript

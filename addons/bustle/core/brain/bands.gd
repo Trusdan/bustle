@@ -11,6 +11,10 @@ extends RefCounted
 const CRITICAL := 100
 ## Pressing matters: investigate a noise, help someone in trouble, eat when starving.
 const URGENT := 80
+## A player or quest order: below urgent self-care, above duty.
+const ORDERED := 70
+## A forced order: above everything, danger included.
+const FORCED := 110
 ## The current scheduled duty.
 const DUTY := 60
 ## Free time: socialise, visit, buy something.
@@ -23,10 +27,14 @@ const IDLE := 20
 ## @experimental
 static func name_of(band: int) -> String:
 	match band:
+		FORCED:
+			return "FORCED"
 		CRITICAL:
 			return "CRITICAL"
 		URGENT:
 			return "URGENT"
+		ORDERED:
+			return "ORDERED"
 		DUTY:
 			return "DUTY"
 		PERSONAL:

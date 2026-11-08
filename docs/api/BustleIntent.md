@@ -18,6 +18,30 @@ var goal_id: StringName = &""
 
 The chosen goal (`idle` for the fallback).
 
+### `order_id`
+
+```gdscript
+var order_id: StringName = &""
+```
+
+The running order's id, or empty when a self-chosen goal (or nothing) runs.
+
+### `player_controlled`
+
+```gdscript
+var player_controlled: bool = false
+```
+
+True while a player controls the agent: the brain chose nothing.
+
+### `order_results`
+
+```gdscript
+var order_results: Dictionary[] = []
+```
+
+Orders that ended this tick, each `{order, outcome, reason}` (see [BustleOrderQueue](BustleOrderQueue.md)).
+
 ### `option_id`
 
 ```gdscript

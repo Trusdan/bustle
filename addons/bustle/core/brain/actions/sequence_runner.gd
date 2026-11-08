@@ -53,6 +53,19 @@ func register(action: StringName, handler: BustleActionHandler) -> void:
 	_handlers[action] = handler
 
 
+## True when an action handler is registered for [param action].
+## @experimental
+func has_handler(action: StringName) -> bool:
+	return _handlers.has(action)
+
+
+## Uses [param source]'s handlers (the same registrations, shared from now on) instead of this
+## runner's own.
+## @experimental
+func share_handlers_with(source: BustleSequenceRunner) -> void:
+	_handlers = source._handlers
+
+
 ## Starts [param p_sequence] for [param agent_id] (using [param option_id], if the goal chose one),
 ## cleaning up anything still running first. An empty sequence succeeds at once.
 ## @experimental

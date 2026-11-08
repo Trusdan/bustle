@@ -97,6 +97,22 @@ func agent_ids() -> Array[StringName]:
 	return out
 
 
+## Gives agent [param agent_id] [param order] (see [method BustleBrain.order]). Returns an empty
+## reason when it was queued, otherwise why not ([code]no_agent[/code] for an unknown agent).
+## @experimental
+func order(agent_id: StringName, p_order: BustleOrder) -> StringName:
+	var state := get_agent(agent_id)
+	return state.brain.order(p_order) if state != null else &"no_agent"
+
+
+## Cancels agent [param agent_id]'s order [param order_id], queued or running. False when there is
+## no such agent or order.
+## @experimental
+func cancel_order(agent_id: StringName, order_id: StringName) -> bool:
+	var state := get_agent(agent_id)
+	return state != null and state.brain.orders.cancel(order_id)
+
+
 ## The population's state as plain data. Attached bodies' positions are copied in first.
 ## @experimental
 func export_state() -> Dictionary:
