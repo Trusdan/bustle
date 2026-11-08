@@ -54,6 +54,12 @@ func front() -> BustleOrder:
 	return _orders[0] if not _orders.is_empty() else null
 
 
+## The order at [param index] (0 is the front), or null.
+## @experimental
+func peek(index: int) -> BustleOrder:
+	return _orders[index] if index >= 0 and index < _orders.size() else null
+
+
 ## The queued orders' ids, front first.
 ## @experimental
 func ids() -> Array[StringName]:

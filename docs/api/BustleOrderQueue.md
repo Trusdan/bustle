@@ -82,6 +82,14 @@ func front() -> BustleOrder
 
 The front order, or null.
 
+### `peek`
+
+```gdscript
+func peek(index: int) -> BustleOrder
+```
+
+The order at `index` (0 is the front), or null.
+
 ### `ids`
 
 ```gdscript
