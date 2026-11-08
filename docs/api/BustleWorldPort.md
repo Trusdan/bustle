@@ -44,6 +44,14 @@ func player_position() -> Vector3
 
 Where the player is. Default: the origin.
 
+### `is_in_view`
+
+```gdscript
+func is_in_view(_position: Vector3) -> bool
+```
+
+True when the player could see `_position` right now (used so bodies don't appear in view). Default: false, so a headless world never relocates a spawn.
+
 ### `is_interior`
 
 ```gdscript

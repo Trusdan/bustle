@@ -32,6 +32,13 @@ func player_position() -> Vector3:
 	return Vector3.ZERO
 
 
+## True when the player could see [param _position] right now (used so bodies don't appear in
+## view). Default: false, so a headless world never relocates a spawn.
+## @experimental
+func is_in_view(_position: Vector3) -> bool:
+	return false
+
+
 ## True when [param _area] is an interior (a building or cave the player sees all of at once).
 ## Default: false.
 ## @experimental

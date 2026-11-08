@@ -49,3 +49,19 @@ var full_whole_interior: bool = true
 ```
 
 When the player is in an interior, everyone in it is FULL, wherever they stand.
+
+### `no_pop_in_distance`
+
+```gdscript
+var no_pop_in_distance: float = 20.0
+```
+
+A body never appears in view within this distance of the player (metres).
+
+### `manage_bodies`
+
+```gdscript
+var manage_bodies: bool = true
+```
+
+When true, [BustleSimRings](BustleSimRings.md) spawns a body when an agent becomes FULL and frees it when it stops being FULL, through the world port.

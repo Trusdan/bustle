@@ -19,3 +19,8 @@ extends Resource
 @export var light_to_offscreen_delay_seconds: float = 10.0
 ## When the player is in an interior, everyone in it is FULL, wherever they stand.
 @export var full_whole_interior: bool = true
+## A body never appears in view within this distance of the player (metres).
+@export var no_pop_in_distance: float = 20.0
+## When true, [BustleSimRings] spawns a body when an agent becomes FULL and frees it when it stops
+## being FULL, through the world port.
+@export var manage_bodies: bool = true
