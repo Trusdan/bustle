@@ -2,14 +2,14 @@
 
 A generic addon for living non-player populations in Godot 4 (4.7 or newer): the people of a place and their daily life. MIT licensed.
 
-**Status: 0.4.0.** It has the project scaffold (0.1.0), the perception module (0.2.0: senses for every actor, awareness queries and dispositions) and the headless simulation core (0.3.0: the utility scorer, brains with action sequences, the host ports, the society registry with save and load, orders, debug tools and simulation rings). 0.4.0 adds needs, mood and thoughts, affordances, schedules with roles, jobs and wages, personality sliders and trait bundles, memory and FindPerson, social opinions, greetings, conversations and comfort, and trade-port buying, with owners taking from their own stock for free. APIs remain experimental before 1.0. More features come in later releases.
+**Status: 0.5.0.** It has the project scaffold (0.1.0), the perception module (0.2.0: senses for every actor, awareness queries and dispositions) and the headless simulation core (0.3.0: the utility scorer, brains with action sequences, the host ports, the society registry with save and load, orders, debug tools and simulation rings). 0.4.0 adds needs, mood and thoughts, affordances, schedules with roles, jobs and wages, personality sliders and trait bundles, memory and FindPerson, social opinions, greetings, conversations and comfort, and trade-port buying, with owners taking from their own stock for free. 0.5.0 adds cause-driven conflict: fight, flee or fetch help, an intent to subdue or kill only for a reason, non-lethal scuffles, quarrels, and assaulted and killed events, with the combat port taking an intent and reporting how a fight ended. APIs remain experimental before 1.0. More features come in later releases.
 
 ## Layout
 
 | Folder | What |
 | --- | --- |
 | `addons/bustle/` | The addon. Depends only on Godot. |
-| `addons/bustle/core/` | Plain data and rules with no nodes, tested headless. `needs/`: the needs engine ([docs/needs.md](docs/needs.md)). `affordances/`: smart objects ([docs/affordances.md](docs/affordances.md)). `schedules/`: daily routines ([docs/schedules.md](docs/schedules.md)). `personality/`: sliders and traits ([docs/personality.md](docs/personality.md)). `memory/`: memory and FindPerson ([docs/memory.md](docs/memory.md)). |
+| `addons/bustle/core/` | Plain data and rules with no nodes, tested headless. `needs/`: the needs engine ([docs/needs.md](docs/needs.md)). `affordances/`: smart objects ([docs/affordances.md](docs/affordances.md)). `schedules/`: daily routines ([docs/schedules.md](docs/schedules.md)). `personality/`: sliders and traits ([docs/personality.md](docs/personality.md)). `memory/`: memory and FindPerson ([docs/memory.md](docs/memory.md)). `conflict/`: fight, flee and fetch help ([docs/conflict.md](docs/conflict.md)). |
 | `addons/bustle/society/` | How the members of a population relate to each other. The built-in social store ([docs/social.md](docs/social.md)). |
 | `addons/bustle/ports/` | The interfaces a host project implements to connect Bustle to its world. |
 | `addons/bustle/debug/` | Tools for inspecting a running population. |
