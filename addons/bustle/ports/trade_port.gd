@@ -10,7 +10,8 @@ extends RefCounted
 ## [br][br]
 ## Stock belongs to the host: the default sells any listed item without limit. A host that keeps
 ## stock (or lends credit) overrides [method can_buy] and [method buy] together, so an item is only
-## offered when [method buy] would go through.
+## offered when [method buy] would go through, and [method can_take] and [method take] together for
+## an owner using its own stock.
 ## @experimental
 
 ## Item id → price, for the default's [method buy]. An item not listed can't be bought.
@@ -69,6 +70,20 @@ func buy(id: StringName, item: StringName, seller: StringName) -> bool:
 		return false
 	var price := price_of(item, seller)
 	return true if price == 0 else pay(id, seller, price)
+
+
+## True when [method take] would go through: [param id] may take one [param item] from its own
+## stock. It changes nothing. Default: any named agent may, for any item.
+## @experimental
+func can_take(id: StringName, _item: StringName) -> bool:
+	return id != &""
+
+
+## [param id] takes one [param item] from its own stock, without paying: no money moves. False,
+## changing nothing, when [method can_take] says no. A host that keeps stock takes one off here.
+## @experimental
+func take(id: StringName, item: StringName) -> bool:
+	return can_take(id, item)
 
 
 ## The default's balances as plain data (ids → amounts). Prices are configuration, not saved.

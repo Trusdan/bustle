@@ -1,16 +1,26 @@
 # Copyright (c) 2026 Corey Patrick Jones (github.com/Trusdan)
 extends GutTest
 ## The trade port: prices, buying and saving balances; hungry agents buying food they can afford
-## from a stall whose stock the host keeps; wages arriving and being spent; and a host lending
+## from a stall whose stock the host keeps; owners using their own stock; wages arriving and being spent; and a host lending
 ## credit through the same two methods.
 
 const STALL := "res://demo/trade/food_stall.tres"
 
 
-## A host port that keeps stock: an item is offered only while some is left, and buying takes one.
+## A host port that keeps stock: an item is offered only while some is left, and buying or the
+## owner taking one takes one off.
 class StockedTrade:
 	extends BustleTradePort
 	var stock: Dictionary[StringName, int] = {}
+
+	func can_take(id: StringName, item: StringName) -> bool:
+		return stock.get(item, 0) > 0 and super(id, item)
+
+	func take(id: StringName, item: StringName) -> bool:
+		if not super(id, item):
+			return false
+		stock[item] -= 1
+		return true
 
 	func can_buy(id: StringName, item: StringName, seller: StringName) -> bool:
 		return stock.get(item, 0) > 0 and super(id, item, seller)
@@ -60,7 +70,7 @@ func test_the_default_port_prices_buys_and_saves() -> void:
 	assert_true(loaded.import_state(saved))
 	assert_eq(loaded.export_state(), trade.export_state())
 	assert_eq(loaded.balance(&"baker"), 3)
-	for bad: Variant in [null, {}, {"balances": {"": 1}}, {"balances": {"a": -1}}, {"balances": {"a": 1.5}}, {"balances": {"a": "1"}}]:
+	for bad: Variant in [null, {}, {"balances": {"": 1}}, {"balances": {"a": -1}}, {"balances": {"a": 1.5}}, {"balances": {"a": "1"}}, {"balances": {"a": 1.0e16}}]:
 		assert_false(loaded.import_state(bad), str(bad))
 	assert_eq(loaded.balance(&"baker"), 3, "bad data changes nothing")
 
@@ -88,11 +98,37 @@ func test_hungry_agents_buy_food_they_can_afford_and_stock_goes_down() -> void:
 	assert_null(stall.advertise(&"smith", 30, 0.0, trade), "nothing left to sell")
 	assert_eq(stall.use(&"smith", 30, needs, null, trade), BustleAffordance.REFUSED_PRICE)
 	assert_eq(trade.balance(&"smith"), 2)
-	assert_not_null(stall.advertise(&"baker", 30, 0.0, trade), "the owner takes without buying")
-	assert_eq(stall.use(&"baker", 30, _hungry(), null, trade), BustleAffordance.OK)
-	assert_eq(trade.balance(&"baker"), 8)
 	var unowned := BustleAffordance.new(&"stall_2", load(STALL))
 	assert_null(unowned.advertise(&"smith", 0, 0.0, trade), "with nobody to sell, it isn't offered")
+
+
+func test_owners_use_their_own_stock_without_paying() -> void:
+	var trade := StockedTrade.new()
+	trade.prices = {&"bread": 4}
+	trade.stock = {&"bread": 2}
+	trade.set_balance(&"baker", 5)
+	trade.set_balance(&"smith", 10)
+	var stall := BustleAffordance.new(&"stall_1", load(STALL), &"square")
+	stall.owner = &"baker"
+	var needs := _hungry()
+	assert_not_null(stall.advertise(&"baker", 0, 0.0, trade), "offered to its owner")
+	assert_eq(stall.use(&"baker", 0, needs, null, trade), BustleAffordance.OK)
+	assert_eq([trade.stock[&"bread"], trade.balance(&"baker")], [1, 5], "one taken from stock, no money moved")
+	assert_almost_eq(needs.pressure(&"food"), 0.3, 1e-6, "and the owner ate")
+	assert_eq(stall.use(&"smith", 5, _hungry(), null, trade), BustleAffordance.OK)
+	assert_eq([trade.stock[&"bread"], trade.balance(&"smith"), trade.balance(&"baker")], [0, 6, 9], "others still buy, and stock goes down")
+	assert_null(stall.advertise(&"baker", 10, 0.0, trade), "an empty stall isn't offered to its owner")
+	var full := _hungry()
+	assert_eq(stall.use(&"baker", 10, full, null, trade), BustleAffordance.REFUSED_PRICE, "nor used for free")
+	assert_eq([trade.stock[&"bread"], trade.balance(&"baker")], [0, 9])
+	assert_almost_eq(full.pressure(&"food"), 0.9, 1e-6, "a refused use changes nothing")
+	assert_null(stall.advertise(&"baker", 10, 0.0, null), "with no trade port, no stock to take")
+	assert_eq(stall.use(&"smith", 10, _hungry(), null, null), BustleAffordance.REFUSED_PRICE, "nor to buy")
+	var paid := BustleAffordance.new(&"stall_2", load(STALL))
+	paid.payee = &"baker"
+	trade.stock[&"bread"] = 1
+	assert_null(paid.advertise(&"baker", 0, 0.0, trade), "a payee isn't its owner, and doesn't buy from itself")
+	assert_not_null(paid.advertise(&"smith", 0, 0.0, trade), "others buy from the payee")
 
 
 func test_wages_arrive_and_are_spent() -> void:
@@ -124,6 +160,8 @@ func test_a_host_can_lend_credit_through_the_same_methods() -> void:
 	assert_not_null(stall.advertise(&"smith", 0, 0.0, trade), "a broke agent is still offered a staple")
 	assert_eq(stall.use(&"smith", 0, _hungry(), null, trade), BustleAffordance.OK)
 	assert_eq([trade.balance(&"smith"), trade.debts[&"smith"]], [0, 4], "on credit, with the debt kept")
+	assert_eq(stall.use(&"baker", 0, _hungry(), null, trade), BustleAffordance.OK)
+	assert_false(trade.debts.has(&"baker"), "an owner taking its own runs up no debt")
 	assert_false(trade.can_buy(&"smith", &"cake", &"baker"), "but not anything else")
 
 

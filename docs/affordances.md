@@ -45,7 +45,14 @@ Holds lapse on their own after their time, and `release` lets one go early.
 
 ## Buying
 
-A def with an `item` is a shop counter, like a food stall: each use buys one of that item from the owner (or `payee`) with `trade.buy`, at the port's `price_of`, and applies the def's relief. It's offered only while `trade.can_buy` says yes, so a hungry agent goes to buy food only when it can. The owner takes one without buying. With nobody to buy from, it isn't offered.
+A def with an `item` is a shop counter, like a food stall. The def's `price` and the affordance's `cost_hook` don't apply to it; the trade port prices it.
+
+- **Others** buy one of that item from the owner (or `payee`) with `trade.buy`, at the port's `price_of`, and get the def's relief. It's offered only while `trade.can_buy` says yes, so a hungry agent goes to buy food only when it can.
+- **The owner** takes one from its own stock with `trade.take`, without paying: no money moves. It's offered only while `trade.can_take` says yes, so an empty stall feeds nobody.
+- **A payee** that isn't the owner doesn't buy from itself, and with nobody to buy from the stall isn't offered.
+- **Without a trade port,** it's offered to nobody.
+
+So every stock change goes through the trade port.
 
 ## The trade port
 
@@ -58,9 +65,11 @@ A def with an `item` is a shop counter, like a food stall: each use buys one of 
 | `price_of(item, seller)` | The `prices` list; -1 when unlisted or negative. |
 | `can_buy(id, item, seller)` | Sold, two different named agents, and the buyer can pay. Changes nothing. |
 | `buy(id, item, seller)` | Pays `price_of` when `can_buy` says yes. A price of 0 moves no money. |
-| `export_state()` / `import_state(saved)` | The balances as plain data. Import is all or nothing. Prices are configuration and aren't saved. |
+| `can_take(id, item)` | Any named agent may take from its own stock. Changes nothing. |
+| `take(id, item)` | Takes one from the agent's own stock when `can_take` says yes. No money moves. |
+| `export_state()` / `import_state(saved)` | The balances as plain data. Import is all or nothing. Prices are configuration and aren't saved. The balances aren't part of the society's export, so a host using the default saves them alongside. |
 
-Stock belongs to the host: the default sells any listed item without limit. A host that keeps stock overrides `can_buy` and `buy` together, so an item is offered only when buying it would go through. The same two methods let a host sell on credit, for example staples to an agent who can't pay, keeping the debt itself.
+Stock belongs to the host: the default sells any listed item without limit. A host that keeps stock overrides `can_buy` and `buy` together, and `can_take` and `take` together, so an item is offered only when buying or taking it would go through. The same two methods let a host sell on credit, for example staples to an agent who can't pay, keeping the debt itself.
 
 `demo/trade/food_stall.tres` is a neutral food stall that sells `bread`.
 

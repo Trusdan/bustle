@@ -14,8 +14,11 @@ extends RefCounted
 ## (the def's price by default; free to the owner), paid to the owner (or [member payee]) through
 ## a [BustleTradePort]. [b]Buying:[/b] when the def names an [member BustleAffordanceDef.item],
 ## each use buys it from the owner (or payee) with [method BustleTradePort.buy] instead, offered
-## only while [method BustleTradePort.can_buy] says yes; the owner takes it without buying. Time
-## is whole game minutes, given by the caller.
+## only while [method BustleTradePort.can_buy] says yes, and [member cost_hook] and the def's price
+## don't apply. The owner takes one from its own stock with [method BustleTradePort.take], without
+## paying, offered only while [method BustleTradePort.can_take] says yes, so every stock change
+## goes through the trade port. A payee doesn't buy from itself. Time is whole game minutes, given
+## by the caller.
 ## @experimental
 
 ## Why [method reserve] or [method use] said no.
@@ -65,7 +68,8 @@ func access(agent: StringName) -> float:
 	return clampf(out, 0.0, 1.0) if is_finite(out) else 0.0
 
 
-## What one use costs [param agent]. Never negative.
+## What one use costs [param agent]. Never negative. Not used for a def with an
+## [member BustleAffordanceDef.item], which the trade port prices.
 ## @experimental
 func price_for(agent: StringName) -> int:
 	if cost_hook.is_valid():
@@ -147,7 +151,11 @@ func use(agent: StringName, now: int, needs: BustleNeedSet, leisure: BustleLeisu
 		return REFUSED_FULL
 	if def.item != &"":
 		var seller := _paid_to(agent)
-		if not _affordable(agent, trade) or (seller != &"" and not trade.buy(agent, def.item, seller)):
+		if not _affordable(agent, trade):
+			return REFUSED_PRICE
+		if seller != &"" and not trade.buy(agent, def.item, seller):
+			return REFUSED_PRICE
+		if seller == &"" and not trade.take(agent, def.item):
 			return REFUSED_PRICE
 	else:
 		var price := price_for(agent)
@@ -203,9 +211,11 @@ func import_state(saved: Variant) -> bool:
 func _affordable(agent: StringName, trade: BustleTradePort) -> bool:
 	var seller := _paid_to(agent)
 	if def.item != &"":
+		if trade == null:
+			return false
 		if seller == &"":
-			return owner != &"" and agent == owner
-		return trade != null and trade.can_buy(agent, def.item, seller)
+			return owner != &"" and agent == owner and trade.can_take(agent, def.item)
+		return trade.can_buy(agent, def.item, seller)
 	var price := price_for(agent)
 	return price <= 0 or (trade != null and trade.balance(agent) >= price and seller != &"")
 
