@@ -53,7 +53,7 @@ A `BustleInteractionDef` (a Resource) describes one kind of interaction, such as
 | `recipient_value` | How much the recipient's opinion of the initiator moves. |
 | `initiator_value` | How much the initiator's opinion of the recipient moves. |
 | `spread` | A random amount added or taken away, seeded per pair, minute and interaction. |
-| `compatibility_scale` | Each value is multiplied by `1 + compatibility × scale`. |
+| `compatibility_scale` | How much compatibility bends each value, like mood: a compatible pair gains more and loses less, and an incompatible pair the reverse. A gain is multiplied by `1 + compatibility × scale` and a loss by `1 − compatibility × scale`, never below 0. |
 | `mood_scale` | How much each side's own mood bends its value. A good mood makes gains larger and losses smaller; a low mood does the reverse. |
 | `days` | How long the opinion entries last. |
 | `recipient_thought`, `initiator_thought` | Optional thoughts from the mood module, one for each side. |
@@ -67,8 +67,8 @@ A `BustleInteractionDef` (a Resource) describes one kind of interaction, such as
   - opinion entries whose reason names that deed: `{deed, interaction, by}` for the recipient and `{deed, interaction, with}` for the initiator;
   - each side's thought, when `mood_of` gives a mood.
 
-  So repeated kind interactions form friends by the rules above.
-- **`greet(initiator, recipient, now)`** runs `greeting` as an interaction, with two cooldowns. Saving covers the cooldowns too.
+  So repeated kind interactions form friends by the rules above. Greetings count too: each friendly greeting is a positive deed entry, though a friend still needs the opinion level.
+- **`greet(initiator, recipient, now)`** runs `greeting` as an interaction, with two cooldowns. `export_state` and `import_state` save the cooldowns that are still running. They aren't part of the store's or the society's export, so a host saves them alongside.
 
   | Cooldown | Default | What it stops |
   | --- | --- | --- |

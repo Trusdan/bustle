@@ -39,22 +39,30 @@ func _init(p_store: BustleSocialStore = null, p_world_seed: int = 0) -> void:
 ## to_initiator}[/code]. [param to_recipient] is how much the recipient's opinion of the initiator
 ## moves, [param to_initiator] the other way. Moods are 0 to 100, or negative for none. The same
 ## inputs always give the same result.
+## [br][br]
+## Compatibility and each side's mood bend a value the same way: a compatible pair, or a good mood,
+## makes a gain larger and a loss smaller ([code]× (1 + lift)[/code] and [code]× (1 − lift)[/code],
+## never below 0); an incompatible pair, or a low mood, does the reverse. The compatibility lift is
+## [code]compatibility × compatibility_scale[/code]; the mood lift is
+## [code]mood_scale × (mood − 50) / 50[/code].
 ## @experimental
 static func outcome(def: BustleInteractionDef, initiator: StringName, recipient: StringName, now: int,
 		world_seed: int, compatibility: float, initiator_mood: float = -1.0, recipient_mood: float = -1.0) -> Dictionary:
 	var bytes := PackedByteArray()
 	bytes.resize(8)
 	bytes.encode_s64(0, world_seed)
-	bytes.append_array(("%s|%s|%s|%d" % [initiator, recipient, def.id, now]).to_utf8_buffer())
+	bytes.append_array(("%d:%s|%d:%s|%d:%s|%d" % [String(initiator).length(), initiator, String(recipient).length(),
+		recipient, String(def.id).length(), def.id, now]).to_utf8_buffer())
 	var h := -3750763034362895579 # 0xcbf29ce484222325 as a signed 64-bit int
 	for byte: int in bytes:
 		h = (h ^ byte) * 1099511628211
 	var rng := RandomNumberGenerator.new()
 	rng.seed = h
 	var compat := clampf(compatibility, -1.0, 1.0) if is_finite(compatibility) else 0.0
-	var bend := maxf(1.0 + compat * def.compatibility_scale, 0.0)
-	var to_recipient := _with_mood(def.recipient_value + rng.randf_range(-1.0, 1.0) * def.spread, recipient_mood, def.mood_scale) * bend
-	var to_initiator := _with_mood(def.initiator_value + rng.randf_range(-1.0, 1.0) * def.spread, initiator_mood, def.mood_scale) * bend
+	var to_recipient := _bend(_bend(def.recipient_value + rng.randf_range(-1.0, 1.0) * def.spread,
+		compat * def.compatibility_scale), _mood_lift(recipient_mood, def.mood_scale))
+	var to_initiator := _bend(_bend(def.initiator_value + rng.randf_range(-1.0, 1.0) * def.spread,
+		compat * def.compatibility_scale), _mood_lift(initiator_mood, def.mood_scale))
 	return {"interaction": def.id, "initiator": initiator, "recipient": recipient,
 		"to_recipient": to_recipient, "to_initiator": to_initiator}
 
@@ -105,6 +113,7 @@ func greet(initiator: StringName, recipient: StringName, now: int, place: String
 		witnesses: Array[Dictionary] = []) -> Dictionary:
 	if not can_greet(initiator, recipient, now):
 		return {"ok": false, "reason": &"cooling_down"}
+	_prune(now)
 	var result := interact(greeting, initiator, recipient, now, place, witnesses)
 	if result.get("ok", false):
 		_pair_ready[_pair(initiator, recipient)] = now + maxi(pair_cooldown_minutes, 0)
@@ -112,9 +121,11 @@ func greet(initiator: StringName, recipient: StringName, now: int, place: String
 	return result
 
 
-## The greeting cooldowns as plain data.
+## The greeting cooldowns that are still running at the store's minute, as plain data. They are
+## not part of the store's or the society's export: a host saves them alongside.
 ## @experimental
 func export_state() -> Dictionary:
+	_prune(store.now_minutes)
 	var pairs := {}
 	for key: String in _pair_ready:
 		pairs[key] = _pair_ready[key]
@@ -146,6 +157,15 @@ func import_state(saved: Variant) -> bool:
 	return true
 
 
+func _prune(now: int) -> void:
+	for key: String in _pair_ready.keys():
+		if _pair_ready[key] <= now:
+			_pair_ready.erase(key)
+	for id: StringName in _agent_ready.keys():
+		if _agent_ready[id] <= now:
+			_agent_ready.erase(id)
+
+
 func _mood(id: StringName) -> Object:
 	if not mood_of.is_valid():
 		return null
@@ -153,12 +173,19 @@ func _mood(id: StringName) -> Object:
 	return found if found is Object and found.has_method(&"add_thought") else null
 
 
-static func _with_mood(value: float, mood: float, scale: float) -> float:
-	if not is_finite(mood) or mood < 0.0:
-		return value
-	var lift := scale * (clampf(mood, 0.0, 100.0) - 50.0) / 50.0
+# A gain grows and a loss shrinks with a positive lift; the reverse with a negative one.
+static func _bend(value: float, lift: float) -> float:
 	return value * maxf(1.0 + lift, 0.0) if value > 0.0 else value * maxf(1.0 - lift, 0.0)
 
 
+static func _mood_lift(mood: float, scale: float) -> float:
+	if not is_finite(mood) or mood < 0.0:
+		return 0.0
+	return scale * (clampf(mood, 0.0, 100.0) - 50.0) / 50.0
+
+
+# Length-prefixed, so no id can run into the next.
 static func _pair(a: StringName, b: StringName) -> String:
-	return "%s|%s" % [a, b] if String(a) < String(b) else "%s|%s" % [b, a]
+	var first := a if String(a) < String(b) else b
+	var second := b if first == a else a
+	return "%d:%s|%d:%s" % [String(first).length(), first, String(second).length(), second]

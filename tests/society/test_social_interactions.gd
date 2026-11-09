@@ -22,8 +22,6 @@ func test_the_outcome_is_the_same_for_the_same_inputs_and_records_nothing() -> v
 	assert_between(first["to_recipient"], 0.0, 20.0)
 	assert_eq(_social.store.deeds_of(&"baker"), [] as Array[Dictionary], "outcome alone records nothing")
 	var plain := _def(&"chitchat", 10.0, 0.0, 0.0)
-	assert_almost_eq(BustleSocialInteractions.outcome(plain, &"a", &"b", 0, 1, 1.0)["to_recipient"], 15.0, 1e-6, "compatible: ×1.5")
-	assert_almost_eq(BustleSocialInteractions.outcome(plain, &"a", &"b", 0, 1, -1.0)["to_recipient"], 5.0, 1e-6, "incompatible: ×0.5")
 	assert_almost_eq(BustleSocialInteractions.outcome(plain, &"a", &"b", 0, 1, 0.0, -1.0, 100.0)["to_recipient"], 13.0, 1e-6, "a good mood lifts gains")
 	assert_almost_eq(BustleSocialInteractions.outcome(plain, &"a", &"b", 0, 1, 0.0, -1.0, 0.0)["to_recipient"], 7.0, 1e-6, "a low mood damps them")
 	var insult := _def(&"insult", -10.0, 0.0, 0.0)
@@ -109,6 +107,46 @@ func test_the_inspector_lists_deeds_and_opinion_reasons() -> void:
 	assert_eq(social["deeds"][0]["verb"], &"kind_words")
 	assert_eq(social["opinions"][0]["other"], &"baker")
 	assert_eq(social["opinions"][0]["reasons"][0]["reason"]["deed"], String(result["deed"]))
+
+
+func test_compatibility_bends_kindness_and_harm_like_mood() -> void:
+	var kind := _def(&"kind_words", 10.0, 4.0, 0.0)
+	var harm := _def(&"insult", -10.0, -4.0, 0.0)
+	var cases := [
+		[kind, 1.0, 15.0, 6.0, "a compatible pair gains more"],
+		[kind, -1.0, 5.0, 2.0, "an incompatible pair gains less"],
+		[harm, 1.0, -5.0, -2.0, "a compatible pair loses less"],
+		[harm, -1.0, -15.0, -6.0, "an incompatible pair loses more"],
+		[kind, 0.0, 10.0, 4.0, "a neutral pair: as written"],
+		[harm, 0.0, -10.0, -4.0, "a neutral pair: as written"],
+	]
+	for case: Array in cases:
+		var result := BustleSocialInteractions.outcome(case[0], &"a", &"b", 0, 1, case[1])
+		assert_almost_eq(result["to_recipient"], case[2], 1e-6, case[4])
+		assert_almost_eq(result["to_initiator"], case[3], 1e-6, "%s (both sides)" % case[4])
+	var both := BustleSocialInteractions.outcome(harm, &"a", &"b", 0, 1, 1.0, -1.0, 100.0)
+	assert_almost_eq(both["to_recipient"], -10.0 * 0.5 * 0.7, 1e-6, "compatibility and a good mood both soften harm")
+	var strong := _def(&"insult", -10.0, 0.0, 0.0)
+	strong.compatibility_scale = 3.0
+	assert_eq(BustleSocialInteractions.outcome(strong, &"a", &"b", 0, 1, 1.0)["to_recipient"], 0.0, "a loss never turns into a gain")
+
+
+func test_expired_cooldowns_are_dropped_and_long_durations_refused() -> void:
+	_social.greet(&"baker", &"smith", 600)
+	_social.greet(&"miller", &"weaver", 600)
+	_social.store.set_time(700)
+	assert_eq(_social.export_state()["agents"].keys(), [], "the greeters' cooldowns ended at 610")
+	assert_eq(_social.export_state()["pairs"].size(), 2, "the pairs' are still running")
+	_social.store.set_time(800)
+	assert_eq(_social.export_state(), {"pairs": {}, "agents": {}}, "nothing ended is kept")
+	var forever := _def(&"vow", 5.0, 0.0, 0.0)
+	forever.days = 2.0e6
+	assert_false(forever.is_valid(), "longer than the store keeps an entry")
+	assert_eq(_social.interact(forever, &"baker", &"smith", 900)["reason"], &"invalid", "so no deed without its opinion")
+	var odd := BustleSocialInteractions.new(BustleSocialStore.new(), 1)
+	odd.greeting = _social.greeting
+	assert_true(odd.greet(&"a|b", &"c", 0)["ok"])
+	assert_true(odd.greet(&"a", &"b|c", 0)["ok"], "ids with separators in them don't collide")
 
 
 func _def(id: StringName, to_recipient: float, to_initiator: float, spread: float) -> BustleInteractionDef:

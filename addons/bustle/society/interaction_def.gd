@@ -16,8 +16,10 @@ extends Resource
 @export var initiator_value: float = 0.0
 ## Up to this much is added or taken away at random (seeded per pair, minute and interaction).
 @export var spread: float = 0.0
-## How much compatibility bends the values: each is multiplied by
-## [code]1 + compatibility × compatibility_scale[/code] (never below 0).
+## How much compatibility bends the values, like mood: a compatible pair gains more and loses less,
+## an incompatible pair the reverse. A gain is multiplied by
+## [code]1 + compatibility × compatibility_scale[/code], a loss by
+## [code]1 − compatibility × compatibility_scale[/code] (never below 0).
 @export var compatibility_scale: float = 0.5
 ## How much each side's mood bends its own value: a good mood (above 50) makes gains larger and
 ## losses smaller, a low mood the reverse, by up to this share at the ends of the scale.
@@ -33,10 +35,11 @@ extends Resource
 
 
 ## True when it can be used: an id, finite numbers, a non-negative spread and scales, and a
-## positive duration.
+## duration above 0 and at most the store's limit of a million days.
 ## @experimental
 func is_valid() -> bool:
 	for value: float in [recipient_value, initiator_value, spread, compatibility_scale, mood_scale, days]:
 		if not is_finite(value):
 			return false
-	return id != &"" and spread >= 0.0 and compatibility_scale >= 0.0 and mood_scale >= 0.0 and days > 0.0
+	return id != &"" and spread >= 0.0 and compatibility_scale >= 0.0 and mood_scale >= 0.0 and days > 0.0 \
+			and days <= 1.0e6

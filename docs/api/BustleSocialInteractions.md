@@ -68,6 +68,7 @@ static func outcome(def: BustleInteractionDef, initiator: StringName, recipient:
 
 The result of `initiator` doing `def` to `recipient` at minute `now`, without recording anything: `{interaction, initiator, recipient, to_recipient,
 to_initiator}`. `to_recipient` is how much the recipient's opinion of the initiator moves, `to_initiator` the other way. Moods are 0 to 100, or negative for none. The same inputs always give the same result.
+Compatibility and each side's mood bend a value the same way: a compatible pair, or a good mood, makes a gain larger and a loss smaller (`× (1 + lift)` and `× (1 − lift)`, never below 0); an incompatible pair, or a low mood, does the reverse. The compatibility lift is `compatibility × compatibility_scale`; the mood lift is `mood_scale × (mood − 50) / 50`.
 
 ### `interact`
 
@@ -99,7 +100,7 @@ func greet(initiator: StringName, recipient: StringName, now: int, place: String
 func export_state() -> Dictionary
 ```
 
-The greeting cooldowns as plain data.
+The greeting cooldowns that are still running at the store's minute, as plain data. They are not part of the store's or the society's export: a host saves them alongside.
 
 ### `import_state`
 

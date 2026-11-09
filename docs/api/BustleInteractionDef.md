@@ -48,7 +48,7 @@ Up to this much is added or taken away at random (seeded per pair, minute and in
 var compatibility_scale: float = 0.5
 ```
 
-How much compatibility bends the values: each is multiplied by `1 + compatibility × compatibility_scale` (never below 0).
+How much compatibility bends the values, like mood: a compatible pair gains more and loses less, an incompatible pair the reverse. A gain is multiplied by `1 + compatibility × compatibility_scale`, a loss by `1 − compatibility × compatibility_scale` (never below 0).
 
 ### `mood_scale`
 
@@ -98,4 +98,4 @@ Its tags (for later choice by weight and mood).
 func is_valid() -> bool
 ```
 
-True when it can be used: an id, finite numbers, a non-negative spread and scales, and a positive duration.
+True when it can be used: an id, finite numbers, a non-negative spread and scales, and a duration above 0 and at most the store's limit of a million days.
