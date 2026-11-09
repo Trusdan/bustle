@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-09
+
+Needs, mood and thoughts, affordances, schedules with roles, jobs and wages, personality sliders and trait bundles, memory and FindPerson, social opinions, greetings, conversations and comfort, and buying through the trade port, with owners taking from their own stock for free. APIs remain experimental before 1.0.
+
 ### Added
 
 - Buying (see `docs/affordances.md`): `BustleTradePort` gains `price_of`, `can_buy` (what `buy` checks; a host keeping stock or lending credit overrides the two together), `can_take` and `take` (an owner using its own stock without paying) and `export_state`/`import_state` for the default's balances. `BustleAffordanceDef.item`: each use buys that item from the owner or payee through the trade port, or the owner takes one from its own stock without paying, and is offered only while that would go through. A neutral demo food stall in `demo/trade/`.
