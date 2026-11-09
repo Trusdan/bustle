@@ -36,6 +36,14 @@ func day_key() -> StringName
 
 A key for the current day: `day_<n>`, counting from 0.
 
+### `season`
+
+```gdscript
+func season() -> StringName
+```
+
+The current season, for schedules' season overrides. The default has none (empty); a host with seasons overrides this.
+
 ### `advance`
 
 ```gdscript

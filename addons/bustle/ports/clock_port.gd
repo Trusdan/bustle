@@ -26,6 +26,13 @@ func day_key() -> StringName:
 	return StringName("day_%d" % floori(float(now_minutes()) / MINUTES_PER_DAY))
 
 
+## The current season, for schedules' season overrides. The default has none (empty); a host with
+## seasons overrides this.
+## @experimental
+func season() -> StringName:
+	return &""
+
+
 ## Moves the default clock on by [param minutes]. False (and no change) when negative.
 ## @experimental
 func advance(minutes: int) -> bool:
