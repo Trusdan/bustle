@@ -18,7 +18,9 @@ func meter_for(target_id: StringName, profile: BustlePerceptionProfile) -> Bustl
 	if _meters.has(target_id):
 		return _meters[target_id]
 	var meter := BustleDetectionMeter.new(profile)
-	meter.state_changed.connect(func(old: BustleDetectionMeter.State, new: BustleDetectionMeter.State) -> void: state_changed.emit(target_id, old, new))
+	# A bound method, not a lambda: a lambda would hold this awareness from its own meter and
+	# neither would ever be freed.
+	meter.state_changed.connect(_on_meter_changed.bind(target_id))
 	_meters[target_id] = meter
 	return meter
 
@@ -60,6 +62,10 @@ func entries() -> Array[BustleAwarenessEntry]:
 	for id: StringName in ids:
 		out.append(entry(id))
 	return out
+
+
+func _on_meter_changed(old: BustleDetectionMeter.State, new: BustleDetectionMeter.State, target_id: StringName) -> void:
+	state_changed.emit(target_id, old, new)
 
 
 ## Drops [param target_id]'s meter (for example when the target is gone for good).
