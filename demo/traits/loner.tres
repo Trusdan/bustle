@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BustleTraitDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/core/personality/trait_def.gd" id="1_trait"]
+
+[resource]
+script = ExtResource("1_trait")
+id = &"loner"
+excludes = Array[StringName]([&"outgoing"])
+adds = Dictionary[StringName, float]({
+&"social.crowd_tolerance": -4.0
+})
+mults = Dictionary[StringName, float]({
+&"need.company.rate": 0.4,
+&"need.solitude.rate": 1.5,
+&"tag.quiet.mult": 1.6,
+&"tag.social.mult": 0.6,
+&"thought.tag.social_pos": 0.6
+})
+slider_offsets = Dictionary[StringName, float]({
+&"sociability": -30.0
+})

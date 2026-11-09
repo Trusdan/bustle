@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BustleTraitDef" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/core/personality/trait_def.gd" id="1_trait"]
+[ext_resource type="Script" path="res://addons/bustle/core/needs/need_def.gd" id="2_need"]
+[ext_resource type="Script" path="res://addons/bustle/core/brain/goal_def.gd" id="3_goal"]
+
+[sub_resource type="Resource" id="devotion"]
+script = ExtResource("2_need")
+id = &"devotion"
+rate_per_hour = 0.06
+
+[sub_resource type="Resource" id="observe"]
+script = ExtResource("3_goal")
+id = &"observe"
+band = 40
+uses_advertisements = true
+
+[resource]
+script = ExtResource("1_trait")
+id = &"pious"
+needs = Array[ExtResource("2_need")]([SubResource("devotion")])
+goals = Array[ExtResource("3_goal")]([SubResource("observe")])
