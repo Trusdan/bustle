@@ -24,7 +24,13 @@ extends Resource
 @export var late_minutes: int = 15
 
 
-## The weekday of game day [param day_index].
+## True when its week has at least one day.
+## @experimental
+func is_valid() -> bool:
+	return week_length >= 1
+
+
+## The weekday of game day [param day_index]. A week shorter than one day counts as one day.
 ## @experimental
 func weekday(day_index: int) -> int:
 	var length := maxi(week_length, 1)

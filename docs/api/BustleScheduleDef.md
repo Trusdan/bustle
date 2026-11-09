@@ -68,13 +68,21 @@ How late an agent may arrive and still be on time, in minutes, for blocks that d
 
 ## Methods
 
+### `is_valid`
+
+```gdscript
+func is_valid() -> bool
+```
+
+True when its week has at least one day.
+
 ### `weekday`
 
 ```gdscript
 func weekday(day_index: int) -> int
 ```
 
-The weekday of game day `day_index`.
+The weekday of game day `day_index`. A week shorter than one day counts as one day.
 
 ### `plan_for`
 
