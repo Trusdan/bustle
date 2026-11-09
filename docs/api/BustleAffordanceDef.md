@@ -64,7 +64,15 @@ How long a reservation holds, in game minutes, before it lapses.
 var price: int = 0
 ```
 
-What one use costs, in the trade port's smallest unit. 0 is free.
+What one use costs, in the trade port's unit. 0 is free. Not used when `item` is set.
+
+### `item`
+
+```gdscript
+var item: StringName = &""
+```
+
+When set, each use buys this item from the owner (or payee) through `BustleTradePort.buy()`, at the port's price and from the host's stock, instead of paying `price`. Empty: an ordinary priced use.
 
 ### `others_mult`
 
