@@ -17,3 +17,9 @@ func is_injured(_id: StringName) -> bool:
 ## @experimental
 func is_incapacitated(_id: StringName) -> bool:
 	return false
+
+
+## True when [param _id]'s life is in danger right now (for example badly wounded). Default: false.
+## @experimental
+func is_life_threatened(_id: StringName) -> bool:
+	return false

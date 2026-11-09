@@ -25,3 +25,11 @@ func is_incapacitated(_id: StringName) -> bool
 ```
 
 True when `_id` can't act at all. Default: false.
+
+### `is_life_threatened`
+
+```gdscript
+func is_life_threatened(_id: StringName) -> bool
+```
+
+True when `_id`'s life is in danger right now (for example badly wounded). Default: false.
