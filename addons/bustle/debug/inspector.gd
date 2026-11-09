@@ -17,8 +17,8 @@ var snapshots_taken: int = 0
 
 ## Everything worth seeing about agent [param agent_id] in [param society]:
 ## agent, area, autonomy, player control, band, goal, option, order, step, top 3 scores, order
-## queue, needs inputs, and the unavailable parts. [code]{missing: true}[/code] for an unknown or
-## removed agent.
+## queue, needs inputs, social deeds and opinions, and the unavailable parts.
+## [code]{missing: true}[/code] for an unknown or removed agent.
 ## @experimental
 func snapshot(society: BustleSociety, agent_id: StringName) -> Dictionary:
 	snapshots_taken += 1
@@ -34,6 +34,7 @@ func snapshot(society: BustleSociety, agent_id: StringName) -> Dictionary:
 		"goal": intent.goal_id if intent != null else &"", "option": intent.option_id if intent != null else &"",
 		"order": intent.order_id if intent != null else &"", "idle": intent.idle if intent != null else false,
 		"step": _step(brain), "top": top(brain, 3), "orders": orders(brain), "needs": needs(brain),
+		"social": social(society, agent_id),
 	}
 	for field: String in UNAVAILABLE:
 		out[field] = {"available": false, "module": UNAVAILABLE[field]}
@@ -82,6 +83,17 @@ static func orders(brain: BustleBrain) -> Array[Dictionary]:
 		var order := brain.orders.peek(i)
 		out.append({"id": order.id, "forced": order.forced, "active": i == 0 and brain.orders.is_started()})
 	return out
+
+
+## The agent's recent deeds and its opinions of others with their reasons, from a
+## [BustleSocialStore]: [code]{available: true, deeds, opinions}[/code]. With any other social port,
+## [code]{available: false, module: social}[/code].
+## @experimental
+func social(society: BustleSociety, agent_id: StringName, count: int = 5) -> Dictionary:
+	var store := society.ports.social as BustleSocialStore if society != null else null
+	if store == null:
+		return {"available": false, "module": "social"}
+	return {"available": true, "deeds": store.deeds_of(agent_id, count), "opinions": store.opinions_of(agent_id)}
 
 
 ## The needs as far as the brain knows them: no needs module yet, so only the raw

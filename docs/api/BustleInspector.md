@@ -36,7 +36,7 @@ How many snapshots this inspector has taken (to check that a disabled overlay do
 func snapshot(society: BustleSociety, agent_id: StringName) -> Dictionary
 ```
 
-Everything worth seeing about agent `agent_id` in `society`: agent, area, autonomy, player control, band, goal, option, order, step, top 3 scores, order queue, needs inputs, and the unavailable parts. `{missing: true}` for an unknown or removed agent.
+Everything worth seeing about agent `agent_id` in `society`: agent, area, autonomy, player control, band, goal, option, order, step, top 3 scores, order queue, needs inputs, social deeds and opinions, and the unavailable parts. `{missing: true}` for an unknown or removed agent.
 
 ### `top`
 
@@ -61,6 +61,14 @@ static func orders(brain: BustleBrain) -> Dictionary[]
 ```
 
 The agent's order queue, front first: id, forced, and whether it has started.
+
+### `social`
+
+```gdscript
+func social(society: BustleSociety, agent_id: StringName, count: int = 5) -> Dictionary
+```
+
+The agent's recent deeds and its opinions of others with their reasons, from a [BustleSocialStore](BustleSocialStore.md): `{available: true, deeds, opinions}`. With any other social port, `{available: false, module: social}`.
 
 ### `needs`
 
