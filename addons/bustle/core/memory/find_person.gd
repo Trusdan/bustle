@@ -9,7 +9,8 @@ extends RefCounted
 ## doesn't search for someone nobody knows about every tick. What is learnt by asking or guessing
 ## is noted in the seeker's memory ([constant BustleMemory.TOLD], [constant BustleMemory.ROUTINE]).
 ## [br][br]
-## The host supplies each source as a [Callable]; empty ones are skipped.
+## The host supplies each source as a [Callable]; empty ones are skipped. Cooldowns live only in
+## memory: an ended one is dropped when that search runs again, and none are saved.
 ## @experimental
 
 ## Found by sensing them.
@@ -50,6 +51,7 @@ func find(seeker: StringName, target: StringName, now: int) -> Dictionary:
 	var key := "%s>%s" % [seeker, target]
 	if _cooldowns.get(key, -1) > now:
 		return _fail(COOLING_DOWN)
+	_cooldowns.erase(key)
 	var own := _memory(seeker)
 	var seen := _call(sense, [seeker, target])
 	if not seen.is_empty():

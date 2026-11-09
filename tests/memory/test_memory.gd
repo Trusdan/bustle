@@ -93,6 +93,53 @@ func test_memory_writes_come_from_perception_events() -> void:
 		world.remove_actor(id)
 
 
+func test_losing_track_notes_the_area_that_goes_with_the_last_known_position() -> void:
+	var world := BustlePerceptionWorld.new()
+	var profile := BustlePerceptionProfile.new()
+	profile.perception_hz = 0.0
+	world.line_of_sight = func(_a: Vector3, _b: Vector3, _p: StringName, _t: StringName) -> bool: return true
+	world.add_actor(BustlePerceptionActor.new(&"seeker", profile))
+	var target := BustlePerceptionActor.new(&"smith")
+	target.position = Vector3(0, 0, -3)
+	world.add_actor(target)
+	var minute := [480]
+	var where := {&"smith": &"square"}
+	var feed := BustleMemoryFeed.new(world, func(id: StringName) -> BustleMemory: return _memories.get(id), func() -> int: return minute[0])
+	feed.area_of = func(id: StringName) -> StringName: return where.get(id, &"")
+	for i in 180:
+		world.tick(1.0 / 60.0)
+	var last: Variant = world.last_known(&"seeker", &"smith")
+	assert_eq(last, Vector3(0, 0, -3))
+	where[&"smith"] = &"mill"
+	minute[0] = 540
+	world.perception_changed.emit(&"seeker", &"smith", S.SEARCHING, S.UNAWARE)
+	var lost := _memories[&"seeker"].recall(BustleMemory.PERSON, &"smith", 540)
+	assert_eq([lost["area"], lost["position"], lost["source"], lost["at"]], [&"square", last, BustleMemory.SAW, 540],
+		"the area it was seen in, not the one it walked into")
+	world.perception_changed.emit(&"stranger", &"cart", S.SEARCHING, S.UNAWARE)
+	assert_eq(_memories[&"stranger"].size(), 0, "no last-known position: nothing written")
+	world.perception_changed.emit(&"neighbour", &"smith", S.SUSPICIOUS, S.UNAWARE)
+	assert_eq(_memories[&"neighbour"].size(), 0, "suspicion alone, never alert: nothing written")
+	world.perception_changed.emit(&"stranger", &"smith", S.UNAWARE, S.SUSPICIOUS)
+	assert_eq(_memories[&"stranger"].size(), 0, "a suspicion writes nothing")
+	world.perception_changed.emit(&"seeker", &"smith", S.SEARCHING, S.UNAWARE)
+	assert_eq(_memories[&"seeker"].recall(BustleMemory.PERSON, &"smith", 540)["area"], &"square", "a second loss without a new sighting adds nothing new")
+	feed.disconnect_world()
+	for id: StringName in world.actor_ids():
+		world.remove_actor(id)
+
+
+func test_a_note_dropped_at_once_by_a_full_memory_reports_false() -> void:
+	var small := BustleMemoryConfig.new()
+	small.capacity = 1
+	var memory := BustleMemory.new(small)
+	memory.note(BustleMemory.PERSON, &"a", &"one", null, BustleMemory.SAW, 0)
+	assert_false(memory.note(BustleMemory.PERSON, &"b", &"two", null, BustleMemory.ROUTINE, 0), "too weak to stay")
+	assert_false(memory.recall(BustleMemory.PERSON, &"a", 0).is_empty())
+	assert_false(memory.import_state({"entries": [{"kind": "person", "subject": "", "area": "", "source": "saw", "strength": 1, "at": 0, "position": null}]}), "an empty subject")
+	assert_false(memory.import_state({"entries": [{"kind": "person", "subject": "x", "area": "", "source": "dreamt", "strength": 1, "at": 0, "position": null}]}), "an unknown source")
+
+
 func test_find_person_by_sense_in_the_same_area() -> void:
 	var finder := _finder()
 	finder.sense = func(_s: StringName, t: StringName) -> Dictionary:
@@ -133,6 +180,7 @@ func test_find_person_gives_up_gracefully_with_a_cooldown() -> void:
 	_memories[&"stranger"].note(BustleMemory.PERSON, &"hermit", &"woods", null, BustleMemory.SAW, 610)
 	assert_eq(finder.find(&"seeker", &"hermit", 620)["how"], BustleFindPerson.COOLING_DOWN, "no search while cooling down")
 	assert_eq(finder.find(&"seeker", &"hermit", 660)["how"], BustleFindPerson.ASKED, "then it tries again")
+	assert_eq(finder.cooldown_until(&"seeker", &"hermit"), -1, "and the ended cooldown is dropped")
 	assert_eq(BustleFindPerson.new().find(&"a", &"b", 0)["how"], BustleFindPerson.UNKNOWN, "with no sources at all, it just doesn't know")
 
 

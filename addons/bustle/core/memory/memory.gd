@@ -41,7 +41,8 @@ func _init(p_config: BustleMemoryConfig = null) -> void:
 
 ## Notes where [param subject] (of [param kind]) is, at minute [param now]: [param area] and
 ## [param position] (null when unknown), from [param source]. Returns true when it was kept (see
-## the class description); false for an empty subject, an unknown source or a weaker note.
+## the class description); false for an empty subject, an unknown source, a weaker note, or a
+## note so weak that a full memory dropped it straight away.
 ## @experimental
 func note(kind: StringName, subject: StringName, area: StringName, position: Variant, source: StringName, now: int) -> bool:
 	var strength := config.strength_of(source)
@@ -55,7 +56,7 @@ func note(kind: StringName, subject: StringName, area: StringName, position: Var
 	forget(now)
 	while _entries.size() > maxi(config.capacity, 1):
 		_entries.erase(_weakest(now))
-	return true
+	return _entries.has(key)
 
 
 ## What is remembered about [param subject] at minute [param now], with its current strength:
@@ -110,7 +111,8 @@ func export_state() -> Dictionary:
 	return {"entries": out}
 
 
-## Restores [method export_state]. False (and nothing changes) when malformed.
+## Restores [method export_state]. False (and nothing changes) when malformed, or for an empty
+## kind or subject or an unknown source, which [method note] would refuse too.
 ## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("entries") is Array:
@@ -139,6 +141,8 @@ func import_state(saved: Variant) -> bool:
 			return false
 		var kind := StringName(data["kind"])
 		var subject := StringName(data["subject"])
+		if kind == &"" or subject == &"" or config.strength_of(StringName(data["source"])) <= 0.0:
+			return false
 		staged[_key(kind, subject)] = {"kind": kind, "subject": subject, "area": StringName(data["area"]),
 			"position": position, "source": StringName(data["source"]), "strength": clampf(float(strength), 0.0, 1.0), "at": at}
 	if staged.size() > maxi(config.capacity, 1):

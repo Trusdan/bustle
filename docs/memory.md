@@ -37,7 +37,7 @@ An entry is forgotten once its strength falls below 0.1.
 
 The methods:
 
-- `note(kind, subject, area, position, source, now)` adds or replaces an entry.
+- `note(kind, subject, area, position, source, now)` adds or replaces an entry. It returns false when the note wasn't kept, including when a full memory drops it straight away as the weakest.
 - `recall(kind, subject, now)` returns the entry with its current strength.
 - `confidence(kind, subject, now)` returns the strength alone.
 - `forget(now)` drops faded entries.
@@ -48,7 +48,8 @@ The methods:
 `BustleMemoryFeed`, in the perception module, writes memory from perception events. It doesn't poll. It listens to `BustlePerceptionWorld.perception_changed`:
 
 - When a perceiver becomes alert to a target, the perceiver's memory notes where the target is (`saw`).
-- When the perceiver loses track (back to unaware), it notes where the target was last known.
+- When the perceiver loses track (back to unaware), it notes where the target was last known. The position is the world's last-known one, and the area is the one the target was in when this perceiver last became alert to it, never where the target is now. With no such sighting, or no last-known position, nothing is written. The note is stamped with the minute track was lost.
+- Suspicion alone writes nothing.
 
 The host gives the feed three callables: one for each agent's memory, one for the game minute, and optionally one for the area of each actor.
 
@@ -63,3 +64,5 @@ The host gives the feed three callables: one for each agent's memory, one for th
 5. **Give up:** nobody knew. The result is `unknown`, and for `cooldown_minutes` (60) every new search for that target fails at once with `cooling_down`.
 
 The result is `{found, how, area, position, from}`, where `from` is who answered when asked. The host moves the agent towards it.
+
+Cooldowns are kept only while the game runs. An ended cooldown is dropped when that search runs again, and none are saved.

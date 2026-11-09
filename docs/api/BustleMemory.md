@@ -85,7 +85,7 @@ How it holds and forgets.
 func note(kind: StringName, subject: StringName, area: StringName, position: Variant, source: StringName, now: int) -> bool
 ```
 
-Notes where `subject` (of `kind`) is, at minute `now`: `area` and `position` (null when unknown), from `source`. Returns true when it was kept (see the class description); false for an empty subject, an unknown source or a weaker note.
+Notes where `subject` (of `kind`) is, at minute `now`: `area` and `position` (null when unknown), from `source`. Returns true when it was kept (see the class description); false for an empty subject, an unknown source, a weaker note, or a note so weak that a full memory dropped it straight away.
 
 ### `recall`
 
@@ -133,4 +133,4 @@ The entries as plain data, sorted by key.
 func import_state(saved: Variant) -> bool
 ```
 
-Restores `export_state()`. False (and nothing changes) when malformed.
+Restores `export_state()`. False (and nothing changes) when malformed, or for an empty kind or subject or an unknown source, which `note()` would refuse too.
