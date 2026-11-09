@@ -7,3 +7,5 @@ The demo is not part of a release.
 `traits/` holds five neutral demo traits (loner, outgoing, low-spirited, greedy, pious). They are data only, and the tests use them to show that trait data alone changes what agents choose. See `docs/personality.md`.
 
 `social/` holds a neutral interaction set (chitchat, deep talk, kind words, slight, insult, comfort) and a `comfort` goal that runs a `converse` step. See `docs/social.md`.
+
+`trade/` holds a neutral food stall that sells bread through the trade port. See `docs/affordances.md`.

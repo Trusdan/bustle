@@ -19,8 +19,12 @@ extends Resource
 @export var capacity: int = 1
 ## How long a reservation holds, in game minutes, before it lapses.
 @export var hold_minutes: int = 60
-## What one use costs, in the trade port's smallest unit. 0 is free.
+## What one use costs, in the trade port's unit. 0 is free. Not used when [member item] is set.
 @export var price: int = 0
+## When set, each use buys this item from the owner (or payee) through
+## [method BustleTradePort.buy], at the port's price and from the host's stock, instead of paying
+## [member price]. Empty: an ordinary priced use.
+@export var item: StringName = &""
 ## For agents other than the owner: their scores are multiplied by this. 0 refuses them, 1 treats
 ## them like the owner. Only applies to an owned affordance.
 @export_range(0.0, 1.0) var others_mult: float = 0.0

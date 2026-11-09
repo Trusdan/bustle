@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BustleAffordanceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/core/affordances/affordance_def.gd" id="1_affordance"]
+
+[resource]
+script = ExtResource("1_affordance")
+id = &"food_stall"
+relief = Dictionary[StringName, float]({
+&"food": 0.6
+})
+tags = Array[StringName]([&"food"])
+capacity = 2
+hold_minutes = 30
+item = &"bread"
+others_mult = 1.0
