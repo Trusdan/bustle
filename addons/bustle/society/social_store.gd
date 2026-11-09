@@ -160,6 +160,44 @@ func update_kinds(a: StringName, b: StringName) -> void:
 	_rule(a, b, rules.rival_kind, value <= rules.rival_at and bad >= rules.min_deeds, value > rules.rival_release)
 
 
+## The deeds [param agent] did or had done to it, newest first, up to [param count]:
+## [code]{deed, actor, verb, target, place}[/code].
+## @experimental
+func deeds_of(agent: StringName, count: int = 5) -> Array[Dictionary]:
+	var keys: Array = _deeds.keys()
+	keys.sort_custom(func(x: StringName, y: StringName) -> bool: return _deed_number(x) > _deed_number(y))
+	var out: Array[Dictionary] = []
+	for key: StringName in keys:
+		var deed: Dictionary = _deeds[key]
+		if deed["actor"] == agent or deed["target"] == agent:
+			out.append({"deed": key, "actor": deed["actor"], "verb": deed["verb"], "target": deed["target"], "place": deed["place"]})
+			if out.size() >= count:
+				break
+	return out
+
+
+## How [param agent] regards everyone it has live opinion entries or kinds about, by id:
+## [code]{other, opinion, kinds, reasons}[/code] with up to [param count] reasons each.
+## @experimental
+func opinions_of(agent: StringName, count: int = 3) -> Array[Dictionary]:
+	var others: Array[StringName] = []
+	var prefix := "%s>" % agent
+	for table: Dictionary in [_entries, _host_kinds, _rule_kinds]:
+		for key: String in table:
+			if key.begins_with(prefix):
+				var other := StringName(key.substr(prefix.length()))
+				if not others.has(other):
+					others.append(other)
+	others.sort_custom(func(x: StringName, y: StringName) -> bool: return String(x) < String(y))
+	var out: Array[Dictionary] = []
+	for other: StringName in others:
+		var live := reasons(agent, other, count)
+		var kinds := kinds_between(agent, other)
+		if not live.is_empty() or not kinds.is_empty():
+			out.append({"other": other, "opinion": opinion(agent, other), "kinds": kinds, "reasons": live})
+	return out
+
+
 ## Opinions, kinds and deeds as plain data.
 ## @experimental
 func export_state() -> Dictionary:
@@ -284,6 +322,11 @@ func _expire(key: String) -> void:
 		_entries.erase(key)
 	else:
 		_entries[key] = kept
+
+
+static func _deed_number(key: StringName) -> int:
+	var text := String(key).trim_prefix("deed_")
+	return text.to_int() if text.is_valid_int() else -1
 
 
 static func _key(a: StringName, b: StringName) -> String:

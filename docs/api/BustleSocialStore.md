@@ -112,6 +112,22 @@ func update_kinds(a: StringName, b: StringName) -> void
 
 Applies the `rules` to `a`'s view of `b`: forms a friend or rival kind when the opinion and deeds call for it, and lets it lapse past its release level.
 
+### `deeds_of`
+
+```gdscript
+func deeds_of(agent: StringName, count: int = 5) -> Dictionary[]
+```
+
+The deeds `agent` did or had done to it, newest first, up to `count`: `{deed, actor, verb, target, place}`.
+
+### `opinions_of`
+
+```gdscript
+func opinions_of(agent: StringName, count: int = 3) -> Dictionary[]
+```
+
+How `agent` regards everyone it has live opinion entries or kinds about, by id: `{other, opinion, kinds, reasons}` with up to `count` reasons each.
+
 ### `export_state`
 
 ```gdscript

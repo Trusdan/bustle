@@ -8,3 +8,5 @@ The population and how its members relate to each other.
   - **Ports:** start as defaults; `set_port` replaces one with a port of the right kind.
   - **Saving:** `export_state` gives plain data with a schema version. `import_state` is all or nothing and returns a `BustleImportReport`. Only the current schema is accepted (no migrations yet). Saves store archetype ids, never resource paths. 64-bit numbers (seeds, generator states) are written as decimal strings, so the export stays exact through JSON; import accepts strings or ints. `state_hash` writes whole-number floats as ints, so a state that went through JSON hashes the same.
 - `BustleDispositionTable`: who regards whom as hostile, neutral or friendly, as data.
+
+The built-in social store (`BustleSocialStore`), compatibility (`BustleCompatibility`), relationship rules (`BustleRelationshipRules`), and interactions and greetings (`BustleInteractionDef`, `BustleSocialInteractions`) live here too. See `docs/social.md`.
