@@ -44,22 +44,35 @@ func start(now: int) -> void:
 	emotion = &""
 
 
-## The agent's resting mood: the config's, through the [code]mood.baseline[/code] modifier.
+## The agent's resting mood: the config's, through the [code]mood.baseline[/code] modifier, kept
+## finite and inside [method mood_range]. A baseline that isn't finite counts as the middle of the
+## range.
 ## @experimental
 func baseline() -> float:
-	return _value(&"mood.baseline", config.baseline)
+	var span := mood_range()
+	var base := config.baseline if is_finite(config.baseline) else (span.x + span.y) / 2.0
+	return clampf(_value(&"mood.baseline", base), span.x, span.y)
+
+
+## The mood range as [code](lowest, highest)[/code]: the config's, with bounds that aren't finite
+## replaced by 0 and 100 and reversed bounds swapped.
+## @experimental
+func mood_range() -> Vector2:
+	var low := config.min_mood if is_finite(config.min_mood) else 0.0
+	var high := config.max_mood if is_finite(config.max_mood) else 100.0
+	return Vector2(minf(low, high), maxf(low, high))
 
 
 ## Adds a timed thought from [param def] now, with [param details] added to its reason. Past its
 ## stack limit the oldest of the same id goes. False for an invalid def or a held one (duration 0).
 ## @experimental
 func add_thought(def: BustleThoughtDef, details: Dictionary = {}) -> bool:
-	if def == null or not def.is_valid() or def.duration_hours <= 0.0:
+	if def == null or not def.is_valid() or def.duration_hours <= 0.0 or not is_plain(details):
 		return false
 	var same := _of(def.id)
 	while same.size() >= def.stack_limit:
 		_thoughts.erase(same.pop_front())
-	_append(def, now_minutes + maxi(roundi(def.duration_hours * 60.0), 1), details)
+	_append(def, now_minutes + def.duration_minutes(), details)
 	return true
 
 
@@ -67,7 +80,7 @@ func add_thought(def: BustleThoughtDef, details: Dictionary = {}) -> bool:
 ## already held only updates its reason. False for an invalid def or a timed one.
 ## @experimental
 func set_held(def: BustleThoughtDef, held: bool, details: Dictionary = {}) -> bool:
-	if def == null or not def.is_valid() or def.duration_hours != 0.0:
+	if def == null or not def.is_valid() or def.duration_hours != 0.0 or not is_plain(details):
 		return false
 	var same := _of(def.id)
 	if not held:
@@ -113,7 +126,8 @@ func target() -> float:
 	var total := baseline()
 	for entry: Dictionary in _thoughts:
 		total += _effective(entry)
-	return clampf(total if is_finite(total) else baseline(), config.min_mood, config.max_mood)
+	var span := mood_range()
+	return clampf(total if is_finite(total) else baseline(), span.x, span.y)
 
 
 ## Moves to game minute [param now]: thoughts that expire on the way go at their minute, and mood
@@ -132,6 +146,8 @@ func advance_to(now: int, asleep: bool = false) -> void:
 			_approach(float(until - now_minutes) / 60.0)
 		now_minutes = until
 		_expire()
+		# At every boundary, so a tie keeps the emotion it had at that moment whatever the step size.
+		_update_emotion()
 	_update_emotion()
 
 
@@ -172,7 +188,10 @@ func export_state() -> Dictionary:
 
 
 ## Restores [method export_state], finding each thought's def by id in [param defs]. False (and
-## nothing changes) when the data is malformed or names a thought [param defs] doesn't have.
+## nothing changes) when the data is malformed or impossible: a thought [param defs] doesn't have,
+## a start after the save's minute, a held thought with an end, a timed one without one (or ending
+## before it starts), more of one id than its stack limit (one for a held thought), or a reason
+## that isn't plain data. A timed thought that had already ended by the save's minute is dropped.
 ## @experimental
 func import_state(saved: Variant, defs: Array[BustleThoughtDef]) -> bool:
 	if not saved is Dictionary:
@@ -188,6 +207,7 @@ func import_state(saved: Variant, defs: Array[BustleThoughtDef]) -> bool:
 			or not data.get("emotion") is String or not data.get("thoughts") is Array:
 		return false
 	var staged: Array[Dictionary] = []
+	var counts: Dictionary[StringName, int] = {}
 	for item: Variant in data["thoughts"]:
 		if not item is Dictionary:
 			return false
@@ -195,13 +215,26 @@ func import_state(saved: Variant, defs: Array[BustleThoughtDef]) -> bool:
 		var started: Variant = _int(item.get("started"))
 		var expires: Variant = _int(item.get("expires"))
 		if not id is String or not by_id.has(StringName(id)) or started == null or expires == null \
-				or not item.get("reason") is Dictionary:
+				or not item.get("reason") is Dictionary or not is_plain(item["reason"]):
 			return false
-		staged.append({"def": by_id[StringName(id)], "started": started, "expires": expires,
+		var def := by_id[StringName(id)]
+		if int(started) > int(new_now):
+			return false
+		if def.duration_hours == 0.0:
+			if int(expires) != -1:
+				return false
+		elif int(expires) <= int(started):
+			return false
+		elif int(expires) <= int(new_now):
+			continue # Ran out before the save's minute: dropped, as advance_to would have.
+		counts[def.id] = counts.get(def.id, 0) + 1
+		if counts[def.id] > (1 if def.duration_hours == 0.0 else def.stack_limit):
+			return false
+		staged.append({"def": def, "started": started, "expires": expires,
 			"reason": (item["reason"] as Dictionary).duplicate(true), "seq": staged.size()})
 	_thoughts = staged
 	_next_seq = staged.size()
-	mood = clampf(float(new_mood), config.min_mood, config.max_mood)
+	mood = clampf(float(new_mood), mood_range().x, mood_range().y)
 	now_minutes = new_now
 	emotion = StringName(data["emotion"])
 	_update_emotion()
@@ -247,12 +280,13 @@ func _effective(entry: Dictionary) -> float:
 
 func _approach(hours: float) -> void:
 	var goal := target()
-	var volatility := maxf(_value(&"mood.volatility", config.volatility), 0.0)
-	var rate := config.rise_per_hour * _value(&"mood.rise.mult", 1.0) if goal > mood \
-			else config.fall_per_hour * _value(&"mood.fall.mult", 1.0)
+	var volatility := maxf(_value(&"mood.volatility", _rate(config.volatility)), 0.0)
+	var rate := _rate(config.rise_per_hour) * _value(&"mood.rise.mult", 1.0) if goal > mood \
+			else _rate(config.fall_per_hour) * _value(&"mood.fall.mult", 1.0)
 	var step := maxf(rate * volatility * hours, 0.0)
+	var span := mood_range()
 	if is_finite(step):
-		mood = clampf(move_toward(mood, goal, step), config.min_mood, config.max_mood)
+		mood = clampf(move_toward(mood, goal, step), span.x, span.y)
 
 
 func _expire() -> void:
@@ -289,6 +323,32 @@ func _update_emotion() -> void:
 func _value(key: StringName, base: float) -> float:
 	var out := modifiers.value(key, base) if modifiers != null else base
 	return out if is_finite(out) else base
+
+
+static func _rate(value: float) -> float:
+	return maxf(value, 0.0) if is_finite(value) else 0.0
+
+
+## True when [param value] is plain data that saves as JSON: null, a bool, an int, a finite float,
+## a string, or arrays and string-keyed dictionaries of those.
+## @experimental
+static func is_plain(value: Variant) -> bool:
+	match typeof(value):
+		TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_STRING, TYPE_STRING_NAME:
+			return true
+		TYPE_FLOAT:
+			return is_finite(value)
+		TYPE_ARRAY:
+			for item: Variant in value:
+				if not is_plain(item):
+					return false
+			return true
+		TYPE_DICTIONARY:
+			for key: Variant in value:
+				if not (key is String or key is StringName) or not is_plain(value[key]):
+					return false
+			return true
+	return false
 
 
 static func _int(value: Variant) -> Variant:

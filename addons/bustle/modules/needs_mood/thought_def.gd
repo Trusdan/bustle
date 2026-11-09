@@ -30,8 +30,27 @@ extends Resource
 @export_range(0.0, 1.0) var need_at_least: float = 1.0
 
 
-## True when it can be used: an id, a finite value and duration, and a stack limit of at least 1.
+## The reason kinds a thought can have.
+const REASON_KINDS: Array[StringName] = [&"need", &"event", &"environment", &"trait", &"deed"]
+## The longest duration: about 1,900 game years, well inside whole minutes.
+const MAX_DURATION_HOURS := 1.0e7
+
+
+## True when it can be used: an id; a finite value; a duration from 0 to
+## [constant MAX_DURATION_HOURS]; a stack limit of at least 1; a [member stack_mult] from 0 to 1
+## (repeats never count more); a [member need_at_least] from 0 to 1; and a known reason kind.
 ## @experimental
 func is_valid() -> bool:
 	return id != &"" and is_finite(value) and is_finite(duration_hours) and duration_hours >= 0.0 \
-			and stack_limit >= 1 and is_finite(stack_mult)
+			and duration_hours <= MAX_DURATION_HOURS and stack_limit >= 1 and is_finite(stack_mult) \
+			and stack_mult >= 0.0 and stack_mult <= 1.0 and is_finite(need_at_least) \
+			and need_at_least >= 0.0 and need_at_least <= 1.0 and REASON_KINDS.has(reason_kind)
+
+
+## A timed thought's length in whole game minutes: the duration rounded to the nearest minute, and
+## at least 1. 0 for a held thought.
+## @experimental
+func duration_minutes() -> int:
+	if duration_hours <= 0.0:
+		return 0
+	return maxi(roundi(duration_hours * 60.0), 1)

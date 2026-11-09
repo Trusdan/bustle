@@ -67,7 +67,15 @@ Starts at game minute `now` with mood at the baseline and no thoughts.
 func baseline() -> float
 ```
 
-The agent's resting mood: the config's, through the `mood.baseline` modifier.
+The agent's resting mood: the config's, through the `mood.baseline` modifier, kept finite and inside `mood_range()`. A baseline that isn't finite counts as the middle of the range.
+
+### `mood_range`
+
+```gdscript
+func mood_range() -> Vector2
+```
+
+The mood range as `(lowest, highest)`: the config's, with bounds that aren't finite replaced by 0 and 100 and reversed bounds swapped.
 
 ### `add_thought`
 
@@ -155,4 +163,12 @@ The mood as plain data: mood, minute, emotion and each thought's id, start, end 
 func import_state(saved: Variant, defs: BustleThoughtDef[]) -> bool
 ```
 
-Restores `export_state()`, finding each thought's def by id in `defs`. False (and nothing changes) when the data is malformed or names a thought `defs` doesn't have.
+Restores `export_state()`, finding each thought's def by id in `defs`. False (and nothing changes) when the data is malformed or impossible: a thought `defs` doesn't have, a start after the save's minute, a held thought with an end, a timed one without one (or ending before it starts), more of one id than its stack limit (one for a held thought), or a reason that isn't plain data. A timed thought that had already ended by the save's minute is dropped.
+
+### `is_plain`
+
+```gdscript
+static func is_plain(value: Variant) -> bool
+```
+
+True when `value` is plain data that saves as JSON: null, a bool, an int, a finite float, a string, or arrays and string-keyed dictionaries of those.

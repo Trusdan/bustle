@@ -8,6 +8,24 @@ Inherits: `Resource`
 
 One kind of thought, as data: what it does to mood, for how long, how repeats stack, the emotion it carries and the kind of reason behind it. A thought with a `duration_hours` of 0 lasts while its condition holds (see `BustleMood.set_held()`); a need thought (`need` set) holds while that need's pressure is at least `need_at_least`.
 
+## Constants
+
+### `REASON_KINDS`
+
+```gdscript
+const REASON_KINDS = Array[StringName]([&"need", &"event", &"environment", &"trait", &"deed"])
+```
+
+The reason kinds a thought can have.
+
+### `MAX_DURATION_HOURS`
+
+```gdscript
+const MAX_DURATION_HOURS = 10000000.0
+```
+
+The longest duration: about 1,900 game years, well inside whole minutes.
+
 ## Properties
 
 ### `id`
@@ -98,4 +116,12 @@ For a need thought: the pressure at or above which it holds.
 func is_valid() -> bool
 ```
 
-True when it can be used: an id, a finite value and duration, and a stack limit of at least 1.
+True when it can be used: an id; a finite value; a duration from 0 to `MAX_DURATION_HOURS`; a stack limit of at least 1; a `stack_mult` from 0 to 1 (repeats never count more); a `need_at_least` from 0 to 1; and a known reason kind.
+
+### `duration_minutes`
+
+```gdscript
+func duration_minutes() -> int
+```
+
+A timed thought's length in whole game minutes: the duration rounded to the nearest minute, and at least 1. 0 for a held thought.

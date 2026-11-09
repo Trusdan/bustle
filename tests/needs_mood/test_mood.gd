@@ -174,6 +174,156 @@ func test_export_and_import_round_trip_and_bad_data_changes_nothing() -> void:
 	assert_eq(other.export_state(), before, "a refused import changes nothing")
 
 
+func test_the_dominant_emotion_is_the_same_whatever_the_step_size_awake_or_asleep() -> void:
+	for asleep: bool in [false, true]:
+		var long := _two_emotions()
+		var short := _two_emotions()
+		assert_eq(long.emotion, &"cheerful", "30 against 20 at the start")
+		long.advance_to(60, asleep)
+		short.advance_to(30, asleep)
+		assert_eq(short.emotion, &"tense", "at 30: 10 against 20")
+		short.advance_to(60, asleep)
+		assert_eq(long.emotion, &"tense", "the tie at 60 keeps what it had at 30 (asleep: %s)" % asleep)
+		assert_eq(long.export_state(), short.export_state(), "the same state either way")
+
+
+func test_import_refuses_impossible_thoughts_and_changes_nothing() -> void:
+	var timed := _thought(&"tense_day", -12.0, 6.0, &"tense", 2)
+	var held := _thought(&"lonely", -6.0, 0.0, &"lonely")
+	var defs: Array[BustleThoughtDef] = [timed, held]
+	_mood.add_thought(timed)
+	_mood.set_held(held, true)
+	_mood.advance_to(30)
+	var good := _mood.export_state()
+	var other := BustleMood.new()
+	assert_true(other.import_state(good, defs))
+	var before := other.export_state()
+	var cases := {
+		"a timed thought made immortal": func(d: Dictionary) -> void: d["thoughts"][0]["expires"] = -1,
+		"another negative end": func(d: Dictionary) -> void: d["thoughts"][0]["expires"] = -2,
+		"a held thought with an end": func(d: Dictionary) -> void: d["thoughts"][1]["expires"] = 500,
+		"a start after the save's minute": func(d: Dictionary) -> void: d["thoughts"][0]["started"] = 31,
+		"an end before the start": func(d: Dictionary) -> void:
+			d["thoughts"][0]["started"] = 20
+			d["thoughts"][0]["expires"] = 10,
+		"more than the stack limit": func(d: Dictionary) -> void:
+			for i in 2:
+				d["thoughts"].append(d["thoughts"][0].duplicate(true)),
+		"two of a held thought": func(d: Dictionary) -> void: d["thoughts"].append(d["thoughts"][1].duplicate(true)),
+		"a bad entry after good ones": func(d: Dictionary) -> void: d["thoughts"].append({"id": "lonely"}),
+		"a reason that isn't plain data": func(d: Dictionary) -> void: d["thoughts"][0]["reason"]["why"] = Vector2.ONE,
+	}
+	for label: String in cases:
+		var data: Dictionary = good.duplicate(true)
+		(cases[label] as Callable).call(data)
+		assert_false(other.import_state(data, defs), label)
+		assert_eq(other.export_state(), before, "%s: nothing changed" % label)
+	var ended: Dictionary = good.duplicate(true)
+	ended["now"] = 400
+	assert_true(other.import_state(ended, defs), "a thought that already ran out is fine")
+	assert_eq(other.count(&"tense_day"), 0, "and dropped")
+	assert_eq(other.count(&"lonely"), 1)
+
+
+func test_mood_always_starts_inside_its_range_and_bad_config_is_safe() -> void:
+	var high := BustleMoodConfig.new()
+	high.baseline = 150.0
+	var mood := BustleMood.new(high)
+	assert_eq(mood.mood, 100.0, "a baseline above the range starts at the top")
+	var lifted := BustleModifierSet.new()
+	lifted.set_source(&"t", &"mood.baseline", 100.0)
+	mood = BustleMood.new(null, lifted)
+	assert_eq(mood.mood, 100.0, "a modifier can't push it past the range either")
+	mood.start(10)
+	assert_eq(mood.mood, 100.0, "nor on a reset")
+	mood.advance_to(600, true)
+	var inputs: Dictionary[StringName, float] = {}
+	mood.fill_inputs(inputs)
+	assert_eq(inputs[BustleInputs.MOOD], 100.0, "and the scorer sees the clamped value")
+	var low := BustleMoodConfig.new()
+	low.baseline = -20.0
+	assert_eq(BustleMood.new(low).mood, 0.0)
+	var broken := BustleMoodConfig.new()
+	broken.baseline = NAN
+	broken.min_mood = INF
+	broken.max_mood = NAN
+	broken.rise_per_hour = NAN
+	broken.volatility = INF
+	mood = BustleMood.new(broken)
+	assert_eq(mood.mood_range(), Vector2(0, 100), "bounds that aren't finite become 0 and 100")
+	assert_eq(mood.mood, 50.0, "a NAN baseline is the middle")
+	mood.add_thought(_thought(&"good", 20.0, 5.0))
+	mood.advance_to(120)
+	assert_eq(mood.mood, 50.0, "a NAN rate doesn't move it")
+	var reversed := BustleMoodConfig.new()
+	reversed.min_mood = 80.0
+	reversed.max_mood = 20.0
+	assert_eq(BustleMood.new(reversed).mood_range(), Vector2(20, 80), "reversed bounds are swapped")
+
+
+func test_a_full_stack_restarts_only_the_replacements_timer() -> void:
+	var praised := _thought(&"praised", 8.0, 10.0, &"cheerful", 2)
+	_mood.add_thought(praised)
+	_mood.advance_to(60)
+	_mood.add_thought(praised)
+	_mood.advance_to(120)
+	_mood.add_thought(praised)
+	var ends: Array = []
+	for thought: Dictionary in _mood.export_state()["thoughts"]:
+		ends.append(thought["expires"])
+	assert_eq(ends, [660, 720], "the oldest (ending at 600) went; the second keeps its own end")
+
+
+func test_durations_round_to_whole_minutes_and_definitions_are_checked() -> void:
+	for pair: Array in [[0.001, 1], [0.5 / 60.0, 1], [1.49 / 60.0, 1], [1.5 / 60.0, 2], [2.0, 120]]:
+		assert_eq(_thought(&"t", 1.0, pair[0]).duration_minutes(), pair[1], "%s hours" % pair[0])
+	assert_eq(_thought(&"held", 1.0, 0.0).duration_minutes(), 0)
+	var bad: Array[BustleThoughtDef] = []
+	for i in 6:
+		bad.append(_thought(&"bad", 1.0, 1.0))
+	bad[0].duration_hours = 1.0e300
+	bad[1].stack_mult = 1.5
+	bad[2].stack_mult = -0.1
+	bad[3].need_at_least = NAN
+	bad[4].reason_kind = &"whim"
+	bad[5].stack_limit = 0
+	for def: BustleThoughtDef in bad:
+		assert_false(def.is_valid())
+		assert_false(_mood.add_thought(def))
+	assert_true(_thought(&"ok", 1.0, 1.0).is_valid())
+	assert_false(_mood.add_thought(_thought(&"ok", 1.0, 1.0), {"bad": Callable()}), "details must be plain data")
+
+
+func test_need_thoughts_at_the_threshold_and_for_missing_needs() -> void:
+	var needs := BustleNeedSet.new()
+	var company := BustleNeedDef.new()
+	company.id = &"company"
+	company.start = 0.5
+	needs.add_need(company)
+	var lonely := _thought(&"lonely", -6.0, 0.0, &"lonely")
+	lonely.need = &"company"
+	lonely.need_at_least = 0.5
+	var stray := _thought(&"thirsty", -3.0, 0.0)
+	stray.need = &"water"
+	stray.need_at_least = 0.0
+	var defs: Array[BustleThoughtDef] = [lonely, stray]
+	_mood.sync_need_thoughts(needs, defs)
+	assert_eq(_mood.count(&"lonely"), 1, "exactly at the threshold holds")
+	assert_eq(_mood.count(&"thirsty"), 0, "a need the agent doesn't have never holds")
+	needs.remove_need(&"company")
+	_mood.sync_need_thoughts(needs, defs)
+	assert_eq(_mood.count(&"lonely"), 0, "a removed need drops its thought")
+
+
+func _two_emotions() -> BustleMood:
+	var mood := BustleMood.new()
+	mood.set_held(_thought(&"a_held", 10.0, 0.0, &"cheerful"), true)
+	mood.add_thought(_thought(&"a_timed", 20.0, 0.5, &"cheerful"))
+	mood.set_held(_thought(&"b_held", 10.0, 0.0, &"tense"), true)
+	mood.add_thought(_thought(&"b_timed", 10.0, 1.0, &"tense"))
+	return mood
+
+
 func _thought(id: StringName, value: float, hours: float, emotion: StringName = &"", limit: int = 1, mult: float = 0.5) -> BustleThoughtDef:
 	var def := BustleThoughtDef.new()
 	def.id = id
