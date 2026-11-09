@@ -9,7 +9,7 @@ A generic addon for living non-player populations in Godot 4 (4.7 or newer): the
 | Folder | What |
 | --- | --- |
 | `addons/bustle/` | The addon. Depends only on Godot. |
-| `addons/bustle/core/` | Plain data and rules with no nodes, tested headless. `needs/`: the needs engine ([docs/needs.md](docs/needs.md)). `affordances/`: smart objects ([docs/affordances.md](docs/affordances.md)). |
+| `addons/bustle/core/` | Plain data and rules with no nodes, tested headless. `needs/`: the needs engine ([docs/needs.md](docs/needs.md)). `affordances/`: smart objects ([docs/affordances.md](docs/affordances.md)). `schedules/`: daily routines ([docs/schedules.md](docs/schedules.md)). |
 | `addons/bustle/society/` | How the members of a population relate to each other. |
 | `addons/bustle/ports/` | The interfaces a host project implements to connect Bustle to its world. |
 | `addons/bustle/debug/` | Tools for inspecting a running population. |
