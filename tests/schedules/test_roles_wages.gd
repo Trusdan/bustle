@@ -119,6 +119,54 @@ func test_definitions_refuse_reserved_names_negative_wages_and_empty_weeks() -> 
 	assert_true(BustleScheduleDef.new().is_valid())
 
 
+func test_an_empty_payer_is_the_employer_of_the_job_held_when_the_shift_was_worked() -> void:
+	_jobs.employers[&"smith"] = &"forge_owner"
+	_trade.set_balance(&"forge_owner", 100)
+	_roster.schedule_of(&"agent_a").attend(300, &"bake")
+	_roles.set_holder(&"baker", &"")
+	_roles.set_holder(&"smith", &"agent_a")
+	var paid := _roster.settle(600, _trade)
+	assert_eq([paid[0]["payer"], paid[0]["paid"]], [&"guild", true], "the baker's employer pays the baker's shift")
+	assert_eq([_trade.balance(&"guild"), _trade.balance(&"forge_owner")], [92, 100], "the new employer pays nothing for it")
+	_roster.schedule_of(&"agent_b").attend(300, &"wander")
+	_roles.set_holder(&"baker", &"agent_b")
+	assert_eq(_roster.settle(800, _trade).size(), 0, "an unpaid block owes nothing, whoever holds a job later")
+
+
+func test_an_owed_wage_is_kept_past_the_attendance_window_until_paid() -> void:
+	_trade.set_balance(&"guild", 0)
+	var schedule := _roster.schedule_of(&"agent_a")
+	schedule.attend(250, &"bake")
+	_roster.settle(600, _trade)
+	for day in range(1, 10):
+		schedule.attend(day * DAY + 250, &"bake")
+	assert_true(schedule.export_state()["attended"].has("240"), "day 0's owed wage is still there on day 9")
+	var unpaid_job := _roster.schedule_of(&"agent_b")
+	unpaid_job.attend(650, &"wander")
+	unpaid_job.attend(9 * DAY + 650, &"wander")
+	assert_false(unpaid_job.export_state()["attended"].has("600"), "history with nothing owed is still trimmed")
+	_trade.set_balance(&"guild", 1000)
+	var paid := _roster.settle(9 * DAY + 600, _trade)
+	assert_eq(paid[0]["start"], 240, "and it is paid first, once there is money")
+	assert_eq(paid.size(), 10, "with every other owed shift")
+	assert_eq(_trade.balance(&"agent_a"), 80)
+
+
+func test_no_change_means_no_signal_and_jobs_can_be_edited_later() -> void:
+	_roster.add_agent(&"agent_c")
+	watch_signals(_roster)
+	_roles.set_holder(&"chair", &"agent_c")
+	_roles.set_holder(&"chair", &"")
+	assert_signal_emit_count(_roster, "schedule_changed", 0, "no job and no routine before or after")
+	_jobs.schedules[&"chair"] = _routine(&"preside", 600, 660, 3)
+	_jobs.employers[&"chair"] = &"guild"
+	_roles.set_holder(&"chair", &"agent_c")
+	assert_eq(_roster.job_of(&"agent_c"), &"chair")
+	_jobs.schedules[&"chair"] = _routine(&"preside", 540, 660, 3)
+	_roster.refresh_all()
+	assert_eq(_roster.schedule_of(&"agent_c").block_at(560)["block"].activity, &"preside", "edited routines apply after refresh_all")
+
+
 func _routine(activity: StringName, start: int, end: int, wage: int) -> BustleScheduleDef:
 	var block := BustleScheduleBlock.new()
 	block.activity = activity

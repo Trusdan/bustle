@@ -6,7 +6,10 @@ extends RefCounted
 ## the roles port's sorted order) that [BustleRoleSchedules] has a routine for; it follows that
 ## routine, or its own ([method set_own]) when it has no job. When a role's holder changes, the old
 ## and new holders' routines swap at once ([signal schedule_changed]); attendance and owed wages
-## stay with the agent. [method settle] pays every agent's ended shifts through the trade port.
+## stay with the agent. A shift's payer is fixed when it is attended (the block's own, else the
+## employer of the job held then), so a later change of job never moves who pays.
+## [method settle] pays every agent's ended shifts through the trade port. After editing
+## [member jobs], call [method refresh_all].
 ## @experimental
 
 ## [param id]'s routine changed from [param old_def] to [param new_def] (either may be null).
@@ -19,6 +22,8 @@ var jobs: BustleRoleSchedules
 
 var _own: Dictionary[StringName, BustleScheduleDef] = {}
 var _schedules: Dictionary[StringName, BustleSchedule] = {}
+# The routine each agent was given (null for none), to tell a real change from no change.
+var _given: Dictionary[StringName, BustleScheduleDef] = {}
 
 
 func _init(p_roles: BustleRolesPort = null, p_jobs: BustleRoleSchedules = null) -> void:
@@ -41,6 +46,14 @@ func add_agent(id: StringName, own: BustleScheduleDef = null) -> void:
 func remove_agent(id: StringName) -> void:
 	_own.erase(id)
 	_schedules.erase(id)
+	_given.erase(id)
+
+
+## Picks every agent's routine and employer again (after [member jobs] was edited).
+## @experimental
+func refresh_all() -> void:
+	for id: StringName in ids():
+		_refresh(id)
 
 
 ## Sets agent [param id]'s own routine (used when it has no job).
@@ -74,15 +87,14 @@ func schedule_of(id: StringName) -> BustleSchedule:
 	return _schedules.get(id)
 
 
-## Pays every agent's ended, attended, unpaid shifts at minute [param now] through [param trade].
-## A block with no payer is paid by the employer of the agent's current job. Returns
+## Pays every agent's ended, attended, unpaid shifts at minute [param now] through [param trade],
+## each by the payer fixed when it was attended. Returns
 ## [code]{agent, start, activity, amount, payer, paid}[/code] per wage tried, by agent then start.
 ## @experimental
 func settle(now: int, trade: BustleTradePort) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: StringName in ids():
-		var employer: StringName = jobs.employers.get(job_of(id), &"")
-		for payment: Dictionary in _schedules[id].settle(now, id, trade, employer):
+		for payment: Dictionary in _schedules[id].settle(now, id, trade):
 			payment["agent"] = id
 			out.append(payment)
 	return out
@@ -128,9 +140,13 @@ func _refresh(id: StringName) -> void:
 	var def: BustleScheduleDef = jobs.schedules[job] if job != &"" else _own.get(id)
 	var schedule: BustleSchedule = _schedules.get(id)
 	if schedule == null:
-		_schedules[id] = BustleSchedule.new(def)
+		schedule = BustleSchedule.new(def)
+		_schedules[id] = schedule
+		_given[id] = def
 		schedule_changed.emit(id, null, def)
-	elif schedule.def != def:
-		var old := schedule.def
+	elif _given.get(id) != def:
+		var old: BustleScheduleDef = _given.get(id)
+		_given[id] = def
 		schedule.set_def(def)
 		schedule_changed.emit(id, old, def)
+	schedule.employer = jobs.employers.get(job, &"") if job != &"" else &""

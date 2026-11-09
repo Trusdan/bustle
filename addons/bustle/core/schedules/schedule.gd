@@ -12,8 +12,9 @@ extends RefCounted
 ## [br][br]
 ## [b]Wages.[/b] A block with a [member BustleScheduleBlock.wage] pays it once, after it ends, if
 ## it was attended (on time or late): [method settle] pays every such block through a
-## [BustleTradePort]. A missed block pays nothing; a payment the payer can't make stays owed and is
-## tried again on the next settle.
+## [BustleTradePort]. Its payer is the block's own, else the [member employer] when it was
+## attended, fixed then and saved. A missed block pays nothing; a payment the payer can't make stays
+## owed (kept past the attendance window) and is tried again on every settle until paid.
 ## @experimental
 
 ## Attended within the tolerance.
@@ -27,6 +28,9 @@ const KEEP_DAYS := 7
 
 ## The routine.
 var def: BustleScheduleDef
+## Who pays wages for blocks that name no payer (the employer of the agent's job). A roster keeps it
+## up to date; it is fixed into each block when attended.
+var employer: StringName = &""
 
 # Block start (absolute minute) → {activity: String, arrived: int, end: int, wage: int,
 # payer: String, paid: bool}. The wage, its payer and the end are kept from the block attended, so
@@ -118,7 +122,7 @@ func attend(now: int, activity: StringName, season: StringName = &"") -> StringN
 	if not _attended.has(start):
 		var block: BustleScheduleBlock = current["block"]
 		_attended[start] = {"activity": String(activity), "arrived": now, "end": int(current["end"]),
-			"wage": block.wage, "payer": String(block.payer), "paid": false}
+			"wage": block.wage, "payer": String(block.payer if block.payer != &"" else employer), "paid": false}
 	_prune(now)
 	return _verdict(current, int(_attended[start]["arrived"]))
 
@@ -142,7 +146,8 @@ func report(day_index: int, now: int, season: StringName = &"") -> Dictionary:
 
 
 ## Pays [param agent]'s wages for every attended block that has ended by minute [param now] and
-## isn't paid yet, through [param trade]. Each block's payer is its own, else [param employer].
+## isn't paid yet, through [param trade]. Each payer was fixed when the block was attended;
+## [param employer] only pays records saved without one.
 ## Returns one [code]{start, activity, amount, payer, paid}[/code] per wage tried, in start order;
 ## an unpaid one stays owed.
 ## @experimental
@@ -217,7 +222,9 @@ func _verdict(occurrence: Dictionary, arrived: int) -> StringName:
 
 func _prune(now: int) -> void:
 	for start: int in _attended.keys():
-		if start < now - KEEP_DAYS * 1440:
+		var record := _attended[start]
+		var owed: bool = int(record.get("wage", 0)) > 0 and not record.get("paid", false)
+		if start < now - KEEP_DAYS * 1440 and not owed:
 			_attended.erase(start)
 
 

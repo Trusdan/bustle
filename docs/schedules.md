@@ -42,7 +42,7 @@ A weekday override wins over a season override, which wins over the usual day. W
   - **Pending:** the block hasn't ended yet and wasn't attended.
 - `report` reads a past day in the season it is given, so pass that day's season if the season has changed since.
 - `set_def(new_def)` swaps the routine and keeps attendance. The old routine's activity inputs are erased by the next `fill_inputs`.
-- `settle(now, agent, trade, employer)` pays each attended block's wage once, after the block ends, through a `BustleTradePort`. A missed block pays nothing. A wage the payer can't pay stays owed and is tried again on the next settle. Each block's wage, payer and end are recorded when the agent attends, so a shift worked before a change of job is still paid.
+- `settle(now, agent, trade, employer)` pays each attended block's wage once, after the block ends, through a `BustleTradePort`. A missed block pays nothing. A wage the payer can't pay stays owed, past the seven-day window, and is tried again on every settle until paid. Each block's wage, end and payer are fixed when the agent attends. The payer is the block's own, or else the schedule's `employer` (the employer of the job held then), so a later change of job never moves who pays.
 - `export_state` and `import_state` save and load attendance and owed wages as plain data. Seven days are kept.
 
 A typical tick fills the inputs, runs the brain, then calls `attend` with the goal the brain picked. The tests do this for three game days.
@@ -56,5 +56,6 @@ A `BustleRoleSchedules` (a Resource) gives each role a routine (`schedules`) and
 - **Job:** an agent's job is the first role it holds, through the roles port, that has a routine. `BustleWorkPort.new(roster).job_of(id)` reads the same thing.
 - **Routine:** an agent follows its job's routine, or its own (`add_agent(id, own)`, `set_own`) when it has no job.
 - **Change of holder:** when a role passes to a new holder, the old and new holders' routines swap at once (`schedule_changed`). Attendance and owed wages stay with each agent.
-- **Pay:** `settle(now, trade)` pays every agent's ended shifts. A block with no payer is paid by its job's employer.
+- **Pay:** `settle(now, trade)` pays every agent's ended shifts, each by the payer fixed when it was attended.
+- **Editing jobs:** after changing `jobs`, call `refresh_all()` so every agent's routine and employer are picked again.
 - **Saving:** `export_state` and `import_state` cover every agent's attendance.
