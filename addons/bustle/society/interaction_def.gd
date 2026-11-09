@@ -30,16 +30,26 @@ extends Resource
 @export var recipient_thought: Resource
 ## A thought for the initiator, or null.
 @export var initiator_thought: Resource
-## Its tags (for later choice by weight and mood).
+## Its tags. A conversation picks [code]curt[/code] ones more often in a low mood.
 @export var tags: Array[StringName] = []
+## How often a conversation picks it, before sliders, traits, opinion and mood. 0: only ever as a
+## conversation's opener (see [BustleConversation]).
+@export var weight: float = 1.0
+## Personality slider → how strongly it bends [member weight]: the weight is multiplied by
+## [code]1 + w × (slider − 50) / 50[/code] (never below 0), so a high slider makes it likelier for a
+## positive [code]w[/code]. Keys are [constant BustlePersonality.SLIDERS] names.
+@export var slider_weights: Dictionary[StringName, float] = {}
 
 
-## True when it can be used: an id, finite numbers, a non-negative spread and scales, and a
-## duration above 0 and at most the store's limit of a million days.
+## True when it can be used: an id, finite numbers, a non-negative spread, scales and weight,
+## known slider names, and a duration above 0 and at most the store's limit of a million days.
 ## @experimental
 func is_valid() -> bool:
-	for value: float in [recipient_value, initiator_value, spread, compatibility_scale, mood_scale, days]:
+	for value: float in [recipient_value, initiator_value, spread, compatibility_scale, mood_scale, days, weight]:
 		if not is_finite(value):
 			return false
-	return id != &"" and spread >= 0.0 and compatibility_scale >= 0.0 and mood_scale >= 0.0 and days > 0.0 \
-			and days <= 1.0e6
+	for slider: StringName in slider_weights:
+		if not BustlePersonality.SLIDERS.has(slider) or not is_finite(slider_weights[slider]):
+			return false
+	return id != &"" and spread >= 0.0 and compatibility_scale >= 0.0 and mood_scale >= 0.0 and weight >= 0.0 \
+			and days > 0.0 and days <= 1.0e6

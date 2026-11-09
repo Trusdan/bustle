@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BustleInteractionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/society/interaction_def.gd" id="1_interaction"]
+
+[resource]
+script = ExtResource("1_interaction")
+id = &"comfort"
+recipient_value = 8.0
+initiator_value = 3.0
+spread = 1.0
+days = 3.0
+tags = Array[StringName]([&"kind", &"comfort"])
+weight = 0.0
+slider_weights = Dictionary[StringName, float]({})
