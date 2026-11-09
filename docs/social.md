@@ -57,7 +57,9 @@ A `BustleInteractionDef` (a Resource) describes one kind of interaction, such as
 | `mood_scale` | How much each side's own mood bends its value. A good mood makes gains larger and losses smaller; a low mood does the reverse. |
 | `days` | How long the opinion entries last. |
 | `recipient_thought`, `initiator_thought` | Optional thoughts from the mood module, one for each side. |
-| `tags` | Tags for the interaction. |
+| `tags` | Tags for the interaction. A conversation picks `curt` ones more often in a low mood. |
+| `weight` | How often a conversation picks it (default 1). 0 means only as a conversation's opener. |
+| `slider_weights` | Personality slider → how strongly it bends `weight`: × `1 + w × (slider − 50) / 50`, never below 0. |
 
 `BustleSocialInteractions` runs interactions on a store:
 
@@ -74,6 +76,51 @@ A `BustleInteractionDef` (a Resource) describes one kind of interaction, such as
   | --- | --- | --- |
   | Per pair (either way round) | 120 minutes | the same two agents greeting again |
   | Per greeter | 10 minutes | one agent greeting everyone at once |
+
+## Conversations
+
+A `BustleConversation` is a few turns (default 4) between two agents, a turn a minute by default. The initiator speaks first, then the two take turns. Each turn picks one interaction from `interactions` by weight and records it through `BustleSocialInteractions.interact`.
+
+It runs two ways with the same results:
+
+- **Abstract:** `run(initiator, recipient, now, opener, place)` does the whole conversation in one call, for agents nobody is watching.
+- **Visible:** the `converse` action (`BustleConverseAction`, registered on a sequence runner) does one turn per tick, for agents in view. The partner is `params.with`, or the step's option id when that's empty. `params.opener` names the first turn's interaction. While it runs, the output names the partner as `talk_to`, and each turn's result is in it as `turn`.
+
+Both go through `begin` and `step`. The conversation's state is plain data, so it saves with the runner. Every choice is seeded by the world seed, the pair, the start minute and the turn number, never by when a tick happens. A turn takes place on the first tick at or after its minute, and is recorded at its own minute.
+
+An interaction's weight for the speaker is its `weight`, bent in this order by:
+
+1. the speaker's sliders (`slider_weights`, through `personality_of`);
+2. the speaker's modifiers: `conversation.<id>.weight` (through `modifiers_of`), which traits set with `adds` and `mults`;
+3. the speaker's opinion of the listener: positive interactions × `1 + opinion_weight × (opinion − 50) / 50`, negative ones × `1 − ...`, never below 0;
+4. the speaker's mood: below 50, `curt` interactions × `1 + curt_mood_scale × (50 − mood) / 50`.
+
+A low mood also lowers the chance of starting: `start_chance × (1 − start_mood_scale × (50 − mood) / 50)` below 50. A good mood raises opinion gains through each interaction's `mood_scale`.
+
+| Setting | Default |
+| --- | --- |
+| `turns` | 4 |
+| `turn_minutes` | 1 |
+| `start_chance` | 1 |
+| `start_mood_scale` | 0.5 (mood 0 halves the chance) |
+| `curt_mood_scale` | 1 (mood 0 doubles curt weights) |
+| `opinion_weight` | 1 |
+
+`run` returns `declined` when the roll to start fails, and the `converse` action fails with `declined`, `no_partner` or `nothing_to_say` (no interaction has any weight).
+
+`demo/social/` holds a neutral interaction set: chitchat, deep talk, kind words, slight, insult (both `curt`) and comfort (weight 0, an opener only), plus a `comfort` goal.
+
+## Comfort
+
+`BustleComfort.advertise(agent, noticed, social, mood_of, senses)` is the comfort hook. For each agent in `noticed` that the agent counts as a friend (`kinds`, default `friend`, one-way) and whose mood is below `low_mood` (default 30), it adds an advertisement to the agent's senses:
+
+- the option id is the friend;
+- it relieves the need `comfort`, more the lower the friend's mood (`urgency`: 0 at `low_mood`, 1 at mood 0);
+- its tags are `social` and `comfort`.
+
+It also sets the `need.comfort` input to 1. The demo `comfort` goal uses these advertisements and runs a `converse` step with the comfort opener, so the agent comforts the friend it picked.
+
+How much an agent cares is its need weight `need.comfort.weight`, which the brain reads from its modifiers for every advertised need. A trait raises or lowers it with `mults`. The hook doesn't need the mood module: a mood is anything with a `mood` number.
 
 ## Inspecting
 

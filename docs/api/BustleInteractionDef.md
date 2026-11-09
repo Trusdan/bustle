@@ -88,7 +88,23 @@ A thought for the initiator, or null.
 var tags: StringName[] = []
 ```
 
-Its tags (for later choice by weight and mood).
+Its tags. A conversation picks `curt` ones more often in a low mood.
+
+### `weight`
+
+```gdscript
+var weight: float = 1.0
+```
+
+How often a conversation picks it, before sliders, traits, opinion and mood. 0: only ever as a conversation's opener (see [BustleConversation](BustleConversation.md)).
+
+### `slider_weights`
+
+```gdscript
+var slider_weights: Dictionary[StringName, float] = {}
+```
+
+Personality slider → how strongly it bends `weight`: the weight is multiplied by `1 + w × (slider − 50) / 50` (never below 0), so a high slider makes it likelier for a positive `w`. Keys are `BustlePersonality.SLIDERS` names.
 
 ## Methods
 
@@ -98,4 +114,4 @@ Its tags (for later choice by weight and mood).
 func is_valid() -> bool
 ```
 
-True when it can be used: an id, finite numbers, a non-negative spread and scales, and a duration above 0 and at most the store's limit of a million days.
+True when it can be used: an id, finite numbers, a non-negative spread, scales and weight, known slider names, and a duration above 0 and at most the store's limit of a million days.

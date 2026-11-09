@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="BustleGoalDef" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/core/brain/goal_def.gd" id="1_goal"]
+[ext_resource type="Script" path="res://addons/bustle/core/brain/actions/action_sequence.gd" id="2_sequence"]
+[ext_resource type="Script" path="res://addons/bustle/core/brain/actions/action_step.gd" id="3_step"]
+
+[sub_resource type="Resource" id="Resource_step"]
+script = ExtResource("3_step")
+action = &"converse"
+params = {
+"opener": "comfort"
+}
+
+[sub_resource type="Resource" id="Resource_sequence"]
+script = ExtResource("2_sequence")
+steps = Array[ExtResource("3_step")]([SubResource("Resource_step")])
+
+[resource]
+script = ExtResource("1_goal")
+id = &"comfort"
+band = 40
+uses_advertisements = true
+sequence = SubResource("Resource_sequence")
