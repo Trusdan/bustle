@@ -50,6 +50,22 @@ var late_minutes: int = -1
 
 How late the agent may arrive and still be on time, in minutes. -1: the schedule's own.
 
+### `wage`
+
+```gdscript
+var wage: int = 0
+```
+
+What attending it earns, paid at its end through the trade port. 0: unpaid.
+
+### `payer`
+
+```gdscript
+var payer: StringName = &""
+```
+
+Who pays the wage. Empty: the employer of the agent's job (see [BustleRoleSchedules](BustleRoleSchedules.md)).
+
 ## Methods
 
 ### `length`
@@ -66,4 +82,4 @@ Its length in minutes (1 to 1440).
 func is_valid() -> bool
 ```
 
-True when it can be used: an activity name that is a valid input name, minutes in range and a lateness of -1 or more.
+True when it can be used: an activity name that is a valid input name (and not `free_time`, which means no block), minutes in range, a lateness of -1 or more and a wage of at least 0.

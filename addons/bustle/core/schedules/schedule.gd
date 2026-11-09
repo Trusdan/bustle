@@ -7,7 +7,13 @@ extends RefCounted
 ## its lateness tolerance, late when it turns up after that, and missed when it never turns up
 ## before the block ends. Time is whole game minutes from the clock port; the season is the clock
 ## port's [method BustleClockPort.season] (a block carried over from the night before is read in
-## the current season).
+## the current season, and [method report] reads a past day in the season it is given, so pass
+## that day's season across a change of season).
+## [br][br]
+## [b]Wages.[/b] A block with a [member BustleScheduleBlock.wage] pays it once, after it ends, if
+## it was attended (on time or late): [method settle] pays every such block through a
+## [BustleTradePort]. A missed block pays nothing; a payment the payer can't make stays owed and is
+## tried again on the next settle.
 ## @experimental
 
 ## Attended within the tolerance.
@@ -22,12 +28,28 @@ const KEEP_DAYS := 7
 ## The routine.
 var def: BustleScheduleDef
 
-# Block start (absolute minute) → {"activity": String, "arrived": int}.
+# Block start (absolute minute) → {activity: String, arrived: int, end: int, wage: int,
+# payer: String, paid: bool}. The wage, its payer and the end are kept from the block attended, so
+# a shift worked before a change of routine is still paid.
 var _attended: Dictionary[int, Dictionary] = {}
+# Activities of routines this schedule has swapped away from: fill_inputs erases them.
+var _retired: Array[StringName] = []
 
 
 func _init(p_def: BustleScheduleDef = null) -> void:
 	def = p_def if p_def != null else BustleScheduleDef.new()
+
+
+## Swaps the routine for [param new_def] (a new job, say), keeping attendance. The old routine's
+## activity inputs are erased by the next [method fill_inputs].
+## @experimental
+func set_def(new_def: BustleScheduleDef) -> void:
+	for activity: StringName in activities():
+		if not _retired.has(activity):
+			_retired.append(activity)
+	def = new_def if new_def != null else BustleScheduleDef.new()
+	for activity: StringName in activities():
+		_retired.erase(activity)
 
 
 ## The block current at minute [param now]: [code]{block, start, end, day}[/code] with absolute
@@ -72,6 +94,8 @@ func activities() -> Array[StringName]:
 ## inputs (and free time, while a block is current) are erased; other inputs are left alone.
 ## @experimental
 func fill_inputs(inputs: Dictionary[StringName, float], now: int, season: StringName = &"") -> void:
+	for activity: StringName in _retired:
+		inputs.erase(StringName("schedule.%s" % activity))
 	for activity: StringName in activities():
 		inputs.erase(StringName("schedule.%s" % activity))
 	inputs.erase(FREE_TIME)
@@ -92,7 +116,9 @@ func attend(now: int, activity: StringName, season: StringName = &"") -> StringN
 		return &""
 	var start: int = current["start"]
 	if not _attended.has(start):
-		_attended[start] = {"activity": String(activity), "arrived": now}
+		var block: BustleScheduleBlock = current["block"]
+		_attended[start] = {"activity": String(activity), "arrived": now, "end": int(current["end"]),
+			"wage": block.wage, "payer": String(block.payer), "paid": false}
 	_prune(now)
 	return _verdict(current, int(_attended[start]["arrived"]))
 
@@ -115,7 +141,28 @@ func report(day_index: int, now: int, season: StringName = &"") -> Dictionary:
 	return out
 
 
-## The attendance as plain data: [code]{"attended": {start: {activity, arrived}}}[/code].
+## Pays [param agent]'s wages for every attended block that has ended by minute [param now] and
+## isn't paid yet, through [param trade]. Each block's payer is its own, else [param employer].
+## Returns one [code]{start, activity, amount, payer, paid}[/code] per wage tried, in start order;
+## an unpaid one stays owed.
+## @experimental
+func settle(now: int, agent: StringName, trade: BustleTradePort, employer: StringName = &"") -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var starts: Array[int] = _attended.keys()
+	starts.sort()
+	for start: int in starts:
+		var record := _attended[start]
+		var wage: int = record.get("wage", 0)
+		if record.get("paid", false) or wage <= 0 or int(record.get("end", 0)) > now:
+			continue
+		var payer := StringName(record.get("payer", "")) if record.get("payer", "") != "" else employer
+		var paid := trade != null and trade.pay(payer, agent, wage)
+		record["paid"] = paid
+		out.append({"start": start, "activity": StringName(record["activity"]), "amount": wage, "payer": payer, "paid": paid})
+	return out
+
+
+## The attendance as plain data: [code]{"attended": {start: {activity, arrived, end, wage, payer, paid}}}[/code].
 ## @experimental
 func export_state() -> Dictionary:
 	var keys: Array[int] = _attended.keys()
@@ -138,9 +185,13 @@ func import_state(saved: Variant) -> bool:
 		if not key is String or not String(key).is_valid_int() or not record is Dictionary:
 			return false
 		var arrived: Variant = _int(record.get("arrived"))
-		if not record.get("activity") is String or arrived == null:
+		var end: Variant = _int(record.get("end", 0))
+		var wage: Variant = _int(record.get("wage", 0))
+		if not record.get("activity") is String or arrived == null or end == null or wage == null or int(wage) < 0 \
+				or not record.get("payer", "") is String or not record.get("paid", false) is bool:
 			return false
-		staged[String(key).to_int()] = {"activity": record["activity"], "arrived": arrived}
+		staged[String(key).to_int()] = {"activity": record["activity"], "arrived": arrived, "end": end,
+			"wage": wage, "payer": record.get("payer", ""), "paid": record.get("paid", false)}
 	_attended = staged
 	return true
 

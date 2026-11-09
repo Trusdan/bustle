@@ -17,6 +17,10 @@ extends Resource
 @export var place: StringName = &""
 ## How late the agent may arrive and still be on time, in minutes. -1: the schedule's own.
 @export var late_minutes: int = -1
+## What attending it earns, paid at its end through the trade port. 0: unpaid.
+@export var wage: int = 0
+## Who pays the wage. Empty: the employer of the agent's job (see [BustleRoleSchedules]).
+@export var payer: StringName = &""
 
 
 ## Its length in minutes (1 to 1440).
@@ -26,10 +30,12 @@ func length() -> int:
 	return out if out > 0 else out + 1440
 
 
-## True when it can be used: an activity name that is a valid input name, minutes in range and a
-## lateness of -1 or more.
+## True when it can be used: an activity name that is a valid input name (and not
+## [code]free_time[/code], which means no block), minutes in range, a lateness of -1 or more and a
+## wage of at least 0.
 ## @experimental
 func is_valid() -> bool:
 	return BustleInputs.is_valid_input(StringName("schedule.%s" % activity)) and activity != &"" \
+			and activity != &"free_time" and wage >= 0 \
 			and start_minute >= 0 and start_minute < 1440 and end_minute >= 0 and end_minute <= 1440 \
 			and late_minutes >= -1

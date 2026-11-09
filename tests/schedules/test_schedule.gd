@@ -76,9 +76,9 @@ func test_lateness_on_time_late_missed_and_pending() -> void:
 	assert_eq(schedule.report(0, 13 * 60), {"on_time": 1, "late": 1, "missed": 1, "pending": 3},
 		"lunch was missed; the afternoon is still to come")
 	var strict := _routine()
-	strict.late_minutes = 15
+	strict.late_minutes = 5
 	var other := BustleSchedule.new(strict)
-	assert_eq(other.attend(7 * 60 + 16, &"meal"), BustleSchedule.LATE)
+	assert_eq(other.attend(7 * 60 + 6, &"meal"), BustleSchedule.LATE, "a stricter routine-wide tolerance")
 
 
 func test_inputs_keep_other_keys_and_bad_blocks_are_skipped() -> void:

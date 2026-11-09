@@ -2,11 +2,19 @@
 class_name BustleWorkPort
 extends RefCounted
 
-## Jobs. A host extends this to give agents its jobs. The standalone default has none beyond schedule blocks.
+## Jobs. A host extends this to give agents its jobs. The standalone default has none, unless it
+## is given a [BustleScheduleRoster]: then an agent's job is its role that comes with a routine.
 ## @experimental
 
+## Jobs as roles, or null for none.
+var roster: BustleScheduleRoster
 
-## The job [param _id] has, or empty.
+
+func _init(p_roster: BustleScheduleRoster = null) -> void:
+	roster = p_roster
+
+
+## The job [param id] has, or empty.
 ## @experimental
-func job_of(_id: StringName) -> StringName:
-	return &""
+func job_of(id: StringName) -> StringName:
+	return roster.job_of(id) if roster != null else &""
