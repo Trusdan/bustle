@@ -10,7 +10,7 @@ A generic addon for living non-player populations in Godot 4 (4.7 or newer): the
 | --- | --- |
 | `addons/bustle/` | The addon. Depends only on Godot. |
 | `addons/bustle/core/` | Plain data and rules with no nodes, tested headless. `needs/`: the needs engine ([docs/needs.md](docs/needs.md)). `affordances/`: smart objects ([docs/affordances.md](docs/affordances.md)). `schedules/`: daily routines ([docs/schedules.md](docs/schedules.md)). `personality/`: sliders and traits ([docs/personality.md](docs/personality.md)). `memory/`: memory and FindPerson ([docs/memory.md](docs/memory.md)). |
-| `addons/bustle/society/` | How the members of a population relate to each other. |
+| `addons/bustle/society/` | How the members of a population relate to each other. The built-in social store ([docs/social.md](docs/social.md)). |
 | `addons/bustle/ports/` | The interfaces a host project implements to connect Bustle to its world. |
 | `addons/bustle/debug/` | Tools for inspecting a running population. |
 | `addons/bustle/modules/` | Optional features, each usable on its own. `perception/`: senses for every actor ([docs/perception.md](docs/perception.md)). `needs_mood/`: mood and thoughts ([docs/mood.md](docs/mood.md)). |
