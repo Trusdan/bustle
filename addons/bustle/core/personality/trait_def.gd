@@ -22,12 +22,14 @@ extends Resource
 ## Goals only agents with this trait have.
 @export var goals: Array[BustleGoalDef] = []
 ## Permanent thoughts it holds (thought definitions of the mood module, with no duration). Kept as
-## plain resources so the core doesn't depend on that module.
+## plain resources so the core doesn't depend on that module. A thought the agent already holds
+## from elsewhere (the same id) is left to its owner.
 @export var thoughts: Array[Resource] = []
 
 
 ## True when it can be used: an id; no exclusion of itself; well-formed modifier keys with finite
-## numbers; known sliders with finite shifts; and needs and goals with ids.
+## numbers; known sliders with finite shifts; needs and goals with ids; and valid permanent
+## thoughts (no duration).
 ## @experimental
 func is_valid() -> bool:
 	if id == &"" or excludes.has(id):
@@ -47,6 +49,9 @@ func is_valid() -> bool:
 			return false
 	for thought: Resource in thoughts:
 		if thought == null or not thought.has_method(&"is_valid") or not thought.call(&"is_valid"):
+			return false
+		var duration: Variant = thought.get(&"duration_hours")
+		if duration != null and float(duration) != 0.0:
 			return false
 	return true
 

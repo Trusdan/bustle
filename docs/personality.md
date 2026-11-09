@@ -7,13 +7,13 @@ Personality (`addons/bustle/core/personality/`) is what makes agents differ: 8 s
 `BustlePersonality.SLIDERS` lists the 8 sliders:
 
 - `sociability`
-- `diligence`
 - `boldness`
+- `diligence`
+- `greed`
+- `piety`
+- `temper`
+- `honesty`
 - `curiosity`
-- `kindness`
-- `cheer`
-- `calm`
-- `thrift`
 
 Each runs from 0 to 100, and 50 is average.
 
@@ -49,7 +49,9 @@ A `BustleTraitDef` (a Resource) bundles:
 | Goal library | Adds each trait's goals. |
 | Mood | Holds each trait's permanent thoughts, with the reason `{kind: trait, trait: <id>}`. |
 
-Applying again after `add_trait` or `remove_trait` adds only what's new. It removes only what a removed trait brought, and leaves the agent's own needs and goals alone.
+Applying again after `add_trait` or `remove_trait` adds only what's new, and removes only what a removed trait brought. A need, goal or thought the agent already had before a trait wanted it (the same need id, the same goal resource, or a thought id the mood already holds) is never added again, never owned by the personality and never removed by it.
+
+A trait's thoughts must be held thoughts, with no duration.
 
 `export_state` and `import_state(saved, defs)` save and load the sliders and trait ids. Import refuses unknown traits, or traits that can't be combined, and changes nothing when it does.
 
@@ -62,8 +64,8 @@ Applying again after `add_trait` or `remove_trait` adds only what's new. It remo
 | Loner | Company builds slowly; crowds start at 2 people and drain fast. Social options count less and quiet ones more. Excludes outgoing. |
 | Outgoing | Company builds fast; crowds start at 12 people. Social options count more. Mood rests higher and changes faster. Excludes loner. |
 | Low-spirited | A permanent "heavy heart" thought of −12. Mood lifts slowly. Social and indulgent options count less and quiet ones more. |
-| Greedy | Money pressure builds faster and weighs more. |
-| Pious | Adds a devotion need and an observance goal. |
+| Greedy | Money pressure builds faster and weighs more. Shifts greed up. |
+| Pious | Adds a devotion need and an observance goal. Shifts piety up. |
 
 The tests give five agents the same day and the same evening options, with one of these traits each. They pick a walk alone, the common room, the porch with one neighbour, an odd job and evening prayer.
 

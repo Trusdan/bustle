@@ -10,5 +10,5 @@ mults = Dictionary[StringName, float]({
 &"need.money.weight": 1.5
 })
 slider_offsets = Dictionary[StringName, float]({
-&"thrift": 25.0
+&"greed": 25.0
 })

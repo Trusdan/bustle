@@ -7,13 +7,15 @@ extends RefCounted
 ## [code]trait.<slider>[/code], from 0 to 1. Traits are data ([BustleTraitDef]); [method apply]
 ## puts them into effect: their modifiers into a [BustleModifierSet] (one source per trait), their
 ## needs into a [BustleNeedSet], their goals into a [BustleGoalLibrary] and their permanent thoughts
-## into a mood (anything with [code]set_held(def, held, details)[/code]). Applying again after a
-## change adds what is new and takes away what a removed trait brought, and nothing else.
+## into a mood (anything with [code]set_held(def, held, details)[/code] and
+## [code]count(id)[/code]). Applying again after a change adds what is new and takes away what a
+## removed trait brought, and nothing else: a need, goal or thought the agent already had before a
+## trait wanted it is never added again, never owned by the personality and never removed by it.
 ## @experimental
 
 ## The sliders.
-const SLIDERS: Array[StringName] = [&"sociability", &"diligence", &"boldness", &"curiosity",
-	&"kindness", &"cheer", &"calm", &"thrift"]
+const SLIDERS: Array[StringName] = [&"sociability", &"boldness", &"diligence", &"greed",
+	&"piety", &"temper", &"honesty", &"curiosity"]
 ## The most traits an agent can have.
 const MAX_TRAITS := 3
 ## [method can_add]'s answers.
@@ -25,11 +27,11 @@ const FULL := &"full"
 
 var _sliders: Dictionary[StringName, float] = {}
 var _traits: Array[BustleTraitDef] = []
-# What the last apply put in place, to undo exactly that.
+# What apply put in place itself (not what was already there), to undo exactly that.
 var _applied_sources: Array[StringName] = []
-var _applied_needs: Array[StringName] = []
-var _applied_goals: Array[BustleGoalDef] = []
-var _applied_thoughts: Array[Resource] = []
+var _owned_needs: Array[StringName] = []
+var _owned_goals: Array[BustleGoalDef] = []
+var _owned_thoughts: Array[Resource] = []
 
 
 ## Slider [param name]'s value with every trait's shift, clamped to 0..100. 50 for unset.
@@ -123,35 +125,45 @@ func apply(modifiers: BustleModifierSet, needs: BustleNeedSet = null, library: B
 		var wanted: Array[StringName] = []
 		for def: BustleTraitDef in _traits:
 			for need: BustleNeedDef in def.needs:
-				if not wanted.has(need.id):
-					wanted.append(need.id)
-					if not needs.has_need(need.id):
-						needs.add_need(need)
-		for id: StringName in _applied_needs:
+				if wanted.has(need.id):
+					continue
+				wanted.append(need.id)
+				if not needs.has_need(need.id) and needs.add_need(need):
+					_owned_needs.append(need.id)
+		for id: StringName in _owned_needs.duplicate():
 			if not wanted.has(id):
 				needs.remove_need(id)
-		_applied_needs = wanted
+				_owned_needs.erase(id)
 	if library != null:
 		var goals: Array[BustleGoalDef] = []
 		for def: BustleTraitDef in _traits:
-			goals.append_array(def.goals)
-		for goal: BustleGoalDef in _applied_goals:
+			for goal: BustleGoalDef in def.goals:
+				if goals.has(goal):
+					continue
+				goals.append(goal)
+				if not library.goals.has(goal):
+					library.goals.append(goal)
+					_owned_goals.append(goal)
+		for goal: BustleGoalDef in _owned_goals.duplicate():
 			if not goals.has(goal):
 				library.goals.erase(goal)
-		for goal: BustleGoalDef in goals:
-			if not library.goals.has(goal):
-				library.goals.append(goal)
-		_applied_goals = goals
-	if mood != null and mood.has_method(&"set_held"):
+				_owned_goals.erase(goal)
+	if mood != null and mood.has_method(&"set_held") and mood.has_method(&"count"):
 		var held: Array[Resource] = []
 		for def: BustleTraitDef in _traits:
 			for thought: Resource in def.thoughts:
+				if held.has(thought):
+					continue
 				held.append(thought)
-				mood.call(&"set_held", thought, true, {"trait": String(def.id)})
-		for thought: Resource in _applied_thoughts:
+				if _owned_thoughts.has(thought):
+					mood.call(&"set_held", thought, true, {"trait": String(def.id)})
+				elif int(mood.call(&"count", thought.get(&"id"))) == 0 \
+						and mood.call(&"set_held", thought, true, {"trait": String(def.id)}):
+					_owned_thoughts.append(thought)
+		for thought: Resource in _owned_thoughts.duplicate():
 			if not held.has(thought):
 				mood.call(&"set_held", thought, false, {})
-		_applied_thoughts = held
+				_owned_thoughts.erase(thought)
 
 
 ## The sliders and trait ids as plain data.

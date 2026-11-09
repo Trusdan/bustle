@@ -20,7 +20,4 @@ mults = Dictionary[StringName, float]({
 &"tag.quiet.mult": 1.3,
 &"tag.social.mult": 0.8
 })
-slider_offsets = Dictionary[StringName, float]({
-&"cheer": -25.0
-})
 thoughts = Array[Resource]([SubResource("heavy_heart")])

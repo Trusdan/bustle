@@ -72,7 +72,7 @@ Goals only agents with this trait have.
 var thoughts: Resource[] = []
 ```
 
-Permanent thoughts it holds (thought definitions of the mood module, with no duration). Kept as plain resources so the core doesn't depend on that module.
+Permanent thoughts it holds (thought definitions of the mood module, with no duration). Kept as plain resources so the core doesn't depend on that module. A thought the agent already holds from elsewhere (the same id) is left to its owner.
 
 ## Methods
 
@@ -82,7 +82,7 @@ Permanent thoughts it holds (thought definitions of the mood module, with no dur
 func is_valid() -> bool
 ```
 
-True when it can be used: an id; no exclusion of itself; well-formed modifier keys with finite numbers; known sliders with finite shifts; and needs and goals with ids.
+True when it can be used: an id; no exclusion of itself; well-formed modifier keys with finite numbers; known sliders with finite shifts; needs and goals with ids; and valid permanent thoughts (no duration).
 
 ### `clashes_with`
 

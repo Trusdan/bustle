@@ -20,3 +20,6 @@ script = ExtResource("1_trait")
 id = &"pious"
 needs = Array[ExtResource("2_need")]([SubResource("devotion")])
 goals = Array[ExtResource("3_goal")]([SubResource("observe")])
+slider_offsets = Dictionary[StringName, float]({
+&"piety": 30.0
+})

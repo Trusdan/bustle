@@ -107,14 +107,16 @@ func test_sliders_reach_the_scorer_with_trait_shifts() -> void:
 	assert_eq(personality.slider(&"sociability"), 50.0)
 	assert_true(personality.set_slider(&"sociability", 90.0))
 	assert_false(personality.set_slider(&"charisma", 10.0), "only the eight sliders")
-	assert_false(personality.set_slider(&"calm", NAN))
+	assert_false(personality.set_slider(&"temper", NAN))
 	personality.add_trait(_trait("outgoing"))
 	assert_eq(personality.slider(&"sociability"), 100.0, "shifted by the trait, clamped")
 	var inputs: Dictionary[StringName, float] = {}
 	personality.fill_inputs(inputs)
 	assert_eq(inputs.size(), 8)
 	assert_eq(inputs[&"trait.sociability"], 1.0)
-	assert_eq(inputs[&"trait.calm"], 0.5)
+	assert_eq(inputs[&"trait.temper"], 0.5)
+	assert_eq(personality.export_state()["sliders"], {"sociability": 90.0})
+	assert_eq(BustlePersonality.SLIDERS, [&"sociability", &"boldness", &"diligence", &"greed", &"piety", &"temper", &"honesty", &"curiosity"] as Array[StringName])
 	for key: StringName in inputs:
 		assert_true(BustleInputs.is_valid_input(key))
 
@@ -124,11 +126,11 @@ func test_personality_saves_and_bad_data_changes_nothing() -> void:
 	for file: String in TRAIT_FILES:
 		defs.append(_trait(file))
 	var personality := BustlePersonality.new()
-	personality.set_slider(&"kindness", 70.0)
+	personality.set_slider(&"honesty", 70.0)
 	personality.add_trait(defs[0])
 	personality.add_trait(defs[3])
 	var saved := personality.export_state()
-	assert_eq(saved, {"sliders": {"kindness": 70.0}, "traits": ["loner", "greedy"]})
+	assert_eq(saved, {"sliders": {"honesty": 70.0}, "traits": ["loner", "greedy"]})
 	var other := BustlePersonality.new()
 	assert_true(other.import_state(JSON.parse_string(JSON.stringify(saved)), defs))
 	assert_eq(other.export_state(), saved)
@@ -136,6 +138,48 @@ func test_personality_saves_and_bad_data_changes_nothing() -> void:
 	assert_false(other.import_state({"sliders": {}, "traits": ["unknown"]}, defs))
 	assert_false(other.import_state({"sliders": {"charisma": 3}, "traits": []}, defs))
 	assert_eq(other.export_state(), saved, "refused imports change nothing")
+
+
+func test_what_the_agent_already_had_is_never_taken_away_with_a_trait() -> void:
+	var pious := _trait("pious")
+	var needs := BustleNeedSet.new()
+	var own_devotion := BustleNeedDef.new()
+	own_devotion.id = &"devotion"
+	own_devotion.start = 0.4
+	needs.add_need(own_devotion)
+	var library := BustleGoalLibrary.new()
+	library.goals.append(pious.goals[0])
+	var personality := BustlePersonality.new()
+	personality.add_trait(pious)
+	var modifiers := BustleModifierSet.new()
+	personality.apply(modifiers, needs, library)
+	assert_eq(needs.pressure(&"devotion"), 0.4, "the agent's own need isn't replaced")
+	assert_eq(library.goals.size(), 1, "nor its goal added twice")
+	personality.remove_trait(&"pious")
+	personality.apply(modifiers, needs, library)
+	assert_true(needs.has_need(&"devotion"), "the need it had before the trait stays")
+	assert_eq(needs.pressure(&"devotion"), 0.4, "with its pressure")
+	assert_eq(library.goals.size(), 1, "and so does the goal")
+
+
+func test_a_thought_the_mood_already_holds_stays_with_its_owner() -> void:
+	var low := _trait("low_spirited")
+	var mood := BustleMood.new()
+	mood.set_held(low.thoughts[0], true, {"from": "host"})
+	var personality := BustlePersonality.new()
+	personality.add_trait(low)
+	personality.apply(null, null, null, mood)
+	assert_eq(mood.count(&"heavy_heart"), 1)
+	assert_eq(mood.reasons()[0]["reason"], {"kind": "trait", "from": "host"}, "the host's reason is kept")
+	personality.remove_trait(&"low_spirited")
+	personality.apply(null, null, null, mood)
+	assert_eq(mood.count(&"heavy_heart"), 1, "removing the trait leaves the host's thought")
+
+
+func test_a_trait_thought_must_be_held_not_timed() -> void:
+	var trait_def := _trait("low_spirited").duplicate(true) as BustleTraitDef
+	trait_def.thoughts[0].set(&"duration_hours", 2.0)
+	assert_false(trait_def.is_valid(), "a timed thought would never be held")
 
 
 # One agent's evening: the same day and options for everyone; only [param trait_id] differs.
