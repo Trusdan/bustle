@@ -7,8 +7,10 @@ extends RefCounted
 ## resolves at once and harmlessly: engaging leaves the fighter RESOLVED, with no damage, no winner
 ## and nobody killed.
 ## [br][br]
-## A fight is a scuffle unless it is engaged as lethal. A host's combat should pass a scuffle's
-## damage through [method BustleConflict.filter_damage], so a scuffle never kills.
+## Every fight has an intent: [code]subdue[/code] (the default) or [code]kill[/code]. A host's
+## combat should pass a subdue fight's immediate damage through
+## [method BustleConflict.filter_damage]. A target may still die, then or later of its wounds; the
+## host's health system decides, and reports it in [method outcome].
 ## @experimental
 
 ## Where a fight stands for one agent.
@@ -18,14 +20,15 @@ var _status: Dictionary[StringName, int] = {}
 var _outcomes: Dictionary[StringName, Dictionary] = {}
 
 
-## [param id] engages [param target], as a scuffle or, with [param lethal], to kill. Ignored when
-## either is empty or they are the same.
+## [param id] engages [param target] with [param intent] ([code]subdue[/code] or
+## [code]kill[/code]). Engaging again changes the intent. Ignored when either id is empty or they
+## are the same.
 ## @experimental
-func engage(id: StringName, target: StringName, lethal: bool = false) -> void:
+func engage(id: StringName, target: StringName, intent: StringName = &"subdue") -> void:
 	if id == &"" or target == &"" or id == target:
 		return
 	_status[id] = Status.RESOLVED
-	_outcomes[id] = {"target": target, "lethal": lethal, "killed": false}
+	_outcomes[id] = {"target": target, "intent": intent, "killed": false, "downed": false}
 
 
 ## [param id] stops fighting.
@@ -35,8 +38,9 @@ func disengage(id: StringName) -> void:
 	_outcomes.erase(id)
 
 
-## How [param id]'s fight ended, once RESOLVED: [code]{target, lethal, killed}[/code], where
-## [code]killed[/code] says whether the target died. Empty before then.
+## How [param id]'s fight ended, once RESOLVED: [code]{target, intent, killed, downed}[/code],
+## where [code]killed[/code] says whether the target died and [code]downed[/code] whether it was
+## beaten without dying. Empty before then.
 ## @experimental
 func outcome(id: StringName) -> Dictionary:
 	return _outcomes.get(id, {}).duplicate() if status(id) == Status.RESOLVED else {}

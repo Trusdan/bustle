@@ -3,7 +3,9 @@ class_name BustleFleeAction
 extends BustleActionHandler
 
 ## [code]flee[/code]: runs straight away from the agent's threat ([code]move_to[/code] in the
-## output) until it is [member BustleConflictConfig.flee_distance] away, then clears the conflict.
+## output, aimed [member BustleConflictConfig.flee_margin] past the safe distance so a body that
+## stops a little short still gets there) until it is
+## [member BustleConflictConfig.flee_distance] away, then clears the conflict.
 ## Without positions it gets away at once. Done when the conflict is over.
 ## @experimental
 
@@ -27,5 +29,5 @@ func tick(context: BustleActionContext, _delta: float) -> Status:
 	var away := (here as Vector3) - (there as Vector3)
 	if away.is_zero_approx():
 		away = Vector3.FORWARD
-	context.output["move_to"] = (there as Vector3) + away.normalized() * conflict.config.flee_distance
+	context.output["move_to"] = (there as Vector3) + away.normalized() * (conflict.config.flee_distance + maxf(conflict.config.flee_margin, 0.0))
 	return Status.RUNNING

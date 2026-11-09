@@ -6,7 +6,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
-- Conflict (`addons/bustle/core/conflict/`, see `docs/conflict.md`): `BustleConflict` (a threat only through the disposition port; fight, flee or fetch help from boldness and temper; `threat.*` inputs and three CRITICAL goals; scuffles that never kill through `filter_damage`; rare seeded lethal fights; `assaulted` and `killed` events with attacker, victim and circumstances; quarrels that can become scuffles; export and import), `BustleConflictConfig`, and the `fight`, `flee` and `fetch_help` actions. `BustleCombatPort.engage` takes `lethal`, and `outcome` reports how a fight ended.
+- Conflict (`addons/bustle/core/conflict/`, see `docs/conflict.md`), with nothing left to chance: `BustleConflict` (fights start from a cause: hostility through the disposition port, a quarrel whose provocation and grudge pass a threshold set by temper and mood, or a call for help; fight, flee or fetch help from boldness and temper; `threat.*` inputs and three CRITICAL goals; an intent to subdue or kill, killing only for a reason (defending one's life, or one the host gives), checked again every fight tick with `intent_changed`; `filter_damage` for a subdue fight's immediate damage; `assaulted` and `killed` events with a fixed act id, the cause, the intent and its reason; export and import), `BustleConflictConfig`, and the `fight`, `flee` and `fetch_help` actions. `BustleCombatPort.engage` takes an intent, and `outcome` reports how a fight ended. `BustleHealthPort.is_life_threatened`.
 
 ## [0.4.0] - 2026-11-09
 

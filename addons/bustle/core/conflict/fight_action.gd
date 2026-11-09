@@ -2,11 +2,12 @@
 class_name BustleFightAction
 extends BustleActionHandler
 
-## [code]fight[/code]: engages the agent's threat through the combat port, as a scuffle unless
-## [method BustleConflict.is_lethal] says otherwise, and names it as the output's
-## [code]attack_target[/code]. Done when the port reports the fight RESOLVED (then
-## [method BustleConflict.finish] reports it) or the conflict was cleared. Fails with
-## [code]no_threat[/code] when the agent has none.
+## [code]fight[/code]: engages the agent's threat through the combat port with its intent, and
+## names it as the output's [code]attack_target[/code]. Every tick it works the intent out again
+## ([method BustleConflict.update_intent]) and engages again when it changed, so a fight can
+## escalate. Done when the port reports the fight RESOLVED (then [method BustleConflict.finish]
+## reports it) or the conflict was cleared. Fails with [code]no_threat[/code] when the agent has
+## none.
 ## @experimental
 
 ## The conflicts it serves.
@@ -22,10 +23,10 @@ func start(context: BustleActionContext) -> void:
 	if threat == &"":
 		context.data["failure"] = "no_threat"
 		return
-	var lethal := conflict.is_lethal(context.agent_id, threat, context.now_minutes)
+	var intent := conflict.update_intent(context.agent_id)
 	context.data["threat"] = String(threat)
-	context.data["lethal"] = lethal
-	conflict.combat.engage(context.agent_id, threat, lethal)
+	context.data["intent"] = String(intent)
+	conflict.combat.engage(context.agent_id, threat, intent)
 
 
 func tick(context: BustleActionContext, _delta: float) -> Status:
@@ -35,10 +36,15 @@ func tick(context: BustleActionContext, _delta: float) -> Status:
 	if conflict.threat_of(context.agent_id) != StringName(context.data["threat"]):
 		conflict.combat.disengage(context.agent_id)
 		return Status.DONE
-	context.output["attack_target"] = StringName(context.data["threat"])
+	var threat := StringName(context.data["threat"])
+	context.output["attack_target"] = threat
+	var intent := conflict.update_intent(context.agent_id)
+	if intent != StringName(context.data["intent"]):
+		context.data["intent"] = String(intent)
+		conflict.combat.engage(context.agent_id, threat, intent)
 	if conflict.combat.status(context.agent_id) != BustleCombatPort.Status.RESOLVED:
 		return Status.RUNNING
-	conflict.finish(context.agent_id, context.now_minutes, bool(context.data["lethal"]))
+	conflict.finish(context.agent_id, context.now_minutes)
 	return Status.DONE
 
 
