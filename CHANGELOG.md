@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+
+- Conflict (`addons/bustle/core/conflict/`, see `docs/conflict.md`): `BustleConflict` (a threat only through the disposition port; fight, flee or fetch help from boldness and temper; `threat.*` inputs and three CRITICAL goals; scuffles that never kill through `filter_damage`; rare seeded lethal fights; `assaulted` and `killed` events with attacker, victim and circumstances; quarrels that can become scuffles; export and import), `BustleConflictConfig`, and the `fight`, `flee` and `fetch_help` actions. `BustleCombatPort.engage` takes `lethal`, and `outcome` reports how a fight ended.
+
 ## [0.4.0] - 2026-11-09
 
 Needs, mood and thoughts, affordances, schedules with roles, jobs and wages, personality sliders and trait bundles, memory and FindPerson, social opinions, greetings, conversations and comfort, and buying through the trade port, with owners taking from their own stock for free. APIs remain experimental before 1.0.
