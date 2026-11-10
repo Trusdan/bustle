@@ -43,6 +43,14 @@ func items_at(place: StringName) -> Dictionary[]
 
 The records of every item at `place`, by id.
 
+### `items_of`
+
+```gdscript
+func items_of(owner_id: StringName) -> Dictionary[]
+```
+
+The records of every item `owner_id` owns, wherever they are, by id.
+
 ### `is_protected`
 
 ```gdscript
@@ -65,7 +73,7 @@ Marks `id` protected (or not). False when unknown.
 func transfer(id: StringName, from: StringName, to: StringName) -> bool
 ```
 
-Moves `id` from `from` to `to`. False, changing nothing, when the item is unknown, protected, not owned by `from`, or `to` is empty or `from`.
+Moves `id` from `from` to `to`. Only the owner changes: the item stays at its place until the host moves it. False, changing nothing, when the item is unknown, protected, not owned by `from`, or `to` is empty or `from`.
 
 ### `export_state`
 

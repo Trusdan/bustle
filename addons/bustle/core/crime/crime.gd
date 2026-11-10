@@ -12,7 +12,8 @@ extends RefCounted
 ## [member enabled] (neither is a game option);
 ## [br]2. the agent is a known agent, not in [member exempt] and not held by [member is_locked];
 ## [br]3. need: one of [member BustleCrimeConfig.needs] presses at least
-## [member BustleCrimeConfig.min_need];
+## [member BustleCrimeConfig.min_need], and the agent owns nothing that eases it (an agent that
+## already has what it needs, stolen or not, isn't driven to take more);
 ## [br]4. personality: that pressure plus [code]Σ weight × (slider − 50) / 100[/code] over
 ## [member BustleCrimeConfig.slider_weights] reaches [member BustleCrimeConfig.threshold] (honesty
 ## holds an agent back; greed and boldness push it on);
@@ -160,9 +161,18 @@ func _pressing_need(agent: StringName) -> Dictionary:
 		if not needs.has_need(need):
 			continue
 		var pressure := needs.pressure(need)
+		if _holds_relief_for(agent, need):
+			continue
 		if pressure >= config.min_need and (best.is_empty() or pressure > float(best["pressure"])):
 			best = {"need": need, "pressure": pressure}
 	return best
+
+
+func _holds_relief_for(agent: StringName, need: StringName) -> bool:
+	for row: Dictionary in society.ports.property.items_of(agent):
+		if float((row["relieves"] as Dictionary).get(String(need), 0.0)) > 0.0:
+			return true
+	return false
 
 
 func _temperament(agent: StringName) -> float:

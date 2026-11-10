@@ -115,6 +115,26 @@ func test_theft_only_moves_existing_items_and_never_means_harm() -> void:
 	assert_eq(_crime.steal(&"drifter", 2), {"ok": false, "reason": &"no_target"})
 
 
+func test_an_agent_that_has_what_it_needs_takes_no_more() -> void:
+	_society.ports.property.register(&"jar", &"cooper", &"market", {&"food": 0.2})
+	_society.ports.property.register(&"pie", &"cook", &"market", {&"food": 0.4})
+	var thefts := []
+	_crime.theft.connect(func(_t: StringName, _o: StringName, i: StringName, _c: Dictionary) -> void: thefts.append(i))
+	for minute in 5:
+		if not _crime.consider(&"drifter", minute).is_empty():
+			_crime.steal(&"drifter", minute)
+	assert_eq(thefts, [&"loaf"], "three items in reach, exactly one theft")
+	assert_eq([_society.ports.property.owner_of(&"jar"), _society.ports.property.owner_of(&"pie")], [&"cooper", &"cook"])
+	assert_eq(_society.ports.property.items_of(&"drifter").size(), 1)
+	_society.ports.property.transfer(&"loaf", &"drifter", &"baker")
+	assert_eq(_crime.consider(&"drifter", 9)["item"], "loaf", "with the loaf gone again, the need drives it again")
+	var owned := BustleCrime.new(_society)
+	owned.needs_of = _crime.needs_of
+	owned.personality_of = _crime.personality_of
+	_society.ports.property.register(&"crust", &"drifter", &"camp", {&"food": 0.1})
+	assert_eq(owned.consider(&"drifter", 10), {}, "anything it owns that eases the need counts, stolen or not")
+
+
 func test_guards_are_checked_again_at_the_moment_of_taking() -> void:
 	_crime.consider(&"drifter", 0)
 	_agent(&"onlooker", &"market", 0.0, {})

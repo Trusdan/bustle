@@ -10,7 +10,7 @@ Desperate theft, in the `BustleBands.GUARDED` band. Nothing here is left to chan
 `consider()` runs the guards, in order. Each must pass: 
 1. crime is allowed: the developer setting `BustleCrimeConfig.SETTING` and `enabled` (neither is a game option); 
 2. the agent is a known agent, not in `exempt` and not held by `is_locked`; 
-3. need: one of `BustleCrimeConfig.needs` presses at least `BustleCrimeConfig.min_need`; 
+3. need: one of `BustleCrimeConfig.needs` presses at least `BustleCrimeConfig.min_need`, and the agent owns nothing that eases it (an agent that already has what it needs, stolen or not, isn't driven to take more); 
 4. personality: that pressure plus `Σ weight × (slider − 50) / 100` over `BustleCrimeConfig.slider_weights` reaches `BustleCrimeConfig.threshold` (honesty holds an agent back; greed and boldness push it on); 
 5. opportunity: an item in the agent's area, owned by someone else, not protected, that eases the need, where nobody else would see (`is_observed`). 
 When they all pass, the agent's `fact.steal` input is 1 (`fill_inputs()`), so the `steal` goal from `goal_defs()` can run its `steal` action, which moves the item through the property port and emits `theft`. A theft only moves an existing item, and never makes anyone mean to kill: what follows is for the host.

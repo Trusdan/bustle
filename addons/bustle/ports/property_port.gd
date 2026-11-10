@@ -52,6 +52,16 @@ func items_at(place: StringName) -> Array[Dictionary]:
 	return out
 
 
+## The records of every item [param owner_id] owns, wherever they are, by id.
+## @experimental
+func items_of(owner_id: StringName) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for id: StringName in _sorted_ids():
+		if StringName(_items[id]["owner_id"]) == owner_id:
+			out.append(_items[id].duplicate(true))
+	return out
+
+
 ## True when [param id] can never be taken.
 ## @experimental
 func is_protected(id: StringName) -> bool:
@@ -67,7 +77,8 @@ func set_protected(id: StringName, protected: bool) -> bool:
 	return true
 
 
-## Moves [param id] from [param from] to [param to]. False, changing nothing, when the item is
+## Moves [param id] from [param from] to [param to]. Only the owner changes: the item stays at its
+## place until the host moves it. False, changing nothing, when the item is
 ## unknown, protected, not owned by [param from], or [param to] is empty or [param from].
 ## @experimental
 func transfer(id: StringName, from: StringName, to: StringName) -> bool:

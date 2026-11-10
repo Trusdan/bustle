@@ -8,7 +8,7 @@ Crime (`addons/bustle/core/crime/`) covers desperate theft. Nothing in it is lef
 
 1. **Crime is allowed.** That needs both the developer setting `bustle/simulation/npc_crime` (a project setting, on unless set to `false`) and the host's `enabled`. Neither is a game option, and a host doesn't show them to players.
 2. **The agent can act.** It's an agent of the society, isn't in `exempt`, and isn't held to a story or task by `is_locked(agent)`.
-3. **Need.** One of `config.needs` (default `food`) presses at least `min_need` (default 0.6).
+3. **Need.** One of `config.needs` (default `food`) presses at least `min_need` (default 0.6), and the agent owns nothing that eases it. An agent that already has what it needs, stolen or not, isn't driven to take more.
 4. **Personality.** That pressure plus `Σ weight × (slider − 50) / 100` reaches `threshold` (default 1). The default weights are honesty −2, greed +1 and boldness +1.
    - An honest agent (honesty 90) never steals, even starving: 1.0 − 0.8 < 1.
    - An ordinary agent steals only when starving: 1.0.
@@ -17,7 +17,7 @@ Crime (`addons/bustle/core/crime/`) covers desperate theft. Nothing in it is lef
    - is owned by someone else;
    - isn't protected;
    - eases the need;
-   - isn't seen. By default it's seen when any other agent of the society is in that area. A host can replace that with `is_observed(thief, area)`.
+   - isn't seen. By default it's seen when any other agent of the society is in that area. The default counts every agent there, including ones asleep or dead, so it errs towards not stealing. A host can replace that with `is_observed(thief, area)`; who can actually perceive a theft comes with witnesses.
 
    The item that eases the need most is chosen (ties by id).
 
@@ -32,7 +32,7 @@ The action calls `steal(agent, now)`:
 - It checks every guard again for the same item. If someone came along in the meantime, it fails with `guards_failed`.
 - It then moves the item to the agent through the property port and emits `theft(thief, owner_id, item, circumstances)`. `circumstances` is `{place, need, pressure, score, at}`, so it says what drove the theft.
 
-Afterwards the target is gone, and the agent's usual goals win again.
+Afterwards the target is gone. The agent now owns something that eases the need, so the need guard fails and it doesn't steal again for that need, however many other items it could reach. Its usual goals win again. When the host lets it use up the item (and removes the item from the register), the need can drive it again.
 
 ## What theft never does
 
@@ -49,8 +49,11 @@ The property port records who owns which things and where they are. A host exten
 | `register(id, owner_id, place, relieves, protected)` | Adds an item. `relieves` is need → amount. A protected item can never be taken. |
 | `item(id)`, `owner_of(id)`, `items_at(place)` | Read the register. |
 | `is_protected(id)`, `set_protected(id, protected)` | A host marks its own protected things (keepsakes, things a story needs). |
-| `transfer(id, from, to)` | Moves an item from its owner. It refuses protected items and items not owned by `from`. |
+| `items_of(owner_id)` | Every item an owner owns, wherever it is. |
+| `transfer(id, from, to)` | Moves an item from its owner. It refuses protected items and items not owned by `from`. Only the owner changes: the item stays at its place until the host moves it. |
 | `export_state()`, `import_state(saved)` | Plain data, in id order. Import is all or nothing. |
+
+Only registered items can be stolen. A host's shop stock, for example, is out of reach unless the host registers those items too.
 
 ## Settings (`BustleCrimeConfig`)
 
