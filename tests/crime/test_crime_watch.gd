@@ -30,6 +30,7 @@ func before_each() -> void:
 	_needs = {}
 	_crime.needs_of = func(id: StringName) -> BustleNeedSet: return _needs.get(id)
 	_watch = BustleCrimeWatch.new(_crime)
+	_watch.instant = true
 	var honest := BustlePersonality.new()
 	honest.set_slider(&"honesty", 100.0)
 	_watch.judge.personality_of = func(id: StringName) -> BustlePersonality: return honest if id in [&"baker", &"onlooker"] else null
@@ -57,7 +58,7 @@ func test_a_theft_nobody_perceived_is_a_deed_its_owner_finds() -> void:
 	assert_eq(_watch.notice_losses(&"baker", &"market", 30), [1] as Array[int])
 	var report := {"id": 1, "thief": "", "owner_id": "baker", "item": "loaf", "place": "market", "at": 10,
 		"witnesses": [], "deed": true, "found_at": 30, "reporter": "baker", "role": "authority",
-		"authority": "warden", "reported_at": 30}
+		"authority": "warden", "source": "owner_deed", "reported_at": 30}
 	assert_eq(_events, [[&"found", &"baker", &"loaf"], [&"reported", &"baker", &"authority", report]],
 		"an honest owner reports its loss, not knowing who took it")
 	assert_eq([_watch.open_deeds(), _watch.known_by(&"baker"), _watch.known_by(&"warden")], [[], [1], []])
@@ -110,10 +111,12 @@ func test_property_can_be_used_up_only_by_the_host() -> void:
 
 
 func test_records_save_and_refuse_bad_data() -> void:
+	_watch.instant = false
 	_crime.consider(&"drifter", 5)
 	_crime.steal(&"drifter", 5)
 	_watch.notice_losses(&"baker", &"market", 6)
 	var saved := _watch.export_state()
+	assert_eq(saved["errands"].size(), 1, "the owner's report is still on its way, and saved")
 	var copy := BustleCrimeWatch.new(BustleCrime.new(_society))
 	assert_true(copy.import_state(saved))
 	assert_eq(copy.export_state(), saved)
@@ -127,6 +130,14 @@ func test_records_save_and_refuse_bad_data() -> void:
 			func(r: Dictionary) -> void: r["decisions"] = {"baker": "shrug"}]:
 		var broken: Dictionary = saved.duplicate(true)
 		change.call(broken["records"][0])
+		bad.append(broken)
+	for change: Callable in [
+			func(e: Dictionary) -> void: e["record"] = 9,
+			func(e: Dictionary) -> void: e["kind"] = "confront",
+			func(e: Dictionary) -> void: e["source"] = "rumour",
+			func(e: Dictionary) -> void: e["knows_thief"] = 1]:
+		var broken: Dictionary = saved.duplicate(true)
+		change.call(broken["errands"][0])
 		bad.append(broken)
 	for entry: Variant in bad:
 		assert_false(copy.import_state(entry), "refuses %s" % [entry])

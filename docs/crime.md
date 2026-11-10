@@ -52,7 +52,7 @@ Afterwards the target is gone. The agent now owns something that eases the need,
   - remembers the thief and the item where it saw them, in its `BustleMemory` if `memory_of(agent)` gives one;
   - gets `witnessed(witness, thief, item, record)`;
   - decides what to do.
-- **Reports**, when a witness or owner decides to report, go to a role, `authority_role` (default `authority`), never to a named agent. `crime_reported(reporter, role, report)` carries the record as the reporter knows it, plus `reporter`, `role`, `authority` (whoever holds the role in the roles port then, maybe nobody) and `reported_at`. Who holds the role, and what follows a report, is the host's.
+- **Reports**, when a witness or owner decides to report, go to a role, `authority_role` (default `authority`), never to a named agent. `crime_reported(reporter, role, report)` carries the record as the reporter knows it, plus `reporter`, `role`, `authority` (the holder it reached), `source` and `reported_at`. A report only counts once it reaches the holder (see "Errands"). Who holds the role, and what follows a report, is the host's.
 - **Deeds.** A theft nobody perceived is a deed, an open trace:
   - `open_deeds()` lists the ones not yet found.
   - `stolen_goods_of(agent)` lists the records of stolen goods an agent still owns, the evidence on it.
@@ -66,10 +66,10 @@ A witness, or an owner who finds a deed, does exactly one thing: `report`, `tell
 
 | Outcome | What happens |
 | --- | --- |
-| `report` | `crime_reported`, at once. |
-| `tell_victim` | `victim_told(witness, owner_id, record)`. |
+| `report` | An errand to the role's holder, then `crime_reported` on arrival. |
+| `tell_victim` | An errand to the victim, then `victim_told(witness, owner_id, record)` on arrival. |
 | `confront` | `confronted(witness, thief, record)`: an accusation, words only. It never starts a fight or sets any intent to harm; if the host lets a scuffle follow, it goes through the conflict rules. |
-| `gossip` | `gossiped(teller, listener, record)`. |
+| `gossip` | An errand to the listener, then `gossiped(teller, listener, record)` on arrival. |
 | `silent` | Nothing more. It still remembers. |
 
 The host can replace the decision with `should_report(agent, case)`, which returns an outcome; anything else counts as `silent`. The case is `{record, thief, owner_id, place, can_confront, gossip_to}`, with the thief empty when the agent doesn't know it.
@@ -106,29 +106,26 @@ The default weights:
 
 So an honest witness (honesty 100) reports. One who also distrusts the authority tells the victim instead, and a hot-tempered one with the thief in reach confronts it. An ordinary witness, or one afraid of the thief, stays silent.
 
-The watch never punishes, fines or harms anyone, and changes nothing about the goods. Arrests, bounties and trials are the host's.
+### Errands
 
-## The property port (`BustlePropertyPort`)
+Reporting, telling the victim and gossiping are errands. The word counts only when the agent reaches whoever it's for, face to face: `can_reach(agent, other)`, by default the same area. Being there already counts at once. `errands_of(agent)` lists an agent's errands, oldest first: `{agent, kind, record, to, source, knows_thief, since, target}`. `target` is who it has to reach now; for a report that's the role's current holder.
 
-The property port records who owns which things and where they are. A host extends it to use its own items. The standalone default is an in-memory register.
+- **The goal:** `BustleCrimeWatch.goal_defs()` gives a `deliver` goal in the guarded band (75), eligible while `fill_inputs(agent, inputs, now)` sets `fact.errand` to 1. Urgent self-care outranks it; orders and duty don't.
+- **The action:** `BustleDeliverAction` (`deliver`) calls `deliver(agent, now)` on the oldest errand. While the agent still has to get there, the action's output names `move_to` (`where(id)`, by default the world port's position of the target's area), `talk_to` and `gear`. The gear is `travel_gear` (default `hurry`), and the host maps it to its own movement gears; `BustleIntent.gear` carries it. Bustle names the destination, and the host moves the body.
+- **`deliver` returns** one of:
+  - `delivered`: the event is emitted;
+  - `travelling`;
+  - `waiting`: nobody holds the role, so the errand stays and the goal isn't eligible until someone does;
+  - `forgot`: the agent's memory of the item has faded below recall, so the errand is dropped with `errand_dropped(agent, errand, &"forgot")` and nothing is reported;
+  - `none`.
+- **Pausing:** `can_travel(agent, now)` returning false (night, fear: the host's call) keeps the goal ineligible. The errand waits.
+- **Intimidation:** `intimidate(thief, witness, now)` drops the witness's errands about that thief's thefts (`errand_dropped(..., &"intimidated")`). The witness still remembers, and `reconsider(agent, id, now)` decides again with that moment's fear and opinions. Nothing here sets any intent to harm; any scuffle is the conflict rules' business.
+- **Second-hand:** a victim who is told, and anyone who hears gossip, learns of the theft, remembers the item and decides in turn. So the authority can hear of it second-hand.
+- **Sources:** every report carries `source`:
+  - `eyewitness`: the reporter saw it;
+  - `secondhand`: the reporter was told;
+  - `owner_deed`: the owner found it gone and doesn't know the thief.
 
-| Method | What |
-| --- | --- |
-| `register(id, owner_id, place, relieves, protected)` | Adds an item. `relieves` is need → amount. A protected item can never be taken. |
-| `item(id)`, `owner_of(id)`, `items_at(place)` | Read the register. |
-| `is_protected(id)`, `set_protected(id, protected)` | A host marks its own protected things (keepsakes, things a story needs). |
-| `items_of(owner_id)` | Every item an owner owns, wherever it is. |
-| `remove(id)` | The host uses up or destroys an item (eaten, broken). Theft never calls it. |
-| `transfer(id, from, to)` | Moves an item from its owner. It refuses protected items and items not owned by `from`. Only the owner changes: the item stays at its place until the host moves it. |
-| `export_state()`, `import_state(saved)` | Plain data, in id order. Import is all or nothing. |
-
-Only registered items can be stolen. A host's shop stock, for example, is out of reach unless the host registers those items too.
-
-## Settings (`BustleCrimeConfig`)
-
-| Setting | Default |
-| --- | --- |
-| `needs` | `food` |
-| `min_need` | 0.6 |
-| `threshold` | 1.0 |
-| `slider_weights` | honesty −2, greed +1, boldness +1 |
+  How much to trust each is the host's.
+- **Instant:** `instant` delivers every errand the moment it's decided, with no travel. It's for developers and tests only, and off unless the project setting `bustle/simulation/instant_crime_reports` is on. It isn't a game option.
+- **Saving:** errands save and load with the records.

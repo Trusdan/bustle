@@ -32,6 +32,9 @@ var move_to: Vector3 = Vector3.ZERO
 var has_move_to: bool = false
 ## How fast to move, in metres a second (0 when not set).
 var speed: float = 0.0
+## Which movement gear to move in (for example hurry), or empty: the host maps it to its own
+## gears, so speed comes from the character, not from Bustle.
+var gear: StringName = &""
 ## Where to face, when [member has_face].
 var face: Vector3 = Vector3.ZERO
 ## True when the step asks to face somewhere.
@@ -57,7 +60,7 @@ func to_dictionary() -> Dictionary:
 		"goal": goal_id, "order": order_id, "player_controlled": player_controlled,
 		"order_results": order_results.duplicate(true), "option": option_id, "band": band, "score": score,
 		"idle": idle, "action": action,
-		"move_to": move_to if has_move_to else null, "speed": speed, "face": face if has_face else null,
+		"move_to": move_to if has_move_to else null, "speed": speed, "gear": gear, "face": face if has_face else null,
 		"attack_target": attack_target, "use_affordance": use_affordance, "talk_to": talk_to,
 		"animation": animation, "failure": failure.duplicate(true), "reasons": reasons.duplicate(true),
 	}
@@ -78,6 +81,7 @@ func read_output(output: Dictionary) -> void:
 	attack_target = _name(output, "attack_target")
 	use_affordance = _name(output, "use_affordance")
 	talk_to = _name(output, "talk_to")
+	gear = _name(output, "gear")
 	animation = _name(output, "animation")
 
 
