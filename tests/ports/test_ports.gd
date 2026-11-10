@@ -5,7 +5,7 @@ extends GutTest
 
 func test_bustle_ports_starts_with_every_default() -> void:
 	var ports := BustlePorts.new()
-	assert_eq(BustlePorts.NAMES.size(), 13)
+	assert_eq(BustlePorts.NAMES.size(), 14)
 	assert_eq(ports.missing(), PackedStringArray())
 	ports.trade = null
 	assert_eq(ports.missing(), PackedStringArray(["trade"]))

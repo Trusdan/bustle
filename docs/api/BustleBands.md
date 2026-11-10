@@ -26,6 +26,14 @@ const URGENT = 80
 
 Pressing matters: investigate a noise, help someone in trouble, eat when starving.
 
+### `GUARDED`
+
+```gdscript
+const GUARDED = 75
+```
+
+Desperate acts under guards, such as theft: below urgent self-care, above orders and duty. A goal here is offered only when its guards pass (see [BustleCrime](BustleCrime.md)).
+
 ### `ORDERED`
 
 ```gdscript

@@ -13,7 +13,7 @@ One of each port, starting with every standalone default, so Bustle runs with no
 ### `NAMES`
 
 ```gdscript
-const NAMES = PackedStringArray("social", "roles", "world", "clock", "combat", "trade", "disposition", "work", "skills", "life_stages", "health", "environment", "director")
+const NAMES = PackedStringArray("social", "roles", "world", "clock", "combat", "trade", "disposition", "work", "skills", "life_stages", "health", "environment", "director", "property")
 ```
 
 The port names, in a fixed order.
@@ -123,6 +123,14 @@ var director: BustleDirectorPort = <unknown>
 ```
 
 Event pacing.
+
+### `property`
+
+```gdscript
+var property: BustlePropertyPort = <unknown>
+```
+
+Who owns which things, and where they are.
 
 ## Methods
 

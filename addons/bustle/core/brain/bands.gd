@@ -11,6 +11,9 @@ extends RefCounted
 const CRITICAL := 100
 ## Pressing matters: investigate a noise, help someone in trouble, eat when starving.
 const URGENT := 80
+## Desperate acts under guards, such as theft: below urgent self-care, above orders and duty. A
+## goal here is offered only when its guards pass (see [BustleCrime]).
+const GUARDED := 75
 ## A player or quest order: below urgent self-care, above duty.
 const ORDERED := 70
 ## A forced order: above everything, danger included.
@@ -33,6 +36,8 @@ static func name_of(band: int) -> String:
 			return "CRITICAL"
 		URGENT:
 			return "URGENT"
+		GUARDED:
+			return "GUARDED"
 		ORDERED:
 			return "ORDERED"
 		DUTY:

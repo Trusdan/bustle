@@ -32,11 +32,13 @@ var health := BustleHealthPort.new()
 var environment := BustleEnvironmentPort.new()
 ## Event pacing.
 var director := BustleDirectorPort.new()
+## Who owns which things, and where they are.
+var property := BustlePropertyPort.new()
 
 ## The port names, in a fixed order.
 const NAMES: PackedStringArray = [
 	"social", "roles", "world", "clock", "combat", "trade", "disposition",
-	"work", "skills", "life_stages", "health", "environment", "director",
+	"work", "skills", "life_stages", "health", "environment", "director", "property",
 ]
 
 
