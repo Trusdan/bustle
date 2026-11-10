@@ -72,6 +72,37 @@ func test_face_to_face_counts_at_once_and_a_vacant_role_waits() -> void:
 	assert_eq(_events[-1][2]["authority"], "drifter")
 
 
+func test_a_waiting_report_never_holds_up_the_next_errand() -> void:
+	_society.ports.roles.set_holder(BustleCrimeWatch.AUTHORITY, &"")
+	_steal(10)
+	_watch.judge.standing_of = func(_w: StringName) -> float: return 0.0
+	_society.ports.property.register(&"bun", &"baker", &"market", {&"food": 0.3})
+	_steal(20)
+	assert_eq(_watch.errands_of(&"witness").map(func(e: Dictionary) -> Array: return [e["kind"], e["record"], e["target"]]),
+		[["report", 1, ""], ["tell_victim", 2, "baker"]], "a report waiting on the empty role, then word for the victim")
+	var brain := _brain()
+	var intent := _tick(brain, 21)
+	assert_eq([intent.goal_id, intent.talk_to], [&"deliver", &"baker"], "it sets out with the errand it can do")
+	_society.get_agent(&"witness").area = &"bakery"
+	_tick(brain, 40)
+	assert_eq(_names().count("victim_told"), 1, "and delivers it")
+	assert_eq(_watch.errands_of(&"witness").map(func(e: Dictionary) -> String: return e["kind"]), ["report"])
+	assert_eq(_watch.deliver(&"witness", 41), {"state": &"waiting", "target": &""})
+	assert_eq([_inputs(&"witness", 42), _tick(brain, 42).goal_id], [{}, &"work"], "with only the waiting report left, it goes back to work")
+	assert_eq(_names().count("crime_reported"), 0)
+	var later := 10 + 15 * 1440
+	_watch.judge.standing_of = Callable()
+	_society.ports.roles.set_holder(BustleCrimeWatch.AUTHORITY, &"warden")
+	_society.ports.property.register(&"cake", &"baker", &"market", {&"food": 0.2})
+	_society.get_agent(&"witness").area = &"market"
+	_steal(later)
+	_society.get_agent(&"witness").area = &"hall"
+	assert_eq(_watch.deliver(&"witness", later)["state"], &"forgot", "the old report, faded while it waited, is dropped first")
+	assert_eq(_watch.deliver(&"witness", later), {"state": &"delivered", "target": &"warden"}, "then the fresh one is delivered")
+	assert_eq([_names().count("crime_reported"), _events[-1][2]["item"]], [1, "cake"])
+	assert_eq(_watch.errands_of(&"witness"), [] as Array[Dictionary])
+
+
 func test_a_forgotten_errand_reports_nothing() -> void:
 	_society.ports.roles.set_holder(BustleCrimeWatch.AUTHORITY, &"")
 	_steal(10)
@@ -138,6 +169,23 @@ func test_instant_reports_are_a_developer_option_off_by_default() -> void:
 
 
 func test_a_brain_delivers_in_the_guarded_band() -> void:
+	var brain := _brain()
+	_steal(10)
+	var night := [true]
+	_watch.can_travel = func(_a: StringName, _now: int) -> bool: return not night[0]
+	assert_eq(_tick(brain, 11).goal_id, &"work", "at night it waits")
+	night[0] = false
+	var intent := _tick(brain, 12)
+	assert_eq([intent.goal_id, intent.band, intent.move_to, intent.talk_to, intent.gear], [&"deliver", BustleBands.GUARDED, Vector3(40, 0, 0), &"warden", &"hurry"],
+		"by day it hurries to the authority, ahead of its work")
+	assert_true(_names().count("crime_reported") == 0)
+	_society.get_agent(&"witness").area = &"hall"
+	_tick(brain, 40)
+	assert_eq(_names().count("crime_reported"), 1)
+	assert_eq(_tick(brain, 41).goal_id, &"work", "word delivered, back to work")
+
+
+func _brain() -> BustleBrain:
 	var library := BustleGoalLibrary.new()
 	var work := BustleGoalDef.new()
 	work.id = &"work"
@@ -153,19 +201,7 @@ func test_a_brain_delivers_in_the_guarded_band() -> void:
 	var runner := BustleSequenceRunner.new()
 	runner.register(&"deliver", BustleDeliverAction.new(_watch))
 	brain.runner.share_handlers_with(runner)
-	_steal(10)
-	var night := [true]
-	_watch.can_travel = func(_a: StringName, _now: int) -> bool: return not night[0]
-	assert_eq(_tick(brain, 11).goal_id, &"work", "at night it waits")
-	night[0] = false
-	var intent := _tick(brain, 12)
-	assert_eq([intent.goal_id, intent.band, intent.move_to, intent.talk_to, intent.gear], [&"deliver", BustleBands.GUARDED, Vector3(40, 0, 0), &"warden", &"hurry"],
-		"by day it hurries to the authority, ahead of its work")
-	assert_true(_names().count("crime_reported") == 0)
-	_society.get_agent(&"witness").area = &"hall"
-	_tick(brain, 40)
-	assert_eq(_names().count("crime_reported"), 1)
-	assert_eq(_tick(brain, 41).goal_id, &"work", "word delivered, back to work")
+	return brain
 
 
 func _tick(brain: BustleBrain, now: int) -> BustleIntent:

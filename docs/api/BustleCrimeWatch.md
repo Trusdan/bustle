@@ -314,8 +314,7 @@ Sets `INPUT` to 1 while `agent` has an errand with someone to reach and can go o
 func deliver(agent: StringName, now: int) -> Dictionary
 ```
 
-`agent` goes on with its oldest errand at minute `now`. Returns `{state,
-target}`: `delivered` when it reached the target face to face (the event is emitted then), `travelling` when it still has to get there, `waiting` when there's nobody to reach (the errand stays), `forgot` when its memory of the item has faded (dropped, nothing emitted) or `none`.
+`agent` goes on with its oldest errand that has someone to reach, at minute `now`. Errands still waiting (nobody holds the role) are skipped, so they never hold up the rest; any errand whose item the agent no longer remembers is dropped on the way, waiting or not. Returns `{state, target}`: `delivered` when it reached the target face to face (the event is emitted then), `travelling` when it still has to get there, `forgot` when it dropped a faded errand (nothing emitted), `waiting` when every errand left is waiting, or `none`.
 
 ### `position_of`
 

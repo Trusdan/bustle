@@ -227,31 +227,35 @@ func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float], now: 
 			return
 
 
-## [param agent] goes on with its oldest errand at minute [param now]. Returns [code]{state,
-## target}[/code]: [code]delivered[/code] when it reached the target face to face (the event is
-## emitted then), [code]travelling[/code] when it still has to get there, [code]waiting[/code] when
-## there's nobody to reach (the errand stays), [code]forgot[/code] when its memory of the item has
-## faded (dropped, nothing emitted) or [code]none[/code].
+## [param agent] goes on with its oldest errand that has someone to reach, at minute [param now].
+## Errands still waiting (nobody holds the role) are skipped, so they never hold up the rest; any
+## errand whose item the agent no longer remembers is dropped on the way, waiting or not.
+## Returns [code]{state, target}[/code]: [code]delivered[/code] when it reached the target face
+## to face (the event is emitted then), [code]travelling[/code] when it still has to get there,
+## [code]forgot[/code] when it dropped a faded errand (nothing emitted), [code]waiting[/code] when
+## every errand left is waiting, or [code]none[/code].
 ## @experimental
 func deliver(agent: StringName, now: int) -> Dictionary:
-	var index := _errands.find_custom(func(e: Dictionary) -> bool: return StringName(e["agent"]) == agent)
-	if index < 0:
-		return {"state": &"none", "target": &""}
-	var errand := _errands[index]
 	var memory: Variant = memory_of.call(agent) if memory_of.is_valid() else null
-	if memory is BustleMemory and (memory as BustleMemory).recall(BustleMemory.ITEM,
-			StringName(_records[int(errand["record"])]["item"]), now).is_empty():
-		_errands.remove_at(index)
-		errand_dropped.emit(agent, errand, &"forgot")
-		return {"state": &"forgot", "target": &""}
-	var target := _target(errand)
-	if target == &"":
-		return {"state": &"waiting", "target": target}
-	if not _reaches(agent, target):
-		return {"state": &"travelling", "target": target}
-	_errands.remove_at(index)
-	_complete(errand, target, now)
-	return {"state": &"delivered", "target": target}
+	var waiting := false
+	for errand: Dictionary in _errands.duplicate():
+		if StringName(errand["agent"]) != agent:
+			continue
+		if memory is BustleMemory and (memory as BustleMemory).recall(BustleMemory.ITEM,
+				StringName(_records[int(errand["record"])]["item"]), now).is_empty():
+			_errands.erase(errand)
+			errand_dropped.emit(agent, errand, &"forgot")
+			return {"state": &"forgot", "target": &""}
+		var target := _target(errand)
+		if target == &"":
+			waiting = true
+			continue
+		if not _reaches(agent, target):
+			return {"state": &"travelling", "target": target}
+		_errands.erase(errand)
+		_complete(errand, target, now)
+		return {"state": &"delivered", "target": target}
+	return {"state": &"waiting" if waiting else &"none", "target": &""}
 
 
 ## Where [param id] is now, for moving towards it ([member where]), or null.

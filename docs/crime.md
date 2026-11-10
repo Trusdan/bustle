@@ -111,15 +111,15 @@ So an honest witness (honesty 100) reports. One who also distrusts the authority
 Reporting, telling the victim and gossiping are errands. The word counts only when the agent reaches whoever it's for, face to face: `can_reach(agent, other)`, by default the same area. Being there already counts at once. `errands_of(agent)` lists an agent's errands, oldest first: `{agent, kind, record, to, source, knows_thief, since, target}`. `target` is who it has to reach now; for a report that's the role's current holder.
 
 - **The goal:** `BustleCrimeWatch.goal_defs()` gives a `deliver` goal in the guarded band (75), eligible while `fill_inputs(agent, inputs, now)` sets `fact.errand` to 1. Urgent self-care outranks it; orders and duty don't.
-- **The action:** `BustleDeliverAction` (`deliver`) calls `deliver(agent, now)` on the oldest errand. While the agent still has to get there, the action's output names `move_to` (`where(id)`, by default the world port's position of the target's area), `talk_to` and `gear`. The gear is `travel_gear` (default `hurry`), and the host maps it to its own movement gears; `BustleIntent.gear` carries it. Bustle names the destination, and the host moves the body.
+- **The action:** `BustleDeliverAction` (`deliver`) calls `deliver(agent, now)`, which goes on with the oldest errand that has someone to reach. Errands still waiting are skipped, so they never hold up the rest. While the agent still has to get there, the action's output names `move_to` (`where(id)`, by default the world port's position of the target's area), `talk_to` and `gear`. The gear is `travel_gear` (default `hurry`), and the host maps it to its own movement gears; `BustleIntent.gear` carries it. Bustle names the destination, and the host moves the body.
 - **`deliver` returns** one of:
   - `delivered`: the event is emitted;
   - `travelling`;
-  - `waiting`: nobody holds the role, so the errand stays and the goal isn't eligible until someone does;
-  - `forgot`: the agent's memory of the item has faded below recall, so the errand is dropped with `errand_dropped(agent, errand, &"forgot")` and nothing is reported;
+  - `waiting`: every errand left is waiting on an empty role, so they stay and the goal isn't eligible until someone holds it;
+  - `forgot`: the agent's memory of the item has faded below recall, so the errand is dropped with `errand_dropped(agent, errand, &"forgot")` and nothing is reported. Memory is checked only when `deliver` runs, and it checks waiting errands too. An errand that faded while the role was empty is dropped at the first try after that, never delivered;
   - `none`.
 - **Pausing:** `can_travel(agent, now)` returning false (night, fear: the host's call) keeps the goal ineligible. The errand waits.
-- **Intimidation:** `intimidate(thief, witness, now)` drops the witness's errands about that thief's thefts (`errand_dropped(..., &"intimidated")`). The witness still remembers, and `reconsider(agent, id, now)` decides again with that moment's fear and opinions. Nothing here sets any intent to harm; any scuffle is the conflict rules' business.
+- **Intimidation:** `intimidate(thief, witness, now)` drops every errand the witness has about that thief's thefts, whether it's a report, word for the victim or gossip (`errand_dropped(..., &"intimidated")`). The witness still remembers, and `reconsider(agent, id, now)` decides again with that moment's fear and opinions. Nothing here sets any intent to harm; any scuffle is the conflict rules' business.
 - **Second-hand:** a victim who is told, and anyone who hears gossip, learns of the theft, remembers the item and decides in turn. So the authority can hear of it second-hand.
 - **Sources:** every report carries `source`:
   - `eyewitness`: the reporter saw it;
@@ -127,5 +127,6 @@ Reporting, telling the victim and gossiping are errands. The word counts only wh
   - `owner_deed`: the owner found it gone and doesn't know the thief.
 
   How much to trust each is the host's.
-- **Instant:** `instant` delivers every errand the moment it's decided, with no travel. It's for developers and tests only, and off unless the project setting `bustle/simulation/instant_crime_reports` is on. It isn't a game option.
+- **Targets that aren't agents:** a target that isn't an agent of the society (the host's own character, say) is never reached by default. A host with such targets sets `can_reach` and `where`; otherwise the errand stays `travelling`.
+- **Instant:** `instant` delivers every errand the moment it's decided, with no travel. It's for developers and tests only, and off unless the project setting `bustle/simulation/instant_crime_reports` is on. A watch reads the setting when it's created. It isn't a game option.
 - **Saving:** errands save and load with the records.
