@@ -44,8 +44,9 @@ var exempt: Array[StringName] = []
 var personality_of: Callable = Callable()
 ## (id) → that agent's [BustleNeedSet], or null (no needs, so no theft).
 var needs_of: Callable = Callable()
-## (thief, place) → true when someone would see a theft there. Empty: someone would whenever
-## another agent of the society is in that area.
+## (thief, place) → true when the thief judges someone would see a theft there. Empty: whenever
+## another agent of the society who isn't incapacitated (the health port) is in that area. Who
+## really perceived a theft is [BustleCrimeWatch]'s business.
 var is_observed: Callable = Callable()
 ## (id) → true while the host holds that agent to a story or task. Empty: never.
 var is_locked: Callable = Callable()
@@ -203,6 +204,6 @@ func _observed(agent: StringName, area: StringName) -> bool:
 	if is_observed.is_valid():
 		return bool(is_observed.call(agent, area))
 	for other: StringName in society.agent_ids():
-		if other != agent and society.get_agent(other).area == area:
+		if other != agent and society.get_agent(other).area == area and not society.ports.health.is_incapacitated(other):
 			return true
 	return false

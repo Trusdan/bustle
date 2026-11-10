@@ -91,7 +91,7 @@ var needs_of: Callable = Callable()
 var is_observed: Callable = Callable()
 ```
 
-(thief, place) → true when someone would see a theft there. Empty: someone would whenever another agent of the society is in that area.
+(thief, place) → true when the thief judges someone would see a theft there. Empty: whenever another agent of the society who isn't incapacitated (the health port) is in that area. Who really perceived a theft is [BustleCrimeWatch](BustleCrimeWatch.md)'s business.
 
 ### `is_locked`
 

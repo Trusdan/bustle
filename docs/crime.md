@@ -17,7 +17,7 @@ Crime (`addons/bustle/core/crime/`) covers desperate theft. Nothing in it is lef
    - is owned by someone else;
    - isn't protected;
    - eases the need;
-   - isn't seen. By default it's seen when any other agent of the society is in that area. The default counts every agent there, including ones asleep or dead, so it errs towards not stealing. A host can replace that with `is_observed(thief, area)`; who can actually perceive a theft comes with witnesses.
+   - isn't seen, as far as the thief can tell. By default it's seen when any other agent of the society who isn't incapacitated (the health port) is in that area. A host can replace that judgement with `is_observed(thief, area)`, which may be wrong: who really perceived a theft is up to the crime watch (below).
 
    The item that eases the need most is chosen (ties by id).
 
@@ -40,6 +40,27 @@ Afterwards the target is gone. The agent now owns something that eases the need,
 - **It never makes anyone mean to kill.** Nothing here engages the combat port. Any scuffle that follows goes through the conflict rules (see `docs/conflict.md`).
 - **It decides nothing that follows.** `theft` is a neutral event, and the host decides what comes of it.
 
+## After a theft (`BustleCrimeWatch`)
+
+`BustleCrimeWatch.new(crime)` follows every `theft` and keeps a record of it: `{id, thief, owner_id, item, place, at, witnesses, known_by, reporters, deed, found_at}`. Every theft is witnessed, reported and remembered, or it leaves a deed.
+
+- **Witnesses.** An agent witnesses a theft only if `perceives(agent, thief, place)` says it perceived it. By default that's every other agent in the place who isn't incapacitated. There are no made-up witnesses.
+  - With both defaults, a thief only steals where nobody can perceive it, so every theft is a deed.
+  - Witnesses come from the gap between what the thief judged (`BustleCrime.is_observed`) and what was really perceived (`perceives`). A host using the perception module, for example, gives the thief its own awareness and the watch the onlookers' awareness, so an onlooker the thief missed sees it.
+- **Each witness:**
+  - knows of it (`known_by`);
+  - remembers the thief and the item where it saw them, in its `BustleMemory` if `memory_of(agent)` gives one;
+  - gets `witnessed(witness, thief, item, record)`;
+  - reports it.
+- **Reports** go to a role, `authority_role` (default `authority`), never to a named agent. `crime_reported(reporter, role, report)` carries the record as the reporter knows it, plus `reporter`, `role`, `authority` (whoever holds the role in the roles port then, maybe nobody) and `reported_at`. Who holds the role, and what follows a report, is the host's.
+- **Deeds.** A theft nobody perceived is a deed, an open trace:
+  - `open_deeds()` lists the ones not yet found.
+  - `stolen_goods_of(agent)` lists the records of stolen goods an agent still owns, the evidence on it.
+  - The host calls `notice_losses(owner_id, place, now)` when an owner is somewhere, for example each tick. It finds what was stolen from that owner there, emits `deed_found(finder, item, record)`, and the owner reports it. The owner doesn't know the thief, so its report's `thief` is empty.
+- **Saving:** `export_state()` and `import_state(saved)` (all or nothing).
+
+The watch never punishes, fines or harms anyone, and changes nothing about the goods. Arrests, bounties and trials are the host's.
+
 ## The property port (`BustlePropertyPort`)
 
 The property port records who owns which things and where they are. A host extends it to use its own items. The standalone default is an in-memory register.
@@ -50,6 +71,7 @@ The property port records who owns which things and where they are. A host exten
 | `item(id)`, `owner_of(id)`, `items_at(place)` | Read the register. |
 | `is_protected(id)`, `set_protected(id, protected)` | A host marks its own protected things (keepsakes, things a story needs). |
 | `items_of(owner_id)` | Every item an owner owns, wherever it is. |
+| `remove(id)` | The host uses up or destroys an item (eaten, broken). Theft never calls it. |
 | `transfer(id, from, to)` | Moves an item from its owner. It refuses protected items and items not owned by `from`. Only the owner changes: the item stays at its place until the host moves it. |
 | `export_state()`, `import_state(saved)` | Plain data, in id order. Import is all or nothing. |
 
