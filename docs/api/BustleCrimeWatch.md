@@ -8,7 +8,7 @@ Inherits: `RefCounted`
 
 What becomes of each theft: who perceived it, who it's reported to, and the deed it leaves when nobody did. Every `BustleCrime.theft` becomes a record, and every record is either witnessed or a deed (an open trace that its owner finds later, and that the stolen goods themselves point to). Each witness, and an owner who finds a deed, remembers it and then decides what to do about it: one of `BustleWitnessJudge.OUTCOMES` (`should_report`).
 There are no made-up witnesses: an agent witnesses a theft only when `perceives` says it perceived it. By default that's every other agent in the place who isn't incapacitated (the health port). The thief's own judgement (`BustleCrime.is_observed`) can be wrong when the host gives it one, for example an onlooker the thief didn't notice, so a theft can have witnesses. With both defaults, a thief only steals where nobody can perceive it, so every theft is a deed.
-Reports go to a role (`authority_role`), never to a named agent: the host decides who holds it (the roles port) and what follows. A report is made at once. Confronting, telling the victim and gossiping are only events: a confrontation is words, never a fight or an intent to harm. Nothing here punishes, fines or harms anyone.
+Reports go to a role (`authority_role`), never to a named agent: the host decides who holds it (the roles port) and what follows. Reporting, telling the victim and gossiping are errands: the word counts only when the agent reaches whoever it's for, face to face (`deliver()`, run by the `deliver` goal in the guarded band). Until then the errand can wait (nobody holds the role), pause (`can_travel`), be forgotten (its memory fades) or be dropped under `intimidate()`. Whoever hears it second-hand learns of the theft and decides in turn. `instant` delivers at once instead, for developers and tests only. A confrontation is words, never a fight or an intent to harm. Nothing here punishes, fines or harms anyone.
 
 ## Signals
 
@@ -26,7 +26,7 @@ signal witnessed(witness: StringName, thief: StringName, item: StringName, recor
 signal crime_reported(reporter: StringName, role: StringName, report: Dictionary)
 ```
 
-`reporter` reported a theft to `role`. `report`: the record as the reporter knows it, plus `reporter`, `role`, `authority` (the role's holder then, maybe empty) and `reported_at`. The thief is empty when the reporter doesn't know who it was.
+`reporter` reported a theft to `role`. `report`: the record as the reporter knows it, plus `reporter`, `role`, `authority` (the role's holder it reached, maybe empty only when `instant`), `source` (one of `SOURCES`) and `reported_at`. The thief is empty when the reporter doesn't know who it was.
 
 ### `deed_found`
 
@@ -68,6 +68,14 @@ signal gossiped(teller: StringName, listener: StringName, record: Dictionary)
 
 `teller` told `listener` about the theft.
 
+### `errand_dropped`
+
+```gdscript
+signal errand_dropped(agent: StringName, errand: Dictionary, reason: StringName)
+```
+
+`agent` gave up `errand` (see `errands_of()`): `forgot` or `intimidated`. It still knows of the theft.
+
 ## Constants
 
 ### `AUTHORITY`
@@ -77,6 +85,54 @@ const AUTHORITY = &"authority"
 ```
 
 The default role reports go to.
+
+### `INSTANT_SETTING`
+
+```gdscript
+const INSTANT_SETTING = "bustle/simulation/instant_crime_reports"
+```
+
+The project setting a developer or a test turns `instant` on with (default off). It isn't a game option.
+
+### `INPUT`
+
+```gdscript
+const INPUT = &"fact.errand"
+```
+
+The brain input that's 1 while the agent has an errand it can go on.
+
+### `EYEWITNESS`
+
+```gdscript
+const EYEWITNESS = &"eyewitness"
+```
+
+The reporter saw it.
+
+### `SECONDHAND`
+
+```gdscript
+const SECONDHAND = &"secondhand"
+```
+
+The reporter heard it from someone (the victim it was told to, or gossip).
+
+### `OWNER_DEED`
+
+```gdscript
+const OWNER_DEED = &"owner_deed"
+```
+
+The reporter is the owner who found it gone, not knowing the thief.
+
+### `SOURCES`
+
+```gdscript
+const SOURCES = Array[StringName]([&"eyewitness", &"secondhand", &"owner_deed"])
+```
+
+Where a report's knowledge came from.
 
 ## Properties
 
@@ -144,6 +200,38 @@ var gossip_to: Callable = Callable()
 
 (agent, record) → who `agent` would gossip to, or empty (then it can't). Empty: nobody.
 
+### `instant`
+
+```gdscript
+var instant: bool = bool(...)
+```
+
+True: reports, telling the victim and gossip are delivered the moment they're decided, without travel. For developers and tests; off unless `INSTANT_SETTING` is on.
+
+### `can_travel`
+
+```gdscript
+var can_travel: Callable = Callable()
+```
+
+(agent, now) → false while the agent can't go on its errands (night, fear: the host's call). Empty: it always can.
+
+### `where`
+
+```gdscript
+var where: Callable = Callable()
+```
+
+(id) → where that agent or person is now (a `Vector3`), or null. Empty: the world port's position of its area.
+
+### `travel_gear`
+
+```gdscript
+var travel_gear: StringName = &"hurry"
+```
+
+The movement gear an errand asks for (`gear` in the action output).
+
 ## Methods
 
 ### `record`
@@ -203,6 +291,55 @@ func notice_losses(owner_id: StringName, place: StringName, now: int) -> int[]
 
 `owner_id`, at `place` at minute `now`, finds what was stolen from it there and nobody saw go: each such deed is found, the owner knows of it and remembers the item there, `deed_found` is emitted, and the owner decides what to do (not knowing the thief). Returns the record ids found.
 
+### `errands_of`
+
+```gdscript
+func errands_of(agent: StringName) -> Dictionary[]
+```
+
+`agent`'s errands, oldest first: `{agent, kind, record, to, source, knows_thief,
+since, target}`. `kind` is report, tell_victim or gossip; `target` is who it must reach now (for a report, the role's holder, empty while nobody holds it).
+
+### `fill_inputs`
+
+```gdscript
+func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float], now: int) -> void
+```
+
+Sets `INPUT` to 1 while `agent` has an errand with someone to reach and can go on it at minute `now`; erases it otherwise.
+
+### `deliver`
+
+```gdscript
+func deliver(agent: StringName, now: int) -> Dictionary
+```
+
+`agent` goes on with its oldest errand that has someone to reach, at minute `now`. Errands still waiting (nobody holds the role) are skipped, so they never hold up the rest; any errand whose item the agent no longer remembers is dropped on the way, waiting or not. Returns `{state, target}`: `delivered` when it reached the target face to face (the event is emitted then), `travelling` when it still has to get there, `forgot` when it dropped a faded errand (nothing emitted), `waiting` when every errand left is waiting, or `none`.
+
+### `position_of`
+
+```gdscript
+func position_of(id: StringName) -> Variant
+```
+
+Where `id` is now, for moving towards it (`where`), or null.
+
+### `intimidate`
+
+```gdscript
+func intimidate(thief: StringName, witness: StringName, _now: int) -> int
+```
+
+`thief` faces down `witness` at minute `now`: the witness drops its errands about that thief's thefts. It still remembers, and can decide again later (`reconsider()`). Nothing here harms anyone. Returns how many errands were dropped.
+
+### `reconsider`
+
+```gdscript
+func reconsider(agent: StringName, id: int, now: int) -> StringName
+```
+
+`agent` decides again about record `id` at minute `now`, with the same judge and today's inputs (fear, opinions). Only for a record it knows of and has no errand about. Returns the outcome, or empty when it can't.
+
 ### `export_state`
 
 ```gdscript
@@ -218,3 +355,11 @@ func import_state(saved: Variant) -> bool
 ```
 
 Restores `export_state()`. False (and nothing changes) when malformed.
+
+### `goal_defs`
+
+```gdscript
+static func goal_defs() -> BustleGoalDef[]
+```
+
+The goal that runs errands: `deliver` in `BustleBands.GUARDED`, eligible while `INPUT` is 1, running the `deliver` action ([BustleDeliverAction](BustleDeliverAction.md)). Urgent self-care outranks it; orders and duty don't.

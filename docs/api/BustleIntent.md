@@ -106,6 +106,14 @@ var speed: float = 0.0
 
 How fast to move, in metres a second (0 when not set).
 
+### `gear`
+
+```gdscript
+var gear: StringName = &""
+```
+
+Which movement gear to move in (for example hurry), or empty: the host maps it to its own gears, so speed comes from the character, not from Bustle.
+
 ### `face`
 
 ```gdscript

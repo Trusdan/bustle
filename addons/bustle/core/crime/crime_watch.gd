@@ -16,17 +16,23 @@ extends RefCounted
 ## is a deed.
 ## [br][br]
 ## Reports go to a role ([member authority_role]), never to a named agent: the host decides who
-## holds it (the roles port) and what follows. A report is made at once. Confronting, telling the
-## victim and gossiping are only events: a confrontation is words, never a fight or an intent to
-## harm. Nothing here punishes, fines or harms anyone.
+## holds it (the roles port) and what follows. Reporting, telling the victim and gossiping are
+## errands: the word counts only when the agent reaches whoever it's for, face to face
+## ([method deliver], run by the [code]deliver[/code] goal in the guarded band). Until then the
+## errand can wait (nobody holds the role), pause ([member can_travel]), be forgotten (its
+## memory fades) or be dropped under [method intimidate]. Whoever hears it second-hand learns of
+## the theft and decides in turn. [member instant] delivers at once instead, for developers and
+## tests only. A confrontation is words, never a fight or an intent to harm. Nothing here
+## punishes, fines or harms anyone.
 ## @experimental
 
 ## [param witness] perceived [param thief] taking [param item]. [param record]: see [method record].
 signal witnessed(witness: StringName, thief: StringName, item: StringName, record: Dictionary)
 ## [param reporter] reported a theft to [param role]. [param report]: the record as the reporter
 ## knows it, plus [code]reporter[/code], [code]role[/code], [code]authority[/code] (the role's
-## holder then, maybe empty) and [code]reported_at[/code]. The thief is empty when the reporter
-## doesn't know who it was.
+## holder it reached, maybe empty only when [member instant]), [code]source[/code] (one of
+## [constant SOURCES]) and [code]reported_at[/code]. The thief is empty when the reporter doesn't
+## know who it was.
 signal crime_reported(reporter: StringName, role: StringName, report: Dictionary)
 ## [param finder], the owner, found [param item] gone: a deed came to light.
 signal deed_found(finder: StringName, item: StringName, record: Dictionary)
@@ -39,9 +45,26 @@ signal confronted(witness: StringName, thief: StringName, record: Dictionary)
 signal victim_told(witness: StringName, owner_id: StringName, record: Dictionary)
 ## [param teller] told [param listener] about the theft.
 signal gossiped(teller: StringName, listener: StringName, record: Dictionary)
+## [param agent] gave up [param errand] (see [method errands_of]): [code]forgot[/code] or
+## [code]intimidated[/code]. It still knows of the theft.
+signal errand_dropped(agent: StringName, errand: Dictionary, reason: StringName)
 
 ## The default role reports go to.
 const AUTHORITY := &"authority"
+## The project setting a developer or a test turns [member instant] on with (default off). It
+## isn't a game option.
+const INSTANT_SETTING := "bustle/simulation/instant_crime_reports"
+## The brain input that's 1 while the agent has an errand it can go on.
+const INPUT := &"fact.errand"
+## The reporter saw it.
+const EYEWITNESS := &"eyewitness"
+## The reporter heard it from someone (the victim it was told to, or gossip).
+const SECONDHAND := &"secondhand"
+## The reporter is the owner who found it gone, not knowing the thief.
+const OWNER_DEED := &"owner_deed"
+## Where a report's knowledge came from.
+const SOURCES: Array[StringName] = [EYEWITNESS, SECONDHAND, OWNER_DEED]
+const _ERRANDS: Array[StringName] = [&"report", &"tell_victim", &"gossip"]
 
 ## The crime whose thefts this follows.
 var crime: BustleCrime
@@ -65,8 +88,20 @@ var can_reach: Callable = Callable()
 ## (agent, record) → who [code]agent[/code] would gossip to, or empty (then it can't).
 ## Empty: nobody.
 var gossip_to: Callable = Callable()
+## True: reports, telling the victim and gossip are delivered the moment they're decided, without
+## travel. For developers and tests; off unless [constant INSTANT_SETTING] is on.
+var instant: bool = bool(ProjectSettings.get_setting(INSTANT_SETTING, false))
+## (agent, now) → false while the agent can't go on its errands (night, fear: the host's call).
+## Empty: it always can.
+var can_travel: Callable = Callable()
+## (id) → where that agent or person is now (a [Vector3]), or null. Empty: the world port's
+## position of its area.
+var where: Callable = Callable()
+## The movement gear an errand asks for ([code]gear[/code] in the action output).
+var travel_gear: StringName = &"hurry"
 
 var _records: Dictionary[int, Dictionary] = {}
+var _errands: Array[Dictionary] = []
 var _next_id: int = 1
 
 
@@ -161,14 +196,110 @@ func notice_losses(owner_id: StringName, place: StringName, now: int) -> Array[i
 		_note(owner_id, BustleMemory.ITEM, StringName(row["item"]), place, now)
 		found.append(id)
 		deed_found.emit(owner_id, StringName(row["item"]), record(id))
-		_decide(row, owner_id, false, now)
+		_decide(row, owner_id, false, OWNER_DEED, now)
 	return found
+
+
+## [param agent]'s errands, oldest first: [code]{agent, kind, record, to, source, knows_thief,
+## since, target}[/code]. [code]kind[/code] is report, tell_victim or gossip; [code]target[/code] is
+## who it must reach now (for a report, the role's holder, empty while nobody holds it).
+## @experimental
+func errands_of(agent: StringName) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for errand: Dictionary in _errands:
+		if StringName(errand["agent"]) == agent:
+			var copy := errand.duplicate(true)
+			copy["target"] = String(_target(errand))
+			out.append(copy)
+	return out
+
+
+## Sets [constant INPUT] to 1 while [param agent] has an errand with someone to reach and can go
+## on it at minute [param now]; erases it otherwise.
+## @experimental
+func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float], now: int) -> void:
+	inputs.erase(INPUT)
+	if can_travel.is_valid() and not bool(can_travel.call(agent, now)):
+		return
+	for errand: Dictionary in errands_of(agent):
+		if errand["target"] != "":
+			inputs[INPUT] = 1.0
+			return
+
+
+## [param agent] goes on with its oldest errand that has someone to reach, at minute [param now].
+## Errands still waiting (nobody holds the role) are skipped, so they never hold up the rest; any
+## errand whose item the agent no longer remembers is dropped on the way, waiting or not.
+## Returns [code]{state, target}[/code]: [code]delivered[/code] when it reached the target face
+## to face (the event is emitted then), [code]travelling[/code] when it still has to get there,
+## [code]forgot[/code] when it dropped a faded errand (nothing emitted), [code]waiting[/code] when
+## every errand left is waiting, or [code]none[/code].
+## @experimental
+func deliver(agent: StringName, now: int) -> Dictionary:
+	var memory: Variant = memory_of.call(agent) if memory_of.is_valid() else null
+	var waiting := false
+	for errand: Dictionary in _errands.duplicate():
+		if StringName(errand["agent"]) != agent:
+			continue
+		if memory is BustleMemory and (memory as BustleMemory).recall(BustleMemory.ITEM,
+				StringName(_records[int(errand["record"])]["item"]), now).is_empty():
+			_errands.erase(errand)
+			errand_dropped.emit(agent, errand, &"forgot")
+			return {"state": &"forgot", "target": &""}
+		var target := _target(errand)
+		if target == &"":
+			waiting = true
+			continue
+		if not _reaches(agent, target):
+			return {"state": &"travelling", "target": target}
+		_errands.erase(errand)
+		_complete(errand, target, now)
+		return {"state": &"delivered", "target": target}
+	return {"state": &"waiting" if waiting else &"none", "target": &""}
+
+
+## Where [param id] is now, for moving towards it ([member where]), or null.
+## @experimental
+func position_of(id: StringName) -> Variant:
+	if where.is_valid():
+		return where.call(id)
+	var state := crime.society.get_agent(id)
+	return crime.society.ports.world.place_position(state.area) if state != null else null
+
+
+## [param thief] faces down [param witness] at minute [param now]: the witness drops its errands
+## about that thief's thefts. It still remembers, and can decide again later
+## ([method reconsider]). Nothing here harms anyone. Returns how many errands were dropped.
+## @experimental
+func intimidate(thief: StringName, witness: StringName, _now: int) -> int:
+	var dropped := 0
+	for errand: Dictionary in _errands.duplicate():
+		if StringName(errand["agent"]) == witness and errand["knows_thief"] \
+				and StringName(_records[int(errand["record"])]["thief"]) == thief:
+			_errands.erase(errand)
+			errand_dropped.emit(witness, errand, &"intimidated")
+			dropped += 1
+	return dropped
+
+
+## [param agent] decides again about record [param id] at minute [param now], with the same
+## judge and today's inputs (fear, opinions). Only for a record it knows of and has no errand
+## about. Returns the outcome, or empty when it can't.
+## @experimental
+func reconsider(agent: StringName, id: int, now: int) -> StringName:
+	if not _records.has(id) or not (_records[id]["known_by"] as Array).has(String(agent)) \
+			or _errands.any(func(e: Dictionary) -> bool: return StringName(e["agent"]) == agent and int(e["record"]) == id):
+		return &""
+	var row := _records[id]
+	var saw := (row["witnesses"] as Array).has(String(agent))
+	var source := EYEWITNESS if saw else (OWNER_DEED if row["deed"] and StringName(row["owner_id"]) == agent else SECONDHAND)
+	return _decide(row, agent, saw, source, now)
 
 
 ## The records as plain data, by id.
 ## @experimental
 func export_state() -> Dictionary:
-	return {"next_id": _next_id, "records": records()}
+	return {"next_id": _next_id, "records": records(), "errands": _errands.duplicate(true)}
 
 
 ## Restores [method export_state]. False (and nothing changes) when malformed.
@@ -181,9 +312,25 @@ func import_state(saved: Variant) -> bool:
 		if not _valid_record(row) or staged.has(int(row["id"])) or int(row["id"]) >= int(saved["next_id"]):
 			return false
 		staged[int(row["id"])] = (row as Dictionary).duplicate(true)
+	var errands: Variant = saved.get("errands", [])
+	if not errands is Array or not (errands as Array).all(func(e: Variant) -> bool: return _valid_errand(e, staged)):
+		return false
 	_records = staged
 	_next_id = int(saved["next_id"])
+	_errands.assign((errands as Array).duplicate(true))
 	return true
+
+
+## The goal that runs errands: [code]deliver[/code] in [constant BustleBands.GUARDED], eligible
+## while [constant INPUT] is 1, running the [code]deliver[/code] action ([BustleDeliverAction]).
+## Urgent self-care outranks it; orders and duty don't.
+## @experimental
+static func goal_defs() -> Array[BustleGoalDef]:
+	var goal: BustleGoalDef = BustleCrime.goal_defs()[0]
+	goal.id = &"deliver"
+	goal.considerations[0].input = INPUT
+	goal.sequence.steps[0].action = &"deliver"
+	return [goal]
 
 
 func _on_theft(thief: StringName, owner_id: StringName, item: StringName, circumstances: Dictionary) -> void:
@@ -203,7 +350,7 @@ func _on_theft(thief: StringName, owner_id: StringName, item: StringName, circum
 		_note(StringName(witness), BustleMemory.PERSON, thief, place, now)
 		_note(StringName(witness), BustleMemory.ITEM, item, place, now)
 		witnessed.emit(StringName(witness), thief, item, record(int(row["id"])))
-		_decide(row, StringName(witness), true, now)
+		_decide(row, StringName(witness), true, EYEWITNESS, now)
 
 
 func _perceived(agent: StringName, thief: StringName, place: StringName) -> bool:
@@ -224,7 +371,7 @@ func _note(agent: StringName, kind: StringName, subject: StringName, place: Stri
 		(found as BustleMemory).note(kind, subject, place, null, BustleMemory.SAW, now)
 
 
-func _decide(row: Dictionary, agent: StringName, knows_thief: bool, now: int) -> void:
+func _decide(row: Dictionary, agent: StringName, knows_thief: bool, source: StringName, now: int) -> StringName:
 	var thief := StringName(row["thief"]) if knows_thief else &""
 	var owner_id := StringName(row["owner_id"])
 	var case := {"record": record(int(row["id"])), "thief": String(thief), "owner_id": String(owner_id),
@@ -240,15 +387,48 @@ func _decide(row: Dictionary, agent: StringName, knows_thief: bool, now: int) ->
 		outcome = BustleWitnessJudge.SILENT
 	(row["decisions"] as Dictionary)[String(agent)] = String(outcome)
 	decided.emit(agent, outcome, record(int(row["id"])))
-	match outcome:
+	if outcome == BustleWitnessJudge.CONFRONT:
+		confronted.emit(agent, thief, record(int(row["id"])))
+	elif _ERRANDS.has(outcome):
+		var to := String(owner_id) if outcome == BustleWitnessJudge.TELL_VICTIM else String(case["gossip_to"])
+		var errand := {"agent": String(agent), "kind": String(outcome), "record": int(row["id"]),
+			"to": "" if outcome == BustleWitnessJudge.REPORT else to, "source": String(source),
+			"knows_thief": knows_thief, "since": now}
+		if instant:
+			_complete(errand, _target(errand), now)
+		else:
+			_errands.append(errand)
+	return outcome
+
+
+func _target(errand: Dictionary) -> StringName:
+	if errand["kind"] == "report":
+		return crime.society.ports.roles.holder_of(authority_role)
+	return StringName(errand["to"])
+
+
+func _complete(errand: Dictionary, target: StringName, now: int) -> void:
+	var row := _records[int(errand["record"])]
+	var agent := StringName(errand["agent"])
+	var knows := bool(errand["knows_thief"])
+	match StringName(errand["kind"]):
 		BustleWitnessJudge.REPORT:
-			_report(row, agent, knows_thief, now)
+			_report(row, agent, knows, StringName(errand["source"]), target, now)
 		BustleWitnessJudge.TELL_VICTIM:
-			victim_told.emit(agent, owner_id, record(int(row["id"])))
-		BustleWitnessJudge.CONFRONT:
-			confronted.emit(agent, thief, record(int(row["id"])))
+			victim_told.emit(agent, target, record(int(row["id"])))
+			_hear(row, target, knows, now)
 		BustleWitnessJudge.GOSSIP:
-			gossiped.emit(agent, StringName(case["gossip_to"]), record(int(row["id"])))
+			gossiped.emit(agent, target, record(int(row["id"])))
+			_hear(row, target, knows, now)
+
+
+# Someone told of a theft learns it (once), remembers the item and decides in turn.
+func _hear(row: Dictionary, listener: StringName, knows_thief: bool, now: int) -> void:
+	if listener == &"" or (row["known_by"] as Array).has(String(listener)):
+		return
+	_learn(row, listener)
+	_note(listener, BustleMemory.ITEM, StringName(row["item"]), StringName(row["place"]), now)
+	_decide(row, listener, knows_thief, SECONDHAND, now)
 
 
 func _reaches(agent: StringName, other: StringName) -> bool:
@@ -259,7 +439,8 @@ func _reaches(agent: StringName, other: StringName) -> bool:
 	return a != null and b != null and a.area == b.area
 
 
-func _report(row: Dictionary, reporter: StringName, knows_thief: bool, now: int) -> void:
+func _report(row: Dictionary, reporter: StringName, knows_thief: bool, source: StringName, authority: StringName,
+		now: int) -> void:
 	(row["reporters"] as Array).append(String(reporter))
 	var report := record(int(row["id"]))
 	if not knows_thief:
@@ -269,7 +450,8 @@ func _report(row: Dictionary, reporter: StringName, knows_thief: bool, now: int)
 	report.erase("reporters")
 	report["reporter"] = String(reporter)
 	report["role"] = String(authority_role)
-	report["authority"] = String(crime.society.ports.roles.holder_of(authority_role))
+	report["authority"] = String(authority)
+	report["source"] = String(source)
 	report["reported_at"] = now
 	crime_reported.emit(reporter, authority_role, report)
 
@@ -278,6 +460,14 @@ func _sorted_ids() -> Array[int]:
 	var ids: Array[int] = _records.keys()
 	ids.sort()
 	return ids
+
+
+static func _valid_errand(errand: Variant, records: Dictionary[int, Dictionary]) -> bool:
+	return errand is Dictionary and errand.get("agent") is String and errand.get("to") is String \
+		and _ERRANDS.has(StringName(str(errand.get("kind")))) and errand.get("kind") is String \
+		and SOURCES.has(StringName(str(errand.get("source")))) and errand.get("source") is String \
+		and errand.get("record") is int and records.has(int(errand["record"])) \
+		and errand.get("knows_thief") is bool and errand.get("since") is int
 
 
 static func _valid_record(row: Variant) -> bool:

@@ -38,6 +38,7 @@ func before_each() -> void:
 	_crime.needs_of = func(id: StringName) -> BustleNeedSet: return hunger if id == &"drifter" else null
 	_crime.is_observed = func(_t: StringName, _p: StringName) -> bool: return false
 	_watch = BustleCrimeWatch.new(_crime)
+	_watch.instant = true
 	_people = {}
 	_watch.judge.personality_of = func(id: StringName) -> BustlePersonality: return _people.get(id)
 	_events = []
@@ -53,14 +54,14 @@ func test_each_outcome_follows_from_who_the_witness_is() -> void:
 	assert_eq(_events.map(func(e: Array) -> String: return e[-1]), ["decided", "crime_reported"])
 	_watch.judge.standing_of = func(_w: StringName) -> float: return 0.0
 	assert_eq(_outcome({&"honesty": 100.0}), &"tell_victim", "honest but distrusts the authority: report 0.5, tell the victim 1.0")
-	assert_eq(_events.map(func(e: Array) -> String: return e[-1]), ["decided", "victim_told"])
+	assert_eq(_events.map(func(e: Array) -> String: return e[-1]), ["decided", "victim_told", "decided"], "the victim hears of it and decides in turn")
 	assert_eq(_outcome({&"honesty": 100.0, &"temper": 100.0}), &"confront", "and hot-tempered, with the thief right there: 1.5")
 	assert_eq(_events[-1].slice(0, 2), [&"witness", &"drifter"])
 	_watch.can_reach = func(_a: StringName, _b: StringName) -> bool: return false
 	assert_eq(_outcome({&"honesty": 100.0, &"temper": 100.0}), &"tell_victim", "a thief out of reach can't be confronted")
 	_watch.gossip_to = func(_a: StringName, _r: Dictionary) -> StringName: return &"friend"
 	assert_eq(_outcome({&"honesty": 100.0, &"sociability": 100.0}), &"gossip", "a sociable one with someone to tell: 1.5")
-	assert_eq(_events[-1].slice(0, 2), [&"witness", &"friend"])
+	assert_eq(_events[-2].slice(0, 2), [&"witness", &"friend"])
 	_watch.judge.standing_of = Callable()
 	assert_eq(_outcome({&"honesty": 100.0}), &"report", "report and telling the victim tie at 1.0: report comes first")
 	assert_eq(_outcome({}), &"silent", "an ordinary witness: nothing reaches 1.0")
