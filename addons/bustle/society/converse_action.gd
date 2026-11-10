@@ -8,7 +8,8 @@ extends BustleActionHandler
 ## names the first turn's interaction. A turn happens on the first tick at or after its minute, so
 ## the results match [method BustleConversation.run] for the same start.
 ## [br][br]
-## It fails with [code]no_partner[/code], [code]declined[/code] (the roll to start failed) or
+## It fails with [code]no_partner[/code], [code]turned_away[/code] (the partner won't talk now,
+## [member BustleConversation.accepts]), [code]declined[/code] (the roll to start failed) or
 ## [code]nothing_to_say[/code]. While it runs, the output names the partner as
 ## [code]talk_to[/code], and each turn's result is in it as [code]turn[/code]. The
 ## conversation's state is plain data in the step's data, so it saves with the runner.
@@ -30,6 +31,8 @@ func start(context: BustleActionContext) -> void:
 	var state := conversation.begin(context.agent_id, partner, context.now_minutes, opener) if conversation != null else {}
 	if state.is_empty():
 		context.data["failure"] = "no_partner"
+	elif conversation.turned_away(context.agent_id, partner, opener):
+		context.data["failure"] = "turned_away"
 	elif not conversation.wants_to_start(context.agent_id, partner, context.now_minutes):
 		context.data["failure"] = "declined"
 	else:

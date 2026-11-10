@@ -22,6 +22,12 @@ var kinds: Array[StringName] = [&"friend"]
 var need: StringName = &"comfort"
 ## The advertisements' tags.
 var tags: Array[StringName] = [&"social", &"comfort"]
+## (id) → true while that agent is in a low mental state (for example
+## [method BustleMentalBehaviour.in_low_state]). A friend in one needs comforting even once its
+## mood has started to rise. Empty: mood alone decides.
+var low_state_of: Callable = Callable()
+## The least comfort a friend in a low state needs (0 to 1), whatever its mood.
+var low_state_urgency: float = 0.5
 
 
 ## How much comfort an agent in [param mood] needs: 0 at or above [member low_mood], up to 1 at
@@ -35,7 +41,8 @@ func urgency(mood: float) -> float:
 
 ## Adds an advertisement to [param senses] for each agent in [param noticed] that
 ## [param agent_id] counts as a friend in [param social] and whose mood ([param mood_of], (id) →
-## anything with a [code]mood[/code], or null) is low. Returns how many it added.
+## anything with a [code]mood[/code], or null) is low, or who is in a low state
+## ([member low_state_of]). Returns how many it added.
 ## @experimental
 func advertise(agent_id: StringName, noticed: Array[StringName], social: BustleSocialPort, mood_of: Callable,
 		senses: BustleSenses) -> int:
@@ -49,6 +56,8 @@ func advertise(agent_id: StringName, noticed: Array[StringName], social: BustleS
 		if not found is Object or found.get(&"mood") == null:
 			continue
 		var amount := urgency(float(found.get(&"mood")))
+		if low_state_of.is_valid() and bool(low_state_of.call(other)):
+			amount = maxf(amount, clampf(low_state_urgency, 0.0, 1.0))
 		if amount <= 0.0:
 			continue
 		var relief: Dictionary[StringName, float] = {need: amount}

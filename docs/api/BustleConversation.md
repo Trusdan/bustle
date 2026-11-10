@@ -13,7 +13,7 @@ An interaction's weight is its `BustleInteractionDef.weight`, bent by:
 - the speaker's modifiers: `conversation.<id>.weight`, which traits set; 
 - the speaker's opinion of the listener: a high one makes positive interactions likelier and negative ones rarer (`opinion_weight`); 
 - the speaker's mood: below 50, `curt` interactions grow likelier (`curt_mood_scale`). 
-A low mood also lowers the chance of starting at all (`start_mood_scale`).
+A low mood also lowers the chance of starting at all (`start_mood_scale`), and a recipient can turn a start away (`accepts`).
 
 ## Properties
 
@@ -97,6 +97,14 @@ var modifiers_of: Callable = Callable()
 
 (id) → that agent's [BustleModifierSet](BustleModifierSet.md), or null. Empty: nobody has one.
 
+### `accepts`
+
+```gdscript
+var accepts: Callable = Callable()
+```
+
+(recipient, initiator, opener) → false when the recipient turns the conversation away (for example `BustleMentalBehaviour.accepts()` while it's withdrawn). Empty: everyone accepts.
+
 ## Methods
 
 ### `chance_to_start`
@@ -114,6 +122,14 @@ func wants_to_start(initiator: StringName, recipient: StringName, now: int) -> b
 ```
 
 Whether `initiator` starts a conversation with `recipient` at minute `now`: a roll against `chance_to_start()`, the same every time for the same inputs.
+
+### `turned_away`
+
+```gdscript
+func turned_away(initiator: StringName, recipient: StringName, opener: StringName = &"") -> bool
+```
+
+True when `recipient` won't talk with `initiator` now (`accepts`).
 
 ### `begin`
 
@@ -153,7 +169,7 @@ Takes `state`'s next turn at `next_minute()` and moves the state on. Returns the
 func run(initiator: StringName, recipient: StringName, now: int, opener: StringName = &"", place: StringName = &"") -> Dictionary
 ```
 
-A whole conversation at once: `wants_to_start()`, then every turn. Returns `{ok: true, turns}` with each turn's result, or `{ok: false, reason}` (`declined` or `no_pair`).
+A whole conversation at once: `wants_to_start()`, then every turn. Returns `{ok: true, turns}` with each turn's result, or `{ok: false, reason}` (`declined`, `turned_away` or `no_pair`).
 
 ### `weights`
 

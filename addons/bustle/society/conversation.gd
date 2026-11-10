@@ -19,7 +19,8 @@ extends RefCounted
 ## negative ones rarer ([member opinion_weight]);
 ## [br]- the speaker's mood: below 50, [code]curt[/code] interactions grow likelier
 ## ([member curt_mood_scale]).
-## [br]A low mood also lowers the chance of starting at all ([member start_mood_scale]).
+## [br]A low mood also lowers the chance of starting at all ([member start_mood_scale]), and a
+## recipient can turn a start away ([member accepts]).
 ## @experimental
 
 ## Where the interactions are recorded, with the world seed and moods.
@@ -46,6 +47,9 @@ var opinion_weight: float = 1.0
 var personality_of: Callable = Callable()
 ## (id) → that agent's [BustleModifierSet], or null. Empty: nobody has one.
 var modifiers_of: Callable = Callable()
+## (recipient, initiator, opener) → false when the recipient turns the conversation away (for
+## example [method BustleMentalBehaviour.accepts] while it's withdrawn). Empty: everyone accepts.
+var accepts: Callable = Callable()
 
 
 func _init(p_social: BustleSocialInteractions = null, p_interactions: Array[BustleInteractionDef] = []) -> void:
@@ -65,6 +69,12 @@ func chance_to_start(initiator: StringName) -> float:
 ## @experimental
 func wants_to_start(initiator: StringName, recipient: StringName, now: int) -> bool:
 	return _roll(["start", initiator, recipient, now]) < chance_to_start(initiator)
+
+
+## True when [param recipient] won't talk with [param initiator] now ([member accepts]).
+## @experimental
+func turned_away(initiator: StringName, recipient: StringName, opener: StringName = &"") -> bool:
+	return accepts.is_valid() and not bool(accepts.call(recipient, initiator, opener))
 
 
 ## A new conversation's state (plain data, safe to save), or an empty dictionary when the pair is
@@ -119,13 +129,15 @@ func step(state: Dictionary) -> Dictionary:
 
 ## A whole conversation at once: [method wants_to_start], then every turn. Returns
 ## [code]{ok: true, turns}[/code] with each turn's result, or [code]{ok: false, reason}[/code]
-## ([code]declined[/code] or [code]no_pair[/code]).
+## ([code]declined[/code], [code]turned_away[/code] or [code]no_pair[/code]).
 ## @experimental
 func run(initiator: StringName, recipient: StringName, now: int, opener: StringName = &"",
 		place: StringName = &"") -> Dictionary:
 	var state := begin(initiator, recipient, now, opener, place)
 	if state.is_empty():
 		return {"ok": false, "reason": &"no_pair"}
+	if turned_away(initiator, recipient, opener):
+		return {"ok": false, "reason": &"turned_away"}
 	if not wants_to_start(initiator, recipient, now):
 		return {"ok": false, "reason": &"declined"}
 	var results: Array[Dictionary] = []

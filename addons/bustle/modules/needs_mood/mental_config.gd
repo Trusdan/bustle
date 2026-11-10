@@ -37,6 +37,29 @@ const SETTING := "bustle/simulation/mental_states"
 @export var dislike_line: float = 50.0
 ## How much a disliked target pushes lashing out: [code]weight × (50 − opinion) / 100[/code].
 @export var dislike_weight: float = 1.0
+## State id → modifier key → [code][add, mult][/code], applied to the agent's
+## [BustleModifierSet] while it's in that state (and not locked). Keys under [code]tag.[/code],
+## [code]need.[/code] and [code]conversation.[/code] are read by Bustle; [code]work.speed[/code],
+## [code]work.quality[/code], [code]dialogue.curt[/code] and [code]social.generosity[/code] are for
+## the host to read.
+@export var state_modifiers: Dictionary[StringName, Dictionary] = {
+	&"withdraw": {&"tag.social.mult": [0.0, 0.2]},
+	&"sulk": {&"tag.social.mult": [0.0, 0.6], &"work.speed": [0.0, 0.75], &"dialogue.curt": [1.0, 1.0]},
+	&"binge": {&"tag.indulgent.mult": [0.0, 3.0]},
+	&"lash_out": {&"dialogue.curt": [1.0, 1.0]},
+	&"high_spirits": {&"tag.social.mult": [0.0, 1.5], &"social.generosity": [1.0, 1.0]},
+	&"inspired": {&"work.speed": [0.0, 1.25], &"work.quality": [1.0, 1.0]},
+}
+## How far (metres) someone may be to be lashed out at: within a short walk, in the same area.
+@export var lash_radius: float = 30.0
+## How close (metres) an agent must get to its target to insult it.
+@export var lash_reach: float = 2.0
+## Conversation openers a withdrawn agent still accepts (a friend's comfort).
+@export var welcome_openers: Array[StringName] = [&"comfort"]
+## How many insults or quarrels one episode may aim at the same person.
+@export var insults_per_victim: int = 1
+## Tier → how hard an insult provokes its target (0 to 1), for the quarrel check.
+@export var provocation: Dictionary[StringName, float] = {&"minor": 0.2, &"major": 0.4, &"extreme": 0.6}
 ## The aftermath thought after a low state ends: mood points, game hours, how many can stack and
 ## how much each repeat counts of the one before.
 @export var catharsis_value: float = 20.0

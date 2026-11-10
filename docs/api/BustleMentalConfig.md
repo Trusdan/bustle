@@ -116,6 +116,54 @@ var dislike_weight: float = 1.0
 
 How much a disliked target pushes lashing out: `weight × (50 − opinion) / 100`.
 
+### `state_modifiers`
+
+```gdscript
+var state_modifiers: Dictionary[StringName, Dictionary] = {...}
+```
+
+State id → modifier key → `[add, mult]`, applied to the agent's [BustleModifierSet](BustleModifierSet.md) while it's in that state (and not locked). Keys under `tag.`, `need.` and `conversation.` are read by Bustle; `work.speed`, `work.quality`, `dialogue.curt` and `social.generosity` are for the host to read.
+
+### `lash_radius`
+
+```gdscript
+var lash_radius: float = 30.0
+```
+
+How far (metres) someone may be to be lashed out at: within a short walk, in the same area.
+
+### `lash_reach`
+
+```gdscript
+var lash_reach: float = 2.0
+```
+
+How close (metres) an agent must get to its target to insult it.
+
+### `welcome_openers`
+
+```gdscript
+var welcome_openers: StringName[] = [...]
+```
+
+Conversation openers a withdrawn agent still accepts (a friend's comfort).
+
+### `insults_per_victim`
+
+```gdscript
+var insults_per_victim: int = 1
+```
+
+How many insults or quarrels one episode may aim at the same person.
+
+### `provocation`
+
+```gdscript
+var provocation: Dictionary[StringName, float] = {...}
+```
+
+Tier → how hard an insult provokes its target (0 to 1), for the quarrel check.
+
 ### `catharsis_value`
 
 ```gdscript
