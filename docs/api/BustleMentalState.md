@@ -8,7 +8,7 @@ Inherits: `RefCounted`
 
 One agent's mental state: which of `BustleMentalConfig.states` it's in, if any, and when that starts and ends. Everything follows from its mood, personality and circumstances; nothing here is a chance, a timer between episodes or a limit shared between agents.
 **Starting.** Each `update()`, an agent in no state may start one: 
-- a low state when mood is below its break threshold (`BustleMentalConfig.break_threshold` plus the `mental.break_threshold` modifier). The highest score wins, ties going to the earlier state (quieter first). A state that needs an indulgence or a target is skipped without one. A disliked target pushes lashing out further. 
+- a low state when mood is below its break threshold (`BustleMentalConfig.break_threshold` plus the `mental.break_threshold` modifier). The highest score wins, ties going to the earlier state (quieter first). A state that needs an indulgence or a target is skipped without one. Lashing out needs a target the agent dislikes (opinion below `BustleMentalConfig.dislike_line`) or that the host marks as a rival; a liked target doesn't count. The dislike pushes it further. 
 - inspiration when mood is above `BustleMentalConfig.inspired_above` and diligence or curiosity is above `BustleMentalConfig.inspired_slider` (or a trait opts in through the `mental.inspired` modifier); else high spirits when mood is above `BustleMentalConfig.high_spirits_above`. Inspiration beats high spirits: an agent in high spirits whose mood rises far enough becomes inspired. 
 Nothing starts while the circumstances say the agent is locked, or while mental states are off (`enabled`, `BustleMentalConfig.allowed()`).
 **Ending.** A state ends when its duration is up, or sooner when mood recovers (a low state once mood rises to the threshold plus `BustleMentalConfig.recover_margin`; a high one once mood drops below its exit line). When a low state ends, the agent gets the catharsis thought, an aftermath only: it can start another state as soon as its mood is below the line again. This part only decides and records states; what an agent does in one comes later.
@@ -81,7 +81,7 @@ True while in a state.
 func update(now: int, mood: BustleMood, personality: BustlePersonality = null, circumstances: Dictionary = {}) -> Dictionary
 ```
 
-Updates the state at minute `now` from `mood` (its value, modifiers and thoughts), `personality` (or null: every slider 50) and `circumstances`: `{locked, indulgence, target, target_opinion}` (whether the agent is locked to a task, knows an indulgence, who it dislikes nearby, and its opinion of them, 0 to 100). Ends a state that's over (adding catharsis to `mood` after a low one); otherwise starts one if it can. A state that ended this update doesn't start another until the next. Returns the active state.
+Updates the state at minute `now` from `mood` (its value, modifiers and thoughts), `personality` (or null: every slider 50) and `circumstances`: `{locked, indulgence, target, target_opinion, target_rival}` (whether the agent is locked to a task, knows an indulgence, who it dislikes nearby, its opinion of them, 0 to 100 and 50 when unknown, and whether they're a rival). Ends a state that's over (adding catharsis to `mood` after a low one); otherwise starts one if it can. A state that ended this update doesn't start another until the next. Returns the active state.
 
 ### `choose`
 

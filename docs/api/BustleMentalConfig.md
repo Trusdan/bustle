@@ -100,6 +100,14 @@ var inspired_slider: float = 50.0
 
 A slider above this counts as a match for inspiration: diligence or curiosity.
 
+### `dislike_line`
+
+```gdscript
+var dislike_line: float = 50.0
+```
+
+Below this opinion of the target, it counts as disliked: lashing out needs a target that's disliked or marked as a rival.
+
 ### `dislike_weight`
 
 ```gdscript

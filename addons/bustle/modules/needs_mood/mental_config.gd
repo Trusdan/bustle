@@ -32,6 +32,9 @@ const SETTING := "bustle/simulation/mental_states"
 @export var inspired_exit: float = 85.0
 ## A slider above this counts as a match for inspiration: diligence or curiosity.
 @export var inspired_slider: float = 50.0
+## Below this opinion of the target, it counts as disliked: lashing out needs a target that's
+## disliked or marked as a rival.
+@export var dislike_line: float = 50.0
 ## How much a disliked target pushes lashing out: [code]weight × (50 − opinion) / 100[/code].
 @export var dislike_weight: float = 1.0
 ## The aftermath thought after a low state ends: mood points, game hours, how many can stack and

@@ -59,11 +59,12 @@ A `BustleMentalState` holds one agent's mental state: which state it's in, if an
 
 Everything follows from the agent's mood, personality and circumstances. There's no chance, no timer between episodes and no limit shared between agents, so any number of agents can be in a state at once.
 
-`update(now, mood, personality, circumstances)` does the work. The host calls it after advancing the mood. `circumstances` is `{locked, indulgence, target, target_opinion}`:
+`update(now, mood, personality, circumstances)` does the work. The host calls it after advancing the mood. `circumstances` is `{locked, indulgence, target, target_opinion, target_rival}`:
 - whether the agent is locked to a task (the host's `is_locked`);
 - whether it knows an indulgence;
 - who it dislikes nearby;
-- its opinion of that person, 0 to 100.
+- its opinion of that person, 0 to 100 (50 when not given);
+- whether the host marks them as a rival.
 
 ### The states
 
@@ -75,7 +76,7 @@ Everything follows from the agent's mood, personality and circumstances. There's
 | sulk | low | temper +1, sociability −1 | | 12 h |
 | wander | low | curiosity +1, diligence −1 | | 24 h |
 | binge | low | greed +1 | an indulgence | 8 h |
-| lash_out | low | temper +2, boldness +1, plus dislike | someone disliked nearby | 12 h |
+| lash_out | low | temper +2, boldness +1, plus dislike | someone disliked, or a rival, nearby | 12 h |
 | high_spirits | high | sociability +1 | | 8 h |
 | inspired | high | diligence +1, curiosity +1 | a match (below) | 12 h |
 
@@ -89,7 +90,8 @@ A state can only start when the agent is in none, isn't locked, and mental state
   - The threshold is `break_threshold` (30) plus the `mental.break_threshold` modifier, so traits can move it.
   - Each eligible low state scores `Σ weight × (slider − 50) / 100`. Lashing out adds `dislike_weight × (50 − target_opinion) / 100`.
   - The highest score wins. Ties go to the earlier state, so quieter states win.
-  - Binge needs an indulgence and lashing out needs a target; without one, that state is skipped.
+  - Binge needs an indulgence; without one, it's skipped.
+  - Lashing out needs a target the agent dislikes (opinion below `dislike_line`, 50) or a rival. A target it likes, or doesn't dislike, doesn't count, so lashing out is skipped and the next-highest state wins.
 - **Tier:** a low state records its tier: `extreme` below 1/7 of the threshold (about 4), `major` below 4/7 (about 17), otherwise `minor`.
 - **Inspiration** starts when mood is above `inspired_above` (90) and the agent matches: diligence or curiosity above 50, or a trait that adds the `mental.inspired` modifier.
 - **High spirits** start otherwise when mood is above `high_spirits_above` (80).

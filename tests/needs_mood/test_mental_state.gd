@@ -44,7 +44,11 @@ func test_the_highest_score_wins() -> void:
 	assert_eq(_choose(20.0, {}), &"withdraw", "all scores 0: the quietest wins the tie")
 	assert_eq(_choose(20.0, {&"temper": 100.0}), &"sulk", "hot-tempered with nobody nearby: lashing out is skipped")
 	assert_eq(_choose(20.0, {&"temper": 100.0}, {"target": "rival", "target_opinion": 10.0}), &"lash_out", "1.0 + 0.4 for the dislike, over sulking's 0.5")
-	assert_eq(_choose(20.0, {&"temper": 75.0}, {"target": "rival", "target_opinion": 90.0}), &"sulk", "someone it likes: 0.5 − 0.4 = 0.1 < 0.25")
+	assert_eq(_choose(20.0, {&"temper": 100.0}, {"target": "friend", "target_opinion": 90.0}), &"sulk", "never at someone it likes, however hot-tempered")
+	assert_eq(_choose(20.0, {&"temper": 100.0}, {"target": "neighbour"}), &"sulk", "nor at someone it doesn't dislike (50, the line)")
+	assert_eq(_choose(20.0, {&"temper": 100.0}, {"target": "neighbour", "target_opinion": 49.0}), &"lash_out", "just below the line, it does")
+	assert_eq(_choose(20.0, {&"temper": 100.0}, {"target": "rival", "target_opinion": 60.0, "target_rival": true}), &"lash_out",
+		"a rival counts even when not disliked: 1.0 − 0.1 over sulking's 0.5")
 	assert_eq(_choose(20.0, {&"greed": 100.0}), &"withdraw", "greedy but knows no indulgence")
 	assert_eq(_choose(20.0, {&"greed": 100.0}, {"indulgence": true}), &"binge")
 	assert_eq(_choose(20.0, {&"curiosity": 100.0}), &"wander")

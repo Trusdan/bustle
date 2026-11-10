@@ -10,8 +10,9 @@ extends RefCounted
 ## [br]- a low state when mood is below its break threshold
 ## ([member BustleMentalConfig.break_threshold] plus the [code]mental.break_threshold[/code]
 ## modifier). The highest score wins, ties going to the earlier state (quieter first). A state
-## that needs an indulgence or a target is skipped without one. A disliked target pushes lashing
-## out further.
+## that needs an indulgence or a target is skipped without one. Lashing out needs a target the
+## agent dislikes (opinion below [member BustleMentalConfig.dislike_line]) or that the host marks
+## as a rival; a liked target doesn't count. The dislike pushes it further.
 ## [br]- inspiration when mood is above [member BustleMentalConfig.inspired_above] and diligence or
 ## curiosity is above [member BustleMentalConfig.inspired_slider] (or a trait opts in through the
 ## [code]mental.inspired[/code] modifier); else high spirits when mood is above
@@ -63,8 +64,9 @@ func is_active() -> bool:
 
 ## Updates the state at minute [param now] from [param mood] (its value, modifiers and thoughts),
 ## [param personality] (or null: every slider 50) and [param circumstances]:
-## [code]{locked, indulgence, target, target_opinion}[/code] (whether the agent is locked to a
-## task, knows an indulgence, who it dislikes nearby, and its opinion of them, 0 to 100). Ends a
+## [code]{locked, indulgence, target, target_opinion, target_rival}[/code] (whether the agent is
+## locked to a task, knows an indulgence, who it dislikes nearby, its opinion of them, 0 to 100
+## and 50 when unknown, and whether they're a rival). Ends a
 ## state that's over (adding catharsis to [param mood] after a low one); otherwise starts one if
 ## it can. A state that ended this update doesn't start another until the next. Returns the
 ## active state.
@@ -201,12 +203,13 @@ func _opts_in(mood: BustleMood, personality: BustlePersonality) -> bool:
 		or personality.slider(&"curiosity") > config.inspired_slider)
 
 
-static func _has_circumstance(def: BustleMentalStateDef, circumstances: Dictionary) -> bool:
+func _has_circumstance(def: BustleMentalStateDef, circumstances: Dictionary) -> bool:
 	match def.needs:
 		BustleMentalStateDef.INDULGENCE:
 			return bool(circumstances.get("indulgence", false))
 		BustleMentalStateDef.TARGET:
-			return StringName(str(circumstances.get("target", ""))) != &""
+			return StringName(str(circumstances.get("target", ""))) != &"" and (bool(circumstances.get("target_rival", false))
+				or float(circumstances.get("target_opinion", 50.0)) < config.dislike_line)
 	return true
 
 
