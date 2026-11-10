@@ -10,7 +10,8 @@ extends RefCounted
 ## [b]Modifiers.[/b] While an agent is in a state, [member BustleMentalConfig.state_modifiers] for
 ## it are set on the agent's [BustleModifierSet] (its mood's), and removed when it ends.
 ## [br][b]Goals[/b] ([method goal_defs], each running the [code]mental[/code] action,
-## [BustleMentalAction]): withdraw goes home, wander walks about, binge uses the indulgence it
+## [BustleMentalAction]): withdraw goes home and turns others away ([method accepts]), wander walks
+## about, binge uses the indulgence it
 ## knows of, and lash out goes to its target and insults it. Sulk, high spirits and inspiration are
 ## modifiers only.
 ## [br][b]Locks.[/b] While [member is_locked] holds, no state starts, the goals aren't eligible and
@@ -55,7 +56,7 @@ var wander_to: Callable = Callable()
 
 var _states: Dictionary[StringName, BustleMentalState] = {}
 var _insulted: Dictionary[StringName, Dictionary] = {}
-var _applied: Dictionary[StringName, BustleModifierSet] = {}
+var _applied: Dictionary[StringName, Dictionary] = {}
 
 
 func _init(p_society: BustleSociety = null, p_config: BustleMentalConfig = null) -> void:
@@ -86,15 +87,33 @@ func update(agent: StringName, now: int, mood: BustleMood, personality: BustlePe
 	var circumstances := circumstances_of(agent, personality)
 	var active := state_of(agent).update(now, mood, personality, circumstances)
 	var mods := mood.modifiers
-	if _applied.has(agent) and (_applied[agent] != mods or active.is_empty() or circumstances["locked"]):
-		_applied[agent].remove_source(SOURCE)
+	var want := &"" if active.is_empty() or circumstances["locked"] or mods == null else StringName(active["id"])
+	if _applied.has(agent) and (_applied[agent]["mods"] != mods or _applied[agent]["id"] != want):
+		(_applied[agent]["mods"] as BustleModifierSet).remove_source(SOURCE)
 		_applied.erase(agent)
-	if not active.is_empty() and not circumstances["locked"] and mods != null and not _applied.has(agent):
-		var rows: Dictionary = config.state_modifiers.get(StringName(active["id"]), {})
+	if want != &"" and not _applied.has(agent):
+		var rows: Dictionary = config.state_modifiers.get(want, {})
 		for key: StringName in rows:
 			mods.set_source(SOURCE, key, float(rows[key][0]), float(rows[key][1]))
-		_applied[agent] = mods
+		_applied[agent] = {"mods": mods, "id": want}
 	return active
+
+
+## The state whose modifiers are on [param agent]'s modifier set now, or empty.
+## @experimental
+func applied_state(agent: StringName) -> StringName:
+	return _applied[agent]["id"] if _applied.has(agent) else &""
+
+
+## Whether [param agent] lets [param visitor] start a conversation or a visit now: not while it's
+## withdrawn (and not locked), unless [param opener] is one of
+## [member BustleMentalConfig.welcome_openers] (comfort, by default). For
+## [member BustleConversation.accepts]; a host's own visits ask it too.
+## @experimental
+func accepts(agent: StringName, _visitor: StringName, opener: StringName = &"") -> bool:
+	if not _states.has(agent) or StringName(_states[agent].active().get("id", "")) != &"withdraw":
+		return true
+	return (is_locked.is_valid() and bool(is_locked.call(agent))) or config.welcome_openers.has(opener)
 
 
 ## What [param agent]'s state decides from now: [code]{locked, indulgence, target, target_opinion,
@@ -218,7 +237,8 @@ func export_state() -> Dictionary:
 	return {"states": states, "insulted": insults}
 
 
-## Restores [method export_state]. False (and nothing changes) when malformed.
+## Restores [method export_state]. False (and nothing changes) when malformed. On success, the
+## state modifiers set so far are taken off; the next [method update] sets the loaded states'.
 ## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not saved.get("states") is Dictionary or not saved.get("insulted") is Dictionary:
@@ -236,6 +256,9 @@ func import_state(saved: Variant) -> bool:
 		if not id is String or not row is Dictionary or not (row as Dictionary).values().all(func(n: Variant) -> bool: return n is int and n > 0):
 			return false
 		insults[StringName(id)] = (row as Dictionary).duplicate()
+	for agent: StringName in _applied:
+		(_applied[agent]["mods"] as BustleModifierSet).remove_source(SOURCE)
+	_applied.clear()
 	_states = staged
 	_insulted = insults
 	return true

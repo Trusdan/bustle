@@ -106,7 +106,7 @@ A low mood also lowers the chance of starting: `start_chance × (1 − start_moo
 | `curt_mood_scale` | 1 (mood 0 doubles curt weights) |
 | `opinion_weight` | 1 |
 
-`run` returns `declined` when the roll to start fails, and the `converse` action fails with `declined`, `no_partner` or `nothing_to_say` (no interaction has any weight).
+`accepts(recipient, initiator, opener)`, when set, lets the recipient turn a start away (for example `BustleMentalBehaviour.accepts` while it's withdrawn). `run` returns `turned_away` then, and `declined` when the roll to start fails. The `converse` action fails with `turned_away`, `declined`, `no_partner` or `nothing_to_say` (no interaction has any weight).
 
 `demo/social/` holds a neutral interaction set: chitchat, deep talk, kind words, slight, insult (both `curt`) and comfort (weight 0, an opener only), plus a `comfort` goal.
 

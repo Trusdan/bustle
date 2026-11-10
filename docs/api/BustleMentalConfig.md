@@ -132,6 +132,22 @@ var lash_radius: float = 30.0
 
 How far (metres) someone may be to be lashed out at: within a short walk, in the same area.
 
+### `lash_reach`
+
+```gdscript
+var lash_reach: float = 2.0
+```
+
+How close (metres) an agent must get to its target to insult it.
+
+### `welcome_openers`
+
+```gdscript
+var welcome_openers: StringName[] = [...]
+```
+
+Conversation openers a withdrawn agent still accepts (a friend's comfort).
+
 ### `insults_per_victim`
 
 ```gdscript

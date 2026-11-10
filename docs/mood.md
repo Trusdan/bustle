@@ -127,7 +127,7 @@ The numbers are configurable experimental defaults, not tuning.
   - `locked`: the host's `is_locked(agent)`, the same hook crime uses;
   - `indulgence`: `indulgence_of(agent)` names an affordance;
   - `target`, `target_opinion` and `target_rival`: from `lash_target(agent)` (below).
-- **Modifiers:** while an agent is in a state and not locked, `state_modifiers` for it are set on its mood's `BustleModifierSet` under the source `mental_state`. They're removed when the state ends or a lock starts.
+- **Modifiers:** while an agent is in a state and not locked, `state_modifiers` for it are set on its mood's `BustleModifierSet` under the source `mental_state`. They're swapped whenever the active state changes (high spirits giving way to inspiration included), and removed when the state ends, a lock starts or `import_state` loads other states. `applied_state(agent)` says whose rows are on.
 
   | State | Modifiers |
   | --- | --- |
@@ -140,17 +140,20 @@ The numbers are configurable experimental defaults, not tuning.
 
   `work.*`, `dialogue.curt` and `social.generosity` are for the host to read.
 - **Goals:** `goal_defs()` gives `mental_withdraw`, `mental_wander`, `mental_binge` and `mental_lash_out`, in the guarded band (75). Urgent self-care outranks them; orders and duty don't. Each is eligible while `fill_inputs(agent, inputs)` sets `fact.mental.<state>` to 1, and runs the `mental` action (`BustleMentalAction`). The action names where to go; the host moves the body.
-  - **withdraw:** goes home (`home_of`) and stays (`withdrawn`).
+  - **withdraw:** goes home (`home_of`) and stays (`withdrawn` in the output), and turns others away. `accepts(agent, visitor, opener)` is false while it's withdrawn and not locked, unless `opener` is one of `welcome_openers` (`comfort`, so a friend's comfort still gets through).
+    - For conversations, set `BustleConversation.accepts` to it: `run` then returns `turned_away`, and a `converse` step fails with `turned_away`.
+    - Bustle has no visits of its own. A host's visits ask `accepts` (or read the `withdrawn` output) and turn the visitor away.
   - **wander:** walks to `wander_to(agent, now)`, by default the agent's neighbouring areas in turn.
   - **binge:** uses its indulgence (`use_affordance`).
   - **lash out:** goes to its target (`talk_to`), insults it and is done.
   - Sulk, high spirits and inspired are modifiers only.
 - **Locks:** while `is_locked` holds, no state starts, the goals aren't eligible and the modifiers are off. When the lock ends, the state is evaluated again.
 - **Lashing out** is words only.
-  - `lash_target(agent)` is someone else in the same area, within `lash_radius` (30 m, by `position_of`, by default the area's position), who is disliked (opinion below `dislike_line`) or a rival. Rivals come first, then the lowest opinion, then by id.
+  - `lash_target(agent)` is someone else in the same area, within `lash_radius` (30 m, by `position_of`, by default the area's position), who is disliked (opinion below `dislike_line`) or a rival. Rivals come first, then the lowest opinion, then by id. An agent insults its target once within `lash_reach` (2 m); without known positions, both fall back to their area's position, so the insult lands at once.
   - Each person can be insulted `insults_per_victim` times (1) an episode; a new episode starts afresh.
   - With nobody to lash out at, lash out isn't eligible, so another state wins, or, once it's started, its goal stops.
   - `insult(agent, target, now)` emits `insulted(agent, target, provocation)`. The provocation is by tier: minor 0.2, major 0.4, extreme 0.6.
   - With a `conflict`, the insulted agent then quarrels through the usual fight rules (`BustleConflict.quarrel`), which start every fight at subdue. Nothing here sets any intent.
 - **Comfort:** `in_low_state(agent)` is for `BustleComfort.low_state_of` (see social docs).
 - **Saving:** `export_state()` and `import_state(saved)` cover every agent's state and this episode's insults.
+- **Cost:** `lash_target` looks at every agent in the society, and runs for each agent's update, so the cost grows with the square of the population. That's fine at town sizes; a host with many more agents can pass fewer through `update`.

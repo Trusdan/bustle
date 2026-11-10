@@ -90,6 +90,7 @@ class Village:
 					problems.append("%s started a state while locked at %d" % [id, minute])
 				if locked and moods[id].modifiers.has(&"tag.social.mult"):
 					problems.append("%s kept its state modifiers while locked at %d" % [id, minute])
+				_check_modifiers(id, locked)
 				var inputs: Dictionary[StringName, float] = {}
 				behaviour.fill_inputs(id, inputs)
 				if inputs.has(&"fact.mental.lash_out"):
@@ -98,6 +99,24 @@ class Village:
 				if conflict.intent_of(id) == BustleConflict.KILL:
 					problems.append("%s meant to kill at %d" % [id, minute])
 				_check_comfort(id)
+
+	# The state rows on an agent's modifier set always match its active state (none while locked).
+	func _check_modifiers(id: StringName, locked: bool) -> void:
+		var active := StringName(behaviour.state_of(id).active().get("id", ""))
+		var want := &"" if locked else active
+		var mods := moods[id].modifiers
+		if behaviour.applied_state(id) != want:
+			problems.append("%s has %s's modifiers in %s at %d" % [id, behaviour.applied_state(id), want, _now])
+		for state: StringName in behaviour.config.state_modifiers:
+			for key: StringName in behaviour.config.state_modifiers[state]:
+				var row: Array = behaviour.config.state_modifiers.get(want, {}).get(key, [])
+				if row.is_empty() and mods.has(key) or not row.is_empty() and not is_equal_approx(mods.value(key, 1.0), _expected(key, row)):
+					problems.append("%s's %s doesn't match %s at %d" % [id, key, want, _now])
+
+	func _expected(key: StringName, row: Array) -> float:
+		var probe := BustleModifierSet.new()
+		probe.set_source(&"probe", key, float(row[0]), float(row[1]))
+		return probe.value(key, 1.0)
 
 	func _check_comfort(id: StringName) -> void:
 		if not behaviour.in_low_state(id):

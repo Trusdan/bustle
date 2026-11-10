@@ -4,7 +4,8 @@ extends BustleActionHandler
 
 ## [code]mental[/code]: acts out the agent's mental state through [BustleMentalBehaviour]. It names
 ## where to go ([code]move_to[/code]) and the host moves the body:
-## [br]- withdraw: home, and stays there ([code]withdrawn[/code] in the output);
+## [br]- withdraw: home, and stays there ([code]withdrawn[/code] in the output: a host's own visits
+## should be turned away while it's set; see [method BustleMentalBehaviour.accepts]);
 ## [br]- wander: walks from place to place;
 ## [br]- binge: uses its indulgence ([code]use_affordance[/code]);
 ## [br]- lash out: goes to its target ([code]talk_to[/code]) and, once there, insults it
@@ -39,7 +40,7 @@ func tick(context: BustleActionContext, _delta: float) -> Status:
 				return Status.DONE
 			context.output["talk_to"] = target
 			var here: Variant = behaviour.position(agent)
-			if not (here is Vector3 and there is Vector3) or (here as Vector3).distance_to(there) <= 2.0:
+			if not (here is Vector3 and there is Vector3) or (here as Vector3).distance_to(there) <= behaviour.config.lash_reach:
 				context.output["insulted"] = target
 				behaviour.insult(agent, target, context.now_minutes)
 				return Status.DONE

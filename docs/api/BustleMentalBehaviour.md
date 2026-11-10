@@ -8,7 +8,7 @@ Inherits: `RefCounted`
 
 What agents do in a mental state, for a whole society: the circumstances each [BustleMentalState](BustleMentalState.md) decides from, the state's modifiers, the goals that act it out (in `BustleBands.GUARDED`, so urgent self-care outranks them and orders and duty don't), and lashing out.
 **Modifiers.** While an agent is in a state, `BustleMentalConfig.state_modifiers` for it are set on the agent's [BustleModifierSet](BustleModifierSet.md) (its mood's), and removed when it ends. 
-**Goals** (`goal_defs()`, each running the `mental` action, [BustleMentalAction](BustleMentalAction.md)): withdraw goes home, wander walks about, binge uses the indulgence it knows of, and lash out goes to its target and insults it. Sulk, high spirits and inspiration are modifiers only. 
+**Goals** (`goal_defs()`, each running the `mental` action, [BustleMentalAction](BustleMentalAction.md)): withdraw goes home and turns others away (`accepts()`), wander walks about, binge uses the indulgence it knows of, and lash out goes to its target and insults it. Sulk, high spirits and inspiration are modifiers only. 
 **Locks.** While `is_locked` holds, no state starts, the goals aren't eligible and the modifiers are off; when it ends, the state is evaluated again. 
 **Lashing out** is words only. The target is the most disliked person nearby: in the same area and within `BustleMentalConfig.lash_radius`, disliked (opinion below the dislike line) or a rival; rivals first, then the lowest opinion, ties by id. Each person can be insulted at most `BustleMentalConfig.insults_per_victim` times an episode. The insult is emitted as `insulted`; with a `conflict`, the insulted agent then quarrels through the usual fight rules, which never mean to kill. Nothing here sets any intent.
 
@@ -140,6 +140,22 @@ func update(agent: StringName, now: int, mood: BustleMood, personality: BustlePe
 
 Updates `agent` at minute `now` (after its `mood` has advanced): its state, from `circumstances_of()`, and its modifiers. Returns the active state.
 
+### `applied_state`
+
+```gdscript
+func applied_state(agent: StringName) -> StringName
+```
+
+The state whose modifiers are on `agent`'s modifier set now, or empty.
+
+### `accepts`
+
+```gdscript
+func accepts(agent: StringName, _visitor: StringName, opener: StringName = &"") -> bool
+```
+
+Whether `agent` lets `visitor` start a conversation or a visit now: not while it's withdrawn (and not locked), unless `opener` is one of `BustleMentalConfig.welcome_openers` (comfort, by default). For `BustleConversation.accepts`; a host's own visits ask it too.
+
 ### `circumstances_of`
 
 ```gdscript
@@ -211,7 +227,7 @@ Every agent's state and this episode's insults, as plain data.
 func import_state(saved: Variant) -> bool
 ```
 
-Restores `export_state()`. False (and nothing changes) when malformed.
+Restores `export_state()`. False (and nothing changes) when malformed. On success, the state modifiers set so far are taken off; the next `update()` sets the loaded states'.
 
 ### `goal_defs`
 

@@ -52,6 +52,10 @@ const SETTING := "bustle/simulation/mental_states"
 }
 ## How far (metres) someone may be to be lashed out at: within a short walk, in the same area.
 @export var lash_radius: float = 30.0
+## How close (metres) an agent must get to its target to insult it.
+@export var lash_reach: float = 2.0
+## Conversation openers a withdrawn agent still accepts (a friend's comfort).
+@export var welcome_openers: Array[StringName] = [&"comfort"]
 ## How many insults or quarrels one episode may aim at the same person.
 @export var insults_per_victim: int = 1
 ## Tier → how hard an insult provokes its target (0 to 1), for the quarrel check.

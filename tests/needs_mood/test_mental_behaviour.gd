@@ -58,6 +58,63 @@ func test_each_state_sets_its_modifiers_while_it_lasts() -> void:
 		assert_false(mods.has(row[3]), "and takes it off when it ends")
 
 
+func test_high_spirits_giving_way_to_inspiration_swaps_the_modifiers() -> void:
+	var mods := _moods[&"agent"].modifiers
+	_people[&"agent"] = _person({&"diligence": 80.0})
+	_moods[&"agent"].mood = 85.0
+	assert_eq(_update(&"agent", 0)["id"], "high_spirits")
+	assert_eq([mods.value(&"tag.social.mult", 1.0), mods.value(&"social.generosity", 0.0), mods.has(&"work.speed")], [1.5, 1.0, false])
+	_moods[&"agent"].mood = 95.0
+	assert_eq(_update(&"agent", 10)["id"], "inspired", "in one update")
+	assert_eq([mods.has(&"tag.social.mult"), mods.has(&"social.generosity"), mods.value(&"work.speed", 1.0), mods.value(&"work.quality", 0.0)],
+		[false, false, 1.25, 1.0], "high spirits' rows go, inspiration's come")
+	assert_eq(_behaviour.applied_state(&"agent"), &"inspired")
+
+
+func test_loading_takes_off_the_old_state_modifiers() -> void:
+	var mods := _moods[&"agent"].modifiers
+	var other := BustleMentalBehaviour.new(_society)
+	var spirited := _mood(85.0)
+	other.update(&"agent", 0, spirited)
+	var saved := other.export_state()
+	_people[&"agent"] = _person({&"sociability": 10.0})
+	_moods[&"agent"].mood = 20.0
+	_update(&"agent", 0)
+	assert_eq(mods.value(&"tag.social.mult", 1.0), 0.2, "withdrawn")
+	assert_true(_behaviour.import_state(saved))
+	assert_eq([mods.has(&"tag.social.mult"), _behaviour.applied_state(&"agent")], [false, &""], "loading another state takes withdraw's rows off")
+	_moods[&"agent"].mood = 85.0
+	_people[&"agent"] = null
+	assert_eq(_update(&"agent", 1)["id"], "high_spirits")
+	assert_eq(mods.value(&"tag.social.mult", 1.0), 1.5, "and the next update sets the loaded state's")
+
+
+func test_a_withdrawn_agent_turns_others_away_but_not_comfort() -> void:
+	var conversation := BustleConversation.new()
+	conversation.accepts = _behaviour.accepts
+	_people[&"agent"] = _person({&"sociability": 0.0})
+	_moods[&"agent"].mood = 20.0
+	assert_false(conversation.turned_away(&"friend", &"agent"), "before: anyone may talk to it")
+	_update(&"agent", 0)
+	assert_true(conversation.turned_away(&"friend", &"agent"), "withdrawn, it turns ordinary talk away")
+	assert_true(conversation.turned_away(&"foe", &"agent", &"chitchat"))
+	assert_eq(conversation.run(&"friend", &"agent", 5), {"ok": false, "reason": &"turned_away"})
+	assert_false(conversation.turned_away(&"friend", &"agent", &"comfort"), "but a friend's comfort still gets through")
+	assert_false(conversation.turned_away(&"agent", &"friend"), "it's only about others reaching it")
+	var action := BustleConverseAction.new(conversation)
+	var context := BustleActionContext.new()
+	context.agent_id = &"friend"
+	context.params = {"with": "agent"}
+	action.start(context)
+	assert_eq(context.data.get("failure"), "turned_away", "a conversation goal fails the same way")
+	assert_false(_behaviour.accepts(&"agent", &"friend"), "a host's own visits ask accepts() too")
+	_locked[&"agent"] = true
+	assert_true(_behaviour.accepts(&"agent", &"friend"), "a lock wins over the state")
+	_locked[&"agent"] = false
+	_update(&"agent", 8 * 60)
+	assert_true(_behaviour.accepts(&"agent", &"friend"), "once it's over, it's open again")
+
+
 func test_lash_out_picks_the_most_disliked_person_nearby_once_each() -> void:
 	_people[&"agent"] = _person({&"temper": 100.0})
 	_moods[&"agent"].mood = 20.0
