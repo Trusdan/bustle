@@ -17,3 +17,4 @@ The interfaces a host project implements to connect Bustle to its own world (pla
 | `BustleHealthPort` | injured, incapacitated, life threatened | everyone healthy |
 | `BustleEnvironmentPort` | rooms | none |
 | `BustleDirectorPort` | event pacing | allows everything |
+| `BustlePropertyPort` | who owns which things and where they are; protected things; moving an item to a new owner | an in-memory register; never creates or destroys an item |

@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+
+- Crime (`addons/bustle/core/crime/`, see `docs/crime.md`): `BustleCrime`, desperate theft with no chance and no cap. Guards run in order: the `bustle/simulation/npc_crime` developer setting and the host's switch; the agent can act; a pressing need; that pressure plus personality (honesty holds back, greed and boldness push on) reaching a threshold; and an unseen, unprotected item of someone else's that eases the need. A `steal` goal in the new `BustleBands.GUARDED` band runs the `steal` action (`BustleStealAction`), which checks the guards again, moves the item and emits a neutral `theft` event with what drove it. Also `BustleCrimeConfig`, and a new property port, `BustlePropertyPort`: an in-memory register of owners, places, relief and protected items, with transfer-only moves and export and import.
+
 ## [0.5.0] - 2026-11-09
 
 Cause-driven conflict: fight, flee or fetch help, an intent to subdue or kill only for a reason, non-lethal scuffles that leave at least 1 health, quarrels from provocation and grudge against a temper and mood threshold, and assaulted and killed events that carry the act id, the cause and the intent. Nothing in the conflict code is left to chance. The combat port takes an intent and reports how a fight ended, and the health port reports when a life is threatened. APIs remain experimental before 1.0.
