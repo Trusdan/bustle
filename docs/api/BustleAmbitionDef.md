@@ -90,6 +90,22 @@ var moot_facts: StringName[] = []
 
 Facts that make it impossible for good (its target is dead or gone, a role lost for good). Any one ends an active ambition as moot.
 
+### `boosts`
+
+```gdscript
+var boosts: Dictionary[StringName, float] = {}
+```
+
+Goal id → how much it multiplies that goal's score while the ambition is active (see `BustleAmbitions.boost()`). Boosts never change a band.
+
+### `target_input`
+
+```gdscript
+var target_input: StringName = &""
+```
+
+The input naming the person the ambition is about (for example `court_target`). With one, only candidates whose option is that person are boosted. Empty: no target.
+
 ### `next`
 
 ```gdscript
@@ -106,7 +122,7 @@ The template to take next after it's completed, when that one is eligible and en
 func is_valid() -> bool
 ```
 
-True when it can be used: an id, known sliders with finite weights and minimums, a finite target, and some way to complete (a progress line or a done fact).
+True when it can be used: an id, known sliders with finite weights and minimums, a finite target, boosts that are finite and not negative, and some way to complete (a progress line or a done fact).
 
 ### `is_done`
 

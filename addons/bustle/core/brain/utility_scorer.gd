@@ -19,6 +19,8 @@ extends RefCounted
 ##   [code]goal score × advertisement score[/code].
 ## - **Repeated options:** a goal's first advertisement for an option id is used; each repeat adds a
 ##   [code]duplicate_option[/code] reason to that first candidate.
+## - **A boost** ([member BustleScoreContext.score_boost]) multiplies a candidate's score last. It
+##   must be finite and not negative; it never changes the candidate's band.
 ## - **Eligible** means the preconditions pass, the numbers are finite, and the raw score is above
 ##   zero and at least the goal's [member BustleGoalDef.min_score].
 ## - **Choosing:** only the highest band with an eligible candidate counts. Within it, every
@@ -206,6 +208,14 @@ func _candidate(goal: BustleGoalDef, option_id: StringName, context: BustleScore
 			score = 0.0
 		else:
 			score *= ad_score
+	if ok and context.score_boost.is_valid():
+		var boost: Variant = context.score_boost.call(goal.id, option_id)
+		if (boost is float or boost is int) and is_finite(float(boost)) and float(boost) >= 0.0:
+			score *= float(boost)
+		else:
+			out.reasons.append({"kind": &"not_finite", "what": &"boost"})
+			ok = false
+			score = 0.0
 	if not is_finite(score):
 		out.reasons.append({"kind": &"not_finite", "what": &"score"})
 		ok = false

@@ -42,6 +42,14 @@ var tag_mults: Dictionary[StringName, float] = {}
 
 Tag → its multiplier. A tag not listed is 1.0.
 
+### `score_boost`
+
+```gdscript
+var score_boost: Callable = Callable()
+```
+
+`func(goal_id: StringName, option_id: StringName) -> float`: a multiplier on that candidate's score (for example a long-term aim favouring some goals). It never changes a band. Unset: 1.
+
 ### `precondition_check`
 
 ```gdscript

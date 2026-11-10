@@ -36,6 +36,30 @@ var cooldown_days: float = 7.0
 
 After a template is completed, how long (game days) before the same agent can be given it again. Only after completion: an ambition that ends moot can be given again at once.
 
+### `never_boost`
+
+```gdscript
+var never_boost: StringName[] = [...]
+```
+
+Goals an ambition never boosts, whatever its table says: theft stays with the crime module, and no aim makes anyone pick a fight.
+
+### `like_line`
+
+```gdscript
+var like_line: float = 60.0
+```
+
+Courting: the least opinion of someone to court them.
+
+### `family_kinds`
+
+```gdscript
+var family_kinds: StringName[] = [...]
+```
+
+Relationship kinds that make someone family, so never courted.
+
 ## Methods
 
 ### `default_templates`
@@ -49,7 +73,8 @@ The default library, with its circumstance, input and fact names:
 - `get_promoted`: diligence 1.0, boldness 0.4; needs `has_role`; done on `promotion_granted`; moot on `role_lost`. 
 - `court_someone`: sociability 1.0, boldness 0.3; needs `has_court_target`; done when `court_opinion` reaches 75 and `court_friend` holds; moot on `court_target_gone`. 
 - `settle_feud`: honesty 1.0, sociability 0.4; needs `has_rival`; done when `rival_opinion` reaches 50 and `rival_cleared` holds, or on `feud_settled`; moot on `rival_gone`. 
-- `leave_settlement`: curiosity 0.8, boldness 0.6, greed −0.3; done on `left_settlement`; moot on `cannot_leave`.
+- `leave_settlement`: curiosity 0.8, boldness 0.6, greed −0.3; done on `left_settlement`; moot on `cannot_leave`. 
+Boosts: saving and promotion ×1.5 to `work` (saving ×1.3 to `trade`); courting ×2 to `visit`, `converse` and `gift` toward the one courted (`court_target`); settling ×2 to `help`, `gift` and `converse` toward the rival (`rival`); leaving ×1.5 to `explore`.
 
 ### `allowed`
 
