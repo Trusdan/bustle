@@ -158,6 +158,14 @@ var last_intent: BustleIntent
 
 The intent of the last tick, or null. Not saved.
 
+### `score_boost`
+
+```gdscript
+var score_boost: Callable = Callable()
+```
+
+`func(goal_id, option_id) -> float`: multiplies each candidate's score (see `BustleScoreContext.score_boost`), for example `BustleAmbitions.boost()`. Unset: 1.
+
 ## Methods
 
 ### `order`

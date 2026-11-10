@@ -11,7 +11,7 @@ One agent's ambition: a long-term aim, one at a time, from `BustleAmbitionConfig
 **Completing.** Once the template's progress line or done fact holds (`BustleAmbitionDef.is_done()`), it's completed: `ambition_completed`, the `achieved_ambition` deed (with a `social` port), and its cooldown starts. Its `BustleAmbitionDef.next` is taken when eligible; otherwise the library is scored again. 
 **Moot.** Once a `BustleAmbitionDef.moot_facts` fact holds, the ambition can no longer happen: `ended_moot`, with no cooldown, and the library is scored again at once. 
 There is no other ending: an ambition stays until it's achieved or moot, however long that takes.
-This part assigns and ends ambitions; how an ambition sways the agent's choices comes later.
+**Bias.** An ambition never acts on its own: `boost()` multiplies the scores of the goals its template names (for `BustleBrain.score_boost`). Boosts never change a band, so nothing here outranks danger, self-care, crime or mental states, orders or duty. They're off while the agent is locked (`locked` in the inputs: an order or quest is followed), while the template is disabled (even when it was assigned earlier), and for `BustleAmbitionConfig.never_boost` goals; the ambition stays assigned all the while.
 
 ## Signals
 
@@ -99,7 +99,7 @@ Optional: where the achieved deed is recorded.
 func active() -> Dictionary
 ```
 
-The current ambition as `{id, since, progress}` (a copy), or empty. `progress` is the last value of its progress input seen.
+The current ambition as `{id, since, progress, target}` (a copy), or empty. `progress` is the last value of its progress input seen; `target` is who it's about, for a template with a `BustleAmbitionDef.target_input`.
 
 ### `update`
 
@@ -107,7 +107,7 @@ The current ambition as `{id, since, progress}` (a copy), or empty. `progress` i
 func update(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> Dictionary
 ```
 
-Updates the ambition at minute `now` from `personality` (or null: every slider 50) and `inputs`: the circumstances, progress inputs and facts the templates name, by name. Completes or ends the current ambition when it's done or moot, then assigns one if there's none. Returns the active ambition.
+Updates the ambition at minute `now` from `personality` (or null: every slider 50) and `inputs`: the circumstances, progress inputs and facts the templates name, by name, and `locked`. Completes or ends the current ambition when it's done or moot, then assigns one if there's none. Returns the active ambition.
 
 ### `choose`
 
@@ -124,6 +124,14 @@ func is_eligible(def: BustleAmbitionDef, now: int, personality: BustlePersonalit
 ```
 
 True when `def` could be assigned now: valid and enabled, every requirement true, every minimum slider met, not already done or moot, and not completed within the cooldown.
+
+### `boost`
+
+```gdscript
+func boost(goal_id: StringName, option_id: StringName = &"") -> float
+```
+
+How much the active ambition multiplies goal `goal_id`'s score for option `option_id` (for `BustleBrain.score_boost`): its template's boost for that goal, or 1. Always 1 with no ambition, while locked or turned off, when the template is disabled, for a `BustleAmbitionConfig.never_boost` goal, or, for a template with a target, when the option isn't that target.
 
 ### `score_of`
 

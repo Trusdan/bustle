@@ -78,6 +78,10 @@ var last_candidates: Array[BustleCandidate] = []
 ## The intent of the last tick, or null. Not saved.
 var last_intent: BustleIntent
 
+## [code]func(goal_id, option_id) -> float[/code]: multiplies each candidate's score (see
+## [member BustleScoreContext.score_boost]), for example [method BustleAmbitions.boost]. Unset: 1.
+var score_boost: Callable = Callable()
+
 var _rng := RandomNumberGenerator.new()
 var _scorer := BustleUtilityScorer.new()
 # The goal and option whose sequence the runner was started for.
@@ -145,6 +149,7 @@ func _think(delta: float, senses: BustleSenses) -> BustleIntent:
 	var context := BustleScoreContext.new()
 	context.inputs = senses.inputs
 	context.advertisements = senses.advertisements
+	context.score_boost = score_boost
 	var needs: Array[StringName] = []
 	var tags: Array[StringName] = []
 	for ad: BustleAdvertisement in senses.advertisements:

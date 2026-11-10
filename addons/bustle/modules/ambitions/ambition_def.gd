@@ -30,13 +30,20 @@ extends Resource
 ## Facts that make it impossible for good (its target is dead or gone, a role lost for good). Any
 ## one ends an active ambition as moot.
 @export var moot_facts: Array[StringName] = []
+## Goal id → how much it multiplies that goal's score while the ambition is active (see
+## [method BustleAmbitions.boost]). Boosts never change a band.
+@export var boosts: Dictionary[StringName, float] = {}
+## The input naming the person the ambition is about (for example [code]court_target[/code]).
+## With one, only candidates whose option is that person are boosted. Empty: no target.
+@export var target_input: StringName = &""
 ## The template to take next after it's completed, when that one is eligible and enabled. Empty:
 ## score the library again.
 @export var next: StringName = &""
 
 
 ## True when it can be used: an id, known sliders with finite weights and minimums, a finite
-## target, and some way to complete (a progress line or a done fact).
+## target, boosts that are finite and not negative, and some way to complete (a progress line or a
+## done fact).
 ## @experimental
 func is_valid() -> bool:
 	if id == &"" or not is_finite(target) or (progress_input == &"" and done_fact == &""):
@@ -45,7 +52,7 @@ func is_valid() -> bool:
 		for slider: StringName in table:
 			if not BustlePersonality.SLIDERS.has(slider) or not is_finite(float(table[slider])):
 				return false
-	return true
+	return boosts.values().all(func(m: float) -> bool: return is_finite(m) and m >= 0.0)
 
 
 ## True when [param inputs] say it's done: [member done_fact] is true, or [member progress_input]

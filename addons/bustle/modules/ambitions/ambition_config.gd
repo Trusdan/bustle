@@ -15,6 +15,13 @@ const SETTING := "bustle/simulation/ambitions"
 ## After a template is completed, how long (game days) before the same agent can be given it again.
 ## Only after completion: an ambition that ends moot can be given again at once.
 @export var cooldown_days: float = 7.0
+## Goals an ambition never boosts, whatever its table says: theft stays with the crime module, and
+## no aim makes anyone pick a fight.
+@export var never_boost: Array[StringName] = [&"steal", &"insult", &"quarrel", &"fight", &"attack"]
+## Courting: the least opinion of someone to court them.
+@export var like_line: float = 60.0
+## Relationship kinds that make someone family, so never courted.
+@export var family_kinds: Array[StringName] = [&"family", &"kin", &"parent", &"child", &"sibling", &"spouse", &"partner"]
 
 
 ## The default library, with its circumstance, input and fact names:
@@ -30,25 +37,36 @@ const SETTING := "bustle/simulation/ambitions"
 ## [code]feud_settled[/code]; moot on [code]rival_gone[/code].
 ## [br]- [code]leave_settlement[/code]: curiosity 0.8, boldness 0.6, greed −0.3; done on
 ## [code]left_settlement[/code]; moot on [code]cannot_leave[/code].
+## [br]Boosts: saving and promotion ×1.5 to [code]work[/code] (saving ×1.3 to [code]trade[/code]);
+## courting ×2 to [code]visit[/code], [code]converse[/code] and [code]gift[/code] toward the one
+## courted ([code]court_target[/code]); settling ×2 to [code]help[/code], [code]gift[/code] and
+## [code]converse[/code] toward the rival ([code]rival[/code]); leaving ×1.5 to [code]explore[/code].
 ## @experimental
 static func default_templates() -> Array[BustleAmbitionDef]:
 	var save := BustleAmbitionDef.make(&"save_money", {&"greed": 1.0, &"diligence": 0.4}, [], &"wallet", 2000.0)
 	save.min_sliders = {&"greed": 50.0}
+	save.boosts = {&"work": 1.5, &"trade": 1.3}
 	var promote := BustleAmbitionDef.make(&"get_promoted", {&"diligence": 1.0, &"boldness": 0.4}, [&"has_role"])
 	promote.done_fact = &"promotion_granted"
 	promote.moot_facts = [&"role_lost"]
+	promote.boosts = {&"work": 1.5}
 	var court := BustleAmbitionDef.make(&"court_someone", {&"sociability": 1.0, &"boldness": 0.3}, [&"has_court_target"],
 		&"court_opinion", 75.0)
 	court.done_facts = [&"court_friend"]
 	court.moot_facts = [&"court_target_gone"]
+	court.boosts = {&"visit": 2.0, &"converse": 2.0, &"gift": 2.0}
+	court.target_input = &"court_target"
 	var feud := BustleAmbitionDef.make(&"settle_feud", {&"honesty": 1.0, &"sociability": 0.4}, [&"has_rival"],
 		&"rival_opinion", 50.0)
 	feud.done_facts = [&"rival_cleared"]
 	feud.done_fact = &"feud_settled"
 	feud.moot_facts = [&"rival_gone"]
+	feud.boosts = {&"help": 2.0, &"gift": 2.0, &"converse": 2.0}
+	feud.target_input = &"rival"
 	var leave := BustleAmbitionDef.make(&"leave_settlement", {&"curiosity": 0.8, &"boldness": 0.6, &"greed": -0.3})
 	leave.done_fact = &"left_settlement"
 	leave.moot_facts = [&"cannot_leave"]
+	leave.boosts = {&"explore": 1.5}
 	return [save, promote, court, feud, leave]
 
 

@@ -20,7 +20,12 @@ extends RefCounted
 ## longer happen: [signal ended_moot], with no cooldown, and the library is scored again at once.
 ## [br]There is no other ending: an ambition stays until it's achieved or moot, however long that takes.
 ## [br][br]
-## This part assigns and ends ambitions; how an ambition sways the agent's choices comes later.
+## [b]Bias.[/b] An ambition never acts on its own: [method boost] multiplies the scores of the goals
+## its template names (for [member BustleBrain.score_boost]). Boosts never change a band, so
+## nothing here outranks danger, self-care, crime or mental states, orders or duty. They're off while
+## the agent is locked ([code]locked[/code] in the inputs: an order or quest is followed), while
+## the template is disabled (even when it was assigned earlier), and for
+## [member BustleAmbitionConfig.never_boost] goals; the ambition stays assigned all the while.
 ## @experimental
 
 ## [param agent] took on ambition [param id]. [param info]: see [method active].
@@ -46,6 +51,7 @@ var social: BustleSocialPort
 
 var _active: Dictionary = {}
 var _completed: Dictionary[StringName, int] = {}
+var _locked: bool = false
 
 
 func _init(p_agent: StringName = &"", p_config: BustleAmbitionConfig = null) -> void:
@@ -53,26 +59,31 @@ func _init(p_agent: StringName = &"", p_config: BustleAmbitionConfig = null) -> 
 	config = p_config if p_config != null else BustleAmbitionConfig.new()
 
 
-## The current ambition as [code]{id, since, progress}[/code] (a copy), or empty. [code]progress[/code]
-## is the last value of its progress input seen.
+## The current ambition as [code]{id, since, progress, target}[/code] (a copy), or empty.
+## [code]progress[/code] is the last value of its progress input seen; [code]target[/code] is who
+## it's about, for a template with a [member BustleAmbitionDef.target_input].
 ## @experimental
 func active() -> Dictionary:
 	return _active.duplicate()
 
 
 ## Updates the ambition at minute [param now] from [param personality] (or null: every slider 50)
-## and [param inputs]: the circumstances, progress inputs and facts the templates name, by name.
+## and [param inputs]: the circumstances, progress inputs and facts the templates name, by name,
+## and [code]locked[/code].
 ## Completes or ends the current ambition when it's done or moot, then assigns one if there's
 ## none. Returns the active ambition.
 ## @experimental
 func update(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> Dictionary:
+	_locked = bool(inputs.get("locked", false))
 	if not enabled or not BustleAmbitionConfig.allowed():
 		return active()
 	var after := &""
 	if not _active.is_empty():
 		var def := config.find(StringName(_active["id"]))
 		if def == null:
+			var gone := StringName(_active["id"])
 			_active = {}
+			ended_moot.emit(agent_id, gone, &"unknown_template")
 		elif def.is_done(inputs):
 			_complete(def, now)
 			after = def.next
@@ -85,6 +96,7 @@ func update(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 			if not _active.is_empty():
 				if def.progress_input != &"":
 					_active["progress"] = float(inputs.get(def.progress_input, 0.0))
+				_active["target"] = _target(def, inputs)
 				return active()
 	var chosen: BustleAmbitionDef = null
 	for preferred: StringName in [after, pin]:
@@ -96,7 +108,8 @@ func update(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 		chosen = choose(now, personality, inputs)
 	if chosen != null:
 		_active = {"id": String(chosen.id), "since": now,
-			"progress": float(inputs.get(chosen.progress_input, 0.0)) if chosen.progress_input != &"" else 0.0}
+			"progress": float(inputs.get(chosen.progress_input, 0.0)) if chosen.progress_input != &"" else 0.0,
+			"target": _target(chosen, inputs)}
 		ambition_started.emit(agent_id, chosen.id, active())
 	return active()
 
@@ -134,6 +147,24 @@ func is_eligible(def: BustleAmbitionDef, now: int, personality: BustlePersonalit
 	return true
 
 
+## How much the active ambition multiplies goal [param goal_id]'s score for option
+## [param option_id] (for [member BustleBrain.score_boost]): its template's boost for that goal, or 1.
+## Always 1 with no ambition, while locked or turned off, when the template is disabled, for a
+## [member BustleAmbitionConfig.never_boost] goal, or, for a template with a target, when the option
+## isn't that target.
+## @experimental
+func boost(goal_id: StringName, option_id: StringName = &"") -> float:
+	if _active.is_empty() or _locked or not enabled or not BustleAmbitionConfig.allowed() or config.never_boost.has(goal_id):
+		return 1.0
+	var def := config.find(StringName(_active["id"]))
+	if def == null or not def.enabled or not def.boosts.has(goal_id):
+		return 1.0
+	if def.target_input != &"" and String(option_id) != str(_active.get("target", "")):
+		return 1.0
+	var mult := def.boosts[goal_id]
+	return mult if is_finite(mult) and mult >= 0.0 else 1.0
+
+
 ## [param def]'s score for [param personality]: [code]Σ weight × (slider − 50) / 100[/code].
 ## @experimental
 func score_of(def: BustleAmbitionDef, personality: BustlePersonality = null) -> float:
@@ -160,7 +191,8 @@ func import_state(saved: Variant) -> bool:
 		return false
 	var row: Dictionary = saved["active"]
 	if not row.is_empty() and (not row.get("id") is String or config.find(StringName(row["id"])) == null
-			or not row.get("since") is int or not (row.get("progress") is float or row.get("progress") is int)):
+			or not row.get("since") is int or not (row.get("progress") is float or row.get("progress") is int)
+			or not row.get("target", "") is String):
 		return false
 	var completed: Dictionary[StringName, int] = {}
 	for id: Variant in saved["completed"]:
@@ -170,6 +202,7 @@ func import_state(saved: Variant) -> bool:
 	_active = row.duplicate()
 	if not _active.is_empty():
 		_active["progress"] = float(_active["progress"])
+		_active["target"] = str(_active.get("target", ""))
 	_completed = completed
 	return true
 
@@ -182,6 +215,10 @@ func _complete(def: BustleAmbitionDef, now: int) -> void:
 	if social != null:
 		social.record_deed(agent_id, DEED, def.id, &"", [] as Array[Dictionary])
 	ambition_completed.emit(agent_id, def.id, info)
+
+
+static func _target(def: BustleAmbitionDef, inputs: Dictionary) -> String:
+	return str(inputs.get(def.target_input, "")) if def.target_input != &"" else ""
 
 
 static func _slider(personality: BustlePersonality, slider: StringName) -> float:

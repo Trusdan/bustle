@@ -22,7 +22,7 @@ func after_each() -> void:
 func test_the_highest_scoring_eligible_template_is_assigned_at_once() -> void:
 	var a := _ambitions(&"a")
 	assert_eq(a.update(0, _person({&"greed": 90.0, &"diligence": 70.0}))["id"], "save_money", "greedy and diligent: 0.48")
-	assert_eq(_events, [[&"a", &"save_money", {"id": "save_money", "since": 0, "progress": 0.0}, "started"]], "at spawn, no waiting")
+	assert_eq(_events, [[&"a", &"save_money", {"id": "save_money", "since": 0, "progress": 0.0, "target": ""}, "started"]], "at spawn, no waiting")
 	assert_eq(_pick({&"diligence": 100.0}, {"has_role": true}), &"get_promoted", "a worker: 0.5")
 	assert_eq(_pick({&"diligence": 100.0}), &"save_money", "without a role, promotion doesn't suit: saving's 0.2 is the best left")
 	assert_eq(_pick({&"greed": 40.0, &"diligence": 100.0}), &"leave_settlement", "too little greed to save: 3 left eligible, all at 0 or less")
