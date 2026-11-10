@@ -30,6 +30,9 @@ func before_each() -> void:
 	_needs = {}
 	_crime.needs_of = func(id: StringName) -> BustleNeedSet: return _needs.get(id)
 	_watch = BustleCrimeWatch.new(_crime)
+	var honest := BustlePersonality.new()
+	honest.set_slider(&"honesty", 100.0)
+	_watch.judge.personality_of = func(id: StringName) -> BustlePersonality: return honest if id in [&"baker", &"onlooker"] else null
 	_events = []
 	_watch.witnessed.connect(func(w: StringName, t: StringName, i: StringName, _r: Dictionary) -> void: _events.append([&"witnessed", w, t, i]))
 	_watch.crime_reported.connect(func(r: StringName, role: StringName, report: Dictionary) -> void: _events.append([&"reported", r, role, report]))
@@ -56,7 +59,7 @@ func test_a_theft_nobody_perceived_is_a_deed_its_owner_finds() -> void:
 		"witnesses": [], "deed": true, "found_at": 30, "reporter": "baker", "role": "authority",
 		"authority": "warden", "reported_at": 30}
 	assert_eq(_events, [[&"found", &"baker", &"loaf"], [&"reported", &"baker", &"authority", report]],
-		"the owner reports its loss, not knowing who took it")
+		"an honest owner reports its loss, not knowing who took it")
 	assert_eq([_watch.open_deeds(), _watch.known_by(&"baker"), _watch.known_by(&"warden")], [[], [1], []])
 	assert_eq(_watch.notice_losses(&"baker", &"market", 40), [] as Array[int], "a deed is found once")
 	_society.ports.property.remove(&"loaf")
@@ -82,7 +85,7 @@ func test_only_those_who_perceived_it_are_witnesses() -> void:
 	assert_eq(_events.size(), 2)
 	assert_eq(_events[0], [&"witnessed", &"onlooker", &"drifter", &"loaf"])
 	assert_eq([_events[1][1], _events[1][2], _events[1][3]["thief"], _events[1][3]["authority"]], [&"onlooker", &"watch", "drifter", ""],
-		"reported to the role, whoever holds it (nobody yet)")
+		"an honest witness reports to the role, whoever holds it (nobody yet)")
 	assert_eq(memories[&"onlooker"].recall(BustleMemory.PERSON, &"drifter", 50)["source"], BustleMemory.SAW, "the witness remembers the thief")
 	assert_eq(memories[&"onlooker"].recall(BustleMemory.ITEM, &"loaf", 50)["area"], &"market")
 	assert_eq(memories[&"far"].size(), 0)
@@ -94,6 +97,7 @@ func test_only_those_who_perceived_it_are_witnesses() -> void:
 	_crime.consider(&"second", 70)
 	_crime.steal(&"second", 70)
 	assert_eq(_watch.record(2)["witnesses"], ["far"], "the host decides who perceived it")
+	assert_eq([_watch.record(2)["decisions"], _watch.record(2)["reporters"]], [{"far": "silent"}, []], "an ordinary witness keeps quiet")
 
 
 func test_property_can_be_used_up_only_by_the_host() -> void:
@@ -119,7 +123,8 @@ func test_records_save_and_refuse_bad_data() -> void:
 			func(r: Dictionary) -> void: r["witnesses"] = ["someone"],
 			func(r: Dictionary) -> void: r["known_by"] = [3],
 			func(r: Dictionary) -> void: r["thief"] = null,
-			func(r: Dictionary) -> void: r["id"] = 0]:
+			func(r: Dictionary) -> void: r["id"] = 0,
+			func(r: Dictionary) -> void: r["decisions"] = {"baker": "shrug"}]:
 		var broken: Dictionary = saved.duplicate(true)
 		change.call(broken["records"][0])
 		bad.append(broken)

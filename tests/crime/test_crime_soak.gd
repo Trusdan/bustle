@@ -1,9 +1,10 @@
 # Copyright (c) 2026 Corey Patrick Jones (github.com/Trusdan)
 extends GutTest
 ## Thirty days of a small village, every half hour: bread is baked and eaten, hunger rises, and
-## whoever is driven to it steals. Every theft is witnessed, reported and remembered, or it leaves
-## a deed; nobody witnesses what they didn't perceive; theft never makes or destroys goods; and the
-## same village runs the same way twice.
+## whoever is driven to it steals. Every theft is witnessed and remembered, or it leaves a deed;
+## each who knows of it decides what to do (a witness grows afraid of a thief it keeps seeing, so
+## not every witness reports, but a silent one still remembers); nobody witnesses what they didn't
+## perceive; theft never makes or destroys goods; and the same village runs the same way twice.
 
 const DAYS := 30
 const STEP := 30
@@ -18,6 +19,7 @@ class Village:
 	var crime: BustleCrime
 	var watch: BustleCrimeWatch
 	var needs: Dictionary[StringName, BustleNeedSet] = {}
+	var memories: Dictionary[StringName, BustleMemory] = {}
 	var people: Dictionary[StringName, BustlePersonality] = {}
 	var events: Array = []
 	var problems: Array[String] = []
@@ -34,12 +36,16 @@ class Village:
 		watch.witnessed.connect(_on_witnessed)
 		watch.crime_reported.connect(_on_reported)
 		watch.deed_found.connect(_on_found)
+		watch.decided.connect(_on_decided)
+		watch.judge.personality_of = _personality_of
+		watch.judge.fear_of = _fear_of
+		watch.memory_of = _memory_of
 		society.ports.roles.set_holder(BustleCrimeWatch.AUTHORITY, &"warden")
-		_add(&"baker", {"honesty": 80.0}, _hours({6: "market", 12: "well", 14: "market", 18: "home_baker"}))
+		_add(&"baker", {"honesty": 80.0, "boldness": 70.0, "diligence": 70.0}, _hours({6: "market", 12: "well", 14: "market", 18: "home_baker"}))
 		_add(&"cook", {"honesty": 70.0}, _hours({7: "mill", 12: "market", 14: "mill", 20: "home_cook"}))
 		_add(&"warden", {"honesty": 90.0}, _hours({8: "market", 10: "well", 12: "mill", 14: "market", 16: "well", 18: "home_warden"}))
 		# A 25-hour round, so it is somewhere else at each hour from one day to the next.
-		_add(HIDDEN, {"honesty": 80.0}, _hours({0: "home_onlooker", 10: "mill", 13: "home_onlooker", 17: "market", 20: "home_onlooker"}) + ["home_onlooker"])
+		_add(HIDDEN, {"honesty": 80.0, "piety": 70.0, "diligence": 70.0}, _hours({0: "home_onlooker", 10: "mill", 13: "home_onlooker", 17: "market", 20: "home_onlooker"}) + ["home_onlooker"])
 		_add(&"drifter", {"honesty": 20.0, "greed": 70.0, "boldness": 60.0}, ["market", "well", "mill"])
 		_add(&"rover", {"honesty": 30.0, "greed": 60.0, "boldness": 50.0}, ["mill", "market", "well", "camp"])
 		_add(&"pauper", {}, ["well", "mill", "market", "camp", "camp"])
@@ -88,6 +94,24 @@ class Village:
 	func _needs_of(id: StringName) -> BustleNeedSet:
 		return needs.get(id)
 
+	func _memory_of(id: StringName) -> BustleMemory:
+		return memories.get(id)
+
+	# A witness grows more afraid of a thief each time it has seen it steal before.
+	func _fear_of(witness: StringName, thief: StringName) -> float:
+		var seen := -1
+		for row: Dictionary in watch.records():
+			if row["thief"] == String(thief) and (row["witnesses"] as Array).has(String(witness)):
+				seen += 1
+		return 50.0 + 20.0 * seen
+
+	func _on_decided(agent: StringName, outcome: StringName, row: Dictionary) -> void:
+		events.append(["decided", agent, outcome, row["id"]])
+		var expected := {"id": row["id"], "item": row["item"], "owner_id": row["owner_id"], "place": row["place"],
+			"at": row["at"], "thief": "" if row["deed"] else row["thief"], "outcome": String(outcome)}
+		if not watch.question(agent, int(row["found_at"]) if row["deed"] else int(row["at"])).has(expected):
+			problems.append("%s can't be questioned about record %d" % [agent, row["id"]])
+
 	func _thief_sees_someone(thief: StringName, place: StringName) -> bool:
 		for other: StringName in society.agent_ids():
 			if other != thief and other != HIDDEN and society.get_agent(other).area == place:
@@ -112,6 +136,7 @@ class Village:
 		var need_set := BustleNeedSet.new()
 		need_set.add_need(food)
 		needs[id] = need_set
+		memories[id] = BustleMemory.new()
 		var p := BustlePersonality.new()
 		for slider: String in sliders:
 			p.set_slider(StringName(slider), sliders[slider])
@@ -148,12 +173,17 @@ func test_thirty_days_of_theft_all_accounted_for() -> void:
 		if row["deed"]:
 			assert_eq(row["witnesses"], [], "a deed has no witnesses")
 			if int(row["found_at"]) >= 0:
-				assert_eq([row["known_by"], row["reporters"]], [[row["owner_id"]], [row["owner_id"]]], "its owner found it and reported it")
+				assert_eq([row["known_by"], row["decisions"], row["reporters"]], [[row["owner_id"]], {row["owner_id"]: "report"}, [row["owner_id"]]],
+					"its owner found it and, honest and bold, reported it")
 			else:
 				assert_gt(int(row["at"]), (DAYS - 1) * 1440, "only a deed of the last day is still unfound: %s" % [row])
 		else:
 			assert_eq(row["witnesses"], [String(HIDDEN)], "only the one the thief missed could see it")
-			assert_eq([row["known_by"], row["reporters"]], [row["witnesses"], row["witnesses"]], "each witness remembers and reports")
+			assert_eq([row["known_by"], (row["decisions"] as Dictionary).keys()], [row["witnesses"], row["witnesses"]], "each witness knows and decides")
+			assert_eq(row["reporters"], row["witnesses"].filter(func(w: String) -> bool: return row["decisions"][w] == "report"), "only those who decide to report do")
+	var choices: Array = witnessed.map(func(r: Dictionary) -> String: return r["decisions"][String(HIDDEN)])
+	assert_eq(choices[0], "report", "the first time, the witness reports")
+	assert_true(choices.slice(1).all(func(c: String) -> bool: return c == "silent"), "afraid of the thief after that, it keeps quiet: %s" % [choices])
 	var reports := village.events.filter(func(e: Array) -> bool: return e[0] == "reported")
 	assert_true(reports.all(func(e: Array) -> bool: return e[2] == BustleCrimeWatch.AUTHORITY and e[4] == "warden"), "reports go to the authority role")
 	assert_true(reports.filter(func(e: Array) -> bool: return e[1] == HIDDEN).all(func(e: Array) -> bool: return not String(e[3]).is_empty()), "a witness names the thief")

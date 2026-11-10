@@ -42,7 +42,7 @@ Afterwards the target is gone. The agent now owns something that eases the need,
 
 ## After a theft (`BustleCrimeWatch`)
 
-`BustleCrimeWatch.new(crime)` follows every `theft` and keeps a record of it: `{id, thief, owner_id, item, place, at, witnesses, known_by, reporters, deed, found_at}`. Every theft is witnessed, reported and remembered, or it leaves a deed.
+`BustleCrimeWatch.new(crime)` follows every `theft` and keeps a record of it: `{id, thief, owner_id, item, place, at, witnesses, known_by, decisions, reporters, deed, found_at}`. Every theft is witnessed and remembered, or it leaves a deed. Everyone who knows of it then decides what to do about it (see "What a witness does").
 
 - **Witnesses.** An agent witnesses a theft only if `perceives(agent, thief, place)` says it perceived it. By default that's every other agent in the place who isn't incapacitated. There are no made-up witnesses.
   - With both defaults, a thief only steals where nobody can perceive it, so every theft is a deed.
@@ -51,13 +51,60 @@ Afterwards the target is gone. The agent now owns something that eases the need,
   - knows of it (`known_by`);
   - remembers the thief and the item where it saw them, in its `BustleMemory` if `memory_of(agent)` gives one;
   - gets `witnessed(witness, thief, item, record)`;
-  - reports it.
-- **Reports** go to a role, `authority_role` (default `authority`), never to a named agent. `crime_reported(reporter, role, report)` carries the record as the reporter knows it, plus `reporter`, `role`, `authority` (whoever holds the role in the roles port then, maybe nobody) and `reported_at`. Who holds the role, and what follows a report, is the host's.
+  - decides what to do.
+- **Reports**, when a witness or owner decides to report, go to a role, `authority_role` (default `authority`), never to a named agent. `crime_reported(reporter, role, report)` carries the record as the reporter knows it, plus `reporter`, `role`, `authority` (whoever holds the role in the roles port then, maybe nobody) and `reported_at`. Who holds the role, and what follows a report, is the host's.
 - **Deeds.** A theft nobody perceived is a deed, an open trace:
   - `open_deeds()` lists the ones not yet found.
   - `stolen_goods_of(agent)` lists the records of stolen goods an agent still owns, the evidence on it.
-  - The host calls `notice_losses(owner_id, place, now)` when an owner is somewhere, for example each tick. It finds what was stolen from that owner there, emits `deed_found(finder, item, record)`, and the owner reports it. The owner doesn't know the thief, so its report's `thief` is empty.
+  - The host calls `notice_losses(owner_id, place, now)` when an owner is somewhere, for example each tick. It finds what was stolen from that owner there. The owner remembers the item where it was taken, `deed_found(finder, item, record)` is emitted, and the owner decides what to do. The owner doesn't know the thief, so it can't confront anyone, and any report has an empty `thief`.
+- **Questioning:** `question(agent, now)` gives what an agent can tell about each record it knows of: `{id, item, owner_id, place, at, thief, outcome}`. It names the thief only if the agent witnessed the theft and still remembers the thief in its memory, so a witness who stayed silent can still be asked, until it forgets.
 - **Saving:** `export_state()` and `import_state(saved)` (all or nothing).
+
+### What a witness does
+
+A witness, or an owner who finds a deed, does exactly one thing: `report`, `tell_victim`, `confront`, `gossip` or `silent`. The watch emits `decided(agent, outcome, record)`, then:
+
+| Outcome | What happens |
+| --- | --- |
+| `report` | `crime_reported`, at once. |
+| `tell_victim` | `victim_told(witness, owner_id, record)`. |
+| `confront` | `confronted(witness, thief, record)`: an accusation, words only. It never starts a fight or sets any intent to harm; if the host lets a scuffle follow, it goes through the conflict rules. |
+| `gossip` | `gossiped(teller, listener, record)`. |
+| `silent` | Nothing more. It still remembers. |
+
+The host can replace the decision with `should_report(agent, case)`, which returns an outcome; anything else counts as `silent`. The case is `{record, thief, owner_id, place, can_confront, gossip_to}`, with the thief empty when the agent doesn't know it.
+
+Otherwise `BustleWitnessJudge` decides, with the same formulas for every agent and no chance:
+
+- **Eligible outcomes:**
+  - `report` is always eligible;
+  - `tell_victim` when the victim is someone else;
+  - `confront` when the thief is known and within reach (`can_reach(agent, other)`, by default both agents in the same area);
+  - `gossip` when `gossip_to(agent, record)` names someone (by default nobody).
+- **Score:** each eligible outcome scores `Σ weight × (value − 50) / 100` over its terms in `BustleWitnessConfig.weights`, plus loyalty: `kind_weights` for each relationship kind between the witness and the thief (none by default).
+- **Values:**
+  - personality sliders (`personality_of`);
+  - the witness's opinions of the thief and the victim (the social port);
+  - its fear of the thief (`fear_of`);
+  - the authority's standing with it (`standing_of`, by default its opinion of the role's holder).
+
+  Each value is 0 to 100, and 50 when unknown.
+- **The winner:** the highest score wins if it reaches `threshold` (default 1), with ties going to report, then tell the victim, confront and gossip. Otherwise the witness stays silent.
+
+The default weights:
+
+| Term | Every outcome | Plus |
+| --- | --- | --- |
+| honesty | +2 | |
+| piety, boldness, diligence | +1 each | |
+| opinion of the thief | −2 | |
+| opinion of the victim | +2 | |
+| fear of the thief | −2 | |
+| the authority's standing | | +1 on `report` |
+| temper | | +1 on `confront` |
+| sociability | | +1 on `gossip` |
+
+So an honest witness (honesty 100) reports. One who also distrusts the authority tells the victim instead, and a hot-tempered one with the thief in reach confronts it. An ordinary witness, or one afraid of the thief, stays silent.
 
 The watch never punishes, fines or harms anyone, and changes nothing about the goods. Arrests, bounties and trials are the host's.
 
