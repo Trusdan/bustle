@@ -43,6 +43,22 @@ var tags: StringName[] = [...]
 
 The advertisements' tags.
 
+### `low_state_of`
+
+```gdscript
+var low_state_of: Callable = Callable()
+```
+
+(id) → true while that agent is in a low mental state (for example `BustleMentalBehaviour.in_low_state()`). A friend in one needs comforting even once its mood has started to rise. Empty: mood alone decides.
+
+### `low_state_urgency`
+
+```gdscript
+var low_state_urgency: float = 0.5
+```
+
+The least comfort a friend in a low state needs (0 to 1), whatever its mood.
+
 ## Methods
 
 ### `urgency`
@@ -59,4 +75,4 @@ How much comfort an agent in `mood` needs: 0 at or above `low_mood`, up to 1 at 
 func advertise(agent_id: StringName, noticed: StringName[], social: BustleSocialPort, mood_of: Callable, senses: BustleSenses) -> int
 ```
 
-Adds an advertisement to `senses` for each agent in `noticed` that `agent_id` counts as a friend in `social` and whose mood (`mood_of`, (id) → anything with a `mood`, or null) is low. Returns how many it added.
+Adds an advertisement to `senses` for each agent in `noticed` that `agent_id` counts as a friend in `social` and whose mood (`mood_of`, (id) → anything with a `mood`, or null) is low, or who is in a low state (`low_state_of`). Returns how many it added.
