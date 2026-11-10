@@ -1,6 +1,6 @@
 # Mood and thoughts
 
-The `needs_mood` module (`addons/bustle/modules/needs_mood/`) gives each agent a mood from 0 to 100 that moves toward a target. Thoughts set the target, and every thought keeps the reason it exists. This is part 1 of the module. Mental states, breaks and catharsis come later.
+The `needs_mood` module (`addons/bustle/modules/needs_mood/`) gives each agent a mood from 0 to 100 that moves toward a target. Thoughts set the target, and every thought keeps the reason it exists. Mental states (see below) build on it.
 
 ## Thoughts
 
@@ -52,3 +52,69 @@ A `BustleMood` holds one agent's mood.
   A timed thought that had already ended by the save's minute is dropped.
 
 The config's numbers are a starting point, not tuning: a host sets its own.
+
+## Mental states
+
+A `BustleMentalState` holds one agent's mental state: which state it's in, if any, and when that started and ends. It decides and records states only; what an agent does in a state comes later.
+
+Everything follows from the agent's mood, personality and circumstances. There's no chance, no timer between episodes and no limit shared between agents, so any number of agents can be in a state at once.
+
+`update(now, mood, personality, circumstances)` does the work. The host calls it after advancing the mood. `circumstances` is `{locked, indulgence, target, target_opinion, target_rival}`:
+- whether the agent is locked to a task (the host's `is_locked`);
+- whether it knows an indulgence;
+- who it dislikes nearby;
+- its opinion of that person, 0 to 100 (50 when not given);
+- whether the host marks them as a rival.
+
+### The states
+
+`BustleMentalConfig.states` holds `BustleMentalStateDef` resources, in tie-break order.
+
+| State | Kind | Weights | Needs | Lasts |
+| --- | --- | --- | --- | --- |
+| withdraw | low | sociability −2, diligence −1 | | 8 h |
+| sulk | low | temper +1, sociability −1 | | 12 h |
+| wander | low | curiosity +1, diligence −1 | | 24 h |
+| binge | low | greed +1 | an indulgence | 8 h |
+| lash_out | low | temper +2, boldness +1, plus dislike | someone disliked, or a rival, nearby | 12 h |
+| high_spirits | high | sociability +1 | | 8 h |
+| inspired | high | diligence +1, curiosity +1 | a match (below) | 12 h |
+
+A state's `behaviour` is one of the `Behaviour` enum: withdraw, sulk, wander, binge, lash out, high spirits or inspired. Nothing else can be expressed. There's no field for harming anyone, the agent included, or for any intent, and lashing out is words only.
+
+### Starting
+
+A state can only start when the agent is in none, isn't locked, and mental states are on.
+
+- **Low states** start when mood is below the break threshold:
+  - The threshold is `break_threshold` (30) plus the `mental.break_threshold` modifier, so traits can move it.
+  - Each eligible low state scores `Σ weight × (slider − 50) / 100`. Lashing out adds `dislike_weight × (50 − target_opinion) / 100`.
+  - The highest score wins. Ties go to the earlier state, so quieter states win.
+  - Binge needs an indulgence; without one, it's skipped.
+  - Lashing out needs a target the agent dislikes (opinion below `dislike_line`, 50) or a rival. A target it likes, or doesn't dislike, doesn't count, so lashing out is skipped and the next-highest state wins.
+- **Tier:** a low state records its tier: `extreme` below 1/7 of the threshold (about 4), `major` below 4/7 (about 17), otherwise `minor`.
+- **Inspiration** starts when mood is above `inspired_above` (90) and the agent matches: diligence or curiosity above 50, or a trait that adds the `mental.inspired` modifier.
+- **High spirits** start otherwise when mood is above `high_spirits_above` (80).
+- **Inspiration beats high spirits.** An agent in high spirits whose mood rises far enough to be inspired leaves high spirits (`replaced`) and becomes inspired.
+
+### Ending
+
+A state ends when its duration is up (`ended`) or when mood recovers early (`recovered`):
+- a low state once mood rises to the threshold plus `recover_margin` (40 by default);
+- high spirits below `high_spirits_exit` (75);
+- inspiration below `inspired_exit` (85).
+
+A state that ends doesn't start another in the same update. At the next update, an agent still below the line can start one; there's no cooldown.
+
+**Catharsis.** When a low state ends, the agent gets the catharsis thought, an aftermath only. It adds +20 mood for 2 game days and stacks up to three times, each repeat counting half the one before. Nothing stops another state starting.
+- `catharsis_def()` gives its thought def. A host passes that def with its other thought defs when it loads a mood.
+
+**Events.** `state_entered(agent, id, info)` and `state_exited(agent, id, reason)` are generic. `active()` returns `{id, kind, tier, since, until}`.
+
+### Switching off and saving
+
+- **Off switch:** `bustle/simulation/mental_states` is a project setting for developers and tests (default on, `BustleMentalConfig.allowed()`). It isn't a game option.
+  - With it off, or with the agent's own `enabled` false, no state starts and an active one ends (`disabled`, without catharsis).
+- **Saving:** `export_state()` and `import_state(saved)`. Import refuses an unknown state, a wrong kind or tier, or an end that isn't after the start, without changing anything.
+
+The numbers are configurable experimental defaults, not tuning.
