@@ -46,6 +46,10 @@ var config: BustleAmbitionConfig
 var pin: StringName = &""
 ## False: nothing is assigned and the current ambition is left as it is (the host's own switch).
 var enabled: bool = true
+## Optional: (id) → true while the agent is locked, checked by [method boost] at once (without it,
+## only [code]locked[/code] in the last [method update]'s inputs counts, so call [method update]
+## whenever a lock starts or ends).
+var is_locked: Callable = Callable()
 ## Optional: where the achieved deed is recorded.
 var social: BustleSocialPort
 
@@ -59,9 +63,10 @@ func _init(p_agent: StringName = &"", p_config: BustleAmbitionConfig = null) -> 
 	config = p_config if p_config != null else BustleAmbitionConfig.new()
 
 
-## The current ambition as [code]{id, since, progress, target}[/code] (a copy), or empty.
-## [code]progress[/code] is the last value of its progress input seen; [code]target[/code] is who
-## it's about, for a template with a [member BustleAmbitionDef.target_input].
+## The current ambition as [code]{id, since, progress, target, last_target}[/code] (a copy), or
+## empty. [code]progress[/code] is the last value of its progress input seen; [code]target[/code] is
+## who it's about right now, for a template with a [member BustleAmbitionDef.target_input] (empty
+## while nobody qualifies), and [code]last_target[/code] the last one it had.
 ## @experimental
 func active() -> Dictionary:
 	return _active.duplicate()
@@ -96,7 +101,7 @@ func update(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 			if not _active.is_empty():
 				if def.progress_input != &"":
 					_active["progress"] = float(inputs.get(def.progress_input, 0.0))
-				_active["target"] = _target(def, inputs)
+				_set_target(_target(def, inputs))
 				return active()
 	var chosen: BustleAmbitionDef = null
 	for preferred: StringName in [after, pin]:
@@ -109,7 +114,8 @@ func update(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 	if chosen != null:
 		_active = {"id": String(chosen.id), "since": now,
 			"progress": float(inputs.get(chosen.progress_input, 0.0)) if chosen.progress_input != &"" else 0.0,
-			"target": _target(chosen, inputs)}
+			"target": "", "last_target": ""}
+		_set_target(_target(chosen, inputs))
 		ambition_started.emit(agent_id, chosen.id, active())
 	return active()
 
@@ -149,17 +155,19 @@ func is_eligible(def: BustleAmbitionDef, now: int, personality: BustlePersonalit
 
 ## How much the active ambition multiplies goal [param goal_id]'s score for option
 ## [param option_id] (for [member BustleBrain.score_boost]): its template's boost for that goal, or 1.
-## Always 1 with no ambition, while locked or turned off, when the template is disabled, for a
-## [member BustleAmbitionConfig.never_boost] goal, or, for a template with a target, when the option
-## isn't that target.
+## Always 1 with no ambition, while locked ([code]locked[/code] at the last update, or
+## [member is_locked] now) or turned off, when the template is disabled, for a
+## [member BustleAmbitionConfig.never_boost] goal, or, for a template with a target, when it has no
+## target right now or the option isn't that target.
 ## @experimental
 func boost(goal_id: StringName, option_id: StringName = &"") -> float:
-	if _active.is_empty() or _locked or not enabled or not BustleAmbitionConfig.allowed() or config.never_boost.has(goal_id):
+	if _active.is_empty() or _locked or (is_locked.is_valid() and bool(is_locked.call(agent_id))) or not enabled or not BustleAmbitionConfig.allowed() or config.never_boost.has(goal_id):
 		return 1.0
 	var def := config.find(StringName(_active["id"]))
 	if def == null or not def.enabled or not def.boosts.has(goal_id):
 		return 1.0
-	if def.target_input != &"" and String(option_id) != str(_active.get("target", "")):
+	var target := str(_active.get("target", ""))
+	if def.target_input != &"" and (target == "" or String(option_id) != target):
 		return 1.0
 	var mult := def.boosts[goal_id]
 	return mult if is_finite(mult) and mult >= 0.0 else 1.0
@@ -192,7 +200,7 @@ func import_state(saved: Variant) -> bool:
 	var row: Dictionary = saved["active"]
 	if not row.is_empty() and (not row.get("id") is String or config.find(StringName(row["id"])) == null
 			or not row.get("since") is int or not (row.get("progress") is float or row.get("progress") is int)
-			or not row.get("target", "") is String):
+			or not row.get("target", "") is String or not row.get("last_target", "") is String):
 		return false
 	var completed: Dictionary[StringName, int] = {}
 	for id: Variant in saved["completed"]:
@@ -203,6 +211,7 @@ func import_state(saved: Variant) -> bool:
 	if not _active.is_empty():
 		_active["progress"] = float(_active["progress"])
 		_active["target"] = str(_active.get("target", ""))
+		_active["last_target"] = str(_active.get("last_target", _active["target"]))
 	_completed = completed
 	return true
 
@@ -215,6 +224,12 @@ func _complete(def: BustleAmbitionDef, now: int) -> void:
 	if social != null:
 		social.record_deed(agent_id, DEED, def.id, &"", [] as Array[Dictionary])
 	ambition_completed.emit(agent_id, def.id, info)
+
+
+func _set_target(target: String) -> void:
+	_active["target"] = target
+	if target != "":
+		_active["last_target"] = target
 
 
 static func _target(def: BustleAmbitionDef, inputs: Dictionary) -> String:

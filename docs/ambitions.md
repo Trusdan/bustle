@@ -85,18 +85,18 @@ Set the agent's brain's `score_boost` to `ambitions.boost`. The scorer multiplie
   - while ambitions are off;
   - when the active template is disabled, even if it was assigned before the host turned it off;
   - for a goal in `never_boost` (`steal`, `insult`, `quarrel`, `fight`, `attack`): theft stays with the crime module, and no aim makes anyone pick a fight;
-  - for a targeted template, toward anyone but its target.
-- **Locks:** while locked, the ambition stays assigned, and progress, completion and moot ending still work.
+  - for a targeted template, toward anyone but its target, and for every option while it has no target right now.
+- **Locks:** while locked, the ambition stays assigned, and progress, completion and moot ending still work. `locked` is read at each `update`, so call `update` whenever a lock starts or ends. Or set `is_locked(id)`, which `boost` checks at once, between updates too.
 
 ## Targets
 
 `BustleAmbitionTargets.new(society, config).fill(agent, ambitions.active(), inputs)` adds the courting and feud inputs before `update`:
 
-- **Courting:** `court_target` is another agent in the same settlement (`settlement_of`, by default the area). They mustn't be family (`family_kinds`, by kind) or gone for good (`is_gone`, by default no longer in the society), and the agent's opinion of them must be at least `like_line` (60). It's the one liked most, ties by id, and the current target is kept while it qualifies.
+- **Courting:** `court_target` is another agent in the same settlement (`settlement_of`, by default the area). They mustn't be family (`family_kinds`, by kind) or gone for good (`is_gone`, by default no longer in the society), and the agent's opinion of them must be at least `like_line` (60). It's the one liked most, ties by id, and the current target is kept while it qualifies. While nobody qualifies (say the one courted is liked less now), the ambition stays but has no target, so it boosts nothing. `active()` keeps `last_target`, the last one it had.
   - `has_court_target`, `court_opinion` and `court_friend` (a friend kind) are filled too.
-  - `court_target_gone` is set only when the current target is gone for good and nobody else qualifies. When someone else does, the ambition turns to them.
+  - `court_target_gone` is set only when the last target is gone for good and nobody else qualifies. When someone else does, the ambition turns to them.
 - **Feuds:** `rival` is the current one, else the rival (by the rival kind) with the lowest opinion, ties by id.
-  - `has_rival`, `rival_opinion`, `rival_cleared` (the rival kind is gone) and `rival_gone` are filled too.
+  - `has_rival`, `rival_opinion`, `rival_cleared` (the rival kind is gone, never once the rival is gone for good, so a feud with someone dead ends moot rather than settled) and `rival_gone` are filled too.
 
 ## Notes for hosts
 
@@ -107,4 +107,4 @@ Set the agent's brain's `score_boost` to `ambitions.boost`. The scorer multiplie
 ## Switching off and saving
 
 - **Off switch:** `bustle/simulation/ambitions` is a project setting for developers and tests (default on, `BustleAmbitionConfig.allowed()`). It isn't a game option. With it off, or with `enabled` false, nothing is assigned and the current ambition is left as it is.
-- **Saving:** `export_state()` and `import_state(saved)` cover the active ambition (with its target) and when each template was last completed (for the cooldown). Import refuses unknown templates and malformed data without changing anything.
+- **Saving:** `export_state()` and `import_state(saved)` cover the active ambition (with its target and last target) and when each template was last completed (for the cooldown). Import refuses unknown templates and malformed data without changing anything.

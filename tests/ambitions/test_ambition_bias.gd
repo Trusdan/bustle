@@ -56,6 +56,11 @@ func test_boosts_stop_while_locked_or_once_the_template_is_disabled() -> void:
 	assert_eq([a.active()["id"], a.boost(&"work")], ["save_money", 1.0], "locked: assigned, but no boost")
 	a.update(1, greedy, {"wallet": 500.0})
 	assert_eq(a.boost(&"work"), 1.5, "the lock ends, the boost is back")
+	var lock := [true]
+	a.is_locked = func(_id: StringName) -> bool: return lock[0]
+	assert_eq(a.boost(&"work"), 1.0, "a lock callable counts at once, between updates")
+	lock[0] = false
+	assert_eq(a.boost(&"work"), 1.5)
 	a.update(2, greedy, {"wallet": 2000.0, "locked": true})
 	assert_eq(a.active()["id"], "leave_settlement", "completing still works while locked")
 	a.config.find(&"leave_settlement").enabled = false
@@ -85,6 +90,11 @@ func test_courting_aims_at_someone_liked_nearby_and_never_family() -> void:
 	_store.add_opinion(&"agent", &"lukewarm", 10.0, {}, 1000.0)
 	_society.remove_agent(&"liked")
 	assert_eq([_update(a, DAY, warm)["id"], a.active()["target"]], ["court_someone", "lukewarm"], "gone, but someone else qualifies: it turns to them")
+	_store.add_opinion(&"agent", &"lukewarm", -15.0, {}, 1000.0)
+	assert_eq([_update(a, DAY + 1, warm)["id"], a.active()["target"]], ["court_someone", ""],
+		"its one is still here but liked less (50) and nobody else qualifies: still courting, nobody to aim at")
+	assert_eq([a.boost(&"converse", &""), a.boost(&"visit", &"someone"), a.boost(&"visit", &"lukewarm")], [1.0, 1.0, 1.0],
+		"so it boosts nothing, with or without an option")
 	_society.remove_agent(&"lukewarm")
 	var events := []
 	a.ended_moot.connect(func(_a: StringName, id: StringName, fact: StringName) -> void: events.append([id, fact]))
@@ -118,6 +128,18 @@ func test_settling_a_feud_aims_at_the_rival_and_never_at_violence() -> void:
 	b.ended_moot.connect(func(_a: StringName, id: StringName, fact: StringName) -> void: moot.append(fact))
 	_update(b, 10 * DAY, fair)
 	assert_eq(moot, [&"rival_gone"], "the rival gone for good: moot")
+	var c := BustleAmbitions.new(&"agent")
+	_society.add_agent(&"foe", &"villager").area = &"town"
+	_store.set_kind(&"agent", &"foe", &"rival")
+	_update(c, 11 * DAY, fair)
+	assert_eq(c.active()["target"], "foe")
+	_store.clear_kind(&"agent", &"foe", &"rival")
+	_society.remove_agent(&"foe")
+	var ends := []
+	c.ambition_completed.connect(func(_a: StringName, id: StringName, _i: Dictionary) -> void: ends.append([id, "completed"]))
+	c.ended_moot.connect(func(_a: StringName, id: StringName, fact: StringName) -> void: ends.append([id, fact]))
+	_update(c, 12 * DAY, fair)
+	assert_eq(ends, [[&"settle_feud", &"rival_gone"]], "gone for good with the kind cleared and opinion at 60: moot, not settled")
 
 
 func test_seven_days_each_template_favours_its_goals() -> void:
@@ -132,7 +154,7 @@ func test_seven_days_each_template_favours_its_goals() -> void:
 		gut.p("%s: %s chosen %d times with it, %d without" % [row[0], row[3], boosted["hits"], control["hits"]])
 		assert_gt(boosted["hits"], control["hits"] * 2, "%s favours %s" % [row[0], row[3]])
 		assert_eq(boosted["locked_boosts"], 0, "%s: no boost while locked" % row[0])
-		assert_eq(boosted["aim"], String(row[0]), "%s stays assigned all week" % row[0])
+		assert_eq(boosted["changed"], 0, "%s stays assigned at every step of the week" % row[0])
 		assert_eq(_week(row, true), boosted, "%s: the same week twice" % row[0])
 
 
@@ -149,12 +171,15 @@ func _week(row: Array, with_ambition: bool) -> Dictionary:
 	var library := _social_library()
 	var hits := 0
 	var locked_boosts := 0
+	var changed := 0
 	for minute in range(0, 7 * DAY, 30):
 		var hour := floori((minute % DAY) / 60.0)
 		var inputs: Dictionary = (row[2] as Dictionary).duplicate()
 		_targets.fill(&"agent", a.active(), inputs)
 		inputs["locked"] = hour >= 9 and hour < 12
 		a.update(minute, _person(row[1]), inputs)
+		if with_ambition and str(a.active().get("id", "")) != String(row[0]):
+			changed += 1
 		var context := BustleScoreContext.new()
 		context.inputs = {&"fact.on": 1.0, &"need.social": 0.5}
 		for person: StringName in [&"liked", &"foe", &"lukewarm"]:
@@ -166,7 +191,7 @@ func _week(row: Array, with_ambition: bool) -> Dictionary:
 		var pick := scorer.choose(candidates, config, rng)
 		if pick.goal_id == row[3] and (row[4] == &"" or pick.option_id == row[4]):
 			hits += 1
-	return {"hits": hits, "locked_boosts": locked_boosts, "aim": str(a.active().get("id", "")) if with_ambition else String(row[0])}
+	return {"hits": hits, "locked_boosts": locked_boosts, "changed": changed}
 
 
 func _plain(candidate: BustleCandidate) -> float:

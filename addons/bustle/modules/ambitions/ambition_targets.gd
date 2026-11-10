@@ -9,12 +9,14 @@ extends RefCounted
 ## ([member settlement_of]), not family
 ## ([member BustleAmbitionConfig.family_kinds]) and not gone for good ([member is_gone]), whose
 ## opinion is at least [member BustleAmbitionConfig.like_line]; the one it likes most, ties by id.
-## The current target is kept while it still qualifies. [code]court_target_gone[/code] is set only
-## when the current target is gone for good and nobody else qualifies; when someone else does,
+## The current target is kept while it still qualifies; while nobody does, there's no target and
+## nothing is boosted. [code]court_target_gone[/code] is set only when the last target is gone for
+## good and nobody else qualifies; when someone else does,
 ## the ambition simply turns to them.
 ## [br][b]Feuds[/b] ([code]rival[/code]): someone it counts as a rival (the social port's
 ## [code]rival[/code] kind), not gone for good; the current one is kept, else the lowest opinion,
-## ties by id. [code]rival_cleared[/code] once the current rival no longer has the rival kind, and
+## ties by id. [code]rival_cleared[/code] once the current rival no longer has the rival kind (never
+## once they're gone for good, so a feud with someone dead ends moot, not settled), and
 ## [code]rival_gone[/code] once they're gone for good.
 ## @experimental
 
@@ -40,10 +42,11 @@ func _init(p_society: BustleSociety = null, p_config: BustleAmbitionConfig = nul
 func fill(agent: StringName, active: Dictionary, inputs: Dictionary) -> void:
 	var social := society.ports.social
 	var current := StringName(str(active.get("target", "")))
+	var last := StringName(str(active.get("last_target", current)))
 	var courting: bool = active.get("id", "") == "court_someone"
 	var court := current if courting and _can_court(agent, current) else court_target(agent)
 	inputs["has_court_target"] = court != &""
-	inputs["court_target_gone"] = courting and current != &"" and _gone(current) and court == &""
+	inputs["court_target_gone"] = courting and last != &"" and _gone(last) and court == &""
 	if court != &"":
 		inputs["court_target"] = String(court)
 		inputs["court_opinion"] = float(social.opinion(agent, court))
@@ -54,8 +57,9 @@ func fill(agent: StringName, active: Dictionary, inputs: Dictionary) -> void:
 	if rival != &"":
 		inputs["rival"] = String(rival)
 		inputs["rival_opinion"] = float(social.opinion(agent, rival))
-		inputs["rival_cleared"] = not social.kinds_between(agent, rival).has("rival")
-		inputs["rival_gone"] = feuding and _gone(rival)
+		var gone := feuding and _gone(rival)
+		inputs["rival_cleared"] = not gone and not social.kinds_between(agent, rival).has("rival")
+		inputs["rival_gone"] = gone
 
 
 ## The person [param agent] would court now, or empty (see the class notes).

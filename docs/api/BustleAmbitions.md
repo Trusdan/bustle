@@ -83,6 +83,14 @@ var enabled: bool = true
 
 False: nothing is assigned and the current ambition is left as it is (the host's own switch).
 
+### `is_locked`
+
+```gdscript
+var is_locked: Callable = Callable()
+```
+
+Optional: (id) → true while the agent is locked, checked by `boost()` at once (without it, only `locked` in the last `update()`'s inputs counts, so call `update()` whenever a lock starts or ends).
+
 ### `social`
 
 ```gdscript
@@ -99,7 +107,7 @@ Optional: where the achieved deed is recorded.
 func active() -> Dictionary
 ```
 
-The current ambition as `{id, since, progress, target}` (a copy), or empty. `progress` is the last value of its progress input seen; `target` is who it's about, for a template with a `BustleAmbitionDef.target_input`.
+The current ambition as `{id, since, progress, target, last_target}` (a copy), or empty. `progress` is the last value of its progress input seen; `target` is who it's about right now, for a template with a `BustleAmbitionDef.target_input` (empty while nobody qualifies), and `last_target` the last one it had.
 
 ### `update`
 
@@ -131,7 +139,7 @@ True when `def` could be assigned now: valid and enabled, every requirement true
 func boost(goal_id: StringName, option_id: StringName = &"") -> float
 ```
 
-How much the active ambition multiplies goal `goal_id`'s score for option `option_id` (for `BustleBrain.score_boost`): its template's boost for that goal, or 1. Always 1 with no ambition, while locked or turned off, when the template is disabled, for a `BustleAmbitionConfig.never_boost` goal, or, for a template with a target, when the option isn't that target.
+How much the active ambition multiplies goal `goal_id`'s score for option `option_id` (for `BustleBrain.score_boost`): its template's boost for that goal, or 1. Always 1 with no ambition, while locked (`locked` at the last update, or `is_locked` now) or turned off, when the template is disabled, for a `BustleAmbitionConfig.never_boost` goal, or, for a template with a target, when it has no target right now or the option isn't that target.
 
 ### `score_of`
 
