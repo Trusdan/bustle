@@ -8,8 +8,8 @@ extends RefCounted
 ## An item is a plain record: [code]{id, owner_id, place, relieves, protected}[/code], where
 ## [code]relieves[/code] is need → amount (what having it would ease) and [code]protected[/code]
 ## marks something that can never be taken (a host marks its own: keepsakes, things a story needs).
-## [method transfer] only ever moves an existing item from its owner to someone else; nothing here
-## creates or destroys an item.
+## [method transfer] only ever moves an existing item from its owner to someone else. Only the
+## host makes items ([method register]) or uses them up ([method remove]); theft never does.
 ## @experimental
 
 var _items: Dictionary[StringName, Dictionary] = {}
@@ -86,6 +86,13 @@ func transfer(id: StringName, from: StringName, to: StringName) -> bool:
 		return false
 	_items[id]["owner_id"] = String(to)
 	return true
+
+
+## The host uses up or destroys [param id] (eaten, broken, sold out of the world). False when
+## unknown. Theft never calls this.
+## @experimental
+func remove(id: StringName) -> bool:
+	return _items.erase(id)
 
 
 ## The register as plain data, by id.
