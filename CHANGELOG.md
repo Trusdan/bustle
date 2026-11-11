@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-10
+
+Crime, mental states, ambitions and locks, all from personality and circumstance with nothing left to chance and no limit shared between agents. Guarded theft by those driven to it; witnesses who perceived it, who decide what to do and carry word face to face, or a deed its owner finds later. Mental states that start when mood crosses a personality-adjusted line, with their modifiers and goals, lashing out in words only and a stacking catharsis. Long-term ambitions that are assigned, completed or end moot, never given up, and that bias choices by multiplying goal scores without changing bands. Host locks that pin an agent to a place or goal, with protection levels for the host to honour. APIs remain experimental before 1.0.
+
 ### Added
 
 - Locks (see `docs/locks.md`): `BustleSociety.lock(agent, BustleLock)` pins an agent to a place, a goal or sequence, or both, by `lock_id`. Several locks stack, one can be released at a time with `unlock`, and locking the same id again replaces it. While any is held, `is_locked` is true and the brain holds a non-forced order at the front of its queue (new `held` orders, the `hold` action and `BustleOrderQueue.submit(order, first)`). Only CRITICAL, or URGENT that keeps to the pinned place, interrupts it, and other orders wait until the last lock is released. Crime, mental states and ambitions made with a society read `society.is_locked`. `set_protection` and `is_protected` give the levels `NONE`, `QUEST_LOCKED` and `ESSENTIAL`. Locks and protection save and load.
