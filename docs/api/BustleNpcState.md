@@ -42,6 +42,14 @@ var area: StringName = &""
 
 The area it is in.
 
+### `protection`
+
+```gdscript
+var protection: int = 0
+```
+
+How it's protected from being killed, a `BustleLock.Protection` (see `BustleSociety.is_protected()`).
+
 ### `position`
 
 ```gdscript

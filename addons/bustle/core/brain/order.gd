@@ -17,6 +17,18 @@ var option_id: StringName = &""
 var forced: bool = false
 
 
+## A held order (a lock's): while it's at the front only CRITICAL, or URGENT that keeps to
+## [member place], interrupts it (see [BustleBrain]).
+var held: bool = false
+## A held order's area, or empty.
+var place: StringName = &""
+## Where [member place] is (a [Vector3], set as [code]move_to[/code] when a step doesn't name one),
+## or null.
+var position: Variant = null
+## How far (metres) an advertised option may be and still count as at [member place].
+var reach: float = 5.0
+
+
 func _init(p_id: StringName = &"", p_sequence: BustleActionSequence = null, p_option_id: StringName = &"",
 		p_forced: bool = false) -> void:
 	id = p_id

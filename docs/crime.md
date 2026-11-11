@@ -7,7 +7,7 @@ Crime (`addons/bustle/core/crime/`) covers desperate theft. Nothing in it is lef
 `BustleCrime.consider(agent, now)` runs the guards in order. Each must pass:
 
 1. **Crime is allowed.** That needs both the developer setting `bustle/simulation/npc_crime` (a project setting, on unless set to `false`) and the host's `enabled`. Neither is a game option, and a host doesn't show them to players.
-2. **The agent can act.** It's an agent of the society, isn't in `exempt`, and isn't held to a story or task by `is_locked(agent)`.
+2. **The agent can act.** It's an agent of the society, isn't in `exempt`, and isn't held to a story or task by `is_locked(agent)` (made with a society, its `is_locked`, see [locks](locks.md)).
 3. **Need.** One of `config.needs` (default `food`) presses at least `min_need` (default 0.6), and the agent owns nothing that eases it. An agent that already has what it needs, stolen or not, isn't driven to take more.
 4. **Personality.** That pressure plus `Σ weight × (slider − 50) / 100` reaches `threshold` (default 1). The default weights are honesty −2, greed +1 and boldness +1.
    - An honest agent (honesty 90) never steals, even starving: 1.0 − 0.8 < 1.

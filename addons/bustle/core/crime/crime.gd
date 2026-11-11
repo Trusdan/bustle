@@ -48,7 +48,8 @@ var needs_of: Callable = Callable()
 ## another agent of the society who isn't incapacitated (the health port) is in that area. Who
 ## really perceived a theft is [BustleCrimeWatch]'s business.
 var is_observed: Callable = Callable()
-## (id) → true while the host holds that agent to a story or task. Empty: never.
+## (id) → true while the host holds that agent to a story or task. Made with a society, it's that
+## society's [method BustleSociety.is_locked]; a host or test may replace it. Empty: never.
 var is_locked: Callable = Callable()
 
 var _targets: Dictionary[StringName, Dictionary] = {}
@@ -57,6 +58,8 @@ var _targets: Dictionary[StringName, Dictionary] = {}
 func _init(p_society: BustleSociety = null, p_config: BustleCrimeConfig = null) -> void:
 	society = p_society if p_society != null else BustleSociety.new()
 	config = p_config if p_config != null else BustleCrimeConfig.new()
+	if p_society != null:
+		is_locked = p_society.is_locked
 
 
 ## Runs the guards for [param agent] at minute [param now] (see the class description). Returns

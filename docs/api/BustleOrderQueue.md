@@ -61,10 +61,10 @@ Runs the front order. [BustleBrain](BustleBrain.md) shares its action handlers w
 ### `submit`
 
 ```gdscript
-func submit(order: BustleOrder) -> StringName
+func submit(order: BustleOrder, first: bool = false) -> StringName
 ```
 
-Queues `order`. Returns an empty reason when queued, otherwise why it was refused.
+Queues `order`, at the back, or at the front when `first` (an order running there is interrupted and starts its step again later). Returns an empty reason when queued, otherwise why it was refused.
 
 ### `refuse`
 

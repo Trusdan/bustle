@@ -41,7 +41,8 @@ var society: BustleSociety
 var config: BustleMentalConfig
 ## Optional: the insulted agent quarrels through it.
 var conflict: BustleConflict
-## (id) → true while the agent is locked to a task. Empty: never.
+## (id) → true while the agent is locked to a task. Made with a society, it's that society's
+## [method BustleSociety.is_locked]; a host or test may replace it. Empty: never.
 var is_locked: Callable = Callable()
 ## (id) → the affordance it would indulge in (an id), or empty. Empty: none.
 var indulgence_of: Callable = Callable()
@@ -62,6 +63,8 @@ var _applied: Dictionary[StringName, Dictionary] = {}
 func _init(p_society: BustleSociety = null, p_config: BustleMentalConfig = null) -> void:
 	society = p_society if p_society != null else BustleSociety.new()
 	config = p_config if p_config != null else BustleMentalConfig.new()
+	if p_society != null:
+		is_locked = p_society.is_locked
 
 
 ## [param agent]'s state, made on first use.

@@ -86,7 +86,7 @@ Set the agent's brain's `score_boost` to `ambitions.boost`. The scorer multiplie
   - when the active template is disabled, even if it was assigned before the host turned it off;
   - for a goal in `never_boost` (`steal`, `insult`, `quarrel`, `fight`, `attack`): theft stays with the crime module, and no aim makes anyone pick a fight;
   - for a targeted template, toward anyone but its target, and for every option while it has no target right now.
-- **Locks:** while locked, the ambition stays assigned, and progress, completion and moot ending still work. `locked` is read at each `update`, so call `update` whenever a lock starts or ends. Or set `is_locked(id)`, which `boost` checks at once, between updates too.
+- **Locks:** while locked, the ambition stays assigned, and progress, completion and moot ending still work. `locked` is read at each `update`, so call `update` whenever a lock starts or ends. Or set `is_locked(id)`, which `boost` checks at once, between updates too; `BustleAmbitions.new(agent, config, society)` sets it to `society.is_locked` (see [locks](locks.md)).
 
 ## Targets
 

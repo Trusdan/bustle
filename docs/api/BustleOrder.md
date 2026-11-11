@@ -41,3 +41,35 @@ var forced: bool = false
 ```
 
 True to run even through danger.
+
+### `held`
+
+```gdscript
+var held: bool = false
+```
+
+A held order (a lock's): while it's at the front only CRITICAL, or URGENT that keeps to `place`, interrupts it (see [BustleBrain](BustleBrain.md)).
+
+### `place`
+
+```gdscript
+var place: StringName = &""
+```
+
+A held order's area, or empty.
+
+### `position`
+
+```gdscript
+var position: Variant = null
+```
+
+Where `place` is (a `Vector3`, set as `move_to` when a step doesn't name one), or null.
+
+### `reach`
+
+```gdscript
+var reach: float = 5.0
+```
+
+How far (metres) an advertised option may be and still count as at `place`.

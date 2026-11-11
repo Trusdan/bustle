@@ -17,6 +17,15 @@ extends RefCounted
 ##   id, an unknown archetype, a brain state that doesn't fit) returns a [BustleImportReport] and
 ##   changes nothing. Only the current schema is accepted; older versions have no migration yet.
 ## - [method state_hash] is a SHA-256 of the canonical export, for checking round trips.
+## - **Locks.** A host pins an agent with [method lock] (a [BustleLock]: a place, a goal or
+##   sequence, or both) and releases it with [method unlock]. While any lock is held the agent is
+##   locked ([method is_locked], the one source crime, mental states and ambitions read) and its
+##   brain holds one order at the front of its queue, built from its locks (the newest place and
+##   the newest goal or sequence), never forced: danger at CRITICAL can interrupt it and it resumes
+##   after, URGENT self-care only when it keeps to the pinned place, and nothing else. Orders the
+##   host gives meanwhile wait behind it and run once the last lock is released. Locks are saved.
+## - **Protection** ([method set_protection], [method is_protected]) is data for the host's combat
+##   or health to honour.
 ## @experimental
 
 ## The saved-state schema version.
@@ -26,10 +35,15 @@ const SCHEMA := 1
 var ports := BustlePorts.new()
 ## The world seed agents' brains are seeded from.
 var world_seed: int = 0
+## How far (metres) an advertised option may be from a locked agent and still count as at its
+## pinned place.
+var lock_reach: float = 5.0
 
 var _agents: Dictionary[StringName, BustleNpcState] = {}
 # archetype id → [library, config]
 var _archetypes: Dictionary[StringName, Array] = {}
+# agent id → its locks, oldest first
+var _locks: Dictionary[StringName, Array] = {}
 
 
 func _init(p_world_seed: int = 0) -> void:
@@ -80,6 +94,7 @@ func add_agent(id: StringName, archetype_id: StringName, group: StringName = &""
 ## @experimental
 func remove_agent(id: StringName) -> void:
 	_agents.erase(id)
+	_locks.erase(id)
 
 
 ## Agent [param id]'s state, or null.
@@ -113,6 +128,79 @@ func cancel_order(agent_id: StringName, order_id: StringName) -> bool:
 	return state != null and state.brain.orders.cancel(order_id)
 
 
+## Pins agent [param id] with [param p_lock], replacing its lock with the same id (which then counts
+## as the newest). False when there's no such agent or the lock pins nothing.
+## @experimental
+func lock(id: StringName, p_lock: BustleLock) -> bool:
+	if get_agent(id) == null or p_lock == null or not p_lock.is_valid():
+		return false
+	var held: Array = _locks.get_or_add(id, [])
+	for old: BustleLock in held.duplicate():
+		if old.lock_id == p_lock.lock_id:
+			held.erase(old)
+	held.append(p_lock)
+	_sync(id)
+	return true
+
+
+## Releases agent [param id]'s lock [param lock_id]; its other locks stay. False when it held no
+## such lock.
+## @experimental
+func unlock(id: StringName, lock_id: StringName) -> bool:
+	var held: Array = _locks.get(id, [])
+	for old: BustleLock in held:
+		if old.lock_id == lock_id:
+			held.erase(old)
+			if held.is_empty():
+				_locks.erase(id)
+			_sync(id)
+			return true
+	return false
+
+
+## True while agent [param id] holds any lock.
+## @experimental
+func is_locked(id: StringName) -> bool:
+	return not (_locks.get(id, []) as Array).is_empty()
+
+
+## Agent [param id]'s locks' ids, oldest first.
+## @experimental
+func lock_ids(id: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for held: BustleLock in _locks.get(id, []):
+		out.append(held.lock_id)
+	return out
+
+
+## Sets agent [param id]'s protection, a [enum BustleLock.Protection]. False for an unknown agent or
+## level.
+## @experimental
+func set_protection(id: StringName, level: int) -> bool:
+	var state := get_agent(id)
+	if state == null or level < BustleLock.Protection.NONE or level > BustleLock.Protection.ESSENTIAL:
+		return false
+	state.protection = level
+	return true
+
+
+## True when agent [param id] must not be killed now: ESSENTIAL always, QUEST_LOCKED while it holds a
+## lock, NONE never. The host's combat or health honours it.
+## @experimental
+func is_protected(id: StringName) -> bool:
+	var state := get_agent(id)
+	if state == null:
+		return false
+	return state.protection == BustleLock.Protection.ESSENTIAL \
+		or (state.protection == BustleLock.Protection.QUEST_LOCKED and is_locked(id))
+
+
+## The id of the order that holds agent [param id]'s locks.
+## @experimental
+static func lock_order_id(id: StringName) -> StringName:
+	return StringName("lock/%s" % id)
+
+
 ## The population's state as plain data. Attached bodies' positions are copied in first.
 ## @experimental
 func export_state() -> Dictionary:
@@ -126,8 +214,13 @@ func export_state() -> Dictionary:
 			"position": [state.position.x, state.position.y, state.position.z] if state.has_position else null,
 			"data": state.data.duplicate(true), "brain": _brain_out(state.brain.export_state()),
 			"sim_ring": state.sim_ring, "last_update_minute": state.last_update_minute,
+			"protection": state.protection,
 		})
-	return {"schema": SCHEMA, "world_seed": str(world_seed), "agents": agents}
+	var locks := {}
+	for id: StringName in agent_ids():
+		if is_locked(id):
+			locks[String(id)] = (_locks[id] as Array).map(func(l: BustleLock) -> Dictionary: return l.to_dict())
+	return {"schema": SCHEMA, "world_seed": str(world_seed), "agents": agents, "locks": locks}
 
 
 ## Replaces the population with [param saved], all or nothing. Bodies attached to agents that are
@@ -164,6 +257,7 @@ func import_state(saved: Variant) -> BustleImportReport:
 			report.fail("agent %d: id %s is repeated" % [index - 1, state.id])
 			continue
 		staged[state.id] = state
+	var staged_locks := _stage_locks(payload.get("locks", {}), staged, report)
 	if not report.errors.is_empty():
 		return report
 	for id: StringName in staged:
@@ -172,6 +266,9 @@ func import_state(saved: Variant) -> BustleImportReport:
 			staged[id].attach_body(old.body())
 	world_seed = seed
 	_agents = staged
+	_locks = staged_locks
+	for id: StringName in agent_ids():
+		_sync(id)
 	report.ok = true
 	return report
 
@@ -191,7 +288,68 @@ func _make(id: StringName, archetype_id: StringName, group: StringName) -> Bustl
 	state.group = group
 	var parts: Array = _archetypes[archetype_id]
 	state.brain = BustleBrain.new(id, parts[0], parts[1], world_seed)
+	state.brain.orders.finished.connect(_on_order_finished.bind(id))
 	return state
+
+
+# Rebuilds agent [param id]'s lock order from its locks: cancels the old one and, while any lock is
+# held, puts a new held order at the front (the newest place and goal or sequence, then hold).
+func _sync(id: StringName) -> void:
+	var state := get_agent(id)
+	if state == null:
+		return
+	var queue := state.brain.orders
+	var order_id := lock_order_id(id)
+	queue.cancel(order_id, &"relocked")
+	if not is_locked(id):
+		return
+	var place := &""
+	var steps: Array[BustleActionStep] = []
+	for held: BustleLock in _locks[id]:
+		if held.place != &"":
+			place = held.place
+		var sequence := held.sequence
+		if sequence == null and held.goal != &"":
+			var goal := state.brain.library.find(held.goal)
+			sequence = goal.sequence if goal != null else null
+		if sequence != null:
+			steps = sequence.steps.duplicate()
+	var hold := BustleActionStep.new()
+	hold.action = &"hold"
+	steps.append(hold)
+	var order := BustleOrder.new(order_id, BustleActionSequence.new())
+	order.sequence.steps = steps
+	order.held = true
+	order.place = place
+	order.position = ports.world.place_position(place) if place != &"" else null
+	order.reach = lock_reach
+	queue.submit(order, true)
+
+
+# The lock order ended on its own (a step failed): put it back while the locks are held.
+func _on_order_finished(order_id: StringName, outcome: BustleOrderQueue.Outcome, _reason: StringName, id: StringName) -> void:
+	if order_id == lock_order_id(id) and outcome in [BustleOrderQueue.Outcome.DONE, BustleOrderQueue.Outcome.FAILED] and is_locked(id):
+		_sync(id)
+
+
+func _stage_locks(saved: Variant, staged: Dictionary[StringName, BustleNpcState], report: BustleImportReport) -> Dictionary[StringName, Array]:
+	var out: Dictionary[StringName, Array] = {}
+	if not saved is Dictionary:
+		report.fail("locks isn't a dictionary")
+		return out
+	for id: Variant in saved:
+		if not id is String or not staged.has(StringName(id)) or not saved[id] is Array or (saved[id] as Array).is_empty():
+			report.fail("locks: %s isn't an agent with locks" % [id])
+			continue
+		var held: Array = []
+		for row: Variant in saved[id]:
+			var parsed := BustleLock.from_dict(row)
+			if parsed == null or held.any(func(l: BustleLock) -> bool: return l.lock_id == parsed.lock_id):
+				report.fail("locks: %s has a malformed or repeated lock" % id)
+				break
+			held.append(parsed)
+		out[StringName(id)] = held
+	return out
 
 
 # One saved agent checked and built, or null with its reasons in the report.
@@ -246,6 +404,13 @@ func _stage(entry: Variant, seed: int, report: BustleImportReport, index: int) -
 			report.fail("%s (%s): %s isn't valid" % [where, id, key])
 			return null
 		state.set(key, value)
+	var protection: Variant = saved.get("protection", BustleLock.Protection.NONE)
+	if typeof(protection) == TYPE_FLOAT and protection == floorf(protection):
+		protection = int(protection)
+	if typeof(protection) != TYPE_INT or protection < BustleLock.Protection.NONE or protection > BustleLock.Protection.ESSENTIAL:
+		report.fail("%s (%s): protection isn't valid" % [where, id])
+		return null
+	state.protection = protection
 	if not state.brain.import_state(brain):
 		report.fail("%s (%s): the brain state doesn't fit its archetype" % [where, id])
 		return null

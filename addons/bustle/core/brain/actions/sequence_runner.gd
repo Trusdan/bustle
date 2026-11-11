@@ -45,6 +45,7 @@ var _active: bool = false
 func _init() -> void:
 	register(&"wait", BustleWaitAction.new())
 	register(&"idle", BustleIdleAction.new())
+	register(&"hold", BustleHoldAction.new())
 
 
 ## Registers [param handler] for [param action], replacing any earlier one.

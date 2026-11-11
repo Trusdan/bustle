@@ -30,14 +30,22 @@ var _results: Array[Dictionary] = []
 var _started: StringName = &""
 
 
-## Queues [param order]. Returns an empty reason when queued, otherwise why it was refused.
+## Queues [param order], at the back, or at the front when [param first] (an order running there
+## is interrupted and starts its step again later). Returns an empty reason when queued, otherwise
+## why it was refused.
 ## @experimental
-func submit(order: BustleOrder) -> StringName:
+func submit(order: BustleOrder, first: bool = false) -> StringName:
 	var reason := _refusal(order)
 	if reason != &"":
 		_report(order.id if order != null else &"", Outcome.IMPOSSIBLE, reason)
 		return reason
-	_orders.append(order)
+	if first:
+		if is_started():
+			runner.cancel()
+			_started = &""
+		_orders.push_front(order)
+	else:
+		_orders.append(order)
 	return &""
 
 

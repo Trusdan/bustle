@@ -166,6 +166,8 @@ func _think(delta: float, senses: BustleSenses) -> BustleIntent:
 	last_candidates = candidates
 	var top := _apply_autonomy(candidates)
 	var front := orders.front()
+	if front != null and front.held:
+		top = _hold(candidates, front, senses)
 	if front != null and BustleOrderQueue.band_of(front) >= top:
 		return _run_order(delta, senses, front)
 	if orders.is_started():
@@ -296,8 +298,34 @@ func _run_order(delta: float, senses: BustleSenses, front: BustleOrder) -> Bustl
 		intent.action = front.sequence.steps[index].action
 	orders.run(delta, senses.now_minutes, agent_id)
 	intent.read_output(orders.runner.context.output)
+	if front.held and front.position is Vector3 and not intent.has_move_to:
+		intent.move_to = front.position
+		intent.has_move_to = true
 	intent.order_results = orders.take_results()
 	return intent
+
+
+# A held order at the front: candidates above ORDERED may only interrupt it from CRITICAL, or from
+# URGENT when the order has no place or the option is advertised within its reach. Others are
+# made ineligible. Returns the highest eligible band left, or -1.
+func _hold(candidates: Array[BustleCandidate], front: BustleOrder, senses: BustleSenses) -> int:
+	var top := -1
+	for candidate: BustleCandidate in candidates:
+		if candidate.eligible and candidate.band > BustleBands.ORDERED and candidate.band < BustleBands.CRITICAL:
+			var keeps := candidate.band >= BustleBands.URGENT and (front.place == &"" or _within(candidate.option_id, senses, front.reach))
+			if not keeps:
+				candidate.eligible = false
+				candidate.reasons.append({"kind": &"held", "order": front.id})
+		if candidate.eligible:
+			top = maxi(top, candidate.band)
+	return top
+
+
+func _within(option_id: StringName, senses: BustleSenses, reach: float) -> bool:
+	for ad: BustleAdvertisement in senses.advertisements:
+		if ad != null and option_id != &"" and ad.option_id == option_id:
+			return ad.distance <= reach
+	return false
 
 
 func _stop() -> void:

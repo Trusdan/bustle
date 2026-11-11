@@ -89,7 +89,7 @@ False: nothing is assigned and the current ambition is left as it is (the host's
 var is_locked: Callable = Callable()
 ```
 
-Optional: (id) → true while the agent is locked, checked by `boost()` at once (without it, only `locked` in the last `update()`'s inputs counts, so call `update()` whenever a lock starts or ends).
+Optional: (id) → true while the agent is locked, checked by `boost()` at once (made with a society, it's that society's `BustleSociety.is_locked()`; without it, only `locked` in the last `update()`'s inputs counts, so call `update()` whenever a lock starts or ends).
 
 ### `social`
 
