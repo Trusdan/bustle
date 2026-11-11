@@ -124,7 +124,7 @@ The numbers are configurable experimental defaults, not tuning.
 `BustleMentalBehaviour.new(society)` acts out the states of a whole society. Call `update(agent, now, mood, personality)` instead of the state's own `update`. It builds the circumstances, updates the agent's `BustleMentalState` (`state_of(agent)`) and sets the state's modifiers.
 
 - **Circumstances:**
-  - `locked`: the host's `is_locked(agent)`, the same hook crime uses;
+  - `locked`: `is_locked(agent)`, the same hook crime uses (made with a society, its `is_locked`, see [locks](locks.md));
   - `indulgence`: `indulgence_of(agent)` names an affordance;
   - `target`, `target_opinion` and `target_rival`: from `lash_target(agent)` (below).
 - **Modifiers:** while an agent is in a state and not locked, `state_modifiers` for it are set on its mood's `BustleModifierSet` under the source `mental_state`. They're swapped whenever the active state changes (high spirits giving way to inspiration included), and removed when the state ends, a lock starts or `import_state` loads other states. `applied_state(agent)` says whose rows are on.

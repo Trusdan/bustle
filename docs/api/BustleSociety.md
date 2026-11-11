@@ -8,7 +8,7 @@ Inherits: `RefCounted`
 
 The registry of a population: every agent's [BustleNpcState](BustleNpcState.md), independent of any scene, the ports the host plugs in, and saving and loading the whole population.
 
-- **Archetypes.** A host registers each archetype once (`register_archetype()`) with the goal library and scoring config its agents share. An agent is added with an archetype; saves store only the archetype's id, never a resource path, so loading never loads files. - **Bodies** are optional and come and go (`BustleNpcState.attach_body()`); the state stays. - **Saving.** `export_state()` gives plain data with a `SCHEMA` version and the agents sorted by id. 64-bit numbers (the world seed and each brain's `world_seed` and `rng_state`) are written as decimal strings so they stay exact through JSON; on import they may be decimal strings or ints. `import_state()` checks everything first and then replaces the population all at once; anything wrong (a malformed payload, another schema version, a repeated id, an unknown archetype, a brain state that doesn't fit) returns a [BustleImportReport](BustleImportReport.md) and changes nothing. Only the current schema is accepted; older versions have no migration yet. - `state_hash()` is a SHA-256 of the canonical export, for checking round trips.
+- **Archetypes.** A host registers each archetype once (`register_archetype()`) with the goal library and scoring config its agents share. An agent is added with an archetype; saves store only the archetype's id, never a resource path, so loading never loads files. - **Bodies** are optional and come and go (`BustleNpcState.attach_body()`); the state stays. - **Saving.** `export_state()` gives plain data with a `SCHEMA` version and the agents sorted by id. 64-bit numbers (the world seed and each brain's `world_seed` and `rng_state`) are written as decimal strings so they stay exact through JSON; on import they may be decimal strings or ints. `import_state()` checks everything first and then replaces the population all at once; anything wrong (a malformed payload, another schema version, a repeated id, an unknown archetype, a brain state that doesn't fit) returns a [BustleImportReport](BustleImportReport.md) and changes nothing. Only the current schema is accepted; older versions have no migration yet. - `state_hash()` is a SHA-256 of the canonical export, for checking round trips. - **Locks.** A host pins an agent with `lock()` (a [BustleLock](BustleLock.md): a place, a goal or sequence, or both) and releases it with `unlock()`. While any lock is held the agent is locked (`is_locked()`, the one source crime, mental states and ambitions read) and its brain holds one order at the front of its queue, built from its locks (the newest place and the newest goal or sequence), never forced: danger at CRITICAL can interrupt it and it resumes after, URGENT self-care only when it keeps to the pinned place, and nothing else. Orders the host gives meanwhile wait behind it and run once the last lock is released. Locks are saved. - **Protection** (`set_protection()`, `is_protected()`) is data for the host's combat or health to honour.
 
 ## Constants
 
@@ -37,6 +37,14 @@ var world_seed: int = 0
 ```
 
 The world seed agents' brains are seeded from.
+
+### `lock_reach`
+
+```gdscript
+var lock_reach: float = 5.0
+```
+
+How far (metres) an advertised option may be from a locked agent and still count as at its pinned place.
 
 ## Methods
 
@@ -110,7 +118,63 @@ Gives agent `agent_id` `order` (see `BustleBrain.order()`). Returns an empty rea
 func cancel_order(agent_id: StringName, order_id: StringName) -> bool
 ```
 
-Cancels agent `agent_id`'s order `order_id`, queued or running. False when there is no such agent or order.
+Cancels agent `agent_id`'s order `order_id`, queued or running. False when there is no such agent or order, or when it's the order holding the agent's locks (release those with `unlock()`).
+
+### `lock`
+
+```gdscript
+func lock(id: StringName, p_lock: BustleLock) -> bool
+```
+
+Pins agent `id` with `p_lock`, replacing its lock with the same id (which then counts as the newest). False when there's no such agent, the lock pins nothing, or its goal isn't in the agent's library.
+
+### `unlock`
+
+```gdscript
+func unlock(id: StringName, lock_id: StringName) -> bool
+```
+
+Releases agent `id`'s lock `lock_id`; its other locks stay. False when it held no such lock.
+
+### `is_locked`
+
+```gdscript
+func is_locked(id: StringName) -> bool
+```
+
+True while agent `id` holds any lock.
+
+### `lock_ids`
+
+```gdscript
+func lock_ids(id: StringName) -> StringName[]
+```
+
+Agent `id`'s locks' ids, oldest first.
+
+### `set_protection`
+
+```gdscript
+func set_protection(id: StringName, level: int) -> bool
+```
+
+Sets agent `id`'s protection, a `BustleLock.Protection`. False for an unknown agent or level.
+
+### `is_protected`
+
+```gdscript
+func is_protected(id: StringName) -> bool
+```
+
+True when agent `id` must not be killed now: ESSENTIAL always, QUEST_LOCKED while it holds a lock, NONE never. The host's combat or health honours it.
+
+### `lock_order_id`
+
+```gdscript
+static func lock_order_id(id: StringName) -> StringName
+```
+
+The id of the order that holds agent `id`'s locks.
 
 ### `export_state`
 

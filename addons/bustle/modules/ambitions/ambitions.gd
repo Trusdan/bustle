@@ -46,7 +46,8 @@ var config: BustleAmbitionConfig
 var pin: StringName = &""
 ## False: nothing is assigned and the current ambition is left as it is (the host's own switch).
 var enabled: bool = true
-## Optional: (id) → true while the agent is locked, checked by [method boost] at once (without it,
+## Optional: (id) → true while the agent is locked, checked by [method boost] at once (made with a
+## society, it's that society's [method BustleSociety.is_locked]; without it,
 ## only [code]locked[/code] in the last [method update]'s inputs counts, so call [method update]
 ## whenever a lock starts or ends).
 var is_locked: Callable = Callable()
@@ -58,9 +59,12 @@ var _completed: Dictionary[StringName, int] = {}
 var _locked: bool = false
 
 
-func _init(p_agent: StringName = &"", p_config: BustleAmbitionConfig = null) -> void:
+func _init(p_agent: StringName = &"", p_config: BustleAmbitionConfig = null, p_society: BustleSociety = null) -> void:
 	agent_id = p_agent
 	config = p_config if p_config != null else BustleAmbitionConfig.new()
+	if p_society != null:
+		is_locked = p_society.is_locked
+		social = p_society.ports.social
 
 
 ## The current ambition as [code]{id, since, progress, target, last_target}[/code] (a copy), or

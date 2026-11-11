@@ -15,6 +15,9 @@ var archetype: StringName = &""
 var group: StringName = &""
 ## The area it is in.
 var area: StringName = &""
+## How it's protected from being killed, a [enum BustleLock.Protection] (see
+## [method BustleSociety.is_protected]).
+var protection: int = BustleLock.Protection.NONE
 ## Its last known position, when [member has_position].
 var position: Vector3 = Vector3.ZERO
 ## True once a position is known.

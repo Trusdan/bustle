@@ -49,3 +49,11 @@ var distance: float = 0.0
 ```
 
 How far it is from the agent, in metres.
+
+### `position`
+
+```gdscript
+var position: Variant = null
+```
+
+Where the option is (a `Vector3`), or null. When known, a held order measures its reach from its place to here rather than using `distance`.

@@ -99,7 +99,7 @@ var is_observed: Callable = Callable()
 var is_locked: Callable = Callable()
 ```
 
-(id) → true while the host holds that agent to a story or task. Empty: never.
+(id) → true while the host holds that agent to a story or task. Made with a society, it's that society's `BustleSociety.is_locked()`; a host or test may replace it. Empty: never.
 
 ## Methods
 
