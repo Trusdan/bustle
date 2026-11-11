@@ -50,6 +50,9 @@ enum Autonomy {
 	FULL,
 }
 
+## Direct player control was turned on or off ([method set_player_controlled]).
+signal player_control_changed(on: bool)
+
 ## The agent's id.
 var agent_id: StringName = &""
 ## The goals it chooses from.
@@ -109,12 +112,16 @@ func order(p_order: BustleOrder) -> StringName:
 
 
 ## Turns direct player control on or off. Turning it on cancels the running goal and every order.
+## Emits [signal player_control_changed] when it changes.
 ## @experimental
 func set_player_controlled(on: bool) -> void:
 	if on and not player_controlled:
 		_stop()
 		orders.clear(&"player_controlled")
+	var changed := on != player_controlled
 	player_controlled = on
+	if changed:
+		player_control_changed.emit(on)
 
 
 ## The generator seed for [param p_agent_id] in a world seeded [param p_world_seed]: 64-bit FNV-1a
@@ -306,13 +313,14 @@ func _run_order(delta: float, senses: BustleSenses, front: BustleOrder) -> Bustl
 
 
 # A held order at the front: candidates above ORDERED may only interrupt it from CRITICAL, or from
-# URGENT when the order has no place or the option is advertised within its reach. Others are
+# URGENT when the order has no place or the option is advertised within its reach of the place
+# (from the place when both positions are known, else from the agent). Others are
 # made ineligible. Returns the highest eligible band left, or -1.
 func _hold(candidates: Array[BustleCandidate], front: BustleOrder, senses: BustleSenses) -> int:
 	var top := -1
 	for candidate: BustleCandidate in candidates:
 		if candidate.eligible and candidate.band > BustleBands.ORDERED and candidate.band < BustleBands.CRITICAL:
-			var keeps := candidate.band >= BustleBands.URGENT and (front.place == &"" or _within(candidate.option_id, senses, front.reach))
+			var keeps := candidate.band >= BustleBands.URGENT and (front.place == &"" or _within(candidate.option_id, senses, front))
 			if not keeps:
 				candidate.eligible = false
 				candidate.reasons.append({"kind": &"held", "order": front.id})
@@ -321,10 +329,12 @@ func _hold(candidates: Array[BustleCandidate], front: BustleOrder, senses: Bustl
 	return top
 
 
-func _within(option_id: StringName, senses: BustleSenses, reach: float) -> bool:
+func _within(option_id: StringName, senses: BustleSenses, front: BustleOrder) -> bool:
 	for ad: BustleAdvertisement in senses.advertisements:
 		if ad != null and option_id != &"" and ad.option_id == option_id:
-			return ad.distance <= reach
+			if ad.position is Vector3 and front.position is Vector3:
+				return (ad.position as Vector3).distance_to(front.position) <= front.reach
+			return ad.distance <= front.reach
 	return false
 
 

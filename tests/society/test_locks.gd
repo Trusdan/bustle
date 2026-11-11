@@ -32,8 +32,8 @@ func test_pin_a_place_a_goal_or_both() -> void:
 	assert_eq([intent.order_id, intent.animation, intent.has_move_to], [&"lock/b", &"tend", false], "a goal: it runs that goal")
 	_tick(&"b", 40)
 	assert_eq(_tick(&"b", 41).action, &"hold", "and holds once it's done")
-	_society.lock(&"b", BustleLock.make(&"y", &"spot", &"tend"))
-	intent = _tick(&"b", 42)
+	_society.lock(&"a", BustleLock.make(&"y", &"spot", &"tend"))
+	intent = _tick(&"a", 42)
 	assert_eq([intent.animation, intent.move_to], [&"tend", Vector3(10, 0, 0)], "both: the goal, at the place")
 	assert_eq(_society.lock(&"zz", BustleLock.make(&"x", &"spot")), false, "nobody to lock")
 	assert_false(_society.lock(&"a", BustleLock.make(&"empty")), "a lock that pins nothing")
@@ -90,6 +90,60 @@ func test_an_order_given_while_locked_waits_and_then_runs() -> void:
 	_tick(&"b", 0)
 	_society.lock(&"b", BustleLock.make(&"x", &"spot"))
 	assert_eq(_society.get_agent(&"b").brain.orders.ids(), [&"lock/b", &"fetch"] as Array[StringName], "a lock goes ahead of a running order")
+
+
+func test_the_lock_order_cannot_be_lost_while_locked() -> void:
+	_society.lock(&"a", BustleLock.make(&"x", &"spot"))
+	assert_false(_society.cancel_order(&"a", &"lock/a"), "the lock order can't be cancelled directly")
+	assert_eq(_tick(&"a", 0).order_id, &"lock/a")
+	var brain := _society.get_agent(&"a").brain
+	brain.set_player_controlled(true)
+	assert_true(_tick(&"a", 1).player_controlled, "the player takes over")
+	brain.set_player_controlled(false)
+	assert_eq([_society.is_locked(&"a"), _tick(&"a", 2).order_id], [true, &"lock/a"], "and when the player lets go, the pin is back")
+	assert_eq(brain.orders.ids(), [&"lock/a"] as Array[StringName], "once")
+	var sequence := BustleActionSequence.new()
+	sequence.steps.append(BustleActionStep.new())
+	assert_ne(_society.order(&"a", BustleOrder.new(&"lock/a", sequence)), &"", "the lock order's id is taken")
+	_society.unlock(&"a", &"x")
+	assert_true(brain.orders.ids().is_empty(), "unlocking still removes it")
+
+
+func test_relocking_keeps_a_goal_going_and_a_failed_goal_isnt_retried() -> void:
+	_society.lock(&"a", BustleLock.make(&"task", &"", &"tend"))
+	_tick(&"a", 0)
+	_tick(&"a", 30)
+	assert_eq(_tick(&"a", 31).action, &"hold", "the goal is done")
+	_society.lock(&"a", BustleLock.make(&"where", &"spot"))
+	var intent := _tick(&"a", 32)
+	assert_eq([intent.action, intent.move_to], [&"hold", Vector3(10, 0, 0)], "another lock adds the place without running the goal again")
+	assert_false(_society.lock(&"a", BustleLock.make(&"ghost", &"", &"no_such_goal")), "a goal the agent doesn't have is refused")
+	var failing := BustleActionSequence.new()
+	var step := BustleActionStep.new()
+	step.action = &"idle"
+	step.params = {"minutes": -1}
+	failing.steps.append(step)
+	_society.lock(&"b", BustleLock.make(&"bad", &"spot", &"", failing))
+	_tick(&"b", 0)
+	var results := []
+	for minute in range(1, 6):
+		var held := _tick(&"b", minute)
+		results.append_array(held.order_results)
+		assert_eq([held.order_id, held.action], [&"lock/b", &"hold"], "after the step fails it holds at the place")
+	assert_eq(results, [], "without failing again every tick")
+
+
+func test_reach_is_measured_from_the_place_when_positions_are_known() -> void:
+	_society.lock(&"a", BustleLock.make(&"x", &"spot"))
+	var senses := _senses(0)
+	senses.inputs[&"need.food"] = 1.0
+	var ad := BustleAdvertisement.new(&"meal", {&"food": 1.0} as Dictionary[StringName, float])
+	ad.distance = 1.0
+	ad.position = Vector3(-10, 0, 0)
+	senses.advertisements.append(ad)
+	assert_eq(_society.get_agent(&"a").brain.tick(0.1, senses).order_id, &"lock/a", "food beside the agent but 20 m from the place: no")
+	ad.position = Vector3(12, 0, 0)
+	assert_eq(_society.get_agent(&"a").brain.tick(0.1, senses).goal_id, &"eat", "food 2 m from the place: yes")
 
 
 func test_crime_mental_states_and_ambitions_read_the_lock() -> void:
@@ -152,7 +206,8 @@ func test_locks_save_and_load() -> void:
 	var intent := copy.get_agent(&"a").brain.tick(0.1, _senses(0))
 	assert_eq([intent.order_id, intent.animation, intent.move_to], [&"lock/a", &"sweep", Vector3(10, 0, 0)], "and the pins hold again")
 	for bad: Variant in [{"b": []}, {"nobody": [{"lock_id": "x", "place": "spot", "goal": "", "steps": null}]},
-			{"a": [{"lock_id": "x", "place": "", "goal": "", "steps": null}]}, {"a": [{"lock_id": "x", "place": "spot", "goal": "", "steps": 3}]}]:
+			{"a": [{"lock_id": "x", "place": "", "goal": "", "steps": null}]}, {"a": [{"lock_id": "x", "place": "spot", "goal": "", "steps": 3}]},
+			{"a": [{"lock_id": "x", "place": "", "goal": "no_such_goal", "steps": null}]}]:
 		var broken: Dictionary = saved.duplicate(true)
 		broken["locks"] = bad
 		assert_false(copy.import_state(broken).ok, "refuses %s" % [bad])

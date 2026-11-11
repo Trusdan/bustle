@@ -10,6 +10,16 @@ One agent's brain, headless: `tick()` takes [BustleSenses](BustleSenses.md) and 
 
 Each tick: 1. The agent's `modifiers` fill the need weights and tag multipliers the options use. 2. [BustleUtilityScorer](BustleUtilityScorer.md) scores the `library`; [BustleChoiceKeeper](BustleChoiceKeeper.md) chooses with hysteresis, using the brain's own random generator. 3. When the choice changes, the old goal's sequence is cancelled and the new goal's `BustleGoalDef.sequence` starts (with the chosen option). A finished sequence starts again if its goal is chosen again on a later tick. 4. The sequence is ticked once. If it fails, the goal is marked failed (it cools down) and the intent carries the failure; the next tick chooses again. 5. The intent holds the choice, its reasons and the running step's output.  **Orders.** `order()` queues a [BustleOrder](BustleOrder.md) (see [BustleOrderQueue](BustleOrderQueue.md)). The front order runs when its band (`BustleBands.ORDERED`, or `BustleBands.FORCED` when forced) is at least the best self-chosen band; otherwise it waits at the front, paused. While an order runs, the self-chosen goal's sequence is interrupted; when the order ends, that goal resumes (its step starting again) if it is still eligible and in the highest eligible band, and is dropped otherwise. Finished orders are reported on the intent and by `BustleOrderQueue.finished`.  **Autonomy.** `autonomy` limits self-chosen goals between orders: FULL and NORMAL use the whole scorer, LOW only URGENT and CRITICAL goals, OFF none at all (orders only; with no order, the IDLE fallback). The brain runs no needs itself, so whatever updates an agent's inputs carries on.  **Player control.** While `player_controlled` is on the brain never chooses: the intent only says so. Turning it on cancels the running goal and every order, and orders are refused.  **Seeding.** The generator is seeded once, from `seed_for()` (a fixed FNV-1a hash of the world seed and the agent id, the same on every platform), and its state is saved with the brain, so a run repeats exactly from the same seed and inputs.
 
+## Signals
+
+### `player_control_changed`
+
+```gdscript
+signal player_control_changed(on: bool)
+```
+
+Direct player control was turned on or off (`set_player_controlled()`).
+
 ## Constants
 
 ### `STATE_VERSION`
@@ -182,7 +192,7 @@ Queues `order`. Returns an empty reason when queued, otherwise why it is impossi
 func set_player_controlled(on: bool) -> void
 ```
 
-Turns direct player control on or off. Turning it on cancels the running goal and every order.
+Turns direct player control on or off. Turning it on cancels the running goal and every order. Emits `player_control_changed` when it changes.
 
 ### `seed_for`
 

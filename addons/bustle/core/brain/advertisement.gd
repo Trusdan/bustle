@@ -16,6 +16,9 @@ var adds: Dictionary[StringName, float] = {}
 var tags: Array[StringName] = []
 ## How far it is from the agent, in metres.
 var distance: float = 0.0
+## Where the option is (a [Vector3]), or null. When known, a held order measures its reach from its
+## place to here rather than using [member distance].
+var position: Variant = null
 
 
 func _init(p_option_id: StringName = &"", p_relief: Dictionary[StringName, float] = {},

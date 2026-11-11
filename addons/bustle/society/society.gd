@@ -44,6 +44,9 @@ var _agents: Dictionary[StringName, BustleNpcState] = {}
 var _archetypes: Dictionary[StringName, Array] = {}
 # agent id → its locks, oldest first
 var _locks: Dictionary[StringName, Array] = {}
+# agent id → what its lock order runs ("goal:<id>" or "seq:<lock id>"), and the run that failed
+var _lock_runs: Dictionary[StringName, String] = {}
+var _lock_failed: Dictionary[StringName, String] = {}
 
 
 func _init(p_world_seed: int = 0) -> void:
@@ -95,6 +98,8 @@ func add_agent(id: StringName, archetype_id: StringName, group: StringName = &""
 func remove_agent(id: StringName) -> void:
 	_agents.erase(id)
 	_locks.erase(id)
+	_lock_runs.erase(id)
+	_lock_failed.erase(id)
 
 
 ## Agent [param id]'s state, or null.
@@ -121,18 +126,24 @@ func order(agent_id: StringName, p_order: BustleOrder) -> StringName:
 
 
 ## Cancels agent [param agent_id]'s order [param order_id], queued or running. False when there is
-## no such agent or order.
+## no such agent or order, or when it's the order holding the agent's locks (release those with
+## [method unlock]).
 ## @experimental
 func cancel_order(agent_id: StringName, order_id: StringName) -> bool:
 	var state := get_agent(agent_id)
-	return state != null and state.brain.orders.cancel(order_id)
+	if state == null or (order_id == lock_order_id(agent_id) and is_locked(agent_id)):
+		return false
+	return state.brain.orders.cancel(order_id)
 
 
 ## Pins agent [param id] with [param p_lock], replacing its lock with the same id (which then counts
-## as the newest). False when there's no such agent or the lock pins nothing.
+## as the newest). False when there's no such agent, the lock pins nothing, or its goal isn't in
+## the agent's library.
 ## @experimental
 func lock(id: StringName, p_lock: BustleLock) -> bool:
-	if get_agent(id) == null or p_lock == null or not p_lock.is_valid():
+	var state := get_agent(id)
+	if state == null or p_lock == null or not p_lock.is_valid() \
+			or (p_lock.goal != &"" and p_lock.sequence == null and state.brain.library.find(p_lock.goal) == null):
 		return false
 	var held: Array = _locks.get_or_add(id, [])
 	for old: BustleLock in held.duplicate():
@@ -267,6 +278,8 @@ func import_state(saved: Variant) -> BustleImportReport:
 	world_seed = seed
 	_agents = staged
 	_locks = staged_locks
+	_lock_runs.clear()
+	_lock_failed.clear()
 	for id: StringName in agent_ids():
 		_sync(id)
 	report.ok = true
@@ -289,6 +302,7 @@ func _make(id: StringName, archetype_id: StringName, group: StringName) -> Bustl
 	var parts: Array = _archetypes[archetype_id]
 	state.brain = BustleBrain.new(id, parts[0], parts[1], world_seed)
 	state.brain.orders.finished.connect(_on_order_finished.bind(id))
+	state.brain.player_control_changed.connect(_on_player_control_changed.bind(id))
 	return state
 
 
@@ -300,10 +314,13 @@ func _sync(id: StringName) -> void:
 		return
 	var queue := state.brain.orders
 	var order_id := lock_order_id(id)
-	queue.cancel(order_id, &"relocked")
 	if not is_locked(id):
+		queue.cancel(order_id, &"unlocked")
+		_lock_runs.erase(id)
+		_lock_failed.erase(id)
 		return
 	var place := &""
+	var run := ""
 	var steps: Array[BustleActionStep] = []
 	for held: BustleLock in _locks[id]:
 		if held.place != &"":
@@ -314,6 +331,20 @@ func _sync(id: StringName) -> void:
 			sequence = goal.sequence if goal != null else null
 		if sequence != null:
 			steps = sequence.steps.duplicate()
+			run = "seq:%s" % held.lock_id if held.sequence != null else "goal:%s" % held.goal
+	var position: Variant = ports.world.place_position(place) if place != &"" else null
+	var current := queue.front()
+	if current != null and current.id == order_id and _lock_runs.get(id, "") == run:
+		current.place = place
+		current.position = position
+		current.reach = lock_reach
+		return
+	queue.cancel(order_id, &"relocked")
+	_lock_runs[id] = run
+	if _lock_failed.get(id, "") == run:
+		steps = []
+	else:
+		_lock_failed.erase(id)
 	var hold := BustleActionStep.new()
 	hold.action = &"hold"
 	steps.append(hold)
@@ -321,14 +352,24 @@ func _sync(id: StringName) -> void:
 	order.sequence.steps = steps
 	order.held = true
 	order.place = place
-	order.position = ports.world.place_position(place) if place != &"" else null
+	order.position = position
 	order.reach = lock_reach
 	queue.submit(order, true)
 
 
-# The lock order ended on its own (a step failed): put it back while the locks are held.
+# The lock order ended on its own (a step failed): put it back while the locks are held, holding
+# at the place without running that goal again until the locks change.
 func _on_order_finished(order_id: StringName, outcome: BustleOrderQueue.Outcome, _reason: StringName, id: StringName) -> void:
 	if order_id == lock_order_id(id) and outcome in [BustleOrderQueue.Outcome.DONE, BustleOrderQueue.Outcome.FAILED] and is_locked(id):
+		_lock_failed[id] = _lock_runs.get(id, "")
+		_lock_runs.erase(id)
+		_sync(id)
+
+
+# Player control ended: the locks' order comes back (turning it on cleared every order).
+func _on_player_control_changed(on: bool, id: StringName) -> void:
+	if not on:
+		_lock_runs.erase(id)
 		_sync(id)
 
 
@@ -344,8 +385,9 @@ func _stage_locks(saved: Variant, staged: Dictionary[StringName, BustleNpcState]
 		var held: Array = []
 		for row: Variant in saved[id]:
 			var parsed := BustleLock.from_dict(row)
-			if parsed == null or held.any(func(l: BustleLock) -> bool: return l.lock_id == parsed.lock_id):
-				report.fail("locks: %s has a malformed or repeated lock" % id)
+			if parsed == null or held.any(func(l: BustleLock) -> bool: return l.lock_id == parsed.lock_id) \
+					or (parsed.goal != &"" and parsed.sequence == null and staged[StringName(id)].brain.library.find(parsed.goal) == null):
+				report.fail("locks: %s has a malformed, repeated or unknown-goal lock" % id)
 				break
 			held.append(parsed)
 		out[StringName(id)] = held

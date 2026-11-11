@@ -118,7 +118,7 @@ Gives agent `agent_id` `order` (see `BustleBrain.order()`). Returns an empty rea
 func cancel_order(agent_id: StringName, order_id: StringName) -> bool
 ```
 
-Cancels agent `agent_id`'s order `order_id`, queued or running. False when there is no such agent or order.
+Cancels agent `agent_id`'s order `order_id`, queued or running. False when there is no such agent or order, or when it's the order holding the agent's locks (release those with `unlock()`).
 
 ### `lock`
 
@@ -126,7 +126,7 @@ Cancels agent `agent_id`'s order `order_id`, queued or running. False when there
 func lock(id: StringName, p_lock: BustleLock) -> bool
 ```
 
-Pins agent `id` with `p_lock`, replacing its lock with the same id (which then counts as the newest). False when there's no such agent or the lock pins nothing.
+Pins agent `id` with `p_lock`, replacing its lock with the same id (which then counts as the newest). False when there's no such agent, the lock pins nothing, or its goal isn't in the agent's library.
 
 ### `unlock`
 
