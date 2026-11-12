@@ -27,6 +27,12 @@ extends Resource
 @export var light_rate_hz: float = 1.0
 ## How often an OFF_SCREEN agent's brain thinks (game minutes).
 @export var offscreen_interval_game_minutes: int = 60
+## How often [method BustleSimRings.tick] re-sorts every agent when nothing else asks it to (real
+## hertz): the most a ring change waits for, a dwell or delay included, is one period. 0: every tick.
+@export var resort_hz: float = 4.0
+## [method BustleSimRings.tick] also re-sorts at once when the player moves this far from where it was
+## at the last sort (metres).
+@export var resort_move: float = 1.0
 ## Catch-up simulates at most this many game days; anything older is summarised.
 @export var catch_up_cap_game_days: int = 7
 ## When true, [BustleSimRings] spawns a body when an agent becomes FULL and frees it when it stops

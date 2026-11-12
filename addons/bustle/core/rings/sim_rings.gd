@@ -25,6 +25,14 @@ extends RefCounted
 ##   ([method catch_up]) as it changes ring, before its body appears.
 ## - A new agent gets its ring at once, or the ring it was saved with
 ##   ([member BustleNpcState.sim_ring]), so after a load an agent in the hysteresis band stays FULL.
+## - **When it re-sorts:** [method tick] re-sorts every agent ([method update]) only when something
+##   calls for it: the player's area changes, the player moves [member BustleSimRingConfig.resort_move]
+##   or more, the clock's minute changes, an agent is added or removed, [method request_sort] was
+##   called, or 1 / [member BustleSimRingConfig.resort_hz] real seconds have passed. The time between
+##   sorts is passed on to [method update], so the dwell and the delay keep counting, and a change
+##   that is due applies within one period. As [method update] takes the world as it is for the whole
+##   time passed, the delay before OFF_SCREEN can end up to one period early. A host that moves an agent to another area can call [method request_sort] to have it
+##   apply on the next tick.
 ## - **Bodies** (with [member BustleSimRingConfig.manage_bodies]): an agent that becomes FULL gets a
 ##   body from [method BustleWorldPort.spawn_body] at its last position. If that spot is within
 ##   [member BustleSimRingConfig.no_pop_in_distance] of the player and in view
@@ -57,6 +65,8 @@ var summary_hook: Callable = Callable()
 ## Microseconds the last [method tick] spent on each ring's thinking:
 ## [code]{FULL, LIGHT, OFF_SCREEN}[/code].
 var last_timings: Dictionary = {"FULL": 0, "LIGHT": 0, "OFF_SCREEN": 0}
+## True when the last [method tick] re-sorted the agents.
+var last_sorted: bool = false
 
 ## The society it sorts.
 var society: BustleSociety
@@ -68,6 +78,15 @@ enum _Zone { HERE, NEAR, AWAY }
 
 # id → {ring, zone (when the ring was last set), held (s since the last change), away (s out of reach), entered}
 var _agents: Dictionary[StringName, Dictionary] = {}
+# What the last sort saw, and the real seconds since it.
+var _since_sort: float = 0.0
+var _sort_requested: bool = true
+var _sorted_area: StringName = &""
+var _sorted_player: Vector3 = Vector3.ZERO
+var _sorted_minute: int = -1
+# The society's sorted agent ids, kept until its roster changes.
+var _ids: Array[StringName] = []
+var _ids_version: int = -1
 
 
 func _init(p_society: BustleSociety = null, p_config: BustleSimRingConfig = null) -> void:
@@ -75,7 +94,8 @@ func _init(p_society: BustleSociety = null, p_config: BustleSimRingConfig = null
 	config = p_config if p_config != null else BustleSimRingConfig.new()
 
 
-## Re-sorts every agent (see [method update]) and then lets each think as its ring allows:
+## Re-sorts every agent when something calls for it (see [method update] and "When it re-sorts"
+## above) and then lets each think as its ring allows:
 ## FULL every 1 / [member BustleSimRingConfig.full_brain_hz] real seconds, LIGHT every
 ## 1 / [member BustleSimRingConfig.light_rate_hz], and OFF_SCREEN once each
 ## [member BustleSimRingConfig.offscreen_interval_game_minutes] of game time, at a fixed phase per
@@ -85,10 +105,14 @@ func _init(p_society: BustleSociety = null, p_config: BustleSimRingConfig = null
 func tick(delta: float) -> void:
 	if society == null:
 		return
-	update(delta)
+	var ids := _roster()
+	_since_sort += maxf(delta, 0.0)
+	last_sorted = _needs_sort(ids)
+	if last_sorted:
+		update(_since_sort)
 	var now := society.ports.clock.now_minutes()
 	var spent := {"FULL": 0, "LIGHT": 0, "OFF_SCREEN": 0}
-	for id: StringName in society.agent_ids():
+	for id: StringName in ids:
 		var entry: Dictionary = _agents.get(id, {})
 		if entry.is_empty():
 			continue
@@ -154,6 +178,13 @@ func catch_up(id: StringName) -> Dictionary:
 	return report
 
 
+## Has the next [method tick] re-sort every agent, whatever else has changed: for instance after the
+## host moves an agent to another area.
+## @experimental
+func request_sort() -> void:
+	_sort_requested = true
+
+
 ## Re-sorts every agent after [param delta] real seconds.
 ## @experimental
 func update(delta: float) -> void:
@@ -166,8 +197,14 @@ func update(delta: float) -> void:
 	var interior := config.full_whole_interior and world.is_interior(player_area)
 	var near := world.neighbour_areas(player_area)
 	var player := world.player_position()
+	var ids := _roster()
+	_since_sort = 0.0
+	_sort_requested = false
+	_sorted_area = player_area
+	_sorted_player = player
+	_sorted_minute = now
 	var present := {}
-	for id: StringName in society.agent_ids():
+	for id: StringName in ids:
 		present[id] = true
 		var state := society.get_agent(id)
 		var area := world.area_of(id)
@@ -210,6 +247,28 @@ func update(delta: float) -> void:
 	for id: StringName in _agents.keys():
 		if not present.has(id):
 			_agents.erase(id)
+
+
+# True when a re-sort is due: see "When it re-sorts" above.
+func _needs_sort(ids: Array[StringName]) -> bool:
+	if _sort_requested or config.resort_hz <= 0.0 or _since_sort >= 1.0 / config.resort_hz - 1e-9:
+		return true
+	var world := society.ports.world
+	if world.player_area() != _sorted_area or society.ports.clock.now_minutes() != _sorted_minute:
+		return true
+	if world.player_position().distance_to(_sorted_player) >= config.resort_move:
+		return true
+	return ids.size() != _agents.size()
+
+
+# The society's agent ids, sorted, from a copy refreshed only when its roster changes. A change
+# also calls for a re-sort.
+func _roster() -> Array[StringName]:
+	if _ids_version != society.roster_version:
+		_ids = society.agent_ids()
+		_ids_version = society.roster_version
+		_sort_requested = true
+	return _ids
 
 
 ## Agent [param id]'s ring. OFF_SCREEN for an agent not sorted yet.

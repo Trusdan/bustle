@@ -6,8 +6,8 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- `BustleSimRings.request_sort()` and `last_sorted`, `BustleSimRingConfig.resort_hz` and `resort_move`, and `BustleSociety.roster_version`, for re-sorting the rings only when needed (see Changed).
 - A population bench (`bench/population_bench.gd`): a synthetic town of 40 FULL, 40 LIGHT and 200 OFF_SCREEN agents through the simulation rings, timed against the proposed budgets (FULL brains and sequences, LIGHT, OFF_SCREEN, save size), with the whole frame and memory, then a game day with every agent watched for being stuck. CI runs it as a report only; it makes no minimum-machine claim.
-
 - A stuck watch for the demo harness (`demo/harness/demo_stuck_watch.gd`): it tells a stuck agent (over 2 game hours with no legitimate activity and no progress, a failure loop, or an overdue mental state) from one asleep, at a scheduled block, using an object, under an order or in a mental state. The bound and the 0.5 m epsilon are experimental defaults.
 - The demo timeline logs thoughts as they come and go (with their value and reason) and stuck spells as they start and end, on the same hash.
 - A demo soak (`bench/soak.gd`): both demos for 30 game days from a fixed seed, twice, with the evidence (seed, engine and build, population, days, time, memory, hash, replay, stuck diagnostics). CI runs a two-day smoke; the full soak runs nightly.
@@ -15,6 +15,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Changed
 
+- `BustleSimRings.tick` re-sorts the agents only when something calls for it (the player's area, a move of `BustleSimRingConfig.resort_move` metres, a new game minute, a roster change, `request_sort()`, or `resort_hz`, 4 a second by default), instead of every frame. It passes the time between sorts on, so a ring change that is due applies within one period. It also keeps the society's sorted agent ids until they change. On the population bench, the whole frame drops from about 2.0 ms to 0.84 ms locally.
 - The demo harness counts using an object as a legitimate long activity only while the use is inside its expected time (`using_on_time`).
 - The colony's settlers sit by a hearth (an idle goal) when nothing else calls, instead of standing still all evening. The colony's pinned week hash changes with it and with the new timeline entries.
 
