@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+
+- A skills module (`addons/bustle/modules/skills/`): `BustleSkills` extends the `BustleSkillSet` port and installs with `society.set_port(&"skills", skills)`. Each agent keeps XP per skill as a float; `level()` is worked out from it through the skill's `BustleSkillDef` (`max_level`, 20 by default, and an `xp_curve` of costs per level). XP comes only from `add_xp` (practice the host reports) and goes only through decay in `advance(id, minutes)`, which lowers a skill by `decay_per_day` levels a day while it is above `decay_floor` and never below it; one long advance equals many short ones. Nothing is random. `export_state` and `import_state` save and load the XP; import refuses unknown skills and malformed data and changes nothing. Bustle ships no skills: the host supplies every def. Without the module, every level is still 0.
+
 ## [0.8.0] - 2026-11-12
 
 Soak, stuck diagnostics and performance. The demo harness gains a stuck watch that tells a stuck agent from one in a long, legitimate activity, and its timeline logs thoughts and stuck spells on the same hash. A 30-day soak runs both demos from a fixed seed and checks the replay hash. CI runs a two-day smoke, and a nightly job runs the full soak. A synthetic bench of 40 FULL, 40 LIGHT and 200 OFF_SCREEN agents times the simulation rings against the proposed budgets and checks for stuck agents at that scale. The rings now re-sort only when something calls for it, which halves the bench's whole frame on the CI runner (1.278 to 0.620 ms on average). APIs remain experimental before 1.0.
