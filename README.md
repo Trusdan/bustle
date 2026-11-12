@@ -22,7 +22,7 @@ A generic addon for living non-player populations in Godot 4 (4.7 or newer): the
 
 ## Install
 
-Copy `addons/bustle/` into your project's `addons/` folder and enable **Bustle** under Project Settings → Plugins. If you also use Wyrd 1.0.1, you can copy `addons/bustle_wyrd/` too.
+Copy `addons/bustle/` into your project's `addons/` folder and enable **Bustle** under Project Settings → Plugins. If you also use Wyrd 1.0.1, you can copy `addons/bustle_wyrd/` too, and install it on a society (see `docs/wyrd-bridge.md`).
 
 ## Develop
 

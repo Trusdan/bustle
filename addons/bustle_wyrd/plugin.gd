@@ -5,7 +5,8 @@ extends EditorPlugin
 ## Editor entry point for the optional Bustle Wyrd bridge.
 ##
 ## @experimental
-## Kept thin on purpose. This plugin registers nothing yet.
+## Kept thin on purpose. This plugin registers nothing: a host installs the bridge on a society with
+## [method BustleWyrdBridge.install].
 
 
 func _enter_tree() -> void:
