@@ -7,8 +7,10 @@ extends RefCounted
 ##
 ## - **Needs:** food (rises while awake, slowly while asleep), sleep (rises while awake), company
 ##   (rises while awake at home: being in the house together isn't talking, so the phone and the
-##   table meet it; it eases among others at work) and solitude (rises in company, eases alone). The loner and outgoing traits
-##   change how fast company and solitude rise, and how much social and quiet things count.
+##   table meet it) and solitude (rises in company, eases alone). Work slows company for everyone,
+##   but only the loner's company eases there: the outgoing resident's still rises, more slowly. The
+##   loner and outgoing traits change how fast company and solitude rise, and how much social and
+##   quiet things count.
 ## - **Sleep** counts for nothing in the scorer until it reaches [constant SLEEPY].
 ## - **Goals:** [code]use_object[/code] (personal: use whatever relieves the most), [code]eat_now[/code]
 ##   and [code]sleep_now[/code] (urgent: cook or go to bed once food or sleep presses hard), and
