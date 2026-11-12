@@ -4,13 +4,14 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+
+- `BustleCrime.record_theft(thief, owner_id, item, circumstances)` (see `docs/crime.md`) records a theft by someone who isn't an agent of the society: it emits `theft`, so `BustleCrimeWatch` finds its witnesses and keeps its record, moves nothing and runs no guards. `circumstances` needs `place` and `at`. `steal()` is unchanged.
+- The Wyrd bridge (see `docs/wyrd-bridge.md`): `BustleWyrdBridge.install(society, wyrd, mood_of)` makes Wyrd 1.0.1 the society's social and roles ports, and does nothing on any other release. `BustleWyrdSocialPort` records deeds with Wyrd's `deeds.record`, and reads opinions, kinds, reasons and who knows a deed from Wyrd; `share_news` passes first-hand deeds one hop as Wyrd beliefs, with no roll. `BustleWyrdRolesPort` assigns and vacates through Wyrd and repeats its role signals as `holder_changed`. `BustleWyrdFacts` registers dialogue facts with `register_function`: an agent's goal and why, its needs, mood band, emotion and strongest thought. The built-in social store is not used while the bridge is installed.
+
 ### Changed
 
 - Interactions, greetings and conversations record through a social port (see `docs/social.md`): `BustleSocialInteractions` takes any `BustleSocialPort`, such as `society.ports.social`, and still makes its own `BustleSocialStore` when given none. Opinion entries are added only when that port is a `BustleSocialStore`. `BustleSocialPort.record_deed` takes an optional `magnitude` and `return_magnitude`, and an interaction passes its outcomes for the recipient and the initiator. The Wyrd bridge's social port forwards `magnitude` to Wyrd's `deeds.record`, so conversations move Wyrd's opinions. `BustleSocialInteractions.store` is now typed as `BustleSocialPort`.
-
-### Added
-
-- The Wyrd bridge (see `docs/wyrd-bridge.md`): `BustleWyrdBridge.install(society, wyrd, mood_of)` makes Wyrd 1.0.1 the society's social and roles ports, and does nothing on any other release. `BustleWyrdSocialPort` records deeds with Wyrd's `deeds.record`, and reads opinions, kinds, reasons and who knows a deed from Wyrd; `share_news` passes first-hand deeds one hop as Wyrd beliefs, with no roll. `BustleWyrdRolesPort` assigns and vacates through Wyrd and repeats its role signals as `holder_changed`. `BustleWyrdFacts` registers dialogue facts with `register_function`: an agent's goal and why, its needs, mood band, emotion and strongest thought. The built-in social store is not used while the bridge is installed.
 
 ## [0.6.0] - 2026-11-10
 

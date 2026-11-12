@@ -14,6 +14,7 @@ Desperate theft, in the `BustleBands.GUARDED` band. Nothing here is left to chan
 4. personality: that pressure plus `Σ weight × (slider − 50) / 100` over `BustleCrimeConfig.slider_weights` reaches `BustleCrimeConfig.threshold` (honesty holds an agent back; greed and boldness push it on); 
 5. opportunity: an item in the agent's area, owned by someone else, not protected, that eases the need, where nobody else would see (`is_observed`). 
 When they all pass, the agent's `fact.steal` input is 1 (`fill_inputs()`), so the `steal` goal from `goal_defs()` can run its `steal` action, which moves the item through the property port and emits `theft`. A theft only moves an existing item, and never makes anyone mean to kill: what follows is for the host.
+A theft by someone who isn't an agent of the society (the player's character, for example) goes through `record_theft()` instead: it emits the same `theft` and moves nothing.
 
 ## Signals
 
@@ -23,7 +24,7 @@ When they all pass, the agent's `fact.steal` input is 1 (`fill_inputs()`), so th
 signal theft(thief: StringName, owner_id: StringName, item: StringName, circumstances: Dictionary)
 ```
 
-`thief` took `item` from `owner_id`. `circumstances`: `{place, need, pressure, score, at}`: what drove it.
+`thief` took `item` from `owner_id`. `circumstances`: `{place, need, pressure, score, at}` from `steal()`, what drove it; from `record_theft()`, `place`, `at` and whatever else the host gave.
 
 ## Constants
 
@@ -134,6 +135,14 @@ func steal(agent: StringName, now: int) -> Dictionary
 ```
 
 `agent` takes its target at minute `now`, if every guard still passes for that same item: the property port moves it to the agent and `theft` is emitted. The target is cleared either way. Returns `{ok: true, item}` or `{ok: false, reason}`.
+
+### `record_theft`
+
+```gdscript
+func record_theft(thief: StringName, owner_id: StringName, item: StringName, circumstances: Dictionary) -> bool
+```
+
+Records a theft that happened outside `steal()`: `thief`, any id (it needn't be an agent of the society), took `item` from `owner_id`. Emits `theft`, so [BustleCrimeWatch](BustleCrimeWatch.md) finds its witnesses and keeps its record. `circumstances` must hold the `place` and the minute `at`; they are passed on as a `StringName` and an [int], with every other key as given. Nothing is moved (the host has already moved the item, or will), and none of `consider()`'s guards run: they're about why an agent steals, and the developer setting and `enabled` are about agents stealing. Returns false, emitting nothing, when the thief, owner or item is empty, the thief is the owner, or the place or a whole-number minute is missing.
 
 ### `clear`
 

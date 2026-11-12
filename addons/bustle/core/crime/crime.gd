@@ -23,10 +23,14 @@ extends RefCounted
 ## so the [code]steal[/code] goal from [method goal_defs] can run its [code]steal[/code] action,
 ## which moves the item through the property port and emits [signal theft]. A theft only moves an
 ## existing item, and never makes anyone mean to kill: what follows is for the host.
+## [br][br]
+## A theft by someone who isn't an agent of the society (the player's character, for example) goes
+## through [method record_theft] instead: it emits the same [signal theft] and moves nothing.
 ## @experimental
 
 ## [param thief] took [param item] from [param owner_id]. [param circumstances]:
-## [code]{place, need, pressure, score, at}[/code]: what drove it.
+## [code]{place, need, pressure, score, at}[/code] from [method steal], what drove it; from
+## [method record_theft], [code]place[/code], [code]at[/code] and whatever else the host gave.
 signal theft(thief: StringName, owner_id: StringName, item: StringName, circumstances: Dictionary)
 
 ## The input the [code]steal[/code] goal reads.
@@ -123,6 +127,32 @@ func steal(agent: StringName, now: int) -> Dictionary:
 	theft.emit(agent, owner_id, item, {"place": again["place"], "need": again["need"],
 		"pressure": again["pressure"], "score": again["score"], "at": now})
 	return {"ok": true, "item": item}
+
+
+## Records a theft that happened outside [method steal]: [param thief], any id (it needn't be an
+## agent of the society), took [param item] from [param owner_id]. Emits [signal theft], so
+## [BustleCrimeWatch] finds its witnesses and keeps its record. [param circumstances] must hold the
+## [code]place[/code] and the minute [code]at[/code]; they are passed on as a [StringName] and an
+## [int], with every other key as given. Nothing is moved (the host has already moved the item, or
+## will), and none of [method consider]'s guards run: they're about why an agent steals, and the
+## developer setting and [member enabled] are about agents stealing. Returns false, emitting
+## nothing, when the thief, owner or item is empty, the thief is the owner, or the place or a
+## whole-number minute is missing.
+## @experimental
+func record_theft(thief: StringName, owner_id: StringName, item: StringName, circumstances: Dictionary) -> bool:
+	if thief == &"" or owner_id == &"" or item == &"" or thief == owner_id:
+		return false
+	var place: Variant = circumstances.get("place")
+	var at: Variant = circumstances.get("at")
+	if not (place is String or place is StringName) or String(place) == "":
+		return false
+	if not (at is int or (at is float and is_finite(at) and at == floorf(at))):
+		return false
+	var given := circumstances.duplicate(true)
+	given["place"] = StringName(place)
+	given["at"] = int(at)
+	theft.emit(thief, owner_id, item, given)
+	return true
 
 
 ## Forgets [param agent]'s target.
