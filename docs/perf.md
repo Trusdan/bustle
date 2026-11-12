@@ -52,3 +52,26 @@ What keeps it cheap:
 - LIGHT and FULL agents think at their ring's rate, at a fixed per-agent phase, so a ring's thinking is spread across the second rather than landing in one frame.
 - OFF_SCREEN agents think once per game hour, at a fixed per-agent minute.
 - Catch-up runs at most seven game days of hourly thinking (168 thinks) per agent, and summarises anything older.
+
+## Demo soak
+
+**Checks:** no agent stuck (by the stuck watch's rule, `demo/README.md`) and the same timeline hash when the same seed runs again. These are deterministic, so they fail the run, not just report.
+
+**Bench:** `bench/soak.gd` runs the house (2 residents) and the colony (4 settlers, every module on, the cold snap included) from seed 1 for a number of game days, twice each. It prints the seed, the engine version and build commit, the population, the simulated days, the wall time (and per day), the static memory, the timeline's size and SHA-256, the replay result, the stuck spells and each agent's longest run with no legitimate activity and no progress. It exits 1 on a stuck agent, a different replay hash or a short run.
+
+```bash
+godot --headless --path . -s res://bench/soak.gd                      # 30 days, seed 1, both demos
+godot --headless --path . -s res://bench/soak.gd -- --days=2 --seed=7 --demo=colony
+```
+
+CI runs a two-day smoke on every change (`test`). The full 30-day soak runs nightly and on demand (`.github/workflows/soak.yml`), and keeps its log as an artifact.
+
+**Measured** (2026-11-12, Godot 4.7.2 headless, Linux cloud machine, seed 1, 30 days):
+
+```
+soak house: 2 agents, 30 days in 3545 ms (118.2 ms a day), static memory 30.3 MiB, timeline 1246 entries, hash 973ec9e1…, replay same, stuck spells 0, longest still {"resident_a":0,"resident_b":0}: OK
+soak colony: 4 agents, 30 days in 14216 ms (473.9 ms a day), static memory 36.2 MiB, timeline 5191 entries, hash 24703e18…, replay same, stuck spells 0, longest still {"settler_a":0,"settler_b":0,"settler_c":0,"settler_d":0}: OK
+```
+
+These are the small demos' numbers, not the 40 Full / 40 Light / 200 Off-screen budgets; a synthetic bench at those counts is still to come.
+

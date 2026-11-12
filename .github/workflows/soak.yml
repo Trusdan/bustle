@@ -1,0 +1,58 @@
+name: Soak
+
+# The full demo soak (docs/perf.md): 30 game days of each demo from a fixed seed, run twice to check
+# the replay's timeline hash. It takes a few minutes, so it runs nightly and on demand rather than on
+# every change; CI runs a two-day smoke instead.
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: Game days to soak
+        default: "30"
+      seed:
+        description: World seed
+        default: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  soak:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install pinned Godot
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC1091
+          source tools/pins.env
+          mkdir -p "$HOME/.local/bin" /tmp/godot-bin
+          curl -fsSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/Godot_v${GODOT_TAG}_linux.x86_64.zip"
+          unzip -q -o /tmp/godot.zip -d /tmp/godot-bin
+          install -m 0755 "/tmp/godot-bin/Godot_v${GODOT_TAG}_linux.x86_64" "$HOME/.local/bin/godot"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Import
+        run: godot --headless --path . --import > /dev/null 2>&1 || true
+
+      - name: Soak
+        env:
+          DAYS: ${{ github.event.inputs.days || '30' }}
+          SEED: ${{ github.event.inputs.seed || '1' }}
+        run: |
+          set -euo pipefail
+          godot --headless --path . -s res://bench/soak.gd -- --days="$DAYS" --seed="$SEED" 2>&1 | tr -d '\r' | tee "$RUNNER_TEMP/soak.log"
+          grep -E '^soak' "$RUNNER_TEMP/soak.log" | while IFS= read -r line; do echo "::notice title=Soak::${line}"; done
+          [[ "$(grep -cE '^soak (house|colony): .*: OK$' "$RUNNER_TEMP/soak.log")" == "2" ]]
+
+      - name: Keep the evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: soak-evidence
+          path: ${{ runner.temp }}/soak.log
