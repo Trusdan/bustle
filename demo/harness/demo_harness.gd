@@ -14,7 +14,11 @@ extends RefCounted
 ## [br]- [code]event[/code]: a host event started or ended: [code]{event, phase}[/code];
 ## [br]- [code]state[/code] and [code]state_end[/code]: an agent entered a mental state
 ## ([code]{state, tier}[/code]) or left one ([code]{state, reason}[/code]), with mood on;
-## [br]- [code]talk[/code]: a conversation turn: [code]{with, interaction}[/code], with social on.
+## [br]- [code]talk[/code]: a conversation turn: [code]{with, interaction}[/code], with social on;
+## [br]- [code]thought[/code]: a thought came ([code]{thought, phase: "add", value, reason}[/code])
+## or went ([code]{thought, phase: "end"}[/code]), with mood on;
+## [br]- [code]stuck[/code] and [code]unstuck[/code]: [member stuck] judged an agent stuck
+## ([code]{reason, since}[/code]) or moving again ([code]{reason, minutes}[/code]).
 ## [br][br]
 ## The optional modules are off until switched on, each before any agent is added:
 ## [method enable_mood] (needs_mood: a mood and a mental state per agent), [method enable_social]
@@ -29,6 +33,7 @@ extends RefCounted
 
 const Timeline := preload("res://demo/harness/demo_timeline.gd")
 const UseAction := preload("res://demo/harness/demo_use_action.gd")
+const StuckWatch := preload("res://demo/harness/demo_stuck_watch.gd")
 ## The goal an agent pursues while it is away (off site, so out of company at home).
 const AWAY_GOAL := &"work"
 
@@ -74,6 +79,8 @@ var comfort: BustleComfort = null
 var conversation: BustleConversation = null
 ## Who notices whom, with perception on.
 var perception: BustlePerceptionWorld = null
+## Watches every agent for being stuck (its bound and epsilon are experimental defaults).
+var stuck := StuckWatch.new()
 
 # id → {brain, needs, personality, schedule, away, last, dire, attended, using, area, position,
 # mood, mental}
@@ -178,7 +185,7 @@ func add_agent(id: StringName, library: BustleGoalLibrary, need_defs: Array[Bust
 	_agents[id] = {"brain": brain, "needs": needs, "personality": personality,
 		"schedule": BustleSchedule.new(routine) if routine != null else null, "away": false,
 		"last": "", "dire": {}, "attended": {}, "using": &"", "area": home_area, "position": Vector3.ZERO,
-		"mood": mood, "mental": mental}
+		"mood": mood, "mental": mental, "thoughts": {}, "consumed": false}
 	if perception != null:
 		var actor := BustlePerceptionActor.new()
 		actor.id = id
@@ -344,6 +351,8 @@ func _step_agent(id: StringName, others_home: int) -> BustleIntent:
 		if arrival != &"" and not (agent["attended"] as Dictionary).has(start):
 			(agent["attended"] as Dictionary)[start] = true
 			timeline.add(now, id, &"attend", {"activity": String(intent.goal_id), "arrival": String(arrival)})
+	_note_thoughts(id, agent)
+	_watch(id, agent, intent)
 	var choice := "%s|%s|%s" % [intent.goal_id, intent.option_id, intent.order_id]
 	if intent.player_controlled:
 		choice = "player"
@@ -369,6 +378,7 @@ func _sleeps_in(object: StringName) -> bool:
 
 func _used(id: StringName, object: StringName, minute: int) -> void:
 	timeline.add(minute, id, &"used", {"object": String(object)})
+	_agents[id]["consumed"] = true
 	var mood := mood_of(id)
 	if mood != null and use_thoughts.has(object):
 		mood.add_thought(use_thoughts[object], {"object": String(object)})
@@ -404,3 +414,60 @@ func _sense() -> void:
 		actor.profile = null if hidden else _profile
 		actor.perceivable = not hidden
 	perception.tick(step_minutes * 60.0)
+
+
+# Logs the thoughts that came and went since the last step: a thought is its id and expiry.
+func _note_thoughts(id: StringName, agent: Dictionary) -> void:
+	var mood: BustleMood = agent["mood"]
+	if mood == null:
+		return
+	var had: Dictionary = agent["thoughts"]
+	var have := {}
+	for entry: Dictionary in mood.reasons():
+		var key := "%s|%d" % [entry["thought"], int(entry["expires"])]
+		have[key] = int(have.get(key, 0)) + 1
+		if int(have[key]) > int(had.get(key, 0)):
+			timeline.add(now, id, &"thought", {"thought": String(entry["thought"]), "phase": "add",
+				"value": snappedf(float(entry["value"]), 0.001), "reason": _plain(entry["reason"])})
+	var gone: Array = had.keys()
+	gone.sort()
+	for key: String in gone:
+		for i: int in int(had[key]) - int(have.get(key, 0)):
+			timeline.add(now, id, &"thought", {"thought": key.get_slice("|", 0), "phase": "end"})
+	agent["thoughts"] = have
+
+
+# Feeds the stuck watch what this agent did this step, and logs a change.
+func _watch(id: StringName, agent: Dictionary, intent: BustleIntent) -> void:
+	var schedule: BustleSchedule = agent["schedule"]
+	var block: Dictionary = schedule.block_at(now) if schedule != null else {}
+	var mental: BustleMentalState = agent["mental"]
+	var state: Dictionary = mental.active() if mental != null else {}
+	var legit: bool = _sleeps_in(agent["using"]) or agent["using"] != &"" or agent["away"] \
+		or intent.order_id != &"" or intent.player_controlled \
+		or (not block.is_empty() and StringName(block["block"].activity) == intent.goal_id) \
+		or (not state.is_empty() and now < int(state["until"]))
+	var change := stuck.observe(id, now, step_minutes, {"goal": intent.goal_id,
+		"step": (agent["brain"] as BustleBrain).runner.step_index, "legit": legit,
+		"consumed": agent["consumed"], "position": agent["position"], "place": agent["area"],
+		"failed": not intent.failure.is_empty(),
+		"state_overdue": not state.is_empty() and now >= int(state["until"])})
+	agent["consumed"] = false
+	if not change.is_empty():
+		var kind := StringName(change["event"])
+		change.erase("event")
+		timeline.add(now, id, kind, change)
+
+
+# A reason as plain data with its numbers rounded, so the timeline reads the same everywhere.
+static func _plain(value: Variant) -> Variant:
+	if value is float:
+		return snappedf(value, 0.001)
+	if value is Dictionary:
+		var out := {}
+		for key: Variant in value:
+			out[String(key)] = _plain(value[key])
+		return out
+	if value is StringName:
+		return String(value)
+	return value

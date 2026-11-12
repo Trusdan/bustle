@@ -35,6 +35,7 @@ Every number is a starting point, not tuning (see `house/house.gd`). The same ru
   - `eat_now`, `sleep_now` and `warm_up` (urgent) go to the stove or the settler's own bed once a need presses hard;
   - `farm` (duty) works the field from 08:00 to 16:00;
   - `rest` (duty) goes to bed from 22:00 to 07:00, while sleep presses;
+  - `unwind` (idle) sits by the hearth when nothing else calls, so a free evening isn't hours of standing still (the soak's stuck watch found that);
   - `comfort` (personal, with social on) talks to a friend in a low mood, from `social/comfort_goal.tres`.
 - **Mood** (the needs_mood module): held thoughts while hungry, tired or cold; timed ones after a hot meal, a night in bed or a harvest. A low enough mood starts a mental state, which the demo only records.
 - **Social** (the built-in social store): A and B are friends, and so are C and D. A settler who notices a friend in a low mood or state is offered comforting them. Comfort, the opener from `social/comfort.tres`, leaves the friend a `comforted` thought in this demo.
@@ -63,7 +64,7 @@ The optional modules are off until a demo switches them on: `enable_mood`, `enab
 
 Objects are used by the demo's `use` action (`harness/demo_use_action.gd`): it holds the object, waits out its time, then finishes the use, which lowers the needs it meets.
 
-Each run keeps a **timeline** (`harness/demo_timeline.gd`): one entry per event, in order. An entry is the game minute, the agent, the kind and a payload of strings and whole numbers:
+Each run keeps a **timeline** (`harness/demo_timeline.gd`): one entry per event, in order. An entry is the game minute, the agent, the kind and a payload of plain data (numbers rounded to three places):
 
 | Kind | Logged when | Payload |
 | --- | --- | --- |
@@ -75,8 +76,24 @@ Each run keeps a **timeline** (`harness/demo_timeline.gd`): one entry per event,
 | `state` | an agent enters a mental state (mood on) | `{state, tier}` |
 | `state_end` | an agent leaves a mental state (mood on) | `{state, reason}` |
 | `talk` | a conversation turn (social on) | `{with, interaction}` |
+| `thought` | a thought comes or goes (mood on) | `{thought, phase: "add", value, reason}` or `{thought, phase: "end"}` |
+| `stuck` | the stuck watch judges an agent stuck | `{reason, since}`: `still`, `fail_loop` or `state_overdue` |
+| `unstuck` | a stuck agent makes progress again | `{reason, minutes}` |
 
 `lines()` writes each entry as `minute|agent|kind|payload`, with the payload as JSON and its keys sorted. `hash()` is the SHA-256 of those lines, as hex. The same seed and setup give the same timeline, so the same hash.
+
+## Stuck or busy
+
+`harness/demo_stuck_watch.gd` tells a stuck agent from one in a long, legitimate activity. The harness feeds it every agent every step, and a bench can feed it the same way.
+
+- **Legitimate (never stuck):** asleep, attending a schedule block that hasn't ended (or away for it), using or waiting on an object, under an order or player control, or in a mental state inside its duration. Travel still closing on its goal, and off-screen catch-up still advancing, count too, for a host that reports them.
+- **Stuck:** more than 2 game hours with none of those and no progress: the same goal and step, nothing used up, and no move past 0.5 m (or, off-screen, the same place with no hop pending). Also stuck at once: the same goal failing three steps in a row, or a mental state still active past its end.
+
+The 2-hour bound, the 0.5 m epsilon and the loop count are experimental defaults (`bound_minutes`, `move_epsilon`, `fail_loop`). `longest_still(id)` and `spells()` give the diagnostics.
+
+## Soak
+
+`bench/soak.gd` runs both demos, at their own sizes with every module on, for a number of game days from a fixed seed, twice. It reports the seed, the engine version and build commit, the population, the days, the wall time and memory, the timeline's size and hash, whether the replay matched, and the stuck diagnostics. See `docs/perf.md`.
 
 ## Data
 

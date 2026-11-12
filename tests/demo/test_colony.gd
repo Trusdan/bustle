@@ -15,7 +15,7 @@ const D := Colony.SETTLER_D
 ## the second afternoon (so a friend comforts them, and the seed picks what else is said). A change to
 ## the colony data, the harness or the framework's choices changes it: check the change is meant,
 ## then update it.
-const GOLDEN_HASH := "f627fe6926a20d0332789d282b1a4b58013932726ccbd3b73e38f9d4991a99d4"
+const GOLDEN_HASH := "6b622a0ac5f32f586880ab3d4cf00b50da09b54d3d0f785d3943128b2ffe93af"
 
 
 func test_6_a_week_on_their_own_schedules_hold_and_mood_follows_thoughts() -> void:

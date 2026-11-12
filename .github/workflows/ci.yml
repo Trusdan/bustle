@@ -123,6 +123,17 @@ jobs:
             | grep -E '^(Scripts|Tests|Passing Tests|Asserts) ' | tr -s ' ' | paste -sd ',' -)"
           echo "::notice title=GUT on Ubuntu::${totals}"
 
+      # A short demo soak (docs/perf.md): two game days of each demo from seed 1, run twice. It fails
+      # when an agent is stuck or the replay's timeline hash differs; both are deterministic, so this
+      # isn't report-only. The full 30-day soak runs nightly (soak.yml).
+      - name: Soak smoke (2 days, same-seed replay)
+        run: |
+          set -euo pipefail
+          out="$(godot --headless --path . -s res://bench/soak.gd -- --days=2 2>&1 | tr -d '\r' | grep -E '^soak' || true)"
+          echo "$out"
+          while IFS= read -r line; do echo "::notice title=Soak smoke::${line}"; done <<< "$out"
+          [[ "$(grep -c ': OK$' <<< "$out")" == "2" ]]
+
       # The perception bench (docs/perf.md). A report only: shared runners' timings vary.
       - name: Perception bench (report only)
         continue-on-error: true

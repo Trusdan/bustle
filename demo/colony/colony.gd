@@ -15,8 +15,9 @@ extends RefCounted
 ##   [code]comfort[/code] goal and interaction.
 ## - **Perception:** who notices whom. Off, a settler notices everyone awake in its area.
 ## - **Goals:** [code]use_object[/code] (personal), [code]eat_now[/code], [code]sleep_now[/code] and
-##   [code]warm_up[/code] (urgent), and [code]farm[/code] (duty: work the field during the day
-##   block). [code]comfort[/code] joins them with social on.
+##   [code]warm_up[/code] (urgent), [code]farm[/code] (duty: work the field during the day
+##   block), and [code]unwind[/code] (idle: sit by the hearth when nothing else calls, so a free
+##   evening isn't hours of standing still). [code]comfort[/code] joins them with social on.
 ##
 ## Each module can be left out of a build ([method build]); the rest still runs.
 
@@ -56,6 +57,9 @@ const REST := &"rest"
 const REST_START := 1320
 const REST_END := 420
 const DROWSY := 0.3
+## The goal and object for free time: sitting by the hearth.
+const UNWIND := &"unwind"
+const HEARTH := &"hearth"
 ## The cold snap: from 18:00 on the third day, for a day.
 const COLD_SNAP := &"cold_snap"
 const COLD_START := 2 * 1440 + 1080
@@ -91,6 +95,7 @@ static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, col
 	colony.add_object(_object(&"stove", {&"food": 0.6, &"warmth": 0.8}, [&"cook"], 2, 60, HOME, Vector3(1.5, 0, 4)), 30)
 	colony.add_object(_object(&"crate", {&"food": 0.35}, [&"stores"], 2, 30, HOME, Vector3(-2, 0, 4)), 10)
 	colony.add_object(_object(&"field", {}, [&"work"], 4, 90, FIELD, Vector3(60, 0, 0)), 60)
+	colony.add_object(_object(HEARTH, {}, [&"quiet"], 4, 60, HOME, Vector3(0, 0, 6)), 60)
 	if modules.has(NEEDS_MOOD):
 		colony.enable_mood(need_thoughts())
 		colony.use_thoughts = {&"stove": thought(&"hot_meal", 5.0, 6.0, &"content", 1),
@@ -190,6 +195,11 @@ static func goals(bed: StringName, social: bool) -> BustleGoalLibrary:
 	rest.considerations.append(_consider(&"need.sleep", DROWSY))
 	rest.sequence = _sequence(&"use", {"object": bed})
 	library.goals.append(rest)
+	var unwind := BustleGoalDef.new()
+	unwind.id = UNWIND
+	unwind.band = BustleBands.IDLE
+	unwind.sequence = _sequence(&"use", {"object": HEARTH})
+	library.goals.append(unwind)
 	if social:
 		library.goals.append(COMFORT_GOAL)
 	return library

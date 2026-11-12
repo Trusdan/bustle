@@ -4,6 +4,17 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+
+- A stuck watch for the demo harness (`demo/harness/demo_stuck_watch.gd`): it tells a stuck agent (over 2 game hours with no legitimate activity and no progress, a failure loop, or an overdue mental state) from one asleep, at a scheduled block, using an object, under an order or in a mental state. The bound and the 0.5 m epsilon are experimental defaults.
+- The demo timeline logs thoughts as they come and go (with their value and reason) and stuck spells as they start and end, on the same hash.
+- A demo soak (`bench/soak.gd`): both demos for 30 game days from a fixed seed, twice, with the evidence (seed, engine and build, population, days, time, memory, hash, replay, stuck diagnostics). CI runs a two-day smoke; the full soak runs nightly.
+- Headless tests of temperaments from data: a loner avoids a busy room, an outgoing agent seeks it, and a low-spirited agent's scores stay low and close together; every thought lists its reason.
+
+### Changed
+
+- The colony's settlers sit by a hearth (an idle goal) when nothing else calls, instead of standing still all evening. The colony's pinned week hash changes with it and with the new timeline entries.
+
 ## [0.7.0] - 2026-11-11
 
 The Wyrd bridge, the social port and two demos. An optional bridge installs Wyrd 1.0.1 as a society's social and roles ports, and registers dialogue facts about agents. Interactions, greetings and conversations now record through whatever social port the society uses. A theft by someone outside the society can be recorded, so its witnesses are found as usual. Two neutral demos run from the start screen: a house with two residents, and a colony of four settlers with mood, comfort and a cold snap, which runs with any of its optional modules left out. A shared headless harness keeps a timeline with a stable hash. APIs remain experimental before 1.0.
