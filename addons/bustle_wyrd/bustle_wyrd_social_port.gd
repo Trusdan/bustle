@@ -77,10 +77,13 @@ func reasons(a: StringName, b: StringName, limit: int = 3) -> Array[Dictionary]:
 
 
 ## Records the deed in Wyrd ([code]deeds.record[/code]) with the witnesses' ids as an explicit
-## list. Returns its key, or empty when the actor or verb is empty or Wyrd refuses it.
+## list and [param magnitude] as the deed's magnitude, so an interaction's outcome for the
+## recipient weighs in Wyrd's opinions. Wyrd keeps one magnitude per deed, so
+## [param _return_magnitude] isn't used. Returns the key, or empty when the actor or verb is empty
+## or Wyrd refuses it.
 ## @experimental
 func record_deed(actor: StringName, verb: StringName, target: StringName, place: StringName,
-		witnesses: Array[Dictionary]) -> StringName:
+		witnesses: Array[Dictionary], magnitude: float = 1.0, _return_magnitude: float = 0.0) -> StringName:
 	var deeds := _member(&"deeds")
 	if deeds == null or actor == &"" or verb == &"":
 		return &""
@@ -89,7 +92,7 @@ func record_deed(actor: StringName, verb: StringName, target: StringName, place:
 		var id: Variant = witness.get("id")
 		if (id is StringName or id is String) and String(id) != "" and not ids.has(String(id)):
 			ids.append(String(id))
-	var deed_id := int(deeds.call(&"record", verb, actor, target, place, PackedStringArray(), 1.0, ids))
+	var deed_id := int(deeds.call(&"record", verb, actor, target, place, PackedStringArray(), magnitude, ids))
 	return key_of(deed_id) if deed_id > 0 else &""
 
 

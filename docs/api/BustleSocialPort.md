@@ -47,10 +47,10 @@ Up to `max` reasons behind `a`'s opinion of `b`, each a dictionary. Default: non
 ### `record_deed`
 
 ```gdscript
-func record_deed(actor: StringName, verb: StringName, target: StringName, place: StringName, witnesses: Dictionary[]) -> StringName
+func record_deed(actor: StringName, verb: StringName, target: StringName, place: StringName, witnesses: Dictionary[], _magnitude: float = 1.0, _return_magnitude: float = 0.0) -> StringName
 ```
 
-Records that `actor` did `verb` to `target` at `place`, seen by `witnesses` (each a dictionary with an `id`; entries without one are ignored). Returns the deed's key, or empty when the actor or verb is empty.
+Records that `actor` did `verb` to `target` at `place`, seen by `witnesses` (each a dictionary with an `id`; entries without one are ignored). `magnitude` is how much the deed moved the target (an interaction passes its outcome for the recipient), and `return_magnitude` how much it moved the actor (the outcome for the initiator). A port that weighs deeds itself can use them; the default and the built-in store keep neither. Returns the deed's key, or empty when the actor or verb is empty.
 
 ### `knows`
 

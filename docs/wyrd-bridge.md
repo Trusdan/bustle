@@ -44,7 +44,7 @@ Install once for each Wyrd. Wyrd refuses a host function name that's already reg
 
 `BustleWyrdSocialPort` keeps to the social port's contract (see `addons/bustle/ports/social_port.gd`). Ids are opaque, so a deed's actor, target or witness needn't be a society agent.
 
-- **`record_deed`** records the deed with Wyrd's `deeds.record`: the interaction id as the verb, the witnesses' ids as an explicit list, each id once. The key is `deed_<Wyrd deed id>`.
+- **`record_deed`** records the deed with Wyrd's `deeds.record`: the interaction id as the verb, the witnesses' ids as an explicit list, each id once, and `magnitude` as the deed's magnitude. The key is `deed_<Wyrd deed id>`. An interaction passes its outcome for the recipient (`to_recipient`) as the magnitude, so with the society's port given to `BustleSocialInteractions`, conversations and greetings move Wyrd's opinions through its verb table. Wyrd keeps one magnitude per deed, so the initiator's outcome (`return_magnitude`) isn't used. Wyrd's verb table may still move the initiator's opinion from the same deed.
 - **`knows(agent, key)`** is true for the deed's actor, its witnesses, and anyone who believes it, whether from `share_news` or from one of Wyrd's own rumours. A key Wyrd has merged away by compacting its log is no longer known.
 - **`share_news(teller, listener, place)`** passes on the deeds the teller did or witnessed and the listener doesn't know yet, oldest first. Each is noted in Wyrd as believed by the listener at Wyrd's current minute. A believer knows the deed second-hand, so it can't pass it on. Nothing is rolled, and `place` isn't used.
 - **`opinion(a, b)`** is Wyrd's disposition of `a` toward `b`, 0 to 100.
