@@ -150,6 +150,24 @@ func test_opinions_kinds_and_reasons_come_from_wyrd() -> void:
 	assert_eq(social.kinds_between(&"a1", &"a2"), PackedStringArray(), "one-way")
 
 
+func test_an_interaction_on_the_installed_port_moves_wyrd_opinions() -> void:
+	var bridge := _install()
+	var interactions := BustleSocialInteractions.new(_society.ports.social, 7)
+	var def := BustleInteractionDef.new()
+	def.id = &"helped"
+	def.recipient_value = 2.0
+	def.initiator_value = 2.0
+	var result := interactions.interact(def, &"a1", &"a2", 0, &"", [{"id": &"a3"}] as Array[Dictionary])
+	assert_true(result["ok"])
+	var row: Dictionary = _wyrd.deeds.row_at(0)
+	assert_eq(row["verb"], &"helped", "a Wyrd deed")
+	assert_almost_eq(float(row["magnitude"]), float(result["to_recipient"]), 0.000001, "weighed by the recipient's outcome")
+	assert_eq(bridge.social.opinion(&"a2", &"a1"), clampi(int(round(50.0 + 20.0 * float(result["to_recipient"]) / 2.0)), 0, 100),
+		"so the recipient's opinion moves in Wyrd: 50 + delta × magnitude / 2")
+	assert_ne(bridge.social.opinion(&"a2", &"a1"), BustleSocialPort.NEUTRAL_OPINION)
+	assert_true(bridge.social.knows(&"a3", result["deed"]), "the witness knows it")
+
+
 func test_roles_follow_wyrd_assign_vacate_and_signals() -> void:
 	var bridge := _install()
 	var roles := bridge.roles

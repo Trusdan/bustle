@@ -2,17 +2,19 @@
 class_name BustleSocialInteractions
 extends RefCounted
 
-## Greetings and interactions between agents, on a [BustleSocialStore]. Every interaction goes
-## through one pure function, [method outcome], which gives the same answer for the same pair,
-## minute, interaction, compatibility and moods; [method interact] then records it: a deed (the
-## verb is the interaction's id) and, together with it, opinion entries whose reason names that
-## deed, plus any thoughts. A greeting is an interaction with cooldowns: one per pair (either way
+## Greetings and interactions between agents, recorded through a social port: give it the
+## society's ([code]society.ports.social[/code]), so they land wherever that port keeps them. Every
+## interaction goes through one pure function, [method outcome], which gives the same answer for
+## the same pair, minute, interaction, compatibility and moods; [method interact] then records it:
+## a deed (the verb is the interaction's id) carrying both outcomes, and any thoughts. When the port
+## is the built-in [BustleSocialStore], opinion entries whose reason names that deed are added too;
+## any other port weighs the deed itself (a bridge to a social engine can use its magnitude). A greeting is an interaction with cooldowns: one per pair (either way
 ## round) and one per initiator, so agents don't greet the same person over and over, or everyone
 ## at once.
 ## @experimental
 
-## The store everything is recorded in.
-var store: BustleSocialStore
+## The social port everything is recorded through. A new [BustleSocialStore] by default.
+var store: BustleSocialPort
 ## The world seed, for compatibility and the outcome's randomness.
 var world_seed: int = 0
 ## The interaction a greeting is.
@@ -26,10 +28,13 @@ var agent_cooldown_minutes: int = 10
 var mood_of: Callable = Callable()
 
 var _pair_ready: Dictionary[String, int] = {}
+# The latest minute an interaction was recorded at, for a port that keeps no clock.
+var _now: int = 0
 var _agent_ready: Dictionary[StringName, int] = {}
 
 
-func _init(p_store: BustleSocialStore = null, p_world_seed: int = 0) -> void:
+## Interactions recorded through [param p_store] (a new [BustleSocialStore] when null).
+func _init(p_store: BustleSocialPort = null, p_world_seed: int = 0) -> void:
 	store = p_store if p_store != null else BustleSocialStore.new()
 	world_seed = p_world_seed
 
@@ -68,9 +73,11 @@ static func outcome(def: BustleInteractionDef, initiator: StringName, recipient:
 
 
 ## [param initiator] does [param def] to [param recipient] at minute [param now] at
-## [param place], seen by [param witnesses]: works out the [method outcome], records the deed and
-## the opinion entries that name it, and gives each side its thought. Returns the outcome with
-## [code]ok[/code] and the [code]deed[/code] key, or [code]{ok: false, reason}[/code].
+## [param place], seen by [param witnesses]: works out the [method outcome], records the deed
+## through the port with [code]to_recipient[/code] as its magnitude and [code]to_initiator[/code] as
+## its return magnitude, adds the opinion entries that name it when the port is a
+## [BustleSocialStore], and gives each side its thought. Returns the outcome with [code]ok[/code]
+## and the [code]deed[/code] key, or [code]{ok: false, reason}[/code].
 ## @experimental
 func interact(def: BustleInteractionDef, initiator: StringName, recipient: StringName, now: int,
 		place: StringName = &"", witnesses: Array[Dictionary] = []) -> Dictionary:
@@ -78,18 +85,22 @@ func interact(def: BustleInteractionDef, initiator: StringName, recipient: Strin
 		return {"ok": false, "reason": &"invalid"}
 	if initiator == &"" or recipient == &"" or initiator == recipient:
 		return {"ok": false, "reason": &"no_pair"}
-	store.set_time(now)
+	var own := store as BustleSocialStore
+	if own != null:
+		own.set_time(now)
+	_now = maxi(_now, now)
 	var a_mood := _mood(initiator)
 	var b_mood := _mood(recipient)
 	var result := outcome(def, initiator, recipient, now, world_seed,
 		BustleCompatibility.of(initiator, recipient, world_seed),
 		float(a_mood.get(&"mood")) if a_mood != null else -1.0, float(b_mood.get(&"mood")) if b_mood != null else -1.0)
-	var key := store.record_deed(initiator, def.id, recipient, place, witnesses)
-	if result["to_recipient"] != 0.0:
-		store.add_opinion(recipient, initiator, result["to_recipient"],
+	var key := store.record_deed(initiator, def.id, recipient, place, witnesses,
+		result["to_recipient"], result["to_initiator"])
+	if own != null and result["to_recipient"] != 0.0:
+		own.add_opinion(recipient, initiator, result["to_recipient"],
 			{"deed": String(key), "interaction": String(def.id), "by": String(initiator)}, def.days)
-	if result["to_initiator"] != 0.0:
-		store.add_opinion(initiator, recipient, result["to_initiator"],
+	if own != null and result["to_initiator"] != 0.0:
+		own.add_opinion(initiator, recipient, result["to_initiator"],
 			{"deed": String(key), "interaction": String(def.id), "with": String(recipient)}, def.days)
 	if b_mood != null and def.recipient_thought != null:
 		b_mood.call(&"add_thought", def.recipient_thought, {"deed": String(key), "by": String(initiator)})
@@ -121,11 +132,13 @@ func greet(initiator: StringName, recipient: StringName, now: int, place: String
 	return result
 
 
-## The greeting cooldowns that are still running at the store's minute, as plain data. They are
-## not part of the store's or the society's export: a host saves them alongside.
+## The greeting cooldowns that are still running at the store's minute (with another port, at the
+## latest minute an interaction was recorded at), as plain data. They are not part of the port's
+## or the society's export: a host saves them alongside.
 ## @experimental
 func export_state() -> Dictionary:
-	_prune(store.now_minutes)
+	var own := store as BustleSocialStore
+	_prune(own.now_minutes if own != null else _now)
 	var pairs := {}
 	for key: String in _pair_ready:
 		pairs[key] = _pair_ready[key]

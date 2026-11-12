@@ -61,16 +61,16 @@ A `BustleInteractionDef` (a Resource) describes one kind of interaction, such as
 | `weight` | How often a conversation picks it (default 1). 0 means only as a conversation's opener. |
 | `slider_weights` | Personality slider → how strongly it bends `weight`: × `1 + w × (slider − 50) / 50`, never below 0. |
 
-`BustleSocialInteractions` runs interactions on a store:
+`BustleSocialInteractions` runs interactions through a social port. Give it the society's (`BustleSocialInteractions.new(society.ports.social, world_seed)`), so interactions land wherever that port keeps them. With no port it makes its own `BustleSocialStore`.
 
 - **`outcome(...)`** is the one pure function every interaction goes through. It records nothing and gives the same result for the same pair, minute, interaction, world seed, compatibility and moods. Visible and abstract conversations both use it.
 - **`interact(def, initiator, recipient, now, place, witnesses)`** works out the outcome and records it:
-  - a deed, whose verb is the interaction's id;
-  - opinion entries whose reason names that deed: `{deed, interaction, by}` for the recipient and `{deed, interaction, with}` for the initiator;
+  - a deed through the port's `record_deed`, whose verb is the interaction's id. Its `magnitude` is `to_recipient` and its `return_magnitude` is `to_initiator`;
+  - when the port is a `BustleSocialStore`, opinion entries whose reason names that deed: `{deed, interaction, by}` for the recipient and `{deed, interaction, with}` for the initiator. Any other port weighs the deed itself; the Wyrd bridge, for example, uses its magnitude (see `docs/wyrd-bridge.md`);
   - each side's thought, when `mood_of` gives a mood.
 
-  So repeated kind interactions form friends by the rules above. Greetings count too: each friendly greeting is a positive deed entry, though a friend still needs the opinion level.
-- **`greet(initiator, recipient, now)`** runs `greeting` as an interaction, with two cooldowns. `export_state` and `import_state` save the cooldowns that are still running. They aren't part of the store's or the society's export, so a host saves them alongside.
+  So, on the store, repeated kind interactions form friends by the rules above. Greetings count too: each friendly greeting is a positive deed entry, though a friend still needs the opinion level.
+- **`greet(initiator, recipient, now)`** runs `greeting` as an interaction, with two cooldowns. `export_state` and `import_state` save the cooldowns that are still running. They aren't part of the port's or the society's export, so a host saves them alongside. On a port other than the store, the cooldowns still running are those at the latest minute an interaction was recorded.
 
   | Cooldown | Default | What it stops |
   | --- | --- | --- |

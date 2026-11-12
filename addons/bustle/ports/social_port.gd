@@ -38,10 +38,13 @@ func reasons(_a: StringName, _b: StringName, _max: int = 3) -> Array[Dictionary]
 
 ## Records that [param actor] did [param verb] to [param target] at [param place], seen by
 ## [param witnesses] (each a dictionary with an [code]id[/code]; entries without one are ignored).
-## Returns the deed's key, or empty when the actor or verb is empty.
+## [param magnitude] is how much the deed moved the target (an interaction passes its outcome for
+## the recipient), and [param return_magnitude] how much it moved the actor (the outcome for the
+## initiator). A port that weighs deeds itself can use them; the default and the built-in store
+## keep neither. Returns the deed's key, or empty when the actor or verb is empty.
 ## @experimental
 func record_deed(actor: StringName, verb: StringName, target: StringName, place: StringName,
-		witnesses: Array[Dictionary]) -> StringName:
+		witnesses: Array[Dictionary], _magnitude: float = 1.0, _return_magnitude: float = 0.0) -> StringName:
 	if actor == &"" or verb == &"":
 		return &""
 	var key := StringName("deed_%d" % _next_deed)
