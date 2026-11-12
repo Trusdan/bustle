@@ -46,6 +46,14 @@ var lock_reach: float = 5.0
 
 How far (metres) an advertised option may be from a locked agent and still count as at its pinned place.
 
+### `roster_version`
+
+```gdscript
+var roster_version: int = 0
+```
+
+Changes whenever an agent is added or removed (or a save is imported), so a caller can keep its own copy of `agent_ids()` until it does.
+
 ## Methods
 
 ### `register_archetype`

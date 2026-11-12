@@ -39,6 +39,11 @@ var world_seed: int = 0
 ## pinned place.
 var lock_reach: float = 5.0
 
+## Changes whenever an agent is added or removed (or a save is imported), so a caller can keep its
+## own copy of [method agent_ids] until it does.
+## @experimental
+var roster_version: int = 0
+
 var _agents: Dictionary[StringName, BustleNpcState] = {}
 # archetype id → [library, config]
 var _archetypes: Dictionary[StringName, Array] = {}
@@ -90,13 +95,15 @@ func add_agent(id: StringName, archetype_id: StringName, group: StringName = &""
 		return null
 	var state := _make(id, archetype_id, group)
 	_agents[id] = state
+	roster_version += 1
 	return state
 
 
 ## Removes agent [param id]. Its body, if any, is left to the host.
 ## @experimental
 func remove_agent(id: StringName) -> void:
-	_agents.erase(id)
+	if _agents.erase(id):
+		roster_version += 1
 	_locks.erase(id)
 	_lock_runs.erase(id)
 	_lock_failed.erase(id)
@@ -277,6 +284,7 @@ func import_state(saved: Variant) -> BustleImportReport:
 			staged[id].attach_body(old.body())
 	world_seed = seed
 	_agents = staged
+	roster_version += 1
 	_locks = staged_locks
 	_lock_runs.clear()
 	_lock_failed.clear()

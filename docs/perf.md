@@ -81,7 +81,7 @@ These are the small demos' numbers, not the 40 Full / 40 Light / 200 Off-screen 
 
 **Bench:** `bench/population_bench.gd` builds a synthetic, neutral town of 40 FULL agents (indoors in the player's area), 40 LIGHT (next door) and 200 OFF_SCREEN (elsewhere), run through `BustleSimRings`. Every agent has six goals, each a two-step sequence of timed waits, scored from three needs that rise and fall on a fixed per-agent cycle from the seed, so choices and sequences keep changing with no rolls.
 
-- **Timing:** one game hour at 60 frames a second and 30× game speed (7,200 frames). It reports each ring's average and p99 per frame from `last_timings`, the whole `tick` (which also re-sorts the rings), the static memory the town takes and the save size per agent (the society's export as JSON).
+- **Timing:** one game hour at 60 frames a second and 30× game speed (7,200 frames). It reports each ring's average and p99 per frame from `last_timings`, the whole `tick` (which also re-sorts the rings when something calls for it), the static memory the town takes and the save size per agent (the society's export as JSON).
 - **Stuck at scale:** then a game day, one game minute a tick (the real seconds a minute takes at 30×). Each minute every agent is watched: a step still inside its wait (plus the ring's think interval), or off-screen catch-up still advancing, is legitimate; anything else needs a new goal or step.
 
 It exits 1 when an average or the FULL p99 is over budget, the save is over budget, or an agent was stuck. CI runs it as a report only (`continue-on-error`): shared runners' timings vary, and **no number here is a claim about a minimum machine**.
@@ -97,5 +97,13 @@ godot --headless --path . -s res://bench/population_bench.gd -- --full=40 --ligh
 population bench: 40 FULL, 40 LIGHT, 200 OFF_SCREEN, seed 1, 7200 frames (60 game min), 1 stuck days: FULL average 0.272 ms p99 0.708 ms (budget 1.0 / 2.0), LIGHT average 0.130 ms p99 0.414 ms (budget 0.3), OFF_SCREEN average 0.195 ms p99 0.480 ms (budget 0.5), frame average 2.228 ms p99 3.933 ms, memory 5509.2 KiB (20148 B an agent), save 546 B an agent (budget 2048), stuck spells 0, longest still 0 min: OK
 ```
 
-The whole frame (2.2 ms) is more than the three rings' thinking (about 0.6 ms) because `BustleSimRings.tick` also re-sorts every agent each frame; that sorting has no budget of its own yet.
+The whole frame is more than the three rings' thinking: it also covers the per-agent loop and timing, and the re-sorts. Since 2026-11-12, `BustleSimRings.tick` re-sorts only when something calls for it (the player's area or a move of `resort_move` metres, a new game minute, a roster change, `request_sort()`, or `resort_hz`, 4 a second by default), and it keeps the society's sorted agent ids until its `roster_version` changes. It used to do both every frame. The whole frame has no budget of its own.
+
+| Whole `rings.tick` frame, 40 / 40 / 200, seed 1 | Average | p99 |
+| --- | --- | --- |
+| Before, re-sorting every frame (local, two runs) | 1.95–1.97 ms | 3.49–3.65 ms |
+| After (local) | 0.836 ms | 1.600 ms |
+| Before (CI runner, run 43295066001) | 1.278 ms | 1.709 ms |
+
+The rings' own thinking was unchanged or slightly lower (local, after: FULL 0.196 / 0.446 ms, LIGHT 0.107 / 0.303 ms, OFF_SCREEN 0.166 / 0.307 ms).
 

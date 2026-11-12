@@ -8,7 +8,7 @@ Inherits: `RefCounted`
 
 Sorts a society's agents into simulation rings by where they are relative to the player, using the society's world and clock ports, and runs each ring. Areas come first, metres second. A ring change touches only the agent's `BustleNpcState.sim_ring` and, with `BustleSimRingConfig.manage_bodies`, its body (which may move its saved position to where the body was or appears); `tick()` and `catch_up()` also let its brain think and set `BustleNpcState.last_update_minute`. Nothing else in its state changes.
 
-- **FULL:** in the player's area, and either within `BustleSimRingConfig.full_radius` of the player (outdoors) or anywhere in it (an interior, with `BustleSimRingConfig.full_whole_interior`). - **LIGHT:** in the player's outdoor area but farther (or with no known position), or in an area next to the player's. - **OFF_SCREEN:** anywhere else. - **By distance** (outdoors, in the player's area): a FULL agent stays FULL until it is beyond the radius plus `BustleSimRingConfig.hysteresis`, and a change waits until `BustleSimRingConfig.min_dwell_seconds` have passed since the last one. - **By area** (the agent's area relative to the player's changed): the change applies at once, FULL to OFF_SCREEN included, except LIGHT to OFF_SCREEN, which waits until the area has been out of reach for `BustleSimRingConfig.light_to_offscreen_delay_seconds`. - **Leaving OFF_SCREEN** (in `update()` as in `tick()`): the agent is caught up (`catch_up()`) as it changes ring, before its body appears. - A new agent gets its ring at once, or the ring it was saved with (`BustleNpcState.sim_ring`), so after a load an agent in the hysteresis band stays FULL. - **Bodies** (with `BustleSimRingConfig.manage_bodies`): an agent that becomes FULL gets a body from `BustleWorldPort.spawn_body()` at its last position. If that spot is within `BustleSimRingConfig.no_pop_in_distance` of the player and in view (`BustleWorldPort.is_in_view()`), the body appears at the nearest spot out of view within that distance of it instead (checked at 8 bearings and 4 distances, nearest first); if there is none, or the agent has no known position, the spawn waits and is retried on later updates. An agent that stops being FULL has its position kept and its body freed (`BustleWorldPort.free_body()`).
+- **FULL:** in the player's area, and either within `BustleSimRingConfig.full_radius` of the player (outdoors) or anywhere in it (an interior, with `BustleSimRingConfig.full_whole_interior`). - **LIGHT:** in the player's outdoor area but farther (or with no known position), or in an area next to the player's. - **OFF_SCREEN:** anywhere else. - **By distance** (outdoors, in the player's area): a FULL agent stays FULL until it is beyond the radius plus `BustleSimRingConfig.hysteresis`, and a change waits until `BustleSimRingConfig.min_dwell_seconds` have passed since the last one. - **By area** (the agent's area relative to the player's changed): the change applies at once, FULL to OFF_SCREEN included, except LIGHT to OFF_SCREEN, which waits until the area has been out of reach for `BustleSimRingConfig.light_to_offscreen_delay_seconds`. - **Leaving OFF_SCREEN** (in `update()` as in `tick()`): the agent is caught up (`catch_up()`) as it changes ring, before its body appears. - A new agent gets its ring at once, or the ring it was saved with (`BustleNpcState.sim_ring`), so after a load an agent in the hysteresis band stays FULL. - **When it re-sorts:** `tick()` re-sorts every agent (`update()`) only when something calls for it: the player's area changes, the player moves `BustleSimRingConfig.resort_move` or more, the clock's minute changes, an agent is added or removed, `request_sort()` was called, or 1 / `BustleSimRingConfig.resort_hz` real seconds have passed. The time between sorts is passed on to `update()`, so the dwell and the delay keep counting, and a change that is due applies within one period. As `update()` takes the world as it is for the whole time passed, the delay before OFF_SCREEN can end up to one period early. A host that moves an agent to another area can call `request_sort()` to have it apply on the next tick. - **Bodies** (with `BustleSimRingConfig.manage_bodies`): an agent that becomes FULL gets a body from `BustleWorldPort.spawn_body()` at its last position. If that spot is within `BustleSimRingConfig.no_pop_in_distance` of the player and in view (`BustleWorldPort.is_in_view()`), the body appears at the nearest spot out of view within that distance of it instead (checked at 8 bearings and 4 distances, nearest first); if there is none, or the agent has no known position, the spawn waits and is retried on later updates. An agent that stops being FULL has its position kept and its body freed (`BustleWorldPort.free_body()`).
 
 ## Signals
 
@@ -108,6 +108,14 @@ var last_timings: Dictionary = {...}
 
 Microseconds the last `tick()` spent on each ring's thinking: `{FULL, LIGHT, OFF_SCREEN}`.
 
+### `last_sorted`
+
+```gdscript
+var last_sorted: bool = false
+```
+
+True when the last `tick()` re-sorted the agents.
+
 ### `society`
 
 ```gdscript
@@ -132,7 +140,7 @@ The thresholds.
 func tick(delta: float) -> void
 ```
 
-Re-sorts every agent (see `update()`) and then lets each think as its ring allows: FULL every 1 / `BustleSimRingConfig.full_brain_hz` real seconds, LIGHT every 1 / `BustleSimRingConfig.light_rate_hz`, and OFF_SCREEN once each `BustleSimRingConfig.offscreen_interval_game_minutes` of game time, at a fixed phase per agent so they don't all think in the same frame (FULL and LIGHT are staggered the same way). Each think sets `BustleNpcState.last_update_minute`.
+Re-sorts every agent when something calls for it (see `update()` and "When it re-sorts" above) and then lets each think as its ring allows: FULL every 1 / `BustleSimRingConfig.full_brain_hz` real seconds, LIGHT every 1 / `BustleSimRingConfig.light_rate_hz`, and OFF_SCREEN once each `BustleSimRingConfig.offscreen_interval_game_minutes` of game time, at a fixed phase per agent so they don't all think in the same frame (FULL and LIGHT are staggered the same way). Each think sets `BustleNpcState.last_update_minute`.
 
 ### `catch_up`
 
@@ -141,6 +149,14 @@ func catch_up(id: StringName) -> Dictionary
 ```
 
 Brings agent `id` up to the clock's minute with OFF_SCREEN thinking from its `BustleNpcState.last_update_minute`: one think per `BustleSimRingConfig.offscreen_interval_game_minutes`, for at most `BustleSimRingConfig.catch_up_cap_game_days`. The most recent time is simulated; anything older is summarised (passed to `summary_hook`) rather than run. Deterministic for the same state and senses. Returns `{agent, from, to, ticks, simulated_minutes, skipped_minutes}` and emits `caught_up` when anything happened.
+
+### `request_sort`
+
+```gdscript
+func request_sort() -> void
+```
+
+Has the next `tick()` re-sort every agent, whatever else has changed: for instance after the host moves an agent to another area.
 
 ### `update`
 
