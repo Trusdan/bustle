@@ -86,10 +86,10 @@ Each run keeps a **timeline** (`harness/demo_timeline.gd`): one entry per event,
 
 `harness/demo_stuck_watch.gd` tells a stuck agent from one in a long, legitimate activity. The harness feeds it every agent every step, and a bench can feed it the same way.
 
-- **Legitimate (never stuck):** asleep, attending a schedule block that hasn't ended (or away for it), using or waiting on an object, under an order or player control, or in a mental state inside its duration. Travel still closing on its goal, and off-screen catch-up still advancing, count too, for a host that reports them.
+- **Legitimate (never stuck):** asleep, attending a schedule block that hasn't ended (or away for it), using an object while the use is inside its expected time (`using_on_time`), under an order or player control, or in a mental state inside its duration. Travel still closing on its goal, and off-screen catch-up still advancing, count too, for a host that reports them.
 - **Stuck:** more than 2 game hours with none of those and no progress: the same goal and step, nothing used up, and no move past 0.5 m (or, off-screen, the same place with no hop pending). Also stuck at once: the same goal failing three steps in a row, or a mental state still active past its end.
 
-The 2-hour bound, the 0.5 m epsilon and the loop count are experimental defaults (`bound_minutes`, `move_epsilon`, `fail_loop`). `longest_still(id)` and `spells()` give the diagnostics.
+The 2-hour bound, the 0.5 m epsilon and the loop count are experimental defaults (`bound_minutes`, `move_epsilon`, `fail_loop`). `longest_still(id)` and `spells()` give the diagnostics. The population bench (`bench/population_bench.gd`) feeds the same watch.
 
 ## Soak
 

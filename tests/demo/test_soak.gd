@@ -72,6 +72,20 @@ func test_the_bound_and_epsilon_are_settings() -> void:
 	assert_true(watch.is_stuck(&"a"), "under five metres in forty minutes, with a thirty-minute bound")
 
 
+func test_a_use_counts_as_busy_only_inside_its_expected_time() -> void:
+	var house: RefCounted = preload("res://demo/house/house.gd").build(1)
+	var id: StringName = house.agent_ids()[0]
+	while house.using_of(id) != &"stove" and house.now < 1440:
+		house.step()
+	assert_eq(house.using_of(id), &"stove", "it goes to cook")
+	assert_true(house.using_on_time(id), "a 30-minute use, just begun")
+	house.use_minutes[&"stove"] = 0
+	house.step()
+	house.step()
+	assert_eq(house.using_of(id), &"stove", "still at it")
+	assert_false(house.using_on_time(id), "but past the time it should take, so it no longer counts as busy")
+
+
 func test_the_timeline_logs_each_thought_with_its_reason_and_value() -> void:
 	var colony := Colony.build(1)
 	colony.run(3 * 1440)

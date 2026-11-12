@@ -73,5 +73,29 @@ soak house: 2 agents, 30 days in 3545 ms (118.2 ms a day), static memory 30.3 Mi
 soak colony: 4 agents, 30 days in 14216 ms (473.9 ms a day), static memory 36.2 MiB, timeline 5191 entries, hash 24703e18…, replay same, stuck spells 0, longest still {"settler_a":0,"settler_b":0,"settler_c":0,"settler_d":0}: OK
 ```
 
-These are the small demos' numbers, not the 40 Full / 40 Light / 200 Off-screen budgets; a synthetic bench at those counts is still to come.
+These are the small demos' numbers, not the 40 Full / 40 Light / 200 Off-screen budgets; those are the population bench's, below.
+
+## Population
+
+**Budgets (proposed):** FULL brains and sequences ≤ 1.0 ms average and ≤ 2.0 ms p99 per frame at 60 fps (on top of perception's), LIGHT ≤ 0.3 ms a frame for 40 at 1 Hz, OFF_SCREEN ≤ 0.5 ms a frame amortised for 200 per game hour, and a save of ≤ 2 KB per agent. No agent stuck (the stuck watch's rule) over a game day.
+
+**Bench:** `bench/population_bench.gd` builds a synthetic, neutral town of 40 FULL agents (indoors in the player's area), 40 LIGHT (next door) and 200 OFF_SCREEN (elsewhere), run through `BustleSimRings`. Every agent has six goals, each a two-step sequence of timed waits, scored from three needs that rise and fall on a fixed per-agent cycle from the seed, so choices and sequences keep changing with no rolls.
+
+- **Timing:** one game hour at 60 frames a second and 30× game speed (7,200 frames). It reports each ring's average and p99 per frame from `last_timings`, the whole `tick` (which also re-sorts the rings), the static memory the town takes and the save size per agent (the society's export as JSON).
+- **Stuck at scale:** then a game day, one game minute a tick (the real seconds a minute takes at 30×). Each minute every agent is watched: a step still inside its wait (plus the ring's think interval), or off-screen catch-up still advancing, is legitimate; anything else needs a new goal or step.
+
+It exits 1 when an average or the FULL p99 is over budget, the save is over budget, or an agent was stuck. CI runs it as a report only (`continue-on-error`): shared runners' timings vary, and **no number here is a claim about a minimum machine**.
+
+```bash
+godot --headless --path . -s res://bench/population_bench.gd
+godot --headless --path . -s res://bench/population_bench.gd -- --full=40 --light=40 --offscreen=200 --frames=7200 --days=1 --seed=1
+```
+
+**Measured** (2026-11-12, Godot 4.7.2 headless, Linux cloud machine, seed 1):
+
+```
+population bench: 40 FULL, 40 LIGHT, 200 OFF_SCREEN, seed 1, 7200 frames (60 game min), 1 stuck days: FULL average 0.272 ms p99 0.708 ms (budget 1.0 / 2.0), LIGHT average 0.130 ms p99 0.414 ms (budget 0.3), OFF_SCREEN average 0.195 ms p99 0.480 ms (budget 0.5), frame average 2.228 ms p99 3.933 ms, memory 5509.2 KiB (20148 B an agent), save 546 B an agent (budget 2048), stuck spells 0, longest still 0 min: OK
+```
+
+The whole frame (2.2 ms) is more than the three rings' thinking (about 0.6 ms) because `BustleSimRings.tick` also re-sorts every agent each frame; that sorting has no budget of its own yet.
 
