@@ -34,6 +34,20 @@ The action calls `steal(agent, now)`:
 
 Afterwards the target is gone. The agent now owns something that eases the need, so the need guard fails and it doesn't steal again for that need, however many other items it could reach. Its usual goals win again. When the host lets it use up the item (and removes the item from the register), the need can drive it again.
 
+## A theft by someone who isn't an agent
+
+A host records a theft by someone who isn't an agent of the society, such as the player's character, with `record_theft(thief, owner_id, item, circumstances)`. It emits the same `theft` event, so the crime watch follows it like any other.
+
+- **The thief is any id.** It needn't be an agent, and nothing looks it up.
+- **`circumstances` needs `place` and `at`.** `place` is passed on as a `StringName` and `at`, a whole minute, as an `int`. Any other keys the host gives are passed on as they are.
+- **It moves nothing.** The host moves the item, or already has.
+- **None of the guards run,** and neither does the switch. They're about why an agent steals; this records a theft that has already happened.
+- **It refuses bad input.** With an empty thief, owner or item, a thief who is the owner, or a missing place or minute, it returns false and emits nothing.
+
+The watch then finds witnesses as usual: the agents who perceived the theft, by default every other agent in the place who isn't incapacitated. Nobody can confront the thief unless the host's `can_reach` says they can reach it, since the society can't place someone who isn't an agent.
+
+`steal()` is unchanged: only an agent the guards pass can steal that way, and it moves the item.
+
 ## What theft never does
 
 - **It never creates or destroys goods.** It only moves an existing item from its owner.
