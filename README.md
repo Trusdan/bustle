@@ -2,7 +2,7 @@
 
 A generic addon for living non-player populations in Godot 4 (4.7 or newer): the people of a place and their daily life. MIT licensed.
 
-**Status: 0.6.0.** It has the project scaffold (0.1.0), the perception module (0.2.0: senses for every actor, awareness queries and dispositions) and the headless simulation core (0.3.0: the utility scorer, brains with action sequences, the host ports, the society registry with save and load, orders, debug tools and simulation rings). 0.4.0 adds needs, mood and thoughts, affordances, schedules with roles, jobs and wages, personality sliders and trait bundles, memory and FindPerson, social opinions, greetings, conversations and comfort, and trade-port buying, with owners taking from their own stock for free. 0.5.0 adds cause-driven conflict: fight, flee or fetch help, an intent to subdue or kill only for a reason, non-lethal scuffles, quarrels, and assaulted and killed events, with the combat port taking an intent and reporting how a fight ended. 0.6.0 adds guarded theft, witnesses and reporting, mental states, ambitions, and host locks with protection levels. APIs remain experimental before 1.0. More features come in later releases.
+**Status: 0.7.0.** It has the project scaffold (0.1.0), the perception module (0.2.0: senses for every actor, awareness queries and dispositions) and the headless simulation core (0.3.0: the utility scorer, brains with action sequences, the host ports, the society registry with save and load, orders, debug tools and simulation rings). 0.4.0 adds needs, mood and thoughts, affordances, schedules with roles, jobs and wages, personality sliders and trait bundles, memory and FindPerson, social opinions, greetings, conversations and comfort, and trade-port buying, with owners taking from their own stock for free. 0.5.0 adds cause-driven conflict: fight, flee or fetch help, an intent to subdue or kill only for a reason, non-lethal scuffles, quarrels, and assaulted and killed events, with the combat port taking an intent and reporting how a fight ended. 0.6.0 adds guarded theft, witnesses and reporting, mental states, ambitions, and host locks with protection levels. 0.7.0 adds the optional Wyrd bridge, social ports for interactions and conversations, recording a theft by an outsider, and the house and colony demos. APIs remain experimental before 1.0. More features come in later releases.
 
 ## Layout
 
@@ -17,7 +17,7 @@ A generic addon for living non-player populations in Godot 4 (4.7 or newer): the
 | `addons/bustle_wyrd/` | Optional bridge to the [Wyrd](https://github.com/Trusdan/wyrd) narrative engine, pinned to Wyrd 1.0.1. |
 | `addons/wyrd/` | A test-only copy of Wyrd 1.0.1 for the bridge tests (`tools/wyrd-pin.env`). Not part of a release. |
 | `addons/gut/` | Vendored [GUT](https://github.com/bitwes/Gut) 9.7.1, for the tests only. |
-| `demo/` | A small neutral demo (a skeleton in 0.1.0). |
+| `demo/` | A small neutral demo: the house and colony scenes and a headless harness ([demo/README.md](demo/README.md)). |
 | `docs/api/` | The API reference, generated from the `##` doc comments. |
 
 ## Install

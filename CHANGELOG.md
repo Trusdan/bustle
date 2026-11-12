@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-11
+
+The Wyrd bridge, the social port and two demos. An optional bridge installs Wyrd 1.0.1 as a society's social and roles ports, and registers dialogue facts about agents. Interactions, greetings and conversations now record through whatever social port the society uses. A theft by someone outside the society can be recorded, so its witnesses are found as usual. Two neutral demos run from the start screen: a house with two residents, and a colony of four settlers with mood, comfort and a cold snap, which runs with any of its optional modules left out. A shared headless harness keeps a timeline with a stable hash. APIs remain experimental before 1.0.
+
 ### Added
 
 - A house demo (see `demo/README.md`): two residents, a loner and an outgoing one, with a bed, a stove, a table, a bench, a phone and a morning block of work off site. It runs from the demo's start screen. A shared headless harness drives it, and keeps a timeline of choices, uses, orders and attendance with a stable SHA-256 hash, so the same seed gives the same hash. Tests check three days on their own, orders with autonomy off, an order that interrupts and then gives way, traits that change choices, and a player-controlled agent that never chooses.
