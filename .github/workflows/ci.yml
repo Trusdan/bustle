@@ -154,6 +154,18 @@ jobs:
           echo "::notice title=Ring bench::${out}"
           [[ "$out" == *": OK" ]]
 
+      # The population bench (docs/perf.md): 40 FULL, 40 LIGHT and 200 OFF_SCREEN agents against the
+      # proposed budgets, plus a game day with nobody stuck. A report only: shared runners' timings
+      # vary, and no number here is a claim about a minimum machine.
+      - name: Population bench (report only)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          out="$(godot --headless --path . -s res://bench/population_bench.gd 2>&1 | tr -d '\r' | grep -E '^population bench: [0-9]' || true)"
+          echo "$out"
+          echo "::notice title=Population bench::${out}"
+          [[ "$out" == *": OK" ]]
+
       # docs/api/ is generated from the ## doc comments; fail if a comment changed without
       # regenerating it (run tools/gen_api_docs.sh and commit the result).
       - name: API docs are up to date

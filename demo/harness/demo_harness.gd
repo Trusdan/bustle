@@ -185,7 +185,7 @@ func add_agent(id: StringName, library: BustleGoalLibrary, need_defs: Array[Bust
 	_agents[id] = {"brain": brain, "needs": needs, "personality": personality,
 		"schedule": BustleSchedule.new(routine) if routine != null else null, "away": false,
 		"last": "", "dire": {}, "attended": {}, "using": &"", "area": home_area, "position": Vector3.ZERO,
-		"mood": mood, "mental": mental, "thoughts": {}, "consumed": false}
+		"mood": mood, "mental": mental, "thoughts": {}, "consumed": false, "using_since": now}
 	if perception != null:
 		var actor := BustlePerceptionActor.new()
 		actor.id = id
@@ -241,6 +241,20 @@ func mental_of(id: StringName) -> BustleMentalState:
 func in_low_state(id: StringName) -> bool:
 	var mental := mental_of(id)
 	return mental != null and mental.active().get("kind", "") == String(BustleMentalStateDef.LOW)
+
+
+## The object [param id] is using, or empty.
+func using_of(id: StringName) -> StringName:
+	return _agents[id]["using"]
+
+
+## True while [param id] uses an object and the use is still inside its expected time (the object's
+## minutes, plus a step for the step it started in). A use that runs on past that doesn't count as
+## a legitimate long activity for the stuck watch.
+func using_on_time(id: StringName) -> bool:
+	var agent := _agents[id]
+	var object: StringName = agent["using"]
+	return object != &"" and now - int(agent["using_since"]) <= minutes_of(object) + step_minutes
 
 
 ## True while [param id] sleeps.
@@ -336,6 +350,8 @@ func _step_agent(id: StringName, others_home: int) -> BustleIntent:
 		comfort.advertise(id, noticed_by(id), store, mood_of, senses)
 	var intent := brain.tick(step_minutes * 60.0, senses)
 	agent["away"] = intent.goal_id == AWAY_GOAL and intent.order_id == &""
+	if intent.use_affordance != agent["using"]:
+		agent["using_since"] = now
 	agent["using"] = intent.use_affordance
 	var used := affordances.get_affordance(intent.use_affordance) if intent.use_affordance != &"" else null
 	if used != null:
@@ -443,7 +459,7 @@ func _watch(id: StringName, agent: Dictionary, intent: BustleIntent) -> void:
 	var block: Dictionary = schedule.block_at(now) if schedule != null else {}
 	var mental: BustleMentalState = agent["mental"]
 	var state: Dictionary = mental.active() if mental != null else {}
-	var legit: bool = _sleeps_in(agent["using"]) or agent["using"] != &"" or agent["away"] \
+	var legit: bool = _sleeps_in(agent["using"]) or using_on_time(id) or agent["away"] \
 		or intent.order_id != &"" or intent.player_controlled \
 		or (not block.is_empty() and StringName(block["block"].activity) == intent.goal_id) \
 		or (not state.is_empty() and now < int(state["until"]))
