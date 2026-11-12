@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-12
+
+Soak, stuck diagnostics and performance. The demo harness gains a stuck watch that tells a stuck agent from one in a long, legitimate activity, and its timeline logs thoughts and stuck spells on the same hash. A 30-day soak runs both demos from a fixed seed and checks the replay hash. CI runs a two-day smoke, and a nightly job runs the full soak. A synthetic bench of 40 FULL, 40 LIGHT and 200 OFF_SCREEN agents times the simulation rings against the proposed budgets and checks for stuck agents at that scale. The rings now re-sort only when something calls for it, which halves the bench's whole frame on the CI runner (1.278 to 0.620 ms on average). APIs remain experimental before 1.0.
+
 ### Added
 
 - `BustleSimRings.request_sort()` and `last_sorted`, `BustleSimRingConfig.resort_hz` and `resort_move`, and `BustleSociety.roster_version`, for re-sorting the rings only when needed (see Changed).
@@ -15,7 +19,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Changed
 
-- `BustleSimRings.tick` re-sorts the agents only when something calls for it (the player's area, a move of `BustleSimRingConfig.resort_move` metres, a new game minute, a roster change, `request_sort()`, or `resort_hz`, 4 a second by default), instead of every frame. It passes the time between sorts on, so a ring change that is due applies within one period. It also keeps the society's sorted agent ids until they change. On the population bench, the whole frame drops from about 2.0 ms to 0.84 ms locally.
+- `BustleSimRings.tick` re-sorts the agents only when something calls for it (the player's area, a move of `BustleSimRingConfig.resort_move` metres, a new game minute, a roster change, `request_sort()`, or `resort_hz`, 4 a second by default), instead of every frame. It passes the time between sorts on, so a ring change that is due applies within one period. It also keeps the society's sorted agent ids until they change. On the population bench, the whole frame drops from 1.278 to 0.620 ms on average on the CI runner (about 1.96 to 0.84 ms locally).
 - The demo harness counts using an object as a legitimate long activity only while the use is inside its expected time (`using_on_time`).
 - The colony's settlers sit by a hearth (an idle goal) when nothing else calls, instead of standing still all evening. The colony's pinned week hash changes with it and with the new timeline entries.
 
