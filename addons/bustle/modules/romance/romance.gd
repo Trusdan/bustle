@@ -9,10 +9,14 @@ extends RefCounted
 ## [method update] moves a pair along the ladder from causes and state alone. Courting starts when
 ## both opinions and their compatibility reach the [BustleRomanceRules] lines; it becomes a
 ## partnership after the courting days if both opinions reach the partner line. Engaged and
-## married come only from [method request] with the host's [member confirm_hook] approving. A pair
-## breaks up when either opinion falls below its release line, or when the host calls
-## [method end]; both then get the breakup thought. An agent with a partner or more never starts
-## courting anyone else, and courting is one at a time. Nothing is random.
+## married come only from [method request] with the host's [member confirm_hook] approving. A
+## courting or partnered pair breaks up when either opinion falls below its release line; an
+## engaged or married pair only when the host calls [method end] (which ends any status). Both then
+## get the breakup thought. After a breakup, the pair can court again only once its lower opinion
+## has been below the courting release line and climbed back, so a breakup sticks until something
+## changes. An agent with a partner or more never starts
+## courting anyone else, and courting is one at a time. Nothing is random. With rules that aren't
+## [method BustleRomanceRules.is_valid], [method update] changes nothing.
 ## @experimental
 
 ## A pair's status changed from [param old] to [param new] (empty: none). [param reason] is
@@ -39,7 +43,8 @@ var world_seed: int = 0
 ## Bustle never gets there on its own.
 var confirm_hook: Callable = Callable()
 
-## Pair key → {a, b, status, since, history: [{status, at, reason}]}.
+## Pair key → {a, b, status, since, armed, history: [{status, at, reason}]}. [code]armed[/code] is
+## false after a breakup until the pair's lower opinion has been below the courting release line.
 var _pairs: Dictionary[String, Dictionary] = {}
 
 
@@ -90,24 +95,38 @@ func compatibility_of(a: StringName, b: StringName) -> float:
 	return BustleCompatibility.of(a, b, world_seed)
 
 
-## Moves the pair along the ladder at game minute [param now]: a breakup below the release line;
-## else courting or partner when the lines are met. [param mood_a] and [param mood_b] (anything
-## with [code]add_thought[/code]) get the breakup thought. Returns the status after.
+## Moves the pair along the ladder at game minute [param now]: a courting or partnered pair breaks
+## up below its release line; else courting or partner forms when the lines are met (courting only
+## for a pair that is armed: never broken up, or below the courting release line since). Engaged
+## and married never lapse here. [param mood_a] and [param mood_b] (anything with
+## [code]add_thought[/code]) get the breakup thought. Returns the status after.
 ## @experimental
 func update(a: StringName, b: StringName, now: int, mood_a: Object = null, mood_b: Object = null) -> StringName:
-	if a == &"" or b == &"" or a == b or not social.supports_kinds():
-		return &""
+	return _update(a, b, now, func() -> Array: return [mood_a, mood_b])
+
+
+func _update(a: StringName, b: StringName, now: int, moods: Callable) -> StringName:
+	if a == &"" or b == &"" or a == b or not social.supports_kinds() or not rules.is_valid():
+		return status_of(a, b)
 	var status := status_of(a, b)
 	var low := mini(social.opinion(a, b), social.opinion(b, a))
-	if status != &"":
+	if status == COURTING or status == PARTNER:
 		var release := rules.courting_release if status == COURTING else rules.partner_release
 		if low < release:
-			_break(a, b, now, &"lapsed", mood_a, mood_b)
+			var pair: Array = moods.call()
+			_break(a, b, now, &"lapsed", pair[0], pair[1])
 			return &""
 		if status == COURTING and low >= rules.partner_opinion \
 				and now - since_of(a, b) >= roundi(rules.partner_days * 1440.0):
 			_move(a, b, PARTNER, now, &"formed")
 		return status_of(a, b)
+	if status != &"":
+		return status
+	var record: Dictionary = _pairs.get(_key(a, b), {})
+	if not bool(record.get("armed", true)):
+		if low >= rules.courting_release:
+			return &""
+		record["armed"] = true
 	if may_court(a, b) and low >= rules.courting_opinion and compatibility_of(a, b) >= rules.courting_compat:
 		_move(a, b, COURTING, now, &"formed")
 	return status_of(a, b)
@@ -121,9 +140,12 @@ func update_all(ids: Array[StringName], now: int, mood_of: Callable = Callable()
 	sorted.sort_custom(func(x: StringName, y: StringName) -> bool: return String(x) < String(y))
 	for i: int in sorted.size():
 		for j: int in range(i + 1, sorted.size()):
-			var mood_a: Object = mood_of.call(sorted[i]) if mood_of.is_valid() else null
-			var mood_b: Object = mood_of.call(sorted[j]) if mood_of.is_valid() else null
-			update(sorted[i], sorted[j], now, mood_a, mood_b)
+			var a: StringName = sorted[i]
+			var b: StringName = sorted[j]
+			_update(a, b, now, func() -> Array:
+				if not mood_of.is_valid():
+					return [null, null]
+				return [mood_of.call(a), mood_of.call(b)])
 
 
 ## True when [param a] and [param b] may start courting: neither holds a
@@ -155,7 +177,9 @@ func request(a: StringName, b: StringName, status: StringName, now: int) -> bool
 
 
 ## Ends the pair's relationship at game minute [param now] (one of them chose to, as the host
-## decides). Both get the breakup thought. False when they have none.
+## decides), whatever its status; this is the only way an engaged or married pair ends. Both get
+## the breakup thought. The pair can't court again until its lower opinion has been below the
+## courting release line. False when they have none.
 ## @experimental
 func end(a: StringName, b: StringName, now: int, mood_a: Object = null, mood_b: Object = null) -> bool:
 	if status_of(a, b) == &"":
@@ -175,12 +199,12 @@ func export_state() -> Dictionary:
 		for entry: Dictionary in pair["history"]:
 			history.append({"status": String(entry["status"]), "at": entry["at"], "reason": String(entry["reason"])})
 		out[key] = {"a": String(pair["a"]), "b": String(pair["b"]), "status": String(pair["status"]),
-			"since": pair["since"], "history": history}
+			"since": pair["since"], "armed": pair.get("armed", true), "history": history}
 	return out
 
 
 ## Restores [method export_state], replacing every pair. False (and nothing changes) when it is
-## malformed or holds a status off the ladder.
+## malformed or holds a status off the ladder. A pair saved without [code]armed[/code] is armed.
 ## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary:
@@ -189,8 +213,9 @@ func import_state(saved: Variant) -> bool:
 	for key: Variant in saved:
 		var row: Variant = saved[key]
 		if not row is Dictionary or not row.get("a") is String or not row.get("b") is String \
-				or not row.get("history") is Array or not _is_int(row.get("since")) \
-				or (row.get("status") != "" and not LADDER.has(StringName(str(row.get("status"))))):
+				or not row.get("history") is Array or not _is_int(row.get("since")) or not row.get("status") is String \
+				or (row["status"] != "" and not LADDER.has(StringName(row["status"]))) \
+				or not row.get("armed", true) is bool:
 			return false
 		var a := StringName(row["a"])
 		var b := StringName(row["b"])
@@ -204,7 +229,7 @@ func import_state(saved: Variant) -> bool:
 			history.append({"status": StringName(entry["status"]), "at": int(entry["at"]),
 				"reason": StringName(entry["reason"])})
 		restored[key] = {"a": a, "b": b, "status": StringName(row["status"]), "since": int(row["since"]),
-			"history": history}
+			"armed": row.get("armed", true), "history": history}
 	_pairs = restored
 	return true
 
@@ -220,7 +245,7 @@ func _move(a: StringName, b: StringName, status: StringName, now: int, reason: S
 		social.set_kind(b, a, status)
 	var key := _key(a, b)
 	var pair: Dictionary = _pairs.get(key, {"a": a if String(a) < String(b) else b,
-		"b": b if String(a) < String(b) else a, "history": [] as Array[Dictionary]})
+		"b": b if String(a) < String(b) else a, "armed": true, "history": [] as Array[Dictionary]})
 	pair["status"] = status
 	pair["since"] = now
 	(pair["history"] as Array).append({"status": status, "at": now, "reason": reason})
@@ -232,6 +257,7 @@ func _move(a: StringName, b: StringName, status: StringName, now: int, reason: S
 
 func _break(a: StringName, b: StringName, now: int, reason: StringName, mood_a: Object, mood_b: Object) -> void:
 	_move(a, b, &"", now, reason)
+	_pairs[_key(a, b)]["armed"] = mini(social.opinion(a, b), social.opinion(b, a)) < rules.courting_release
 	for pair: Array in [[mood_a, b], [mood_b, a]]:
 		var mood: Object = pair[0]
 		if rules.breakup_thought != null and mood != null and mood.has_method(&"add_thought"):

@@ -138,6 +138,7 @@ func test_either_can_end_it() -> void:
 	var baker := BustleMood.new()
 	var smith := BustleMood.new()
 	assert_true(_romance.end(&"smith", &"baker", DAY, smith, baker))
+	assert_eq(_romance.update(&"baker", &"smith", DAY + 1), &"", "the end sticks with opinions unchanged")
 	assert_eq(baker.count(&"heartbroken") + smith.count(&"heartbroken"), 2)
 	assert_eq(_romance.history_of(&"baker", &"smith").back()["reason"], &"ended")
 	assert_false(_romance.end(&"smith", &"baker", DAY))
@@ -202,7 +203,9 @@ func test_statuses_survive_save_and_load() -> void:
 	assert_eq(_romance.history_of(&"baker", &"smith").map(func(e: Dictionary) -> StringName: return e["status"]),
 			[BustleRomance.COURTING, BustleRomance.PARTNER])
 	var before := _romance.export_state()
-	for bad: Variant in [null, {"x": {"a": "baker"}}, {"baker|smith": {"a": "baker", "b": "smith", "status": "betrothed",
+	for bad: Variant in [null, {"x": {"a": "baker"}}, {"baker|smith": {"a": "baker", "b": "smith", "status": 3,
+			"since": 0, "history": []}}, {"baker|smith": {"a": "baker", "b": "smith", "status": "", "since": 0,
+			"armed": "yes", "history": []}}, {"baker|smith": {"a": "baker", "b": "smith", "status": "betrothed",
 			"since": 0, "history": []}}, {"smith|baker": {"a": "smith", "b": "baker", "status": "", "since": 0, "history": []}}]:
 		assert_false(_romance.import_state(bad), str(bad))
 		assert_eq(_romance.export_state(), before)
@@ -218,3 +221,74 @@ func test_same_opinions_give_the_same_ladder() -> void:
 		runs.append(_romance.export_state())
 	assert_eq(runs[0], runs[1])
 	assert_false(runs[0].is_empty())
+
+
+# A breakup sticks until the pair's lower opinion has been below the courting release line.
+func test_after_a_breakup_courting_needs_a_dip_and_a_climb() -> void:
+	_mutual(&"baker", &"smith", 90)
+	_romance.update(&"baker", &"smith", 0)
+	_romance.end(&"baker", &"smith", DAY)
+	for day: int in range(2, 20):
+		assert_eq(_romance.update(&"baker", &"smith", day * DAY), &"", "day %d" % day)
+	_like(&"smith", &"baker", 56)
+	_romance.update(&"baker", &"smith", 20 * DAY)
+	_like(&"smith", &"baker", 90)
+	assert_eq(_romance.update(&"baker", &"smith", 21 * DAY), &"", "56 isn't below the release line (55)")
+	_like(&"smith", &"baker", 50)
+	assert_eq(_romance.update(&"baker", &"smith", 22 * DAY), &"", "below it: armed, but not courting at 50")
+	_like(&"smith", &"baker", 90)
+	assert_eq(_romance.update(&"baker", &"smith", 23 * DAY), BustleRomance.COURTING, "climbed back")
+	assert_eq(_romance.history_of(&"baker", &"smith").back(), {"status": BustleRomance.COURTING, "at": 23 * DAY,
+		"reason": &"formed"})
+
+
+func test_a_lapse_below_the_release_line_rearms_at_once() -> void:
+	_mutual(&"baker", &"smith", 90)
+	_romance.update(&"baker", &"smith", 0)
+	_like(&"smith", &"baker", 50)
+	_romance.update(&"baker", &"smith", DAY)
+	_like(&"smith", &"baker", 90)
+	assert_eq(_romance.update(&"baker", &"smith", 2 * DAY), BustleRomance.COURTING, "it has already dipped")
+
+
+func test_a_breakup_sticks_across_a_save() -> void:
+	_mutual(&"baker", &"smith", 90)
+	_romance.update(&"baker", &"smith", 0)
+	_romance.end(&"baker", &"smith", DAY)
+	var saved: Variant = JSON.parse_string(JSON.stringify({"romance": _romance.export_state(), "social": _store.export_state()}))
+	assert_eq(saved["romance"]["baker|smith"]["armed"], false)
+	before_each()
+	_store.import_state(saved["social"])
+	assert_true(_romance.import_state(saved["romance"]))
+	assert_eq(_romance.update(&"baker", &"smith", 2 * DAY), &"", "still apart after the load")
+	_like(&"baker", &"smith", 40)
+	_romance.update(&"baker", &"smith", 3 * DAY)
+	_like(&"baker", &"smith", 90)
+	assert_eq(_romance.update(&"baker", &"smith", 4 * DAY), BustleRomance.COURTING)
+
+
+# Only the host ends an engagement or a marriage.
+func test_engaged_and_married_never_lapse_on_their_own() -> void:
+	_mutual(&"baker", &"smith", 90)
+	_romance.update(&"baker", &"smith", 0)
+	_romance.update(&"baker", &"smith", 7 * DAY)
+	_romance.confirm_hook = func(_a: StringName, _b: StringName, _s: StringName) -> bool: return true
+	_romance.request(&"baker", &"smith", BustleRomance.ENGAGED, 8 * DAY)
+	_mutual(&"baker", &"smith", 10)
+	var baker := BustleMood.new()
+	var smith := BustleMood.new()
+	assert_eq(_romance.update(&"baker", &"smith", 9 * DAY, baker, smith), BustleRomance.ENGAGED)
+	_romance.request(&"baker", &"smith", BustleRomance.MARRIED, 10 * DAY)
+	assert_eq(_romance.update(&"baker", &"smith", 11 * DAY, baker, smith), BustleRomance.MARRIED)
+	assert_eq(baker.count(), 0)
+	assert_true(_romance.end(&"baker", &"smith", 12 * DAY, baker, smith))
+	assert_eq(baker.count(&"heartbroken") + smith.count(&"heartbroken"), 2)
+	assert_true(_store.kinds_between(&"baker", &"smith").is_empty())
+
+
+func test_invalid_rules_change_nothing() -> void:
+	_mutual(&"baker", &"smith", 90)
+	_romance.rules.courting_release = 80
+	assert_false(_romance.rules.is_valid())
+	assert_eq(_romance.update(&"baker", &"smith", 0), &"")
+	assert_true(_store.kinds_between(&"baker", &"smith").is_empty())

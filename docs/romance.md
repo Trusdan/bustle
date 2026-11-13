@@ -8,6 +8,8 @@ romance.confirm_hook = func(a, b, status) -> bool: return host_allows(a, b, stat
 romance.update_all(agent_ids, now, mood_of)
 ```
 
+`update_all` asks `mood_of` for the two moods only when a pair breaks up.
+
 ## The ladder
 
 | Status | How it forms |
@@ -26,13 +28,15 @@ Compatibility is `BustleCompatibility.of(a, b, world_seed)` unless the host sets
 - a pair where either holds a `blocked_kinds` kind toward the other (`parent`, `child` or `sibling` by default, as the host sets them);
 - a pair where either agent is already courting or bonded to anyone. Courting is one at a time.
 
-The thresholds are on `BustleRomanceRules` and are experimental defaults.
+The thresholds are on `BustleRomanceRules` and are experimental defaults. With rules that aren't `is_valid()` (a release line at or above its forming line, say), `update` changes nothing.
 
 ## Breakups
 
-A pair breaks up when either opinion falls below its release line: `courting_release` (55) for courting, and `partner_release` (60) for partner, engaged and married. The host can also end it, as either one's choice, with `end(a, b, now)`.
+A courting or partnered pair breaks up when either opinion falls below its release line: `courting_release` (55) for courting and `partner_release` (60) for partner. Every release line sits below its forming line, so a status doesn't flicker.
 
-Every release line sits below its forming line, so a status doesn't flicker. A breakup clears the kind both ways and gives each of the two `breakup_thought`, with the other in its reason, when their moods are passed in.
+An engaged or married pair never breaks up on its own, whatever the opinions. Only the host ends it, with `end(a, b, now)`, as either one's choice. `end` works for every status. A breakup clears the kind both ways and gives each of the two `breakup_thought`, with the other in its reason, when their moods are passed in.
+
+**A breakup sticks.** After it, the pair may court again only once its lower opinion has dropped below `courting_release` and then climbed back to `courting_opinion`. A pair whose opinion had already lapsed below that line can court again as soon as it climbs back. This is kept per pair (`armed` in the saved record), so it survives a save, and it needs no extra tuning.
 
 ## Affairs
 
@@ -47,4 +51,4 @@ Every release line sits below its forming line, so a status doesn't flicker. A b
 
 `status_changed(a, b, old, new, reason)` fires on every change. The reason is `formed`, `confirmed`, `lapsed` or `ended`.
 
-`export_state()` keeps each pair's status, since when, and its last `history_limit` (10) changes. The kinds themselves are saved by the social port: the store's or Wyrd's own save. `import_state` refuses malformed data or a status off the ladder, and changes nothing.
+`export_state()` keeps each pair's status, since when, whether it is armed to court again, and its last `history_limit` (10) changes. The kinds themselves are saved by the social port: the store's or Wyrd's own save. `import_state` refuses malformed data or a status off the ladder, and changes nothing.
