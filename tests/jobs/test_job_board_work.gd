@@ -191,3 +191,13 @@ func test_import_restores_claims_and_progress_and_refuses_bad_times() -> void:
 		bad[change[0]] = change[1]
 		assert_false(copy.import_state({"next": 5, "postings": [bad]}), str(change))
 		assert_eq(copy.export_state(), before, str(change))
+
+
+func test_saved_progress_past_the_type_never_goes_backwards() -> void:
+	var job := _board.post(&"harvest", &"farm", 0)
+	_board.claim(_seeker(&"baker"), job, 0)
+	_board.posting(job).progress = 120
+	assert_true(_board.work(_seeker(&"baker"), 30))
+	assert_null(_board.posting(job), "completed")
+	assert_eq(_skills.xp_of(&"baker", &"farming"), 0.0, "no practice, and none taken away")
+	assert_eq(_ports.trade.balance(&"baker"), 8)

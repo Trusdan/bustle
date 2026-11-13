@@ -6,12 +6,21 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- A careers module (`addons/bustle/modules/careers/`). A career is an agent's standing job (a role with a routine) held at a rank of a `BustleCareerDef`; it is not a second job.
+  - Each track names its role, a skill, the career block's activity and whether that block is off site.
+  - Each `BustleCareerRank` has a wage and a skill minimum.
+  - `BustleCareers` has `assign`, `end`, `can_hold`, `career_of`, `rank_of`, `since_of`, `is_away`, and `export_state` / `import_state`.
+  - The rank's wage is paid for the career block at its end, only if attended, through the usual schedule settle.
+  - While an agent attends an off-site career block, `is_away` is true, so the host can take it out of the world until the block ends.
+  - An agent that loses the role leaves the track.
+  - Agents without a career keep their jobs and wages as before.
+- `BustleSchedule.wages` (activity → wage, replacing a block's own wage; fixed when attended) and `BustleSchedule.attended_now(now)`.
 - A job board for posted, one-off work (`addons/bustle/core/jobs/`). `BustleWorkType` is host data: a skill and minimum level, a required role and tags, a base priority, slider and input weights, a wage, minutes and a place. `BustleJobBoard` posts, claims, releases, completes, cancels and expires postings, and saves and loads them. An agent (`BustleJobSeeker`: its id, personality, inputs and tags) takes the open posting it can do and wants most, ties going to the earlier posting. Claims are exclusive, one per agent. `assign` resolves several agents picking in the same tick: the highest score wins, ties going to the lower agent id. The gates read roles and skill levels through the ports. Nothing is random. Standing jobs stay roles and schedules.
 - `BustleWorkPort.board` (optional), `can_do(id, job, tags)` and `claimed_of(id)`. `job_of` is unchanged and works with no board.
 - The job board with a brain (see `docs/work.md`):
   - `advertise(seeker, senses)` offers postings to a job goal. Each relieves the need `job` by its appeal, `clamp(appeal_base + score, 0, 1)`, and carries the tag `job`. The board only ranks, so the brain weighs work it dislikes against its other goals.
   - `request` and `settle(now)` give a posting picked by several agents in one tick to the highest score, with ties going to the lower agent id.
-  - `work(seeker, minutes)` adds progress and practice through the skill port (`BustleWorkType.xp_per_hour`, 10).
+  - `work(seeker, minutes)` adds progress and practice through the skill port (`BustleWorkType.xp_per_hour`, 10). Only minutes the type still needs count, so saved progress past a type's minutes never goes backwards.
   - Completion pays the type's wage once through the trade port.
   - `changed` reports `paid` or `unpaid`.
   - Postings save their progress.
