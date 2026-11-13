@@ -139,12 +139,15 @@ func attended_now(now: int, season: StringName = &"") -> bool:
 
 
 ## How game day [param day_index] went by minute [param now]:
-## [code]{on_time, late, missed, pending}[/code] counts of its blocks. A block that hasn't ended
-## and wasn't attended is pending, not missed.
+## [code]{on_time, late, missed, pending}[/code] counts of its blocks (only those for
+## [param activity], when given). A block that hasn't ended and wasn't attended is pending, not
+## missed.
 ## @experimental
-func report(day_index: int, now: int, season: StringName = &"") -> Dictionary:
+func report(day_index: int, now: int, season: StringName = &"", activity: StringName = &"") -> Dictionary:
 	var out := {"on_time": 0, "late": 0, "missed": 0, "pending": 0}
 	for occurrence: Dictionary in _occurrences(day_index, season):
+		if activity != &"" and (occurrence["block"] as BustleScheduleBlock).activity != activity:
+			continue
 		var start: int = occurrence["start"]
 		var record: Dictionary = _attended.get(start, {})
 		if not record.is_empty() and record["activity"] == String((occurrence["block"] as BustleScheduleBlock).activity):

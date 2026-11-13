@@ -14,7 +14,14 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
   - While an agent attends an off-site career block, `is_away` is true, so the host can take it out of the world until the block ends.
   - An agent that loses the role leaves the track.
   - Agents without a career keep their jobs and wages as before.
-- `BustleSchedule.wages` (activity → wage, replacing a block's own wage; fixed when attended) and `BustleSchedule.attended_now(now)`.
+  - `update(id, now, mood)` closes each whole day, once its career blocks have ended, into a performance from 0 to 1. The formula is `(0.4 × mood + 0.3 × skill ÷ 10 + 0.3 × attendance) ÷ weights used`, where attendance is on time 1, late 0.5 and missed 0. All of these are configurable experimental defaults.
+  - After `review_days` (7) days in a window, the agent is reviewed. At or above `promote_if` (0.75), `promotion_due` is emitted; at or below `demote_if` (0.35), `demotion_due`. `review_hook` grants or refuses, and grants by default.
+  - A granted promotion puts the new rank's wage on the career block and sets `promotion_granted` (through `fill_inputs`) until the next review, so the `get_promoted` ambition completes.
+  - Reviews add the `promoted`, `demoted`, `good_review` or `poor_review` thought when a mood and thoughts are given; `reviewed` fires either way.
+  - One long `update` gives the same reviews as stepped ones. The rank and review clock are saved.
+  - A career also ends when the agent's job changes while it still holds the track's role.
+  - See `docs/careers.md`.
+- `BustleSchedule.wages` (activity → wage, replacing a block's own wage; fixed when attended), `BustleSchedule.attended_now(now)`, and an optional `activity` filter on `BustleSchedule.report`.
 - A job board for posted, one-off work (`addons/bustle/core/jobs/`). `BustleWorkType` is host data: a skill and minimum level, a required role and tags, a base priority, slider and input weights, a wage, minutes and a place. `BustleJobBoard` posts, claims, releases, completes, cancels and expires postings, and saves and loads them. An agent (`BustleJobSeeker`: its id, personality, inputs and tags) takes the open posting it can do and wants most, ties going to the earlier posting. Claims are exclusive, one per agent. `assign` resolves several agents picking in the same tick: the highest score wins, ties going to the lower agent id. The gates read roles and skill levels through the ports. Nothing is random. Standing jobs stay roles and schedules.
 - `BustleWorkPort.board` (optional), `can_do(id, job, tags)` and `claimed_of(id)`. `job_of` is unchanged and works with no board.
 - The job board with a brain (see `docs/work.md`):
