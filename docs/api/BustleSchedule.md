@@ -61,6 +61,14 @@ var employer: StringName = &""
 
 Who pays wages for blocks that name no payer (the employer of the agent's job). A roster keeps it up to date; it is fixed into each block when attended.
 
+### `wages`
+
+```gdscript
+var wages: Dictionary[StringName, int] = {}
+```
+
+Activity → the wage attending it earns instead of its block's (a career rank's wage, say). Fixed into each block when attended, like the block's own. Empty: every block's own wage.
+
 ## Methods
 
 ### `set_def`
@@ -110,6 +118,14 @@ func attend(now: int, activity: StringName, season: StringName = &"") -> StringN
 ```
 
 The agent is doing `activity` at minute `now`. When that is the current block's activity, records its arrival (the first one counts) and returns `ON_TIME` or `LATE`; otherwise returns empty.
+
+### `attended_now`
+
+```gdscript
+func attended_now(now: int, season: StringName = &"") -> bool
+```
+
+True when the block current at minute `now` has been attended (and so hasn't ended).
 
 ### `report`
 

@@ -176,8 +176,7 @@ Marks `job` done by its claimant, takes it off the board and pays its type's wag
 func work(seeker: BustleJobSeeker, minutes: int) -> bool
 ```
 
-Adds `minutes` of work by `seeker` on the posting it holds. Practice goes to the skill port when it can take it (`add_xp(id, skill, xp,
-personality)`, as the skills module does): `BustleWorkType.xp_per_hour` for each hour. Once the work done reaches the type's minutes, the posting is completed (`complete()`). False (and no change) when the seeker holds no claim or `minutes` isn't positive.
+Adds `minutes` of work by `seeker` on the posting it holds. Practice goes to the skill port when it can take it (`add_xp(id, skill, xp, personality)`, as the skills module does): `BustleWorkType.xp_per_hour` for each hour. Only minutes the type still needs count, never fewer than none (a save may hold more progress than a type now needs). Once the work done reaches the type's minutes, the posting is completed (`complete()`). False (and no change) when the seeker holds no claim or `minutes` isn't positive.
 
 ### `appeal`
 

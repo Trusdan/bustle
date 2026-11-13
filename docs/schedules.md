@@ -35,6 +35,7 @@ A weekday override wins over a season override, which wins over the usual day. W
 - `block_at(now, season)` gives the current block, including one carried over from the night before.
 - `fill_inputs(inputs, now, season)` sets `schedule.<activity>` to 1 for the current block, or `schedule.free_time` when no block is current. It erases the routine's other activity inputs and leaves every other input alone.
 - `attend(now, activity, season)` records that the agent is doing the current block's activity. Only the first arrival counts. It returns `on_time` or `late`.
+- `attended_now(now, season)` is true while the current block has been attended.
 - `report(day, now, season)` counts that day's blocks as on time, late, missed or pending:
   - **On time:** the agent turned up within the tolerance.
   - **Late:** the agent turned up after the tolerance.
@@ -43,6 +44,7 @@ A weekday override wins over a season override, which wins over the usual day. W
 - `report` reads a past day in the season it is given, so pass that day's season if the season has changed since.
 - `set_def(new_def)` swaps the routine and keeps attendance. The old routine's activity inputs are erased by the next `fill_inputs`.
 - `settle(now, agent, trade, employer)` pays each attended block's wage once, after the block ends, through a `BustleTradePort`. A missed block pays nothing. A wage the payer can't pay stays owed, past the seven-day window, and is tried again on every settle until paid. Each block's wage, end and payer are fixed when the agent attends. The payer is the block's own, or else the schedule's `employer` (the employer of the job held then), so a later change of job never moves who pays.
+- `wages` (activity → wage) replaces a block's own wage for that activity, such as a career rank's wage. Like the block's own, it is fixed into the block when the agent attends. It's empty unless something sets it, and it isn't saved: whatever set it sets it again on load.
 - `export_state` and `import_state` save and load attendance and owed wages as plain data. Seven days are kept.
 
 A typical tick fills the inputs, runs the brain, then calls `attend` with the goal the brain picked. The tests do this for three game days.

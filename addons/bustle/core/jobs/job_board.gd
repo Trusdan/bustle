@@ -246,11 +246,12 @@ func complete(job: StringName) -> bool:
 	return true
 
 
-## Adds [param minutes] of work by [param seeker] on the posting it holds. Practice goes to the skill port when it can take it ([code]add_xp(id, skill, xp,
-## personality)[/code], as the skills module does): [member BustleWorkType.xp_per_hour] for each
-## hour. Once the work done reaches the type's minutes, the posting is completed
-## ([method complete]). False (and no change) when the seeker holds no claim or
-## [param minutes] isn't positive.
+## Adds [param minutes] of work by [param seeker] on the posting it holds. Practice goes to the
+## skill port when it can take it ([code]add_xp(id, skill, xp, personality)[/code], as the skills
+## module does): [member BustleWorkType.xp_per_hour] for each hour. Only minutes the type still
+## needs count, never fewer than none (a save may hold more progress than a type now needs). Once
+## the work done reaches the type's minutes, the posting is completed ([method complete]). False
+## (and no change) when the seeker holds no claim or [param minutes] isn't positive.
 ## @experimental
 func work(seeker: BustleJobSeeker, minutes: int) -> bool:
 	var job := claimed_of(seeker.id) if seeker != null else &""
@@ -258,10 +259,10 @@ func work(seeker: BustleJobSeeker, minutes: int) -> bool:
 		return false
 	var posting: BustleJobPosting = _postings[job]
 	var def: BustleWorkType = _types[posting.type]
-	var done := mini(minutes, def.minutes - posting.progress)
+	var done := clampi(def.minutes - posting.progress, 0, minutes)
 	posting.progress += done
 	var skills: BustleSkillSet = ports.skills if ports != null else null
-	if def.skill != &"" and def.xp_per_hour > 0.0 and skills != null and skills.has_method(&"add_xp"):
+	if done > 0 and def.skill != &"" and def.xp_per_hour > 0.0 and skills != null and skills.has_method(&"add_xp"):
 		skills.call(&"add_xp", seeker.id, def.skill, def.xp_per_hour * done / 60.0, seeker.personality)
 	if posting.progress >= def.minutes:
 		complete(job)

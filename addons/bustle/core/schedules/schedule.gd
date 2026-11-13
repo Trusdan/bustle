@@ -31,6 +31,9 @@ var def: BustleScheduleDef
 ## Who pays wages for blocks that name no payer (the employer of the agent's job). A roster keeps it
 ## up to date; it is fixed into each block when attended.
 var employer: StringName = &""
+## Activity → the wage attending it earns instead of its block's (a career rank's wage, say). Fixed
+## into each block when attended, like the block's own. Empty: every block's own wage.
+var wages: Dictionary[StringName, int] = {}
 
 # Block start (absolute minute) → {activity: String, arrived: int, end: int, wage: int,
 # payer: String, paid: bool}. The wage, its payer and the end are kept from the block attended, so
@@ -122,9 +125,17 @@ func attend(now: int, activity: StringName, season: StringName = &"") -> StringN
 	if not _attended.has(start):
 		var block: BustleScheduleBlock = current["block"]
 		_attended[start] = {"activity": String(activity), "arrived": now, "end": int(current["end"]),
-			"wage": block.wage, "payer": String(block.payer if block.payer != &"" else employer), "paid": false}
+			"wage": wages.get(activity, block.wage), "payer": String(block.payer if block.payer != &"" else employer), "paid": false}
 	_prune(now)
 	return _verdict(current, int(_attended[start]["arrived"]))
+
+
+## True when the block current at minute [param now] has been attended (and so hasn't ended).
+## @experimental
+func attended_now(now: int, season: StringName = &"") -> bool:
+	var current := block_at(now, season)
+	return not current.is_empty() and _attended.has(int(current["start"])) \
+			and _attended[int(current["start"])]["activity"] == String((current["block"] as BustleScheduleBlock).activity)
 
 
 ## How game day [param day_index] went by minute [param now]:
