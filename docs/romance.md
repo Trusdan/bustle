@@ -25,7 +25,7 @@ Compatibility is `BustleCompatibility.of(a, b, world_seed)` unless the host sets
 
 `may_court(a, b)` refuses:
 
-- a pair where either holds a `blocked_kinds` kind toward the other (`parent`, `child` or `sibling` by default, as the host sets them);
+- a pair where either holds a `blocked_kinds` kind toward the other (`parent`, `child`, `sibling` or `in_law` by default);
 - a pair where either agent is already courting or bonded to anyone. Courting is one at a time.
 
 The thresholds are on `BustleRomanceRules` and are experimental defaults. With rules that aren't `is_valid()` (a release line at or above its forming line, say), `update` changes nothing.
@@ -37,6 +37,35 @@ A courting or partnered pair breaks up when either opinion falls below its relea
 An engaged or married pair never breaks up on its own, whatever the opinions. Only the host ends it, with `end(a, b, now)`, as either one's choice. `end` works for every status. A breakup clears the kind both ways and gives each of the two `breakup_thought`, with the other in its reason, when their moods are passed in.
 
 **A breakup sticks.** After it, the pair may court again only once its lower opinion has dropped below `courting_release` and then climbed back to `courting_opinion`. A pair whose opinion had already lapsed below that line can court again as soon as it climbs back. This is kept per pair (`armed` in the saved record), so it survives a save, and it needs no extra tuning.
+
+## The host's ratings policy
+
+`ratings_policy` (`func(a, b, status) -> bool`) is the host's own rules, such as age, content rating or setting, without Bustle knowing why. It is asked before every step up the ladder:
+
+- courting and partner, when `update` would form them;
+- engaged and married, before `confirm_hook`.
+
+Returning false vetoes the step. Nothing changes and no signal fires; the pair is simply asked again on a later update or request. Unset, it allows everything the ladder allows.
+
+## Family
+
+Bustle never creates family on its own, not even on a marriage. The host records it:
+
+```gdscript
+romance.link_family(&"child_1", &"parent_1", &"parent")  # parent_1 is child_1's parent
+romance.link_family(&"a", &"b", &"sibling")
+```
+
+`link_family(a, b, relation)` records `b` as `a`'s relation. It writes the kind both ways through the social port: `parent` and `child` as a pair, and `sibling` and `in_law` the same both ways. `unlink_family` takes a link away. The kinds are saved by the port (the store's or Wyrd's), and family is never courted.
+
+## Jealousy
+
+An agent with a romantic bond (courting or above; never a friend) gets jealous when its partner takes to a third agent. There are two causes, both deterministic:
+
+- **Opinion.** In `update_all`, the partner's opinion of a third agent reaches `jealousy_opinion` (75). This is felt once per (agent, partner, third agent). It can come again only after that opinion has fallen below `jealousy_release` (60) and climbed back. What has been felt is saved, and a breakup forgets it.
+- **Interaction.** The host calls `notice(actor, verb, target, mood_of)` for an interaction it has listed in `jealousy_verbs`. That gives one jealousy for each such interaction.
+
+The agent gets `jealousy_thought` (timed), with the partner, the rival and the cause in its reason, and `jealous(agent, partner, rival, cause)` fires. The thought is an ordinary timed thought, under its own stack rules.
 
 ## Affairs
 
@@ -51,4 +80,13 @@ An engaged or married pair never breaks up on its own, whatever the opinions. On
 
 `status_changed(a, b, old, new, reason)` fires on every change. The reason is `formed`, `confirmed`, `lapsed` or `ended`.
 
-`export_state()` keeps each pair's status, since when, whether it is armed to court again, and its last `history_limit` (10) changes. The kinds themselves are saved by the social port: the store's or Wyrd's own save. `import_state` refuses malformed data or a status off the ladder, and changes nothing.
+`export_state()` keeps each pair's status, since when, whether it is armed to court again, and its last `history_limit` (10) changes. It also keeps the jealousy already felt over opinions, under `jealousy`. The kinds themselves are saved by the social port: the store's or Wyrd's own save. `import_state` refuses malformed data or a status off the ladder, and changes nothing.
+
+## In the demo
+
+`Colony.build(..., romance)` with `Colony.romance_rules()` turns romance on (it needs the social module). The harness's `enable_romance(rules)` runs `update_all` every step and logs `romance` and `jealous` on the timeline. The colony fixture:
+
+- the third and fourth settlers start fond of each other, so they court on the first morning and are partners two days later;
+- the first two are fond too, but are recorded as siblings, so they never court.
+
+The demo lines are lower than the defaults so a week shows this. Without romance, the colony is unchanged.

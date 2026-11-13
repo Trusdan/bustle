@@ -88,3 +88,17 @@ func test_a_breakup_clears_wyrds_kinds() -> void:
 	assert_true(_wyrd.social.targets(&"a1", &"courting").is_empty())
 	assert_true(_wyrd.social.targets(&"a2", &"courting").is_empty())
 	assert_push_error_count(0)
+
+
+# Family links with the bridge: written both ways into Wyrd's social state, and never courted.
+func test_family_goes_through_wyrd_and_blocks_courting() -> void:
+	assert_true(_romance.link_family(&"a1", &"a2", &"parent"))
+	assert_true(_wyrd.social.has_kind(&"a1", &"a2", &"parent"))
+	assert_true(_wyrd.social.has_kind(&"a2", &"a1", &"child"))
+	assert_true(_romance.link_family(&"a2", &"a3", &"sibling"))
+	assert_true(_wyrd.social.has_kind(&"a3", &"a2", &"sibling"))
+	_help(&"a1", &"a2")
+	_help(&"a2", &"a1")
+	assert_eq(_romance.update(&"a1", &"a2", 0), &"", "family is never courted")
+	assert_true(_romance.unlink_family(&"a1", &"a2", &"parent"))
+	assert_false(_wyrd.social.has_kind(&"a2", &"a1", &"child"))

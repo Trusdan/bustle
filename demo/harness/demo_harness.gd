@@ -18,6 +18,8 @@ extends RefCounted
 ## [br]- [code]thought[/code]: a thought came ([code]{thought, phase: "add", value, reason}[/code])
 ## or went ([code]{thought, phase: "end"}[/code]), with mood on;
 ## [br]- [code]job[/code]: a board posting changed, with jobs on: [code]{job, what}[/code];
+## [br]- [code]romance[/code] and [code]jealous[/code], with romance on:
+## [code]{with, status, reason}[/code] and [code]{partner, rival, cause}[/code];
 ## [br]- [code]want[/code], [code]fear[/code] and [code]points[/code], with aspirations on:
 ## [code]{want, what}[/code], [code]{fear, what}[/code] and [code]{amount, total}[/code];
 ## [br]- [code]stuck[/code] and [code]unstuck[/code]: [member stuck] judged an agent stuck
@@ -27,7 +29,8 @@ extends RefCounted
 ## [method enable_mood] (needs_mood: a mood and a mental state per agent), [method enable_social]
 ## (the built-in social store, conversations and the comfort hook), [method enable_perception]
 ## (who notices whom), [method enable_jobs] (a job board), [method enable_environment] (indoors
-## and outdoors) and [method enable_aspirations] (wants, fears and points). With perception off, an agent notices everyone awake in its area.
+## and outdoors), [method enable_aspirations] (wants, fears and points) and [method enable_romance]
+## (the courtship ladder). With perception off, an agent notices everyone awake in its area.
 ## [br][br]
 ## Needs move on under these conditions: [code]asleep[/code] while using [member sleep_object];
 ## otherwise [code]awake[/code], plus [code]away[/code] and [code]in_company[/code] while away, or
@@ -92,6 +95,8 @@ var _started: Array[StringName] = []
 ## The environment port whose rooms give [code]indoors[/code] and [code]outdoors[/code], with the
 ## environment on.
 var environment: BustleEnvironmentPort = null
+## The courtship ladder, with romance on.
+var romance: BustleRomance = null
 ## The want and fear library, with aspirations on.
 var aspiration_config: BustleAspirationConfig = null
 ## The job board, with jobs on.
@@ -148,6 +153,21 @@ func enable_social(p_store: BustleSocialStore, interactions: Array[BustleInterac
 ## [code]indoors[/code] while [param port] has it in a room, else [code]outdoors[/code].
 func enable_environment(port: BustleEnvironmentPort) -> void:
 	environment = port
+
+
+## Switches romance on, over the social store (so after [method enable_social]): each step, every
+## pair moves along the ladder with [param rules], and jealousy follows. Logs [code]romance[/code]
+## and [code]jealous[/code] on the timeline.
+func enable_romance(rules: BustleRomanceRules) -> BustleRomance:
+	romance = BustleRomance.new(store, rules, world_seed)
+	var me: WeakRef = weakref(self)
+	romance.status_changed.connect(func(a: StringName, b: StringName, _old: StringName, new: StringName, reason: StringName) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, a, &"romance", {"with": String(b), "status": String(new), "reason": String(reason)}))
+	romance.jealous.connect(func(agent: StringName, partner: StringName, rival: StringName, cause: StringName) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, agent, &"jealous", {"partner": String(partner), "rival": String(rival), "cause": String(cause)}))
+	return romance
 
 
 ## Switches aspirations on, before agents are added: each agent gets wants and fears from
@@ -368,6 +388,9 @@ func step() -> Dictionary[StringName, BustleIntent]:
 		intents[id] = _step_agent(id, home - (0 if is_away(id) else 1))
 	if jobs != null:
 		jobs.settle(now)
+	if romance != null:
+		var me: WeakRef = weakref(self)
+		romance.update_all(agent_ids(), now, func(id: StringName) -> Object: return me.get_ref().mood_of(id))
 	now += step_minutes
 	return intents
 
