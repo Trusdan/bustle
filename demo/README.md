@@ -51,6 +51,13 @@ Every number is a starting point, not tuning (see `house/house.gd`). The same ru
 9. The same seed gives the same timeline, and the week's hash is pinned. Another seed gives another conversation, so another hash.
 10. With each module left out in turn, and with all three left out, every settler still works and sleeps on time.
 
+`Colony.build(seed, modules, cold_snap, board)` also takes a job board (see `docs/work.md`). Settlers then weigh its postings in their free time (`take_job`, after field duty) against eating and sitting by the hearth. Without a board, nothing changes, the pinned hash included. `tests/demo/test_jobs_demo.gd` checks it with the demo work types:
+
+11. A settler takes the posting it wants most, and swapping two settlers' sliders swaps their picks. Settlers who dislike the work leave it posted and do something else.
+12. Mending needs the `mender` role: keener settlers without it never claim it, and the one who holds it does.
+13. Two settlers who pick one posting in the same step never share it: the higher score claims it.
+14. A completed job pays its wage once and gives practice in its skill, and the same run gives the same timeline.
+
 ## The harness and the timeline
 
 `harness/demo_harness.gd` runs a demo population headless, one fixed step of game time at a time (10 minutes by default), the way a host would. For each agent, in id order, it:
@@ -100,6 +107,8 @@ The 2-hour bound, the 0.5 m epsilon and the loop count are experimental defaults
 `traits/` holds five neutral demo traits (loner, outgoing, low-spirited, greedy, pious). They are data only, and the tests use them to show that trait data alone changes what agents choose. See `docs/personality.md`.
 
 `social/` holds a neutral interaction set (chitchat, deep talk, kind words, slight, insult, comfort) and a `comfort` goal that runs a `converse` step. See `docs/social.md`.
+
+`jobs/` holds three neutral work types: a harvest (diligence, practises farming), an errand (curiosity) and mending (needs the `mender` role). See `docs/work.md`.
 
 `skills/` holds a generic skill set (cooking, farming and crafts), a passion for each and a shared `enjoying_work` thought. They are data only; the tests use them. See `docs/skills.md`.
 
