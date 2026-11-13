@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BustleFearDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/modules/aspirations/fear_def.gd" id="1_fear"]
+[ext_resource type="Resource" path="res://demo/aspirations/frightened.tres" id="2_thought"]
+
+[resource]
+script = ExtResource("1_fear")
+id = &"fear_of_cold"
+trigger = &"cold_snap"
+avoid_options = Array[StringName]([&"field"])
+avoid_mult = 0.5
+duration_hours = 48.0
+thought = ExtResource("2_thought")

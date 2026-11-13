@@ -12,6 +12,11 @@ extends RefCounted
 ## highest score is taken (ties to the lower id). The host may also post wants
 ## ([method post_want]); all wants together stay within [member BustleAspirationConfig.want_cap].
 ## [br][br]
+## A fulfilled want also earns its [member BustleWantDef.points]. Points only accumulate: the host
+## spends them ([method spend_points]), for example from [member on_points]. Bustle defines no
+## rewards. An active want may boost the goals it names ([method boost]), never past
+## [member BustleAspirationConfig.max_want_boost] and never a [code]never_boost[/code] goal.
+## [br][br]
 ## [b]Fears.[/b] An event passed to [method update] forms each fear it triggers, or renews one already
 ## formed. While formed, a fear multiplies the scores of the goals and options it avoids
 ## ([method avoidance], for [member BustleBrain.score_boost]); it only lowers scores. It ends after
@@ -30,11 +35,20 @@ signal want_expired(agent: StringName, id: StringName, info: Dictionary)
 signal fear_formed(agent: StringName, id: StringName, info: Dictionary)
 ## A fear ended: [param reason] is [code]expired[/code] or [code]cleared[/code].
 signal fear_ended(agent: StringName, id: StringName, reason: StringName)
+## Points changed by [param amount] (negative when spent) for [param reason]; [param total] is the
+## new total.
+signal points_changed(agent: StringName, amount: int, reason: StringName, total: int)
 
 ## The agent.
 var agent_id: StringName
 ## The library and numbers.
 var config: BustleAspirationConfig
+## The host's reward hook, [code]func(agent, amount, reason)[/code], called after points are earned
+## (with the new total already counted). It may spend them with [method spend_points]. Unset: points
+## only accumulate.
+var on_points: Callable = Callable()
+
+var _points: int = 0
 
 ## Want id → {id, since, expires, source}.
 var _wants: Dictionary[StringName, Dictionary] = {}
@@ -139,7 +153,63 @@ func fulfill(id: StringName, now: int, mood: Object = null) -> bool:
 	if def != null and def.thought != null and mood != null and mood.has_method(&"add_thought"):
 		mood.call(&"add_thought", def.thought, {"want": String(id)})
 	want_fulfilled.emit(agent_id, id, info)
+	if def != null and def.points > 0:
+		add_points(def.points, StringName("want:" + String(id)))
 	return true
+
+
+## The agent's aspiration points.
+## @experimental
+func points() -> int:
+	return _points
+
+
+## Adds [param amount] points for [param reason], then calls [member on_points]. False (and no
+## change) unless [param amount] is positive.
+## @experimental
+func add_points(amount: int, reason: StringName) -> bool:
+	if amount <= 0:
+		return false
+	_points += amount
+	points_changed.emit(agent_id, amount, reason, _points)
+	if on_points.is_valid():
+		on_points.call(agent_id, amount, reason)
+	return true
+
+
+## Spends [param amount] points for [param reason] (the host's reward). False (and no change) unless
+## [param amount] is positive and no more than the points held.
+## @experimental
+func spend_points(amount: int, reason: StringName) -> bool:
+	if amount <= 0 or amount > _points:
+		return false
+	_points -= amount
+	points_changed.emit(agent_id, -amount, reason, _points)
+	return true
+
+
+## How much the active wants multiply goal [param goal_id]'s score for option [param option_id]:
+## the largest boost any active want gives it (wants don't stack), capped by
+## [member BustleAspirationConfig.max_want_boost]. 1 for a [code]never_boost[/code] goal, a goal no
+## want names, or an option other than a want's [member BustleWantDef.boost_option]. Never below 1.
+## @experimental
+func boost(goal_id: StringName, option_id: StringName = &"") -> float:
+	if config.never_boost.has(goal_id):
+		return 1.0
+	var best := 1.0
+	for id: StringName in _wants:
+		var def := config.find_want(id)
+		if def == null or not def.boosts.has(goal_id) or (def.boost_option != &"" and option_id != def.boost_option):
+			continue
+		best = maxf(best, minf(def.boosts[goal_id], maxf(config.max_want_boost, 1.0)))
+	return best
+
+
+## The aspirations' whole effect on a score, for [member BustleBrain.score_boost]:
+## [method boost] × [method avoidance]. Multiply it with other boosts, such as an ambition's.
+## @experimental
+func score(goal_id: StringName, option_id: StringName = &"") -> float:
+	return boost(goal_id, option_id) * avoidance(goal_id, option_id)
 
 
 ## The active wants as rows [code]{id, since, expires, source}[/code] (source
@@ -192,18 +262,18 @@ func avoidance(goal_id: StringName, option_id: StringName = &"") -> float:
 	return mult
 
 
-## Active wants, formed fears and when each want last ended, as plain data, with absolute game
+## Active wants, formed fears, when each want last ended and the points, as plain data, with absolute game
 ## minutes, so expiry carries over a save.
 ## @experimental
 func export_state() -> Dictionary:
 	var ended := {}
 	for id: StringName in _sorted(_ended.keys()):
 		ended[String(id)] = _ended[id]
-	return {"wants": wants(), "fears": fears(), "ended": ended}
+	return {"wants": wants(), "fears": fears(), "ended": ended, "points": _points}
 
 
 ## Restores [method export_state], replacing everything. False (and nothing changes) when malformed
-## or naming a want or fear the config doesn't have.
+## or naming a want or fear the config doesn't have. A save without [code]points[/code] has none.
 ## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not saved.get("wants") is Array or not saved.get("fears") is Array \
@@ -230,11 +300,13 @@ func import_state(saved: Variant) -> bool:
 		if not id is String or config.find_want(StringName(id)) == null or not _is_int(saved["ended"][id]):
 			return false
 		ended_in[StringName(id)] = int(saved["ended"][id])
-	if wants_in.size() > config.want_cap:
+	var points_in: Variant = saved.get("points", 0)
+	if wants_in.size() > config.want_cap or not _is_int(points_in) or int(points_in) < 0:
 		return false
 	_wants = wants_in
 	_fears = fears_in
 	_ended = ended_in
+	_points = int(points_in)
 	return true
 
 

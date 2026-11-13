@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BustleWantDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/modules/aspirations/want_def.gd" id="1_want"]
+[ext_resource type="Resource" path="res://demo/aspirations/want_met.tres" id="2_thought"]
+
+[resource]
+script = ExtResource("1_want")
+id = &"warm_by_the_hearth"
+weights = Dictionary[StringName, float]({
+&"sociability": 1.0
+})
+done_fact = &"used.hearth"
+points = 3
+boosts = Dictionary[StringName, float]({
+&"unwind": 1.25
+})
+boost_option = &"hearth"
+thought = ExtResource("2_thought")

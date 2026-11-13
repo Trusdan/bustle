@@ -14,6 +14,11 @@ extends Resource
 @export var auto_wants: int = 1
 ## The most wants an agent holds at a time, automatic and posted together.
 @export var want_cap: int = 3
+## The most a want boosts a goal, whatever its table says: smaller than an ambition's boosts, so a
+## want never drowns an ambition.
+@export var max_want_boost: float = 1.25
+## Goals a want never boosts, whatever its table says (as for ambitions).
+@export var never_boost: Array[StringName] = [&"steal", &"insult", &"quarrel", &"fight", &"attack"]
 
 
 ## The want [param id], or null.

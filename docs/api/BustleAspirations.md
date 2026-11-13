@@ -8,6 +8,7 @@ Inherits: `RefCounted`
 
 The aspirations module, for one agent: short-lived wants and event-formed fears. It is separate from ambitions, which keep working the same with it on or off.
 **Wants.** Each `update()`, an active want whose `BustleWantDef.is_done()` holds is fulfilled: its satisfaction thought goes to the mood. One that has reached its expiry minute instead expires, with no thought. Then, while fewer than `BustleAspirationConfig.auto_wants` automatic wants are active, the eligible want with the highest score is taken (ties to the lower id). The host may also post wants (`post_want()`); all wants together stay within `BustleAspirationConfig.want_cap`.
+A fulfilled want also earns its `BustleWantDef.points`. Points only accumulate: the host spends them (`spend_points()`), for example from `on_points`. Bustle defines no rewards. An active want may boost the goals it names (`boost()`), never past `BustleAspirationConfig.max_want_boost` and never a `never_boost` goal.
 **Fears.** An event passed to `update()` forms each fear it triggers, or renews one already formed. While formed, a fear multiplies the scores of the goals and options it avoids (`avoidance()`, for `BustleBrain.score_boost`); it only lowers scores. It ends after its duration, or when its clearing fact is true.
 Nothing is random: wants and fears come only from causes and state.
 
@@ -53,6 +54,14 @@ signal fear_ended(agent: StringName, id: StringName, reason: StringName)
 
 A fear ended: `reason` is `expired` or `cleared`.
 
+### `points_changed`
+
+```gdscript
+signal points_changed(agent: StringName, amount: int, reason: StringName, total: int)
+```
+
+Points changed by `amount` (negative when spent) for `reason`; `total` is the new total.
+
 ## Properties
 
 ### `agent_id`
@@ -70,6 +79,14 @@ var config: BustleAspirationConfig
 ```
 
 The library and numbers.
+
+### `on_points`
+
+```gdscript
+var on_points: Callable = Callable()
+```
+
+The host's reward hook, `func(agent, amount, reason)`, called after points are earned (with the new total already counted). It may spend them with `spend_points()`. Unset: points only accumulate.
 
 ## Methods
 
@@ -112,6 +129,46 @@ func fulfill(id: StringName, now: int, mood: Object = null) -> bool
 ```
 
 Fulfils active want `id` at game minute `now` (the host saying so, or `update()` finding it done): its thought goes to `mood`. False when it isn't active.
+
+### `points`
+
+```gdscript
+func points() -> int
+```
+
+The agent's aspiration points.
+
+### `add_points`
+
+```gdscript
+func add_points(amount: int, reason: StringName) -> bool
+```
+
+Adds `amount` points for `reason`, then calls `on_points`. False (and no change) unless `amount` is positive.
+
+### `spend_points`
+
+```gdscript
+func spend_points(amount: int, reason: StringName) -> bool
+```
+
+Spends `amount` points for `reason` (the host's reward). False (and no change) unless `amount` is positive and no more than the points held.
+
+### `boost`
+
+```gdscript
+func boost(goal_id: StringName, option_id: StringName = &"") -> float
+```
+
+How much the active wants multiply goal `goal_id`'s score for option `option_id`: the largest boost any active want gives it (wants don't stack), capped by `BustleAspirationConfig.max_want_boost`. 1 for a `never_boost` goal, a goal no want names, or an option other than a want's `BustleWantDef.boost_option`. Never below 1.
+
+### `score`
+
+```gdscript
+func score(goal_id: StringName, option_id: StringName = &"") -> float
+```
+
+The aspirations' whole effect on a score, for `BustleBrain.score_boost`: `boost()` × `avoidance()`. Multiply it with other boosts, such as an ambition's.
 
 ### `wants`
 
@@ -159,7 +216,7 @@ How much the formed fears multiply goal `goal_id`'s score for option `option_id`
 func export_state() -> Dictionary
 ```
 
-Active wants, formed fears and when each want last ended, as plain data, with absolute game minutes, so expiry carries over a save.
+Active wants, formed fears, when each want last ended and the points, as plain data, with absolute game minutes, so expiry carries over a save.
 
 ### `import_state`
 
@@ -167,4 +224,4 @@ Active wants, formed fears and when each want last ended, as plain data, with ab
 func import_state(saved: Variant) -> bool
 ```
 
-Restores `export_state()`, replacing everything. False (and nothing changes) when malformed or naming a want or fear the config doesn't have.
+Restores `export_state()`, replacing everything. False (and nothing changes) when malformed or naming a want or fear the config doesn't have. A save without `points` has none.

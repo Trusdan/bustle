@@ -42,6 +42,22 @@ var want_cap: int = 3
 
 The most wants an agent holds at a time, automatic and posted together.
 
+### `max_want_boost`
+
+```gdscript
+var max_want_boost: float = 1.25
+```
+
+The most a want boosts a goal, whatever its table says: smaller than an ambition's boosts, so a want never drowns an ambition.
+
+### `never_boost`
+
+```gdscript
+var never_boost: StringName[] = [...]
+```
+
+Goals a want never boosts, whatever its table says (as for ambitions).
+
 ## Methods
 
 ### `find_want`

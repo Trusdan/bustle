@@ -11,6 +11,9 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
   - **Fears** (`BustleFearDef`). A fear forms (or renews) from its triggering event. While formed, `avoidance(goal, option)` multiplies the scores of the goals and options it avoids, including the one named when it formed, for `BustleBrain.score_boost`. A fear ends on time or by a clearing fact.
   - Signals for want added, fulfilled and expired, and for fear formed and ended. Save and load.
   - Nothing is random. Bustle ships no wants or fears; the demo's are in `demo/aspirations/`. See `docs/aspirations.md`.
+  - Aspiration points: a fulfilled want earns `BustleWantDef.points`. `add_points` and `spend_points` move points, `points_changed` reports every change, and `on_points(agent, amount, reason)` is the host's reward hook. Bustle defines no rewards. Points are saved.
+  - The want boost: an active want multiplies the goals in `BustleWantDef.boosts` (optionally only for `boost_option`). It takes the largest boost across wants, capped at `max_want_boost` (1.25), never a `never_boost` goal, and inside the goal's band. `score(goal, option)` is boost × avoidance, for `score_boost`.
+  - The demo harness's `enable_aspirations(config)`, and `Colony.build(..., Colony.aspirations())` with a small fixture: two wants met at the stove and hearth, and a fear of the cold formed by the cold snap.
 - Room scores on `BustleEnvironmentPort`. `scores(room)` gives beauty, comfort, cleanliness and impressiveness, each from 0 to 1; a score a room doesn't have is unset, not 0. The default port has a store the host fills (`set_room`, `set_scores`) and saves (`export_state` / `import_state`). It is empty by default: no rooms, no scores.
 - An environment module (`addons/bustle/modules/environment/`):
   - `BustleRoomThought` is a rule: a score, an `at_least` or `at_most` line, and a held thought with reason kind `environment`.
