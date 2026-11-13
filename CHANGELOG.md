@@ -15,6 +15,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
   - Jealousy: an agent with a romantic bond gets `jealousy_thought` (timed) and `jealous` fires.
     - From opinion: when its partner's opinion of a third agent reaches `jealousy_opinion`, once per cause until that opinion drops below `jealousy_release`; saved.
     - From interaction: when the host reports one of `jealousy_verbs` through `notice()`, once per interaction.
+    - Each time, the agent also gets a modest timed opinion entry toward the rival (`jealousy_opinion_value`, −5, for `jealousy_opinion_days`, 3), on ports with opinion entries such as the built-in store. At 0, no entry is written.
   - Family: `link_family()` / `unlink_family()` write parent and child, sibling, or in-law both ways through the social port. Family (now including `in_law`) is never courted.
   - `ratings_policy(a, b, status)`, the host's veto over every step up the ladder, automatic or requested. A veto changes nothing.
   - The demo harness's `enable_romance(rules)`, and `Colony.build(..., Colony.romance_rules())` with fond settlers and a sibling pair.

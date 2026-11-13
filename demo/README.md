@@ -108,6 +108,8 @@ The 2-hour bound, the 0.5 m epsilon and the loop count are experimental defaults
 
 `social/` holds a neutral interaction set (chitchat, deep talk, kind words, slight, insult, comfort) and a `comfort` goal that runs a `converse` step. See `docs/social.md`.
 
+Romance is opt-in too. `Colony.build(..., Colony.romance_rules())` (with the social module on) turns on the courtship ladder through the harness's `enable_romance(rules)`. The third and fourth settlers start fond of each other, so they court on the first morning and are partners two days later. The first two are fond too but recorded as siblings, so they never court. A partner taking to someone else brings a jealousy thought and a small drop in opinion of the rival. Without it, the colony is unchanged. `tests/demo/test_romance_demo.gd` checks it. See `docs/romance.md`.
+
 `aspirations/` holds test wants (sharing a meal, tidying up) and a fear of fire, plus the colony fixture: a hearty meal at the stove and a warm evening at the hearth, with points and boosts, and a fear of the cold formed by the cold snap. `Colony.build(..., Colony.aspirations())` wires the fixture in, and `tests/demo/test_aspirations_demo.gd` checks the wants, fears and points it shows. See `docs/aspirations.md`.
 
 `environment/` holds an `outdoors` need, which rises indoors and falls outside, and an `indoors` need, which does the reverse. They are data only; a host or test installs them. See `docs/environment.md`.

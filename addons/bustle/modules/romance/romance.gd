@@ -20,7 +20,10 @@ extends RefCounted
 ## An agent gets jealous when its partner (courting or above) takes to a third agent: the partner's
 ## opinion of them reaches [member BustleRomanceRules.jealousy_opinion] ([method update_all]), or
 ## the partner does one of [member BustleRomanceRules.jealousy_verbs] to them ([method notice]).
-## The host records family with [method link_family]; family is never courted. A host
+## Jealousy is a timed thought and a modest timed opinion entry toward the rival
+## ([member BustleRomanceRules.jealousy_opinion_value], on ports with opinion entries such as the
+## built-in store); it never changes a status by itself. The host records family with
+## [method link_family]; family is never courted. A host
 ## [member ratings_policy] can veto any step up the ladder. Nothing is random. With rules that aren't
 ## [method BustleRomanceRules.is_valid], [method update] changes nothing.
 ## @experimental
@@ -338,6 +341,9 @@ func _feel(agent: StringName, partner: StringName, rival: StringName, cause: Str
 	if rules.jealousy_thought != null and mood != null and mood.has_method(&"add_thought"):
 		mood.call(&"add_thought", rules.jealousy_thought,
 				{"partner": String(partner), "rival": String(rival), "cause": String(cause)})
+	if rules.jealousy_opinion_value != 0.0 and social.has_method(&"add_opinion"):
+		social.call(&"add_opinion", agent, rival, rules.jealousy_opinion_value,
+				{"jealous": String(cause), "partner": String(partner), "rival": String(rival)}, rules.jealousy_opinion_days)
 	jealous.emit(agent, partner, rival, cause)
 
 
