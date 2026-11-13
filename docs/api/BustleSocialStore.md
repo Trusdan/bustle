@@ -88,6 +88,14 @@ func kinds_between(a: StringName, b: StringName) -> PackedStringArray
 
 The kinds `a` has towards `b`, the host's and the rules' together, sorted.
 
+### `supports_kinds`
+
+```gdscript
+func supports_kinds() -> bool
+```
+
+True: the store keeps kinds.
+
 ### `set_kind`
 
 ```gdscript

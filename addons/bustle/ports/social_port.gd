@@ -29,6 +29,25 @@ func kinds_between(_a: StringName, _b: StringName) -> PackedStringArray:
 	return PackedStringArray()
 
 
+## True when this port keeps relationship kinds written with [method set_kind]. Default: false.
+## @experimental
+func supports_kinds() -> bool:
+	return false
+
+
+## Gives [param a] the kind [param kind] towards [param b] (one way). Default: nothing, since the
+## default keeps no kinds.
+## @experimental
+func set_kind(_a: StringName, _b: StringName, _kind: StringName) -> void:
+	pass
+
+
+## Takes the kind [param kind] away from [param a] towards [param b]. Default: nothing.
+## @experimental
+func clear_kind(_a: StringName, _b: StringName, _kind: StringName) -> void:
+	pass
+
+
 ## Up to [param max] reasons behind [param a]'s opinion of [param b], each a dictionary. Default:
 ## none.
 ## @experimental

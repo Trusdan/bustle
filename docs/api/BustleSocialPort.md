@@ -36,6 +36,30 @@ func kinds_between(_a: StringName, _b: StringName) -> PackedStringArray
 
 The kinds of relationship between `a` and `b` (for example friend). Default: none.
 
+### `supports_kinds`
+
+```gdscript
+func supports_kinds() -> bool
+```
+
+True when this port keeps relationship kinds written with `set_kind()`. Default: false.
+
+### `set_kind`
+
+```gdscript
+func set_kind(_a: StringName, _b: StringName, _kind: StringName) -> void
+```
+
+Gives `a` the kind `kind` towards `b` (one way). Default: nothing, since the default keeps no kinds.
+
+### `clear_kind`
+
+```gdscript
+func clear_kind(_a: StringName, _b: StringName, _kind: StringName) -> void
+```
+
+Takes the kind `kind` away from `a` towards `b`. Default: nothing.
+
 ### `reasons`
 
 ```gdscript

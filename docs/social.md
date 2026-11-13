@@ -23,7 +23,7 @@ An opinion is one-way: how `a` regards `b`, from 0 to 100. It's 50 plus every li
 
 Kinds are one-way too: `a` counts `b` a friend. `kinds_between(a, b)` returns them sorted.
 
-**Kinds a host sets** with `set_kind` (kin, for example) stay until `clear_kind` removes them.
+**Kinds a host sets** with `set_kind` (kin, for example) stay until `clear_kind` removes them. Both are on `BustleSocialPort`, so modules such as romance (`docs/romance.md`) write kinds through whichever port is installed. `supports_kinds()` says whether a port keeps them; the default keeps none.
 
 **Kinds formed from deeds** come and go with opinion, by `BustleRelationshipRules`. Every number below is a starting default, not tuning:
 

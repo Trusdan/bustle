@@ -6,6 +6,13 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- A romance module (`addons/bustle/modules/romance/`): the courtship ladder of courting, partner, engaged and married, written both ways as kinds through the social port.
+  - Courting and partner form automatically from mutual opinion, compatibility and courting days (`BustleRomanceRules`).
+  - Engaged and married come only from `request()` with the host's `confirm_hook` approving.
+  - A courting or partnered pair breaks up below its release line, and any pair when the host calls `end()`; engaged and married end only that way. Both get a thought. A breakup sticks: the pair can court again only after its lower opinion has dipped below the courting release line and climbed back, and that is saved.
+  - Courting is one at a time, and an agent who is bonded never starts courting anyone else. `affairs_enabled` is off, with no affair path.
+  - Statuses and their history are saved. See `docs/romance.md`.
+- `BustleSocialPort.supports_kinds()`, `set_kind()` and `clear_kind()` (no-ops in the default port). The built-in store keeps the kinds, and the Wyrd bridge's social port writes them to Wyrd.
 - An aspirations module (`addons/bustle/modules/aspirations/`): short-lived wants and event-formed fears, separate from ambitions.
   - **Wants** (`BustleWantDef`). The highest-scoring eligible want fills one automatic slot (slider weights, required circumstances, cooldown; ties to the lower id), and the host may post more, up to a cap of 3. A want is fulfilled by a fact or progress line, or by the host, and adds its satisfaction thought. It expires on time, at an absolute minute that carries over a save.
   - **Fears** (`BustleFearDef`). A fear forms (or renews) from its triggering event. While formed, `avoidance(goal, option)` multiplies the scores of the goals and options it avoids, including the one named when it formed, for `BustleBrain.score_boost`. A fear ends on time or by a clearing fact.

@@ -11,7 +11,8 @@ extends BustleSocialPort
 ## [method record_deed] uses Wyrd's stable [code]deeds.record[/code]. The reads use Wyrd's
 ## experimental surface, which [method BustleWyrdBridge.is_supported] pins to one exact release:
 ## [code]social.disposition[/code] for opinions, the kinds Wyrd's social state stores, and the deed
-## log's rows for knowledge and reasons. [method share_news] passes first-hand deeds one hop by
+## log's rows for knowledge and reasons. Kinds are written with [code]social.set_kind[/code] and
+## [code]social.clear_kind[/code] from the same pinned release. [method share_news] passes first-hand deeds one hop by
 ## noting the listener as a believer of each, with no roll. A deed's key is
 ## [code]deed_<Wyrd deed id>[/code]. Ids are opaque: an actor, target or witness needn't be an agent.
 
@@ -49,6 +50,28 @@ func kinds_between(a: StringName, b: StringName) -> PackedStringArray:
 			out.append(str(row.get("kind", "")))
 	out.sort()
 	return out
+
+
+## True: kinds are kept in Wyrd's social state.
+## @experimental
+func supports_kinds() -> bool:
+	return true
+
+
+## Gives [param a] the kind [param kind] towards [param b] in Wyrd's social state.
+## @experimental
+func set_kind(a: StringName, b: StringName, kind: StringName) -> void:
+	var social := _member(&"social")
+	if social != null and a != &"" and b != &"" and a != b and kind != &"":
+		social.call(&"set_kind", a, b, kind)
+
+
+## Takes the kind [param kind] away from [param a] towards [param b] in Wyrd's social state.
+## @experimental
+func clear_kind(a: StringName, b: StringName, kind: StringName) -> void:
+	var social := _member(&"social")
+	if social != null and a != &"" and b != &"" and kind != &"":
+		social.call(&"clear_kind", a, b, kind)
 
 
 ## Up to [param limit] of the deeds behind [param a]'s opinion of [param b], newest first: the deeds
