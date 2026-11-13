@@ -23,6 +23,8 @@ var due: int = -1
 var claimed_by: StringName = &""
 ## The game minute it was claimed, or -1 while it's open.
 var claimed_at: int = -1
+## Game minutes of work done on it so far. Kept when a claim is released.
+var progress: int = 0
 
 
 ## True while nobody holds a claim on it.
@@ -35,4 +37,4 @@ func is_open() -> bool:
 ## @experimental
 func to_dict() -> Dictionary:
 	return {"id": String(id), "type": String(type), "employer": String(employer), "place": String(place),
-		"opened": opened, "due": due, "claimed_by": String(claimed_by), "claimed_at": claimed_at}
+		"opened": opened, "due": due, "claimed_by": String(claimed_by), "claimed_at": claimed_at, "progress": progress}

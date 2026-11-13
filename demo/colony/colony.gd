@@ -72,14 +72,24 @@ const URGENT_WARMTH := 0.7
 const PECKISH := 0.3
 ## Sleep counts for nothing below this (about 16 hours up), so a settler doesn't nap.
 const SLEEPY := 0.8
+## The goal that takes posted jobs (with a board), in free time.
+const TAKE_JOB := &"take_job"
+## The demo work types: a harvest (diligence), an errand (curiosity) and mending (needs the
+## [code]mender[/code] role).
+const WORK_TYPES: Array[StringName] = [&"harvest", &"errand", &"mending"]
+const JOBS_DIR := "res://demo/jobs/%s.tres"
 ## The run starts at 06:00 on the first day, as the settlers wake.
 const START := 360
 
 
 ## A colony run seeded [param world_seed] with [param modules] on (all three by default), and the
-## cold snap unless [param cold_snap] is false.
-static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, cold_snap: bool = true) -> Harness:
+## cold snap unless [param cold_snap] is false. With [param board], settlers also weigh its postings
+## in their free time ([constant TAKE_JOB]).
+static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, cold_snap: bool = true,
+		board: BustleJobBoard = null) -> Harness:
 	var colony := Harness.new(world_seed)
+	if board != null:
+		colony.enable_jobs(board, TAKE_JOB)
 	colony.now = START
 	colony.home_area = HOME
 	colony.sleep_object = &""
@@ -115,7 +125,10 @@ static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, col
 	for i: int in SETTLERS.size():
 		var own: Array[BustleTraitDef] = []
 		own.assign(traits[i])
-		colony.add_agent(SETTLERS[i], goals(BEDS[SETTLERS[i]], modules.has(SOCIAL)), needs(), own, days)
+		var library := goals(BEDS[SETTLERS[i]], modules.has(SOCIAL))
+		if board != null:
+			library.goals.append(job_goal())
+		colony.add_agent(SETTLERS[i], library, needs(), own, days)
 	if colony.store != null:
 		for pair: Array in [[SETTLER_A, SETTLER_B], [SETTLER_C, SETTLER_D]]:
 			colony.store.set_kind(pair[0], pair[1], &"friend")
@@ -203,6 +216,25 @@ static func goals(bed: StringName, social: bool) -> BustleGoalLibrary:
 	if social:
 		library.goals.append(COMFORT_GOAL)
 	return library
+
+
+## The demo work types, loaded from [code]demo/jobs/[/code].
+static func work_types() -> Array[BustleWorkType]:
+	var out: Array[BustleWorkType] = []
+	for id: StringName in WORK_TYPES:
+		out.append(load(JOBS_DIR % id))
+	return out
+
+
+## Taking a posted job: free time, one candidate per posting the board offers, kept for at least an
+## hour. With no sequence, the settler holds it while the harness adds its work.
+static func job_goal() -> BustleGoalDef:
+	var goal := BustleGoalDef.new()
+	goal.id = TAKE_JOB
+	goal.band = BustleBands.PERSONAL
+	goal.uses_advertisements = true
+	goal.min_commit_minutes = 60
+	return goal
 
 
 ## The settlers' routine, every day: the field in the day and the night in bed.

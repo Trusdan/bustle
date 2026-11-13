@@ -25,6 +25,9 @@ extends Resource
 ## Input → weight; adds [code]Σ weight × input[/code] to the score. Inputs are numbers the host
 ## fills for each agent (for example how much it needs money, from 0 to 1).
 @export var need_weights: Dictionary[StringName, float] = {}
+## XP of practice in [member skill] per game hour of work, added through the skill port when it
+## can take practice (the skills module). 0: none.
+@export var xp_per_hour: float = 10.0
 ## The wage a completed posting pays, in the trade port's unit.
 @export var wage: int = 0
 ## How long the work takes, in game minutes.
@@ -39,7 +42,7 @@ extends Resource
 func is_valid() -> bool:
 	if id == &"" or not is_finite(min_skill) or min_skill < 0.0 or not is_finite(priority):
 		return false
-	if wage < 0 or minutes <= 0 or (min_skill > 0.0 and skill == &""):
+	if wage < 0 or minutes <= 0 or (min_skill > 0.0 and skill == &"") or not is_finite(xp_per_hour) or xp_per_hour < 0.0:
 		return false
 	for slider: StringName in priority_weights:
 		if not BustlePersonality.SLIDERS.has(slider) or not is_finite(priority_weights[slider]):

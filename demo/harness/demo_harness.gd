@@ -17,13 +17,14 @@ extends RefCounted
 ## [br]- [code]talk[/code]: a conversation turn: [code]{with, interaction}[/code], with social on;
 ## [br]- [code]thought[/code]: a thought came ([code]{thought, phase: "add", value, reason}[/code])
 ## or went ([code]{thought, phase: "end"}[/code]), with mood on;
+## [br]- [code]job[/code]: a board posting changed, with jobs on: [code]{job, what}[/code];
 ## [br]- [code]stuck[/code] and [code]unstuck[/code]: [member stuck] judged an agent stuck
 ## ([code]{reason, since}[/code]) or moving again ([code]{reason, minutes}[/code]).
 ## [br][br]
 ## The optional modules are off until switched on, each before any agent is added:
 ## [method enable_mood] (needs_mood: a mood and a mental state per agent), [method enable_social]
-## (the built-in social store, conversations and the comfort hook) and [method enable_perception]
-## (who notices whom). With perception off, an agent notices everyone awake in its area.
+## (the built-in social store, conversations and the comfort hook), [method enable_perception]
+## (who notices whom) and [method enable_jobs] (a job board). With perception off, an agent notices everyone awake in its area.
 ## [br][br]
 ## Needs move on under these conditions: [code]asleep[/code] while using [member sleep_object];
 ## otherwise [code]awake[/code], plus [code]away[/code] and [code]in_company[/code] while away, or
@@ -81,6 +82,10 @@ var conversation: BustleConversation = null
 var perception: BustlePerceptionWorld = null
 ## Watches every agent for being stuck (its bound and epsilon are experimental defaults).
 var stuck := StuckWatch.new()
+## The job board, with jobs on.
+var jobs: BustleJobBoard = null
+## The goal that takes posted jobs, with jobs on.
+var job_goal: StringName = &""
 
 # id → {brain, needs, personality, schedule, away, last, dire, attended, using, area, position,
 # mood, mental}
@@ -127,6 +132,18 @@ func enable_social(p_store: BustleSocialStore, interactions: Array[BustleInterac
 	comfort.low_state_of = func(id: StringName) -> bool: return me.get_ref().in_low_state(id)
 
 
+## Switches jobs on: each agent's brain is offered [param board]'s postings as options for
+## [param goal] (and only for it). A posting its brain picks is requested and settled at the end of
+## the step; while it holds the job goal on its claim, its work is added each step.
+func enable_jobs(board: BustleJobBoard, goal: StringName) -> void:
+	jobs = board
+	job_goal = goal
+	var me: WeakRef = weakref(self)
+	board.changed.connect(func(job: StringName, what: StringName, agent: StringName) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, agent, &"job", {"job": String(job), "what": String(what)}))
+
+
 ## Switches perception on: who an agent notices comes from a [BustlePerceptionWorld], each agent
 ## an actor with [param profile] at the place of the object it last used.
 func enable_perception(profile: BustlePerceptionProfile) -> void:
@@ -160,6 +177,7 @@ func add_agent(id: StringName, library: BustleGoalLibrary, need_defs: Array[Bust
 	var me: WeakRef = weakref(self)
 	if _converse != null:
 		brain.runner.register(&"converse", _converse)
+	if _converse != null or jobs != null:
 		brain.score_boost = func(goal: StringName, option: StringName) -> float: return me.get_ref()._fits(goal, option)
 	brain.orders.finished.connect(func(order_id: StringName, outcome: BustleOrderQueue.Outcome, _reason: StringName) -> void:
 		var run: RefCounted = me.get_ref()
@@ -185,13 +203,24 @@ func add_agent(id: StringName, library: BustleGoalLibrary, need_defs: Array[Bust
 	_agents[id] = {"brain": brain, "needs": needs, "personality": personality,
 		"schedule": BustleSchedule.new(routine) if routine != null else null, "away": false,
 		"last": "", "dire": {}, "attended": {}, "using": &"", "area": home_area, "position": Vector3.ZERO,
-		"mood": mood, "mental": mental, "thoughts": {}, "consumed": false, "using_since": now}
+		"mood": mood, "mental": mental, "thoughts": {}, "consumed": false, "using_since": now, "tags": [] as Array[StringName],
+		"working": false}
 	if perception != null:
 		var actor := BustlePerceptionActor.new()
 		actor.id = id
 		actor.profile = _profile
 		perception.add_actor(actor)
 	return brain
+
+
+## [param id]'s personality.
+func personality_of(id: StringName) -> BustlePersonality:
+	return _agents[id]["personality"]
+
+
+## Gives [param id] [param tags], for the job board's gates.
+func set_tags(id: StringName, tags: Array[StringName]) -> void:
+	_agents[id]["tags"] = tags
 
 
 ## The agents' ids, sorted.
@@ -296,12 +325,16 @@ func step() -> Dictionary[StringName, BustleIntent]:
 		store.set_time(now)
 	if perception != null:
 		_sense()
+	if jobs != null:
+		jobs.expire(now)
 	var home := 0
 	for id: StringName in agent_ids():
 		if not is_away(id):
 			home += 1
 	for id: StringName in agent_ids():
 		intents[id] = _step_agent(id, home - (0 if is_away(id) else 1))
+	if jobs != null:
+		jobs.settle(now)
 	now += step_minutes
 	return intents
 
@@ -348,7 +381,16 @@ func _step_agent(id: StringName, others_home: int) -> BustleIntent:
 	senses.advertisements = affordances.advertisements(id, now)
 	if comfort != null:
 		comfort.advertise(id, noticed_by(id), store, mood_of, senses)
+	var seeker := BustleJobSeeker.new(id, personality, senses.inputs, agent["tags"])
+	if jobs != null:
+		jobs.advertise(seeker, senses)
 	var intent := brain.tick(step_minutes * 60.0, senses)
+	agent["working"] = false
+	if jobs != null and intent.goal_id == job_goal and intent.option_id != &"":
+		if jobs.claimed_of(id) == intent.option_id:
+			agent["working"] = jobs.work(seeker, step_minutes)
+		else:
+			jobs.request(seeker, intent.option_id)
 	agent["away"] = intent.goal_id == AWAY_GOAL and intent.order_id == &""
 	if intent.use_affordance != agent["using"]:
 		agent["using_since"] = now
@@ -400,10 +442,15 @@ func _used(id: StringName, object: StringName, minute: int) -> void:
 		mood.add_thought(use_thoughts[object], {"object": String(object)})
 
 
-# Options that are agents are only for people goals, and objects only for the others.
+# Options that are agents are only for people goals, postings only for the job goal, and objects
+# only for the others.
 func _fits(goal: StringName, option: StringName) -> float:
 	if option == &"":
 		return 1.0
+	if jobs != null and jobs.posting(option) != null:
+		return 1.0 if goal == job_goal else 0.0
+	if goal == job_goal:
+		return 0.0
 	return 1.0 if people_goals.has(goal) == _agents.has(option) else 0.0
 
 
@@ -460,7 +507,7 @@ func _watch(id: StringName, agent: Dictionary, intent: BustleIntent) -> void:
 	var mental: BustleMentalState = agent["mental"]
 	var state: Dictionary = mental.active() if mental != null else {}
 	var legit: bool = _sleeps_in(agent["using"]) or using_on_time(id) or agent["away"] \
-		or intent.order_id != &"" or intent.player_controlled \
+		or intent.order_id != &"" or intent.player_controlled or agent["working"] \
 		or (not block.is_empty() and StringName(block["block"].activity) == intent.goal_id) \
 		or (not state.is_empty() and now < int(state["until"]))
 	var change := stuck.observe(id, now, step_minutes, {"goal": intent.goal_id,

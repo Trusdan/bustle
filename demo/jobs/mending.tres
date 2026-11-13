@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BustleWorkType" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/core/jobs/work_type.gd" id="1_work"]
+
+[resource]
+script = ExtResource("1_work")
+id = &"mending"
+required_role = &"mender"
+priority = 0.3
+priority_weights = Dictionary[StringName, float]({
+&"diligence": 1.0
+})
+wage = 8
+minutes = 60

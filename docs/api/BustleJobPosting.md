@@ -74,6 +74,14 @@ var claimed_at: int = -1
 
 The game minute it was claimed, or -1 while it's open.
 
+### `progress`
+
+```gdscript
+var progress: int = 0
+```
+
+Game minutes of work done on it so far. Kept when a claim is released.
+
 ## Methods
 
 ### `is_open`

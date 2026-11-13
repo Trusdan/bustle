@@ -74,6 +74,14 @@ var need_weights: Dictionary[StringName, float] = {}
 
 Input → weight; adds `Σ weight × input` to the score. Inputs are numbers the host fills for each agent (for example how much it needs money, from 0 to 1).
 
+### `xp_per_hour`
+
+```gdscript
+var xp_per_hour: float = 10.0
+```
+
+XP of practice in `skill` per game hour of work, added through the skill port when it can take practice (the skills module). 0: none.
+
 ### `wage`
 
 ```gdscript

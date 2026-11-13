@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BustleWorkType" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/core/jobs/work_type.gd" id="1_work"]
+
+[resource]
+script = ExtResource("1_work")
+id = &"errand"
+priority_weights = Dictionary[StringName, float]({
+&"curiosity": 1.0
+})
+wage = 3
+minutes = 60

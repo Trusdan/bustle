@@ -8,6 +8,7 @@ Inherits: `RefCounted`
 
 A board of posted, one-off work that agents claim. An employer posts a [BustleWorkType](BustleWorkType.md); an agent that passes its gates (role, skill level, tags) can claim it; the claim is exclusive and lasts until the work is completed, released, cancelled or expired. Standing jobs stay roles and schedules: the board doesn't touch them.
 An agent takes the open posting it wants most (`BustleWorkType.score()`) among those it can do, ties going to the earlier posting id. When several agents want one posting at the same time, `assign()` gives it to the highest score, ties going to the lower agent id. Nothing is random: the same postings, agents and clock give the same claims. Install it as `society.ports.work.board`.
+**With a brain.** `advertise()` offers an agent's postings to its brain as options, so a job goal weighs them against its other goals. The board only ranks: it never leaves out work an agent dislikes, it just makes that work less appealing. When a brain picks a posting, the host calls `request()`; `settle()`, at the end of the tick, gives each requested posting to the highest score, ties going to the lower agent id. `work()` then adds the work done, with practice through the skill port, and completes the posting once its type's minutes are done, paying the wage through the trade port.
 
 ## Signals
 
@@ -17,7 +18,25 @@ An agent takes the open posting it wants most (`BustleWorkType.score()`) among t
 signal changed(job: StringName, what: StringName, agent: StringName)
 ```
 
-Every board change: `job` was posted, claimed, released, completed, cancelled or expired (`what`); `agent` is the claimant, if any.
+Every board change: `job` was posted, claimed, released, completed, cancelled or expired, or its wage was paid or couldn't be (`what`); `agent` is the claimant, if any.
+
+## Constants
+
+### `TAG`
+
+```gdscript
+const TAG = &"job"
+```
+
+The tag on every job advertisement.
+
+### `NEED`
+
+```gdscript
+const NEED = &"job"
+```
+
+The need a job advertisement relieves (see `advertise()`).
 
 ## Properties
 
@@ -27,7 +46,15 @@ Every board change: `job` was posted, claimed, released, completed, cancelled or
 var ports: BustlePorts
 ```
 
-The ports the gates read: `roles` and `skills`. Null: no roles are held and every skill is 0.
+The ports it reads: `roles` and `skills` for the gates, `skills` for practice and `trade` for wages. Null (or a null port): no roles are held, every skill is 0, nothing is practised and no wage is paid.
+
+### `appeal_base`
+
+```gdscript
+var appeal_base: float = 0.5
+```
+
+The appeal of a posting an agent scores 0 for (see `appeal()`). An experimental default.
 
 ## Methods
 
@@ -141,7 +168,48 @@ Lets go of the claim on `job`, so it's open again. False when it isn't claimed.
 func complete(job: StringName) -> bool
 ```
 
-Marks `job` done by its claimant and takes it off the board. False (and no change) when it isn't claimed.
+Marks `job` done by its claimant, takes it off the board and pays its type's wage from the employer to the claimant through the trade port, once. A wage the employer can't pay (or with no trade port) is not paid, and `changed` says `unpaid`. False (and no change) when it isn't claimed.
+
+### `work`
+
+```gdscript
+func work(seeker: BustleJobSeeker, minutes: int) -> bool
+```
+
+Adds `minutes` of work by `seeker` on the posting it holds. Practice goes to the skill port when it can take it (`add_xp(id, skill, xp,
+personality)`, as the skills module does): `BustleWorkType.xp_per_hour` for each hour. Once the work done reaches the type's minutes, the posting is completed (`complete()`). False (and no change) when the seeker holds no claim or `minutes` isn't positive.
+
+### `appeal`
+
+```gdscript
+func appeal(seeker: BustleJobSeeker, job: StringName) -> float
+```
+
+How appealing `job` is to `seeker`, from 0 to 1: `appeal_base` plus its `score()`, clamped. It is never left out: a posting the seeker dislikes appeals 0, so its brain picks something else.
+
+### `advertise`
+
+```gdscript
+func advertise(seeker: BustleJobSeeker, senses: BustleSenses) -> int
+```
+
+Adds to `senses` an advertisement for each posting `seeker` can claim, or only for the one it holds. Each relieves the need `NEED` by its `appeal()`, carries the tag `TAG`, and has the posting id as its option; the input `need.job` is set to 1. A host gives these options to its job goal only (as with other agents for people goals). Returns how many it added.
+
+### `request`
+
+```gdscript
+func request(seeker: BustleJobSeeker, job: StringName) -> void
+```
+
+Asks for `job` on behalf of `seeker`, whose brain picked it this tick. The claim is decided by `settle()`. A later request from the same seeker in the tick replaces it.
+
+### `settle`
+
+```gdscript
+func settle(now: int) -> Dictionary[StringName, StringName]
+```
+
+Decides this tick's `request()`s at game minute `now`: each requested posting goes to the requester with the highest score, ties going to the lower agent id, if it can still claim it. The others keep no claim and choose again next tick. Returns agent id → the posting it claimed.
 
 ### `cancel`
 
@@ -173,4 +241,4 @@ Every posting, open and claimed, as plain data: `{"next": n, "postings": [...]}`
 func import_state(saved: Variant) -> bool
 ```
 
-Restores `export_state()`, replacing every posting. False (and nothing changes) when the data is malformed, names an unknown work type, repeats a posting id, gives one agent two claims, or has a `next` that could repeat an id.
+Restores `export_state()`, replacing every posting. False (and nothing changes) when the data is malformed, names an unknown work type, repeats a posting id, gives one agent two claims, has times before the posting opened or negative progress, or has a `next` that could repeat an id.
