@@ -53,7 +53,9 @@ var roster: BustleScheduleRoster
 var ports: BustlePorts
 ## [code]func(id, career, from_rank, to_rank, kind) -> bool[/code], where kind is
 ## [constant PROMOTED] or [constant DEMOTED]: true grants the change. Unset: every change is
-## granted. The host's employer policy goes here.
+## granted. The host's employer policy goes here. A refusal delays the change: the next window
+## starts at once, and the hook is asked again after it if the agent is still due. The hook must
+## only answer; it must not change careers itself.
 var review_hook: Callable = Callable()
 ## Outcome → a timed thought (a [code]BustleThoughtDef[/code]) added to the agent's mood after a
 ## review with that outcome. Leave empty without the needs_mood module.
@@ -194,7 +196,8 @@ func is_away(id: StringName, now: int, season: StringName = &"") -> bool:
 
 ## One day's performance, from 0 to 1: the weighted mean of the terms given, each from 0 to 1.
 ## [param mood] always counts; [param skill] and [param attendance] only when not NAN (a track with
-## no skill; a day with no career block).
+## no skill; a caller with no attendance to give). [method update] always gives attendance, since
+## it scores only days with a career block.
 ## [code](mood_weight × mood + skill_weight × skill + attendance_weight × attendance) ÷ (sum of the
 ## weights used)[/code].
 ## @experimental
@@ -222,12 +225,13 @@ func performance(id: StringName) -> float:
 	return total / window.size()
 
 
-## Brings [param id]'s career up to game minute [param now]. Each whole game day whose career
-## blocks have all ended is closed into a [method day_performance] from [param mood] (anything with
-## a [code]mood[/code] number, such as a [code]BustleMood[/code]; null: [member neutral_mood]), the
-## skill level now and that day's attendance at the career block. Each time a window has
-## [member BustleCareerRank.review_days] days, the agent is reviewed at the end of the last day,
-## and the next window starts. Call it at least every few game days (the schedule keeps 7 days of
+## Brings [param id]'s career up to game minute [param now]. Each whole game day with a career
+## block is closed, once its career blocks have all ended, into a [method day_performance] from
+## [param mood] (anything with a [code]mood[/code] number, such as a [code]BustleMood[/code]; null:
+## [member neutral_mood]), the skill level now and that day's attendance at the career block. A day
+## with no career block (a day off) is skipped: it adds no score and doesn't count toward the
+## window. Each time a window has [member BustleCareerRank.review_days] working days, the agent is
+## reviewed at the end of the last one, and the next window starts. Call it at least every few game days (the schedule keeps 7 days of
 ## attendance). Given the same mood, skill and attendance, one long call gives the same reviews as
 ## many short ones. Returns one [code]{at, performance, outcome, rank}[/code] per review.
 ## @experimental
@@ -246,14 +250,14 @@ func update(id: StringName, now: int, mood: Object = null) -> Array[Dictionary]:
 				blocks += 1
 		if now < closes:
 			break
-		var attendance := NAN
-		if blocks > 0:
-			var seen := schedule.report(day, closes, &"", def.activity)
-			attendance = (float(seen["on_time"]) + late_credit * float(seen["late"])) / blocks
+		info["closed"] = day
+		if blocks == 0:
+			continue
+		var seen := schedule.report(day, closes, &"", def.activity)
+		var attendance := (float(seen["on_time"]) + late_credit * float(seen["late"])) / blocks
 		var skill := NAN
 		if def.skill != &"":
 			skill = _skill(id, def) / skill_full if skill_full > 0.0 else 1.0
-		info["closed"] = day
 		(info["window"] as Array).append(day_performance(_mood(mood), skill, attendance))
 		var rank: BustleCareerRank = def.ranks[def.rank_index(info["rank"])]
 		if (info["window"] as Array).size() >= rank.review_days:

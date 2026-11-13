@@ -14,8 +14,8 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
   - While an agent attends an off-site career block, `is_away` is true, so the host can take it out of the world until the block ends.
   - An agent that loses the role leaves the track.
   - Agents without a career keep their jobs and wages as before.
-  - `update(id, now, mood)` closes each whole day, once its career blocks have ended, into a performance from 0 to 1. The formula is `(0.4 × mood + 0.3 × skill ÷ 10 + 0.3 × attendance) ÷ weights used`, where attendance is on time 1, late 0.5 and missed 0. All of these are configurable experimental defaults.
-  - After `review_days` (7) days in a window, the agent is reviewed. At or above `promote_if` (0.75), `promotion_due` is emitted; at or below `demote_if` (0.35), `demotion_due`. `review_hook` grants or refuses, and grants by default.
+  - `update(id, now, mood)` closes each whole working day (a day with a career block), once its career blocks have ended, into a performance from 0 to 1. Days off are skipped. The formula is `(0.4 × mood + 0.3 × skill ÷ 10 + 0.3 × attendance) ÷ weights used`, where attendance is on time 1, late 0.5 and missed 0. All of these are configurable experimental defaults.
+  - After `review_days` (7) working days in a window, the agent is reviewed. At or above `promote_if` (0.75), `promotion_due` is emitted; at or below `demote_if` (0.35), `demotion_due`. `review_hook` grants or refuses, and grants by default.
   - A granted promotion puts the new rank's wage on the career block and sets `promotion_granted` (through `fill_inputs`) until the next review, so the `get_promoted` ambition completes.
   - Reviews add the `promoted`, `demoted`, `good_review` or `poor_review` thought when a mood and thoughts are given; `reviewed` fires either way.
   - One long `update` gives the same reviews as stepped ones. The rank and review clock are saved.

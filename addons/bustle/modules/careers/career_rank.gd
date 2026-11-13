@@ -15,7 +15,8 @@ extends Resource
 ## The least level in the track's skill (read through the skill port) an agent needs to hold it.
 ## 0: none.
 @export var min_skill: float = 0.0
-## Whole game days at this rank in each review window (see [method BustleCareers.update]).
+## Working days (days with a career block) at this rank in each review window (see
+## [method BustleCareers.update]). Days off don't count.
 @export var review_days: int = 7
 ## A window's performance (0 to 1) at or above this makes a promotion due.
 @export var promote_if: float = 0.75

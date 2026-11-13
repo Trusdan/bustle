@@ -40,7 +40,7 @@ The least level in the track's skill (read through the skill port) an agent need
 var review_days: int = 7
 ```
 
-Whole game days at this rank in each review window (see `BustleCareers.update()`).
+Working days (days with a career block) at this rank in each review window (see `BustleCareers.update()`). Days off don't count.
 
 ### `promote_if`
 

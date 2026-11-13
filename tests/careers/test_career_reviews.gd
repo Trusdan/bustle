@@ -275,3 +275,95 @@ func test_a_new_job_ends_the_career_even_with_the_role_still_held() -> void:
 	assert_eq(_careers.career_of(&"agent_a"), &"")
 	assert_signal_emitted_with_parameters(_careers, "career_changed", [&"agent_a", &"office_clerk", &"junior", &""])
 	assert_false(_roster.schedule_of(&"agent_a").wages.has(&"work"), "no rank wage on the new job's block")
+
+
+# Weekdays 2 and 3 (days 2, 3, 9, 10, ...) off: the track's routine has no block on them.
+func _with_days_off(role: StringName) -> void:
+	var routine := _routine(&"work")
+	routine.weekdays = {2: BustleScheduleDay.new(), 3: BustleScheduleDay.new()}
+	_jobs.schedules[role] = routine
+	_roster.refresh_all()
+
+
+# Only days with a career block count; days off are skipped.
+func test_happy_days_off_do_not_lift_a_week_of_missed_shifts() -> void:
+	_with_days_off(&"clerk")
+	var senior := _careers.def_of(&"office_clerk").ranks[1]
+	senior.review_days = 5
+	senior.demote_if = 0.7
+	_start(&"agent_a", &"senior", 10.0)
+	var reviews := _days(&"agent_a", 0, 7, _mood(100.0), -1)
+	assert_eq(reviews.size(), 1)
+	assert_eq(reviews[0]["at"], 7 * DAY, "the fifth working day is day 6")
+	assert_almost_eq(float(reviews[0]["performance"]), 0.7, 1e-9, "0.4 × 1 + 0.3 × 1 + 0.3 × 0, days off left out")
+	assert_eq(reviews[0]["outcome"], BustleCareers.DEMOTED, "scored, the two days off would have lifted it to 0.82")
+
+
+func test_days_off_do_not_advance_the_window() -> void:
+	_with_days_off(&"clerk")
+	_start(&"agent_a", &"junior", 10.0)
+	assert_true(_days(&"agent_a", 0, 4, _mood(90.0)).is_empty(), "two working days, two off")
+	var state: Dictionary = _careers.export_state()["agent_a"]
+	assert_eq(state["closed"], 3, "the days off are closed")
+	assert_eq((state["window"] as Array).size(), 2, "but not scored")
+	assert_almost_eq(_careers.performance(&"agent_a"), 0.96, 1e-9)
+	var reviews := _days(&"agent_a", 4, 1, _mood(90.0))
+	assert_eq(reviews.size(), 1, "the third working day")
+	assert_eq(reviews[0]["at"], 5 * DAY)
+	assert_eq(reviews[0]["outcome"], BustleCareers.PROMOTED)
+
+
+func test_one_long_update_over_days_off_equals_daily_ones() -> void:
+	var results: Array = []
+	for mode: int in 2:
+		before_each()
+		_with_days_off(&"clerk")
+		_start(&"agent_a", &"junior", 6.0)
+		var mood := _mood(85.0)
+		var reviews: Array[Dictionary] = []
+		for day: int in 9:
+			if day % 7 != 2 and day % 7 != 3:
+				_roster.schedule_of(&"agent_a").attend(day * DAY + START + 5, &"work")
+			if mode == 1:
+				reviews.append_array(_careers.update(&"agent_a", (day + 1) * DAY, mood))
+		if mode == 0:
+			reviews = _careers.update(&"agent_a", 9 * DAY, mood)
+		results.append([reviews, _careers.export_state()])
+	assert_eq(results[1], results[0])
+	assert_eq((results[0][0] as Array).size(), 2, "seven working days in nine: two windows of three")
+
+
+# Reviews compare the window's mean: one poor day doesn't spoil a good window.
+func test_a_review_uses_the_window_mean() -> void:
+	_start(&"agent_a", &"junior", 10.0)
+	_days(&"agent_a", 0, 1, _mood(90.0), -1)
+	assert_almost_eq(_careers.performance(&"agent_a"), 0.66, 1e-9, "below the line on its own")
+	var reviews := _days(&"agent_a", 1, 2, _mood(90.0))
+	assert_almost_eq(float(reviews[0]["performance"]), (0.66 + 0.96 + 0.96) / 3.0, 1e-9)
+	assert_eq(reviews[0]["outcome"], BustleCareers.PROMOTED)
+
+
+# A refused promotion starts a new window at once; the hook is asked again after it.
+func test_a_refused_promotion_is_asked_again_after_the_next_window() -> void:
+	_start(&"agent_a", &"junior", 10.0)
+	var asked: Array[int] = []
+	_careers.review_hook = func(_id: StringName, _c: StringName, _f: StringName, _t: StringName, _k: StringName) -> bool:
+		asked.append(asked.size())
+		return asked.size() >= 2
+	_days(&"agent_a", 0, 3, _mood(90.0))
+	assert_eq(asked.size(), 1)
+	_days(&"agent_a", 3, 2, _mood(90.0))
+	assert_eq(asked.size(), 1, "not asked again every day")
+	assert_eq(_careers.rank_of(&"agent_a"), &"junior")
+	_days(&"agent_a", 5, 1, _mood(90.0))
+	assert_eq(asked.size(), 2, "after the next full window")
+	assert_eq(_careers.rank_of(&"agent_a"), &"senior")
+
+
+# A demotion applies even below the lower rank's skill minimum.
+func test_a_demotion_applies_below_the_lower_ranks_skill_minimum() -> void:
+	_careers.def_of(&"office_clerk").ranks[1].min_skill = 5.0
+	_start(&"agent_a", &"chief", 8.0)
+	_skills.set_level(&"agent_a", &"crafts", 0.0)
+	assert_eq(_days(&"agent_a", 0, 3, _mood(10.0), -1)[0]["outcome"], BustleCareers.DEMOTED)
+	assert_eq(_careers.rank_of(&"agent_a"), &"senior", "kept on the track; ending it is the host's call")

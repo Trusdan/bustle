@@ -1,6 +1,6 @@
 # Careers
 
-`addons/bustle/modules/careers/` gives standing jobs ranks. A career is not a second job: it is the agent's standing job (a role with a routine, see `docs/schedules.md`) held at a rank of a track. Each rank sets the wage of the career block. Performance from mood, skill and attendance leads to promotion or demotion after a configured number of days, decided by a host hook.
+`addons/bustle/modules/careers/` gives standing jobs ranks. A career is not a second job: it is the agent's standing job (a role with a routine, see `docs/schedules.md`) held at a rank of a track. Each rank sets the wage of the career block. Performance from mood, skill and attendance leads to promotion or demotion after a configured number of working days, decided by a host hook.
 
 Nothing is random: the same mood, skill and attendance always give the same reviews. Agents with no career keep their job, routine and wages exactly as before.
 
@@ -35,7 +35,7 @@ Only the host puts an agent on a track. A new holder of a role is not enrolled a
 | `id` | | Unique in its track. |
 | `wage` | 0 | What one attended career block earns. It replaces the block's own wage; 0 means the rank is unpaid. |
 | `min_skill` | 0 | The skill level needed to hold it. |
-| `review_days` | 7 | Whole days in each review window. |
+| `review_days` | 7 | Working days (days with a career block) in each review window. Days off don't count. |
 | `promote_if` | 0.75 | A window's performance at or above this makes a promotion due. |
 | `demote_if` | 0.35 | At or below this, a demotion is due. Must be below `promote_if`. |
 
@@ -49,7 +49,7 @@ A career ends when the agent's job is no longer the track's role. That happens w
 
 ## Performance
 
-`update` closes each whole game day once that day's career blocks have all ended. It scores the day from 0 to 1 with `day_performance`:
+`update` closes each whole game day once that day's career blocks have all ended. A day with a career block (a working day) is scored from 0 to 1 with `day_performance`. A day with no career block (a day off) is skipped: it adds no score and doesn't count toward the window, so good days off can't lift a window of missed shifts.
 
 ```
 performance = (mood_weight × mood + skill_weight × skill + attendance_weight × attendance)
@@ -60,7 +60,7 @@ performance = (mood_weight × mood + skill_weight × skill + attendance_weight �
 | --- | --- | --- |
 | mood | The mood given to `update`, within its range (0 to 100 by default). With no mood, `neutral_mood` (0.5). | `mood_weight` 0.4 |
 | skill | The track's skill level now ÷ `skill_full` (10), at most 1. Left out for a track with no skill. | `skill_weight` 0.3 |
-| attendance | The day's career blocks: (on time + `late_credit` × late) ÷ blocks, with `late_credit` 0.5 and missed counting 0 (from `BustleSchedule.report`). Left out on a day with no career block. | `attendance_weight` 0.3 |
+| attendance | The day's career blocks: (on time + `late_credit` × late) ÷ blocks, with `late_credit` 0.5 and missed counting 0 (from `BustleSchedule.report`). | `attendance_weight` 0.3 |
 
 All of these are properties of `BustleCareers` and configurable experimental defaults. For example, at skill 5 and on time every day, mood 90 scores `0.4 × 0.9 + 0.3 × 0.5 + 0.3 × 1 = 0.81`, and mood 20 scores 0.28 less (0.53). So low mood lowers performance linearly, by `mood_weight` per unit of mood range.
 
@@ -68,15 +68,18 @@ All of these are properties of `BustleCareers` and configurable experimental def
 
 ## Reviews
 
-When a window has `review_days` closed days, the agent is reviewed at the end of its last day. The window's mean is compared with the rank's thresholds:
+When a window has `review_days` working days, the agent is reviewed at the end of the last one. The window's mean is compared with the rank's thresholds:
 
 - **At or above `promote_if`:** if there is a next rank and the agent has its skill minimum, `promotion_due` is emitted and the hook is asked. If it grants the promotion, the agent takes the next rank: its wage goes on the career block, and `promotion_granted` is set (see below). If there is no next rank, the agent lacks the skill, or the hook refuses, the outcome is a good review and the rank stays.
 - **At or below `demote_if`:** if there is a lower rank, `demotion_due` is emitted and the hook is asked. If it grants the demotion, the agent takes the lower rank. Otherwise the outcome is a poor review.
 - **In between:** steady.
 
-A new window starts after every review. After a change of rank, it starts the next day.
+A new window starts after every review. After a change of rank, it starts the next day. A demotion applies even if the agent is below the lower rank's skill minimum; ending a career is the host's call.
 
 **The hook.** `review_hook` is `func(id, career, from_rank, to_rank, kind) -> bool`, where `kind` is `promoted` or `demoted`. It returns true to grant. With no hook set, every change is granted. The employer's staffing and pay policy goes here.
+
+- **Refusing delays the change.** A refusing hook leaves the rank as it is, the next window starts at once, and the hook is asked again after that window if the agent is still due.
+- **The hook only answers.** It must not change careers itself (`assign`, `end` or a change of role); make such changes after `update` returns.
 
 **Ambitions.** `fill_inputs(id, inputs)` sets the fact `promotion_granted` from a granted promotion until the agent's next review, so the `get_promoted` ambition completes.
 

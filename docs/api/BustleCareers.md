@@ -114,7 +114,7 @@ The ports it reads: `skills` for rank skill minimums and performance. Null (or a
 var review_hook: Callable = Callable()
 ```
 
-`func(id, career, from_rank, to_rank, kind) -> bool`, where kind is `PROMOTED` or `DEMOTED`: true grants the change. Unset: every change is granted. The host's employer policy goes here.
+`func(id, career, from_rank, to_rank, kind) -> bool`, where kind is `PROMOTED` or `DEMOTED`: true grants the change. Unset: every change is granted. The host's employer policy goes here. A refusal delays the change: the next window starts at once, and the hook is asked again after it if the agent is still due. The hook must only answer; it must not change careers itself.
 
 ### `thoughts`
 
@@ -256,7 +256,7 @@ True while `id` is off site at minute `now`: it has a career whose track is off 
 func day_performance(mood: float, skill: float = nan, attendance: float = nan) -> float
 ```
 
-One day's performance, from 0 to 1: the weighted mean of the terms given, each from 0 to 1. `mood` always counts; `skill` and `attendance` only when not NAN (a track with no skill; a day with no career block). `(mood_weight × mood + skill_weight × skill + attendance_weight × attendance) ÷ (sum of the
+One day's performance, from 0 to 1: the weighted mean of the terms given, each from 0 to 1. `mood` always counts; `skill` and `attendance` only when not NAN (a track with no skill; a caller with no attendance to give). `update()` always gives attendance, since it scores only days with a career block. `(mood_weight × mood + skill_weight × skill + attendance_weight × attendance) ÷ (sum of the
 weights used)`.
 
 ### `performance`
@@ -273,7 +273,7 @@ The mean performance of `id`'s current review window so far, or NAN with no clos
 func update(id: StringName, now: int, mood: Object = null) -> Dictionary[]
 ```
 
-Brings `id`'s career up to game minute `now`. Each whole game day whose career blocks have all ended is closed into a `day_performance()` from `mood` (anything with a `mood` number, such as a `BustleMood`; null: `neutral_mood`), the skill level now and that day's attendance at the career block. Each time a window has `BustleCareerRank.review_days` days, the agent is reviewed at the end of the last day, and the next window starts. Call it at least every few game days (the schedule keeps 7 days of attendance). Given the same mood, skill and attendance, one long call gives the same reviews as many short ones. Returns one `{at, performance, outcome, rank}` per review.
+Brings `id`'s career up to game minute `now`. Each whole game day with a career block is closed, once its career blocks have all ended, into a `day_performance()` from `mood` (anything with a `mood` number, such as a `BustleMood`; null: `neutral_mood`), the skill level now and that day's attendance at the career block. A day with no career block (a day off) is skipped: it adds no score and doesn't count toward the window. Each time a window has `BustleCareerRank.review_days` working days, the agent is reviewed at the end of the last one, and the next window starts. Call it at least every few game days (the schedule keeps 7 days of attendance). Given the same mood, skill and attendance, one long call gives the same reviews as many short ones. Returns one `{at, performance, outcome, rank}` per review.
 
 ### `fill_inputs`
 
