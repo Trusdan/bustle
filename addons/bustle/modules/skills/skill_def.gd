@@ -2,8 +2,8 @@
 class_name BustleSkillDef
 extends Resource
 
-## One skill, as data: its id, its top level, how much practice each level costs and how it fades
-## without practice. [BustleSkills] reads it. Bustle ships no skills; the host supplies every def.
+## One skill, as data: its id, its top level, how much practice each level costs, how it fades and
+## how much it speeds and improves work. [BustleSkills] reads it. Bustle ships no skills; the host supplies every def.
 ## The numbers here are experimental defaults.
 ## @experimental
 
@@ -18,10 +18,15 @@ extends Resource
 ## XP needed for each level, from level 0 to 1 onwards. The last entry repeats for the levels
 ## after it, so [code][100.0][/code] costs 100 XP a level.
 @export var xp_curve: Array[float] = [100.0]
+## Added to [code]work.speed[/code] (base 1) at [member max_level], in proportion below it: half at
+## half the top level, nothing at 0.
+@export var speed_add: float = 0.5
+## Added to [code]work.quality[/code] at [member max_level], in proportion below it.
+@export var quality_add: float = 1.0
 
 
 ## True when it can be used: an id, a positive top level, a floor in [code]0..max_level[/code],
-## a non-negative decay rate, and a curve of positive finite costs.
+## a non-negative decay rate, finite work bonuses and a curve of positive finite costs.
 ## @experimental
 func is_valid() -> bool:
 	if id == &"" or max_level <= 0 or xp_curve.is_empty():
@@ -29,6 +34,8 @@ func is_valid() -> bool:
 	if not is_finite(decay_floor) or decay_floor < 0.0 or decay_floor > max_level:
 		return false
 	if not is_finite(decay_per_day) or decay_per_day < 0.0:
+		return false
+	if not is_finite(speed_add) or not is_finite(quality_add):
 		return false
 	for cost: float in xp_curve:
 		if not is_finite(cost) or cost <= 0.0:

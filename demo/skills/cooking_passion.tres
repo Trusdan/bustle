@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BustlePassionDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/modules/skills/passion_def.gd" id="1_passion"]
+[ext_resource type="Resource" path="res://demo/skills/enjoying_work.tres" id="2_thought"]
+
+[resource]
+script = ExtResource("1_passion")
+skill = &"cooking"
+learn_mult = 1.5
+sliders = Dictionary[StringName, float]({
+&"sociability": 1.0
+})
+thought = ExtResource("2_thought")
