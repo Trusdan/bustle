@@ -113,6 +113,12 @@ func kinds_between(a: StringName, b: StringName) -> PackedStringArray:
 	return out
 
 
+## True: the store keeps kinds.
+## @experimental
+func supports_kinds() -> bool:
+	return true
+
+
 ## Gives [param a] the kind [param kind] towards [param b], kept until [method clear_kind].
 ## @experimental
 func set_kind(a: StringName, b: StringName, kind: StringName) -> void:

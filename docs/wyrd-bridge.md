@@ -49,6 +49,7 @@ Install once for each Wyrd. Wyrd refuses a host function name that's already reg
 - **`share_news(teller, listener, place)`** passes on the deeds the teller did or witnessed and the listener doesn't know yet, oldest first. Each is noted in Wyrd as believed by the listener at Wyrd's current minute. A believer knows the deed second-hand, so it can't pass it on. Nothing is rolled, and `place` isn't used.
 - **`opinion(a, b)`** is Wyrd's disposition of `a` toward `b`, 0 to 100.
 - **`kinds_between(a, b)`** lists the kinds `a` holds toward `b` in Wyrd, sorted.
+- **`set_kind` and `clear_kind`** write to Wyrd's social state, so the romance module's kinds live in Wyrd.
 - **`reasons(a, b, limit)`** lists, newest first, the deeds `b` did that `a` was the target or a witness of. These are the deeds Wyrd's disposition counts. Each is `{deed, verb, minute, as}`, where `as` is `target` or `witness`.
 
 ## The roles port
