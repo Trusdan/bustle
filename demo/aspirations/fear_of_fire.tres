@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BustleFearDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/modules/aspirations/fear_def.gd" id="1_fear"]
+[ext_resource type="Resource" path="res://demo/aspirations/frightened.tres" id="2_thought"]
+
+[resource]
+script = ExtResource("1_fear")
+id = &"fear_of_fire"
+trigger = &"fire"
+avoid_goals = Array[StringName]([&"cook"])
+avoid_input = &"fire_source"
+avoid_mult = 0.2
+duration_hours = 72.0
+cleared_fact = &"fire_safe"
+thought = ExtResource("2_thought")

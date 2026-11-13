@@ -6,6 +6,11 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- An aspirations module (`addons/bustle/modules/aspirations/`): short-lived wants and event-formed fears, separate from ambitions.
+  - **Wants** (`BustleWantDef`). The highest-scoring eligible want fills one automatic slot (slider weights, required circumstances, cooldown; ties to the lower id), and the host may post more, up to a cap of 3. A want is fulfilled by a fact or progress line, or by the host, and adds its satisfaction thought. It expires on time, at an absolute minute that carries over a save.
+  - **Fears** (`BustleFearDef`). A fear forms (or renews) from its triggering event. While formed, `avoidance(goal, option)` multiplies the scores of the goals and options it avoids, including the one named when it formed, for `BustleBrain.score_boost`. A fear ends on time or by a clearing fact.
+  - Signals for want added, fulfilled and expired, and for fear formed and ended. Save and load.
+  - Nothing is random. Bustle ships no wants or fears; the demo's are in `demo/aspirations/`. See `docs/aspirations.md`.
 - Room scores on `BustleEnvironmentPort`. `scores(room)` gives beauty, comfort, cleanliness and impressiveness, each from 0 to 1; a score a room doesn't have is unset, not 0. The default port has a store the host fills (`set_room`, `set_scores`) and saves (`export_state` / `import_state`). It is empty by default: no rooms, no scores.
 - An environment module (`addons/bustle/modules/environment/`):
   - `BustleRoomThought` is a rule: a score, an `at_least` or `at_most` line, and a held thought with reason kind `environment`.

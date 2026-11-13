@@ -108,6 +108,8 @@ The 2-hour bound, the 0.5 m epsilon and the loop count are experimental defaults
 
 `social/` holds a neutral interaction set (chitchat, deep talk, kind words, slight, insult, comfort) and a `comfort` goal that runs a `converse` step. See `docs/social.md`.
 
+`aspirations/` holds two wants (sharing a meal, for sociability, and tidying up, for diligence), a fear of fire formed by the event `fire`, which avoids cooking and whatever started it, and their thoughts. They are data only. See `docs/aspirations.md`.
+
 `environment/` holds an `outdoors` need, which rises indoors and falls outside, and an `indoors` need, which does the reverse. They are data only; a host or test installs them. See `docs/environment.md`.
 
 `jobs/` holds three neutral work types: a harvest (diligence, practises farming), an errand (curiosity) and mending (needs the `mender` role). See `docs/work.md`.

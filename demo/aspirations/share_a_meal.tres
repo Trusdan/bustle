@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BustleWantDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/modules/aspirations/want_def.gd" id="1_want"]
+[ext_resource type="Resource" path="res://demo/aspirations/want_met.tres" id="2_thought"]
+
+[resource]
+script = ExtResource("1_want")
+id = &"share_a_meal"
+weights = Dictionary[StringName, float]({
+&"sociability": 1.0
+})
+done_fact = &"ate_with_company"
+duration_hours = 12.0
+thought = ExtResource("2_thought")
