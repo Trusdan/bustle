@@ -130,10 +130,10 @@ True when the block current at minute `now` has been attended (and so hasn't end
 ### `report`
 
 ```gdscript
-func report(day_index: int, now: int, season: StringName = &"") -> Dictionary
+func report(day_index: int, now: int, season: StringName = &"", activity: StringName = &"") -> Dictionary
 ```
 
-How game day `day_index` went by minute `now`: `{on_time, late, missed, pending}` counts of its blocks. A block that hasn't ended and wasn't attended is pending, not missed.
+How game day `day_index` went by minute `now`: `{on_time, late, missed, pending}` counts of its blocks (only those for `activity`, when given). A block that hasn't ended and wasn't attended is pending, not missed.
 
 ### `settle`
 

@@ -150,7 +150,8 @@ func test_jobs_without_a_career_are_unchanged() -> void:
 func test_save_round_trip() -> void:
 	_careers.assign(&"agent_a", &"office", &"junior", 120)
 	var saved: Variant = JSON.parse_string(JSON.stringify(_careers.export_state()))
-	assert_eq(saved, {"agent_a": {"career": "office", "rank": "junior", "since": 120.0}})
+	assert_eq(saved, {"agent_a": {"career": "office", "rank": "junior", "since": 120.0, "closed": 0.0, "window": [],
+		"promoted": false}})
 	before_each()
 	assert_true(_careers.import_state(saved))
 	assert_eq(_careers.rank_of(&"agent_a"), &"junior")
