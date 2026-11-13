@@ -11,7 +11,8 @@ extends RefCounted
 ## [member BustleRoomThought.at_most]), so a better score gives a better thought. Every other rule
 ## thought is dropped, so leaving the room, or its scores changing, clears or swaps them. A score
 ## the room doesn't have is unset and meets no rule. Thoughts go through the mood's
-## [code]set_held[/code], so one of each is held at most. Nothing is random.
+## [code]set_held[/code], so one of each is held at most. Rule thought ids must be the module's own:
+## [method sync] drops any held thought with a rule's id. Nothing is random.
 ## [br][br]
 ## With no environment port, the default one (no rooms) or no mood, there are no environment
 ## thoughts and nothing errors.
@@ -95,8 +96,9 @@ func sync(id: StringName, mood: Object = null) -> Array[StringName]:
 		var dropped: Array[Resource] = []
 		for rule: BustleRoomThought in _rules:
 			if not keep.has(rule.thought) and not dropped.has(rule.thought):
-				mood.call(&"set_held", rule.thought, false, {})
 				dropped.append(rule.thought)
+				if not mood.has_method(&"count") or int(mood.call(&"count", rule.thought.get(&"id"))) > 0:
+					mood.call(&"set_held", rule.thought, false, {})
 		var values := ports.environment.scores(room) if rules.size() > 0 else ({} as Dictionary[StringName, float])
 		for rule: BustleRoomThought in rules:
 			mood.call(&"set_held", rule.thought, true,

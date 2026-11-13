@@ -13,6 +13,12 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
   - With no port, the default port or no mood there are no environment thoughts and no errors.
   - Each agent's last room and thoughts are saved, and loading never duplicates a thought.
   - Bustle ships no rules. See `docs/environment.md`.
+- Indoors and outdoors:
+  - `BustleEnvironmentPort.is_indoors(id)` (in a room) and `conditions(id)` (`indoors` or `outdoors`) give a need condition.
+  - `BustleEnvironmentPort.conditions_of(port, id)` gives none when there is no port.
+  - The demo ships an `outdoors` need (rises indoors, falls outside) and an `indoors` need (the reverse) as data in `demo/environment/`.
+  - The demo harness's `enable_environment(port)` adds the conditions.
+- A `BustleRoomThought` now needs a held thought (duration 0) with reason kind `environment`, and `sync` drops only rule thoughts that are actually held.
 - A careers module (`addons/bustle/modules/careers/`). A career is an agent's standing job (a role with a routine) held at a rank of a `BustleCareerDef`; it is not a second job.
   - Each track names its role, a skill, the career block's activity and whether that block is off site.
   - Each `BustleCareerRank` has a wage and a skill minimum.
