@@ -56,7 +56,7 @@ Game days of courting before partnership.
 var partner_release: int = 60
 ```
 
-A partnership, engagement or marriage ends (a breakup) when either opinion falls below this.
+A partnership ends (a breakup) when either opinion falls below this. An engagement or marriage never ends on opinion: only the host ends it (`BustleRomance.end()`).
 
 ### `breakup_thought`
 
@@ -90,6 +90,38 @@ var history_limit: int = 10
 
 How many status changes each pair keeps in its history.
 
+### `jealousy_thought`
+
+```gdscript
+var jealousy_thought: Resource = null
+```
+
+The timed thought an agent gets when its partner (courting or above) takes to someone else, or null for none (the `BustleRomance.jealous` signal still fires).
+
+### `jealousy_opinion`
+
+```gdscript
+var jealousy_opinion: int = 75
+```
+
+A partner's opinion of a third agent at or above this makes the agent jealous, once.
+
+### `jealousy_release`
+
+```gdscript
+var jealousy_release: int = 60
+```
+
+Jealousy over that third agent can come again only after the partner's opinion of them has fallen below this.
+
+### `jealousy_verbs`
+
+```gdscript
+var jealousy_verbs: StringName[] = []
+```
+
+Interactions (by id) that make a partner's partner jealous when done to a third agent (`BustleRomance.notice()`). Empty: none. The host names its own.
+
 ## Methods
 
 ### `is_valid`
@@ -98,4 +130,4 @@ How many status changes each pair keeps in its history.
 func is_valid() -> bool
 ```
 
-True when it can be used: opinions from 0 to 100 with each release line below its forming line, a finite compatibility line, a non-negative finite courting time and a history of at least one entry.
+True when it can be used: opinions from 0 to 100 with each release line below its forming line (jealousy's too), a finite compatibility line, a non-negative finite courting time and a history of at least one entry.

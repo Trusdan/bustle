@@ -12,6 +12,12 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
   - A courting or partnered pair breaks up below its release line, and any pair when the host calls `end()`; engaged and married end only that way. Both get a thought. A breakup sticks: the pair can court again only after its lower opinion has dipped below the courting release line and climbed back, and that is saved.
   - Courting is one at a time, and an agent who is bonded never starts courting anyone else. `affairs_enabled` is off, with no affair path.
   - Statuses and their history are saved. See `docs/romance.md`.
+  - Jealousy: an agent with a romantic bond gets `jealousy_thought` (timed) and `jealous` fires.
+    - From opinion: when its partner's opinion of a third agent reaches `jealousy_opinion`, once per cause until that opinion drops below `jealousy_release`; saved.
+    - From interaction: when the host reports one of `jealousy_verbs` through `notice()`, once per interaction.
+  - Family: `link_family()` / `unlink_family()` write parent and child, sibling, or in-law both ways through the social port. Family (now including `in_law`) is never courted.
+  - `ratings_policy(a, b, status)`, the host's veto over every step up the ladder, automatic or requested. A veto changes nothing.
+  - The demo harness's `enable_romance(rules)`, and `Colony.build(..., Colony.romance_rules())` with fond settlers and a sibling pair.
 - `BustleSocialPort.supports_kinds()`, `set_kind()` and `clear_kind()` (no-ops in the default port). The built-in store keeps the kinds, and the Wyrd bridge's social port writes them to Wyrd.
 - An aspirations module (`addons/bustle/modules/aspirations/`): short-lived wants and event-formed fears, separate from ambitions.
   - **Wants** (`BustleWantDef`). The highest-scoring eligible want fills one automatic slot (slider weights, required circumstances, cooldown; ties to the lower id), and the host may post more, up to a cap of 3. A want is fulfilled by a fact or progress line, or by the host, and adds its satisfaction thought. It expires on time, at an absolute minute that carries over a save.

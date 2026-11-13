@@ -85,9 +85,13 @@ const START := 360
 ## A colony run seeded [param world_seed] with [param modules] on (all three by default), and the
 ## cold snap unless [param cold_snap] is false. With [param board], settlers also weigh its postings
 ## in their free time ([constant TAKE_JOB]). With [param aspirations] (for example
-## [method aspirations]), settlers also have wants, fears and points.
+## [method aspirations]), settlers also have wants, fears and points. With [param romance] (for
+## example [method romance_rules], and the social module on), the courtship ladder runs: the third
+## and fourth settlers start fond of each other, and the first two are fond too but recorded as
+## siblings, so they never court.
 static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, cold_snap: bool = true,
-		board: BustleJobBoard = null, aspirations: BustleAspirationConfig = null) -> Harness:
+		board: BustleJobBoard = null, aspirations: BustleAspirationConfig = null,
+		romance: BustleRomanceRules = null) -> Harness:
 	var colony := Harness.new(world_seed)
 	if board != null:
 		colony.enable_jobs(board, TAKE_JOB)
@@ -138,7 +142,25 @@ static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, col
 			colony.store.set_kind(pair[1], pair[0], &"friend")
 	if cold_snap:
 		colony.add_event(COLD_SNAP, COLD_START, COLD_MINUTES, &"cold", thought(&"bitter_weather", -6.0, 24.0, &"miserable", 1))
+	if romance != null and colony.store != null:
+		var ladder := colony.enable_romance(romance)
+		for pair: Array in [[SETTLER_A, SETTLER_B], [SETTLER_C, SETTLER_D]]:
+			for way: Array in [pair, [pair[1], pair[0]]]:
+				colony.store.add_opinion(way[0], way[1], 30.0, {"why": "fond"}, 30.0)
+		ladder.link_family(SETTLER_A, SETTLER_B, &"sibling")
 	return colony
+
+
+## The demo's courtship lines: lower than the defaults so a week shows a partnership (courting at
+## 70, partners after two days at 75), with a breakup and a jealousy thought.
+static func romance_rules() -> BustleRomanceRules:
+	var rules := BustleRomanceRules.new()
+	rules.partner_opinion = 75
+	rules.partner_days = 2.0
+	rules.jealousy_opinion = 70
+	rules.breakup_thought = thought(&"heartbroken", -10.0, 48.0, &"miserable", 1)
+	rules.jealousy_thought = thought(&"jealous", -5.0, 12.0, &"miserable", 2)
+	return rules
 
 
 ## The settlers' needs.
