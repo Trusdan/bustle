@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BustleSkillDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/modules/skills/skill_def.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"cooking"
+decay_floor = 5.0
+decay_per_day = 0.1
+xp_curve = Array[float]([100.0])

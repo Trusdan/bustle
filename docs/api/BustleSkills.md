@@ -8,6 +8,35 @@ Inherits: `BustleSkillSet`
 
 The skills module: skill levels that grow with practice and fade without it. Install it as the society's skill set with `society.set_port(&"skills", skills)`; a host that doesn't keeps the default, where everyone's level is 0.
 Each agent keeps XP per skill, as a float, and its level is worked out from that XP with the skill's [BustleSkillDef](BustleSkillDef.md). XP is added only by `add_xp()` (practice the host or another module reports) and lost only by decay in `advance()`. Nothing is random, so the same practice and time always give the same levels. The skills come from the host's defs; Bustle has none of its own.
+A passion ([BustlePassionDef](BustlePassionDef.md)) multiplies the XP practice gives. An agent's passions are the ones the host assigned, or, when it has none, the ones derived from its personality sliders (see `derived_passions()`). `apply()` writes the skill in use onto the agent's [BustleModifierSet](BustleModifierSet.md) as `work.speed` and `work.quality`, and holds a passion's thought in its mood while it does that work.
+
+## Constants
+
+### `SOURCE`
+
+```gdscript
+const SOURCE = &"skills"
+```
+
+The modifier source `apply()` writes under.
+
+## Properties
+
+### `passion_min_score`
+
+```gdscript
+var passion_min_score: float = 0.2
+```
+
+The lowest score (`BustlePassionDef.score()`) at which a passion is derived. 0.2 is one slider at 70 with weight 1. An experimental default.
+
+### `max_derived_passions`
+
+```gdscript
+var max_derived_passions: int = 1
+```
+
+The most passions derived for one agent. An experimental default.
 
 ## Methods
 
@@ -18,6 +47,22 @@ func add_def(def: BustleSkillDef) -> bool
 ```
 
 Adds `def`. False (and no change) when it's null, invalid or its id is taken.
+
+### `add_passion_def`
+
+```gdscript
+func add_passion_def(def: BustlePassionDef) -> bool
+```
+
+Adds `def`, the passion for its skill. False (and no change) when it's null or invalid, its skill has no def, or that skill already has a passion def.
+
+### `passion_def_of`
+
+```gdscript
+func passion_def_of(skill: StringName) -> BustlePassionDef
+```
+
+The passion def for `skill`, or null.
 
 ### `def_of`
 
@@ -62,10 +107,66 @@ Sets `id`'s `skill` to `new_level` (clamped to `0..max_level`) by setting its XP
 ### `add_xp`
 
 ```gdscript
-func add_xp(id: StringName, skill: StringName, amount: float) -> bool
+func add_xp(id: StringName, skill: StringName, amount: float, personality: BustlePersonality = null) -> bool
 ```
 
-Adds `amount` XP of practice to `id`'s `skill`, up to the XP at the top level. False (and no change) for an unknown skill, an empty id, or an amount that is negative or not finite.
+Adds `amount` XP of practice to `id`'s `skill`, up to the XP at the top level. When the skill is one of `id`'s passions (`passion_of()`, with `personality` for derived ones), the amount is multiplied by the passion's `BustlePassionDef.learn_mult` first. False (and no change) for an unknown skill, an empty id, or an amount that is negative or not finite.
+
+### `assign_passion`
+
+```gdscript
+func assign_passion(id: StringName, skill: StringName) -> bool
+```
+
+Gives `id` a passion for `skill`. Once an agent has any assigned passion, none are derived for it. False (and no change) for an empty id or a skill with no passion def.
+
+### `remove_passion`
+
+```gdscript
+func remove_passion(id: StringName, skill: StringName) -> void
+```
+
+Takes `skill` from `id`'s assigned passions. With none left, its passions are derived again.
+
+### `assigned_passions`
+
+```gdscript
+func assigned_passions(id: StringName) -> StringName[]
+```
+
+`id`'s assigned passions, sorted. Empty when it has none.
+
+### `derived_passions`
+
+```gdscript
+func derived_passions(personality: BustlePersonality) -> StringName[]
+```
+
+The passions derived from `personality`, best first: every passion def whose `BustlePassionDef.score()` is at least `passion_min_score`, by score and then by skill id, at most `max_derived_passions` of them. Empty for no personality. No rolls: the same sliders always give the same passions.
+
+### `passions_of`
+
+```gdscript
+func passions_of(id: StringName, personality: BustlePersonality = null) -> StringName[]
+```
+
+`id`'s passions: its assigned ones, or, when it has none, the ones derived from `personality`.
+
+### `passion_of`
+
+```gdscript
+func passion_of(id: StringName, skill: StringName, personality: BustlePersonality = null) -> BustlePassionDef
+```
+
+The passion def when `skill` is one of `id`'s passions, or null.
+
+### `apply`
+
+```gdscript
+func apply(id: StringName, modifiers: BustleModifierSet, using_skill: StringName = &"", personality: BustlePersonality = null, mood: Object = null) -> void
+```
+
+Puts `id`'s work at `using_skill` into effect. On `modifiers`, under source `SOURCE`, it replaces anything written before with the skill's share of `BustleSkillDef.speed_add` on `work.speed` and of `BustleSkillDef.quality_add` on `work.quality` (level ÷ top level of each), and the same on `work.speed.<skill>` and `work.quality.<skill>` when the skill id is a valid key part. They combine with other sources (a mental state) through the modifier set. On `mood` (anything with `set_held(def, held, details)`, such as a `BustleMood`), it holds the thought of the passion for `using_skill` and drops every other passion thought. An empty or unknown `using_skill` clears both: the agent isn't working at a skill.
 
 ### `advance`
 
@@ -73,7 +174,7 @@ Adds `amount` XP of practice to `id`'s `skill`, up to the XP at the top level. F
 func advance(id: StringName, minutes: int) -> bool
 ```
 
-Moves `id`'s skills on by `minutes` of game time without practice: each skill above its decay floor loses `BustleSkillDef.decay_per_day` levels a day, never going below the floor. Skills at or below the floor don't change. One long call gives the same levels as many short ones. False (and no change) when `minutes` is negative.
+Moves `id`'s skills on by `minutes` of game time: each skill above its decay floor loses `BustleSkillDef.decay_per_day` levels a day, never going below the floor. Call it for all the time that passes, practice included; practice adds its XP on top through `add_xp()`. Skills at or below the floor don't change. One long call gives the same levels as many short ones. False (and no change) when `minutes` is negative.
 
 ### `agent_ids`
 
@@ -81,7 +182,7 @@ Moves `id`'s skills on by `minutes` of game time without practice: each skill ab
 func agent_ids() -> StringName[]
 ```
 
-The agent ids with any XP, sorted.
+The agent ids with any XP or an assigned passion, sorted.
 
 ### `forget`
 
@@ -89,7 +190,7 @@ The agent ids with any XP, sorted.
 func forget(id: StringName) -> void
 ```
 
-Drops everything `id` knows (for an agent that leaves the society).
+Drops everything `id` knows and its assigned passions (for an agent that leaves the society).
 
 ### `export_state`
 
@@ -97,7 +198,7 @@ Drops everything `id` knows (for an agent that leaves the society).
 func export_state() -> Dictionary
 ```
 
-Every agent's XP per skill, as plain data: `{"xp": {agent: {skill: xp}}}`.
+Every agent's XP per skill and assigned passions, as plain data: `{"xp": {agent: {skill: xp}}, "passions": {agent: [skill, ...]}}`. Derived passions aren't saved; they come from the personality, which the host saves.
 
 ### `import_state`
 
@@ -105,4 +206,4 @@ Every agent's XP per skill, as plain data: `{"xp": {agent: {skill: xp}}}`.
 func import_state(saved: Variant) -> bool
 ```
 
-Restores `export_state()`, replacing what's kept now. False (and nothing changes) when the data is malformed, names a skill with no def, or holds XP that is negative, not finite or past the skill's top level.
+Restores `export_state()`, replacing what's kept now. False (and nothing changes) when the data is malformed, names a skill with no def or a passion with no passion def, or holds XP that is negative, not finite or past the skill's top level. A save with no `passions` has no assigned passions.

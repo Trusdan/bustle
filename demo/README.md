@@ -101,4 +101,6 @@ The 2-hour bound, the 0.5 m epsilon and the loop count are experimental defaults
 
 `social/` holds a neutral interaction set (chitchat, deep talk, kind words, slight, insult, comfort) and a `comfort` goal that runs a `converse` step. See `docs/social.md`.
 
+`skills/` holds a generic skill set (cooking, farming and crafts), a passion for each and a shared `enjoying_work` thought. They are data only; the tests use them. See `docs/skills.md`.
+
 `trade/` holds a neutral food stall that sells bread through the trade port. See `docs/affordances.md`.
