@@ -84,12 +84,15 @@ const START := 360
 
 ## A colony run seeded [param world_seed] with [param modules] on (all three by default), and the
 ## cold snap unless [param cold_snap] is false. With [param board], settlers also weigh its postings
-## in their free time ([constant TAKE_JOB]).
+## in their free time ([constant TAKE_JOB]). With [param aspirations] (for example
+## [method aspirations]), settlers also have wants, fears and points.
 static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, cold_snap: bool = true,
-		board: BustleJobBoard = null) -> Harness:
+		board: BustleJobBoard = null, aspirations: BustleAspirationConfig = null) -> Harness:
 	var colony := Harness.new(world_seed)
 	if board != null:
 		colony.enable_jobs(board, TAKE_JOB)
+	if aspirations != null:
+		colony.enable_aspirations(aspirations)
 	colony.now = START
 	colony.home_area = HOME
 	colony.sleep_object = &""
@@ -216,6 +219,18 @@ static func goals(bed: StringName, social: bool) -> BustleGoalLibrary:
 	if social:
 		library.goals.append(COMFORT_GOAL)
 	return library
+
+
+## The colony's wants and fears, from [code]demo/aspirations/[/code]: a hearty meal at the stove
+## (diligence; 5 points; boosts using the stove) and a warm evening at the hearth (sociability;
+## 3 points; boosts unwinding there), and a fear of the cold formed by the cold snap, which makes the
+## field less appealing for two days.
+static func aspirations() -> BustleAspirationConfig:
+	var config := BustleAspirationConfig.new()
+	config.wants = [load("res://demo/aspirations/hearty_meal.tres"),
+		load("res://demo/aspirations/warm_by_the_hearth.tres")] as Array[BustleWantDef]
+	config.fears = [load("res://demo/aspirations/fear_of_cold.tres")] as Array[BustleFearDef]
+	return config
 
 
 ## The demo work types, loaded from [code]demo/jobs/[/code].

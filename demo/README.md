@@ -108,7 +108,7 @@ The 2-hour bound, the 0.5 m epsilon and the loop count are experimental defaults
 
 `social/` holds a neutral interaction set (chitchat, deep talk, kind words, slight, insult, comfort) and a `comfort` goal that runs a `converse` step. See `docs/social.md`.
 
-`aspirations/` holds two wants (sharing a meal, for sociability, and tidying up, for diligence), a fear of fire formed by the event `fire`, which avoids cooking and whatever started it, and their thoughts. They are data only. See `docs/aspirations.md`.
+`aspirations/` holds test wants (sharing a meal, tidying up) and a fear of fire, plus the colony fixture: a hearty meal at the stove and a warm evening at the hearth, with points and boosts, and a fear of the cold formed by the cold snap. `Colony.build(..., Colony.aspirations())` wires the fixture in, and `tests/demo/test_aspirations_demo.gd` checks the wants, fears and points it shows. See `docs/aspirations.md`.
 
 `environment/` holds an `outdoors` need, which rises indoors and falls outside, and an `indoors` need, which does the reverse. They are data only; a host or test installs them. See `docs/environment.md`.
 

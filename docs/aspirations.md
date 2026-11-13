@@ -1,6 +1,6 @@
-# Aspirations: wants and fears
+# Aspirations: wants, fears and points
 
-`addons/bustle/modules/aspirations/` gives agents short-lived wants and fears formed by events. It is separate from ambitions (`docs/ambitions.md`), which keep working the same with it on or off. Nothing is random: wants and fears come only from causes and state.
+`addons/bustle/modules/aspirations/` gives agents short-lived wants, fears formed by events, and aspiration points. It is separate from ambitions (`docs/ambitions.md`), which keep working the same with it on or off. Nothing is random: wants and fears come only from causes and state.
 
 Bustle ships no wants or fears. The demo's are data in `demo/aspirations/`.
 
@@ -12,7 +12,7 @@ Each agent has its own `BustleAspirations`:
 var aspirations := BustleAspirations.new(&"baker_1", config)
 aspirations.update(now, personality, inputs, events, mood)
 brain.score_boost = func(goal: StringName, option: StringName) -> float:
-	return ambitions.boost(goal, option) * aspirations.avoidance(goal, option)
+	return ambitions.boost(goal, option) * aspirations.score(goal, option)
 ```
 
 - **`inputs`** are the same circumstances and facts the host gives ambitions.
@@ -41,6 +41,9 @@ brain.score_boost = func(goal: StringName, option: StringName) -> float:
 | `duration_hours` | 12 | How long it lasts before it expires unfulfilled. |
 | `cooldown_hours` | 24 | How long after it ends before it is taken automatically again. |
 | `thought` | | The satisfaction thought (a timed `BustleThoughtDef`). |
+| `points` | 0 | Aspiration points earned when it's fulfilled. |
+| `boosts` | | Goal → multiplier while it's active, each at least 1. |
+| `boost_option` | | With one, only candidates whose option is this are boosted. |
 
 **How wants start.** While fewer than `auto_wants` (1) automatic wants are active, `update` takes the eligible want with the highest score:
 
@@ -56,6 +59,26 @@ The host can also give one with `post_want(id, now)`. All wants together stay wi
 - **Expired:** when an update comes at or after its expiry minute. It expires with no thought.
 
 Either way, the want is gone and its cooldown starts.
+
+**The want boost.** While a want is active, `boost(goal, option)` multiplies the goals it names. The rules match an ambition's boost, with a smaller multiplier:
+
+- **Capped:** never more than `max_want_boost` (1.25 by default, below an ambition's ×1.5–2), so a want can tip a close choice but never drown an ambition.
+- **Not stacked:** with several wants naming one goal, the largest boost counts, not the product.
+- **Banned goals:** never a goal in `never_boost` (steal, insult, quarrel, fight and attack by default).
+- **Only its option:** with `boost_option` set, only candidates whose option is that one are boosted.
+- **Bands unchanged:** the boost goes through `BustleBrain.score_boost`, so it applies inside the goal's band, and a boosted personal goal never outranks duty.
+
+`score(goal, option)` is the whole effect, boost × avoidance, for `score_boost`.
+
+## Points
+
+Fulfilling a want earns its `points`. Points only accumulate, and Bustle defines no rewards:
+
+- **`points()`** gives the total.
+- **`add_points(amount, reason)`** awards more. Fulfilment uses it with the reason `want:<id>`, and a host may call it too.
+- **`spend_points(amount, reason)`** takes points away. It refuses more than are held.
+- **`on_points`**, the host's reward hook, is `func(agent, amount, reason)`. It is called after points are earned, with the new total already counted, and it may spend them to grant whatever reward the game has. Unset, points just accumulate.
+- **`points_changed(agent, amount, reason, total)`** fires on every change; `amount` is negative for spending.
 
 ## Fears
 
@@ -84,7 +107,18 @@ Either way, the want is gone and its cooldown starts.
 - `want_expired(agent, id, info)`
 - `fear_formed(agent, id, info)`, where `info.renewed` marks a renewal
 - `fear_ended(agent, id, reason)`, where the reason is `expired` or `cleared`
+- `points_changed(agent, amount, reason, total)`
 
 ## Saving
 
-`export_state()` gives `{wants, fears, ended}`. Expiry and end times are absolute game minutes, so a want saved with an hour left expires an hour after the load. `import_state` refuses malformed data, or a want or fear the config doesn't have, and changes nothing.
+`export_state()` gives `{wants, fears, ended, points}`. Expiry and end times are absolute game minutes, so a want saved with an hour left expires an hour after the load. `import_state` refuses malformed data, a want or fear the config doesn't have, or negative points, and changes nothing. A save without `points` has none.
+
+## In the demo
+
+`Colony.build(..., aspirations)` with `Colony.aspirations()` gives the settlers the colony fixture from `demo/aspirations/`:
+
+- a **hearty meal** at the stove (diligence; 5 points; boosts using the stove);
+- a **warm evening** at the hearth (sociability; 3 points; boosts unwinding there);
+- a **fear of the cold**, formed by the cold snap, which halves the field's appeal for two days.
+
+The demo harness (`enable_aspirations`) updates each settler every step with its inputs, the fact `used.<object>` for what it is using, and the events that started that step. It multiplies `score` into its brain, and logs `want`, `fear` and `points` on the timeline. Without aspirations, the colony is unchanged.

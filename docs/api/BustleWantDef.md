@@ -82,6 +82,30 @@ var cooldown_hours: float = 24.0
 
 Game hours after it ends (fulfilled or expired) before the same agent takes it again automatically.
 
+### `points`
+
+```gdscript
+var points: int = 0
+```
+
+Aspiration points the agent earns when it's fulfilled.
+
+### `boosts`
+
+```gdscript
+var boosts: Dictionary[StringName, float] = {}
+```
+
+Goal → multiplier while it's active (see `BustleAspirations.boost()`). Each is at least 1, and is capped by `BustleAspirationConfig.max_want_boost`.
+
+### `boost_option`
+
+```gdscript
+var boost_option: StringName = &""
+```
+
+With one, only candidates whose option is this are boosted. Empty: any option.
+
 ### `thought`
 
 ```gdscript
@@ -98,7 +122,7 @@ The satisfaction thought added when it's fulfilled (a timed `BustleThoughtDef` f
 func is_valid() -> bool
 ```
 
-True when it can be used: an id, known sliders with finite weights, a finite target, a positive finite duration and a non-negative finite cooldown.
+True when it can be used: an id, known sliders with finite weights, a finite target, a positive finite duration, a non-negative finite cooldown, points of at least 0, and boosts that are finite and at least 1.
 
 ### `is_done`
 

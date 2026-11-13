@@ -18,14 +18,16 @@ extends RefCounted
 ## [br]- [code]thought[/code]: a thought came ([code]{thought, phase: "add", value, reason}[/code])
 ## or went ([code]{thought, phase: "end"}[/code]), with mood on;
 ## [br]- [code]job[/code]: a board posting changed, with jobs on: [code]{job, what}[/code];
+## [br]- [code]want[/code], [code]fear[/code] and [code]points[/code], with aspirations on:
+## [code]{want, what}[/code], [code]{fear, what}[/code] and [code]{amount, total}[/code];
 ## [br]- [code]stuck[/code] and [code]unstuck[/code]: [member stuck] judged an agent stuck
 ## ([code]{reason, since}[/code]) or moving again ([code]{reason, minutes}[/code]).
 ## [br][br]
 ## The optional modules are off until switched on, each before any agent is added:
 ## [method enable_mood] (needs_mood: a mood and a mental state per agent), [method enable_social]
 ## (the built-in social store, conversations and the comfort hook), [method enable_perception]
-## (who notices whom), [method enable_jobs] (a job board) and [method enable_environment] (indoors
-## and outdoors). With perception off, an agent notices everyone awake in its area.
+## (who notices whom), [method enable_jobs] (a job board), [method enable_environment] (indoors
+## and outdoors) and [method enable_aspirations] (wants, fears and points). With perception off, an agent notices everyone awake in its area.
 ## [br][br]
 ## Needs move on under these conditions: [code]asleep[/code] while using [member sleep_object];
 ## otherwise [code]awake[/code], plus [code]away[/code] and [code]in_company[/code] while away, or
@@ -84,9 +86,14 @@ var conversation: BustleConversation = null
 var perception: BustlePerceptionWorld = null
 ## Watches every agent for being stuck (its bound and epsilon are experimental defaults).
 var stuck := StuckWatch.new()
+var _aspirations: Dictionary[StringName, BustleAspirations] = {}
+## Events that started this step, passed to aspirations as their events.
+var _started: Array[StringName] = []
 ## The environment port whose rooms give [code]indoors[/code] and [code]outdoors[/code], with the
 ## environment on.
 var environment: BustleEnvironmentPort = null
+## The want and fear library, with aspirations on.
+var aspiration_config: BustleAspirationConfig = null
 ## The job board, with jobs on.
 var jobs: BustleJobBoard = null
 ## The goal that takes posted jobs, with jobs on.
@@ -143,6 +150,19 @@ func enable_environment(port: BustleEnvironmentPort) -> void:
 	environment = port
 
 
+## Switches aspirations on, before agents are added: each agent gets wants and fears from
+## [param config]. Each step, it is updated with its inputs, the fact [code]used.<object>[/code] for
+## the object it is using, and the events that started that step; its [method BustleAspirations.score]
+## goes into its brain's scores.
+func enable_aspirations(config: BustleAspirationConfig) -> void:
+	aspiration_config = config
+
+
+## [param id]'s wants, fears and points, with aspirations on (else null).
+func aspirations_of(id: StringName) -> BustleAspirations:
+	return _aspirations.get(id)
+
+
 ## Switches jobs on: each agent's brain is offered [param board]'s postings as options for
 ## [param goal] (and only for it). A posting its brain picks is requested and settled at the end of
 ## the step; while it holds the job goal on its claim, its work is added each step.
@@ -188,8 +208,10 @@ func add_agent(id: StringName, library: BustleGoalLibrary, need_defs: Array[Bust
 	var me: WeakRef = weakref(self)
 	if _converse != null:
 		brain.runner.register(&"converse", _converse)
-	if _converse != null or jobs != null:
-		brain.score_boost = func(goal: StringName, option: StringName) -> float: return me.get_ref()._fits(goal, option)
+	if aspiration_config != null:
+		_add_aspirations(id)
+	if _converse != null or jobs != null or aspiration_config != null:
+		brain.score_boost = func(goal: StringName, option: StringName) -> float: return me.get_ref()._fits(id, goal, option)
 	brain.orders.finished.connect(func(order_id: StringName, outcome: BustleOrderQueue.Outcome, _reason: StringName) -> void:
 		var run: RefCounted = me.get_ref()
 		run.timeline.add(run.now, id, &"order", {"order": String(order_id), "outcome": BustleOrderQueue.Outcome.keys()[outcome]}))
@@ -396,6 +418,12 @@ func _step_agent(id: StringName, others_home: int) -> BustleIntent:
 	var seeker := BustleJobSeeker.new(id, personality, senses.inputs, agent["tags"])
 	if jobs != null:
 		jobs.advertise(seeker, senses)
+	var asp: BustleAspirations = _aspirations.get(id)
+	if asp != null:
+		var facts := senses.inputs.duplicate()
+		if agent["using"] != &"":
+			facts["used." + String(agent["using"])] = true
+		asp.update(now, personality, facts, _started, mood)
 	var intent := brain.tick(step_minutes * 60.0, senses)
 	agent["working"] = false
 	if jobs != null and intent.goal_id == job_goal and intent.option_id != &"":
@@ -455,23 +483,47 @@ func _used(id: StringName, object: StringName, minute: int) -> void:
 
 
 # Options that are agents are only for people goals, postings only for the job goal, and objects
-# only for the others.
-func _fits(goal: StringName, option: StringName) -> float:
+# only for the others. With aspirations on, [param id]'s wants and fears scale what fits.
+func _fits(id: StringName, goal: StringName, option: StringName) -> float:
+	var asp: BustleAspirations = _aspirations.get(id)
+	var mult := asp.score(goal, option) if asp != null else 1.0
 	if option == &"":
-		return 1.0
+		return mult
 	if jobs != null and jobs.posting(option) != null:
-		return 1.0 if goal == job_goal else 0.0
+		return mult if goal == job_goal else 0.0
 	if goal == job_goal:
 		return 0.0
-	return 1.0 if people_goals.has(goal) == _agents.has(option) else 0.0
+	return mult if people_goals.has(goal) == _agents.has(option) else 0.0
+
+
+func _add_aspirations(id: StringName) -> void:
+	var asp := BustleAspirations.new(id, aspiration_config)
+	_aspirations[id] = asp
+	var me: WeakRef = weakref(self)
+	var log := func(kind: StringName, agent: StringName, payload: Dictionary) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, agent, kind, payload)
+	for pair: Array in [[asp.want_added, "added"], [asp.want_fulfilled, "fulfilled"], [asp.want_expired, "expired"]]:
+		var what: String = pair[1]
+		(pair[0] as Signal).connect(func(agent: StringName, want: StringName, _info: Dictionary) -> void:
+			log.call(&"want", agent, {"want": String(want), "what": what}))
+	asp.fear_formed.connect(func(agent: StringName, fear: StringName, info: Dictionary) -> void:
+		log.call(&"fear", agent, {"fear": String(fear), "what": "renewed" if info["renewed"] else "formed"}))
+	asp.fear_ended.connect(func(agent: StringName, fear: StringName, reason: StringName) -> void:
+		log.call(&"fear", agent, {"fear": String(fear), "what": String(reason)}))
+	asp.points_changed.connect(func(agent: StringName, amount: int, _reason: StringName, total: int) -> void:
+		log.call(&"points", agent, {"amount": amount, "total": total}))
 
 
 func _update_events() -> void:
+	_started.clear()
 	for event: Dictionary in _events:
 		var on: bool = now >= int(event["start"]) and now < int(event["end"])
 		if on == event["on"]:
 			continue
 		event["on"] = on
+		if on:
+			_started.append(event["id"])
 		timeline.add(now, &"", &"event", {"event": String(event["id"]), "phase": "start" if on else "end"})
 		var thought: BustleThoughtDef = event["thought"]
 		if on and thought != null:
