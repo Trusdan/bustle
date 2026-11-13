@@ -37,14 +37,19 @@ extends Resource
 ## Jealousy over that third agent can come again only after the partner's opinion of them has
 ## fallen below this.
 @export var jealousy_release: int = 60
+## Each time jealousy is felt, the jealous agent's opinion of the rival moves by this, as one timed
+## opinion entry (a modest drop). 0: no entry.
+@export var jealousy_opinion_value: float = -5.0
+## Game days that opinion entry lasts.
+@export var jealousy_opinion_days: float = 3.0
 ## Interactions (by id) that make a partner's partner jealous when done to a third agent
 ## ([method BustleRomance.notice]). Empty: none. The host names its own.
 @export var jealousy_verbs: Array[StringName] = []
 
 
 ## True when it can be used: opinions from 0 to 100 with each release line below its forming
-## line (jealousy's too), a finite compatibility line, a non-negative finite courting time and a history of at least
-## one entry.
+## line (jealousy's too), a finite compatibility line, a non-negative finite courting time, a history of at least
+## one entry, and a finite jealousy opinion entry lasting a positive number of days.
 ## @experimental
 func is_valid() -> bool:
 	for line: int in [courting_opinion, courting_release, partner_opinion, partner_release, jealousy_opinion,
@@ -52,4 +57,5 @@ func is_valid() -> bool:
 		if line < 0 or line > 100:
 			return false
 	return courting_release < courting_opinion and partner_release < partner_opinion and jealousy_release < jealousy_opinion \
-			and is_finite(courting_compat) and is_finite(partner_days) and partner_days >= 0.0 and history_limit >= 1
+			and is_finite(courting_compat) and is_finite(partner_days) and partner_days >= 0.0 and history_limit >= 1 \
+			and is_finite(jealousy_opinion_value) and is_finite(jealousy_opinion_days) and jealousy_opinion_days > 0.0

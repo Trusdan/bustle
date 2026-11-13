@@ -152,7 +152,9 @@ static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, col
 
 
 ## The demo's courtship lines: lower than the defaults so a week shows a partnership (courting at
-## 70, partners after two days at 75), with a breakup and a jealousy thought.
+## 70, partners after two days at 75). It carries a breakup thought and a jealousy thought for when
+## they happen; the fixture itself shows no breakup, and jealousy only once a partner takes to
+## someone else.
 static func romance_rules() -> BustleRomanceRules:
 	var rules := BustleRomanceRules.new()
 	rules.partner_opinion = 75

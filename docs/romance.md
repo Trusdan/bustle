@@ -65,7 +65,13 @@ An agent with a romantic bond (courting or above; never a friend) gets jealous w
 - **Opinion.** In `update_all`, the partner's opinion of a third agent reaches `jealousy_opinion` (75). This is felt once per (agent, partner, third agent). It can come again only after that opinion has fallen below `jealousy_release` (60) and climbed back. What has been felt is saved, and a breakup forgets it.
 - **Interaction.** The host calls `notice(actor, verb, target, mood_of)` for an interaction it has listed in `jealousy_verbs`. That gives one jealousy for each such interaction.
 
-The agent gets `jealousy_thought` (timed), with the partner, the rival and the cause in its reason, and `jealous(agent, partner, rival, cause)` fires. The thought is an ordinary timed thought, under its own stack rules.
+Each time, three things happen:
+
+- **A thought.** The agent gets `jealousy_thought` (timed), with the partner, the rival and the cause in its reason. It is an ordinary timed thought, under its own stack rules.
+- **An opinion entry.** The agent's opinion of the rival gets one timed entry of `jealousy_opinion_value` (−5) for `jealousy_opinion_days` (3), with the cause, partner and rival in its reason. It is written through the port's `add_opinion`, which the built-in store has. A port without opinion entries, such as the Wyrd bridge, whose opinions come from deeds, gets none. Set the value to 0 to turn it off.
+- **A signal.** `jealous(agent, partner, rival, cause)` fires.
+
+The entry is never toward the partner, and it never changes a status by itself: it only moves the opinion of the rival, which no romance line reads for this pair.
 
 ## Affairs
 
