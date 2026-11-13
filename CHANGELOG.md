@@ -6,6 +6,13 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- Room scores on `BustleEnvironmentPort`. `scores(room)` gives beauty, comfort, cleanliness and impressiveness, each from 0 to 1; a score a room doesn't have is unset, not 0. The default port has a store the host fills (`set_room`, `set_scores`) and saves (`export_state` / `import_state`). It is empty by default: no rooms, no scores.
+- An environment module (`addons/bustle/modules/environment/`):
+  - `BustleRoomThought` is a rule: a score, an `at_least` or `at_most` line, and a held thought with reason kind `environment`.
+  - `BustleRoomThoughts.sync(id, mood)` holds, per score of the agent's room, the most extreme high rule and the most extreme low rule it meets, and drops the other rule thoughts. A better room gives a better thought, and leaving a room or a score change swaps or clears them.
+  - With no port, the default port or no mood there are no environment thoughts and no errors.
+  - Each agent's last room and thoughts are saved, and loading never duplicates a thought.
+  - Bustle ships no rules. See `docs/environment.md`.
 - A careers module (`addons/bustle/modules/careers/`). A career is an agent's standing job (a role with a routine) held at a rank of a `BustleCareerDef`; it is not a second job.
   - Each track names its role, a skill, the career block's activity and whether that block is off site.
   - Each `BustleCareerRank` has a wage and a skill minimum.
