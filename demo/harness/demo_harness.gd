@@ -24,13 +24,15 @@ extends RefCounted
 ## The optional modules are off until switched on, each before any agent is added:
 ## [method enable_mood] (needs_mood: a mood and a mental state per agent), [method enable_social]
 ## (the built-in social store, conversations and the comfort hook), [method enable_perception]
-## (who notices whom) and [method enable_jobs] (a job board). With perception off, an agent notices everyone awake in its area.
+## (who notices whom), [method enable_jobs] (a job board) and [method enable_environment] (indoors
+## and outdoors). With perception off, an agent notices everyone awake in its area.
 ## [br][br]
 ## Needs move on under these conditions: [code]asleep[/code] while using [member sleep_object];
 ## otherwise [code]awake[/code], plus [code]away[/code] and [code]in_company[/code] while away, or
 ## the usual [code]alone[/code] / [code]in_company[/code] / [code]crowded[/code] from whoever else
 ## is home ([method BustleNeedSet.social_conditions]). An active event ([method add_event]) adds its
-## condition for everyone.
+## condition for everyone. With the environment on, [code]indoors[/code] or [code]outdoors[/code]
+## too.
 
 const Timeline := preload("res://demo/harness/demo_timeline.gd")
 const UseAction := preload("res://demo/harness/demo_use_action.gd")
@@ -82,6 +84,9 @@ var conversation: BustleConversation = null
 var perception: BustlePerceptionWorld = null
 ## Watches every agent for being stuck (its bound and epsilon are experimental defaults).
 var stuck := StuckWatch.new()
+## The environment port whose rooms give [code]indoors[/code] and [code]outdoors[/code], with the
+## environment on.
+var environment: BustleEnvironmentPort = null
 ## The job board, with jobs on.
 var jobs: BustleJobBoard = null
 ## The goal that takes posted jobs, with jobs on.
@@ -130,6 +135,12 @@ func enable_social(p_store: BustleSocialStore, interactions: Array[BustleInterac
 	_converse = BustleConverseAction.new(conversation)
 	comfort = BustleComfort.new()
 	comfort.low_state_of = func(id: StringName) -> bool: return me.get_ref().in_low_state(id)
+
+
+## Switches the environment on: each step, every agent's needs also move on under
+## [code]indoors[/code] while [param port] has it in a room, else [code]outdoors[/code].
+func enable_environment(port: BustleEnvironmentPort) -> void:
+	environment = port
 
 
 ## Switches jobs on: each agent's brain is offered [param board]'s postings as options for
@@ -362,6 +373,7 @@ func _step_agent(id: StringName, others_home: int) -> BustleIntent:
 	for event: Dictionary in _events:
 		if event["on"]:
 			conditions.append(event["condition"])
+	conditions.append_array(BustleEnvironmentPort.conditions_of(environment, id))
 	needs.advance(step_minutes, conditions, brain.modifiers)
 	_track_dire(agent, needs)
 	var personality: BustlePersonality = agent["personality"]

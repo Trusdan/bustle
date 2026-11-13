@@ -50,7 +50,7 @@ The thought held: a `BustleThoughtDef` from the needs_mood module, with a durati
 func is_valid() -> bool
 ```
 
-True when it can be used: a known score; exactly one of `at_least` and `at_most`, from 0 to 1; and a thought with an id.
+True when it can be used: a known score; exactly one of `at_least` and `at_most`, from 0 to 1; and a held thought (a duration of 0) with an id and reason kind `environment`.
 
 ### `is_high`
 

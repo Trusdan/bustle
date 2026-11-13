@@ -108,6 +108,8 @@ The 2-hour bound, the 0.5 m epsilon and the loop count are experimental defaults
 
 `social/` holds a neutral interaction set (chitchat, deep talk, kind words, slight, insult, comfort) and a `comfort` goal that runs a `converse` step. See `docs/social.md`.
 
+`environment/` holds an `outdoors` need, which rises indoors and falls outside, and an `indoors` need, which does the reverse. They are data only; a host or test installs them. See `docs/environment.md`.
+
 `jobs/` holds three neutral work types: a harvest (diligence, practises farming), an errand (curiosity) and mending (needs the `mender` role). See `docs/work.md`.
 
 `skills/` holds a generic skill set (cooking, farming and crafts), a passion for each and a shared `enjoying_work` thought. They are data only; the tests use them. See `docs/skills.md`.

@@ -5,11 +5,16 @@ extends RefCounted
 ## Rooms and surroundings. The host computes its rooms and their scores; Bustle never detects rooms
 ## or looks at what is in them. A host either extends this (overriding [method room_of] and
 ## [method scores]) or fills the built-in store with [method set_room] and [method set_scores].
-## The standalone default has no rooms and no scores.
+## The standalone default has no rooms and no scores. An agent in a room is indoors and one in no
+## room outdoors ([method conditions]), for needs that rise or fall with that.
 ## @experimental
 
 ## The room scores, each from 0 to 1. A score a room doesn't have is unset, not 0.
 const SCORES: Array[StringName] = [&"beauty", &"comfort", &"cleanliness", &"impressiveness"]
+## The need condition for an agent in a room.
+const INDOORS := &"indoors"
+## The need condition for an agent in no room.
+const OUTDOORS := &"outdoors"
 
 ## Agent id → room.
 var _rooms: Dictionary[StringName, StringName] = {}
@@ -29,6 +34,31 @@ func room_of(id: StringName) -> StringName:
 func scores(room: StringName) -> Dictionary[StringName, float]:
 	var out: Dictionary[StringName, float] = {}
 	out.assign(_scores.get(room, {}))
+	return out
+
+
+## True while [param id] is indoors: by default, while it is in a room. A host can override it
+## (a roofless yard counted as a room, say).
+## @experimental
+func is_indoors(id: StringName) -> bool:
+	return room_of(id) != &""
+
+
+## The need conditions for [param id] now: [constant INDOORS] while it [method is_indoors], else
+## [constant OUTDOORS]. Add them to the conditions passed to [method BustleNeedSet.advance].
+## @experimental
+func conditions(id: StringName) -> Array[StringName]:
+	var out: Array[StringName] = [INDOORS if is_indoors(id) else OUTDOORS]
+	return out
+
+
+## [method conditions] for [param id] from [param port], or none when there is no port: with no
+## environment port, the environment changes no need.
+## @experimental
+static func conditions_of(port: BustleEnvironmentPort, id: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	if port != null:
+		out = port.conditions(id)
 	return out
 
 

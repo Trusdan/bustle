@@ -19,10 +19,15 @@ extends Resource
 
 
 ## True when it can be used: a known score; exactly one of [member at_least] and [member at_most],
-## from 0 to 1; and a thought with an id.
+## from 0 to 1; and a held thought (a duration of 0) with an id and reason kind
+## [code]environment[/code].
 ## @experimental
 func is_valid() -> bool:
 	if not BustleEnvironmentPort.SCORES.has(score) or thought == null or thought.get(&"id") == &"":
+		return false
+	var duration: Variant = thought.get(&"duration_hours")
+	if not (duration is float or duration is int) or float(duration) != 0.0 \
+			or thought.get(&"reason_kind") != &"environment":
 		return false
 	if is_nan(at_least) == is_nan(at_most):
 		return false

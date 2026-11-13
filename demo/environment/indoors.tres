@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BustleNeedDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/bustle/core/needs/need_def.gd" id="1_need"]
+
+[resource]
+script = ExtResource("1_need")
+id = &"indoors"
+rate_per_hour = 0.05
+rises_when = Array[StringName]([&"outdoors"])
+condition_rates = Dictionary[StringName, float]({
+&"indoors": -0.25
+})
