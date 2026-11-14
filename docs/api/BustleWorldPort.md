@@ -123,3 +123,11 @@ func free_body(_id: StringName) -> void
 ```
 
 Removes the body of `_id`. Default: nothing to remove.
+
+### `request_spawn`
+
+```gdscript
+func request_spawn(_kind: StringName, _area: StringName, _count: int, _event: StringName) -> bool
+```
+
+Asks the host to bring `_count` of `_kind` into `_area` (empty: the host's choice) for the story event `_event`. The host decides and makes them; Bustle never creates anything itself. True when the host did. Default: false, and nothing happens.

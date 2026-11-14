@@ -74,6 +74,14 @@ var score_inputs: Dictionary[StringName, float] = {}
 
 Extra score from the host's inputs: input key → points per unit of that input (missing: 0).
 
+### `effects`
+
+```gdscript
+var effects: BustleEventEffect[] = []
+```
+
+What it does when fired, in order (thoughts, orders, spawn requests), applied by [BustleDirectorEffects](BustleDirectorEffects.md). Empty: only `BustleDirector.event_fired`.
+
 ## Methods
 
 ### `event_kind`

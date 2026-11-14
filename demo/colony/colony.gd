@@ -189,6 +189,39 @@ static func life_stage_rules() -> BustleLifeStageRules:
 	return rules
 
 
+## A small neutral story deck for [method Harness.enable_director], with experimental values:
+## [br]- [code]gale[/code] raises tension (0.4): everyone feels windswept (−4 for 12 hours); every 2 days;
+## [br]- [code]fair_day[/code] relieves it (−0.4): everyone enjoys the fine weather (+3 for 12 hours),
+## with at least 2 settlers; every day;
+## [br]- [code]travellers[/code] asks the world for a visitor (the default world makes none), with
+## at most 10 settlers; every 3 days.
+## [br]Beside the fixed cold snap, which it doesn't replace.
+static func director_events() -> Array[BustleEventDef]:
+	var out: Array[BustleEventDef] = []
+	for row: Array in [[&"gale", 0.4, 2, &"windswept", -4.0, {"input": BustleDirector.INPUT_POPULATION}],
+			[&"fair_day", -0.4, 1, &"fine_weather", 3.0, {"input": BustleDirector.INPUT_POPULATION, "at_least": 2}]]:
+		var effect := BustleEventEffect.new()
+		effect.thought = thought(row[3], row[4], 12.0, &"", 1)
+		effect.target_area = BustleWorldPort.DEFAULT_AREA
+		out.append(_story_event(row[0], row[1], row[2], row[5], effect))
+	var visit := BustleEventEffect.new()
+	visit.kind = BustleEventEffect.SPAWN
+	visit.spawn_kind = &"visitor"
+	visit.spawn_area = BustleWorldPort.DEFAULT_AREA
+	out.append(_story_event(&"travellers", 0.0, 3, {"input": BustleDirector.INPUT_POPULATION, "at_most": 10}, visit))
+	return out
+
+
+static func _story_event(id: StringName, tension: float, days: int, rule: Dictionary, effect: BustleEventEffect) -> BustleEventDef:
+	var def := BustleEventDef.new()
+	def.id = id
+	def.tension = tension
+	def.cooldown_minutes = days * 1440
+	def.requires = [rule]
+	def.effects = [effect]
+	return def
+
+
 ## The settlers' needs.
 static func needs() -> Array[BustleNeedDef]:
 	return [

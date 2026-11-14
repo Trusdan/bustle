@@ -97,3 +97,11 @@ func spawn_body(_id: StringName, _xf: Transform3D) -> Node3D:
 ## @experimental
 func free_body(_id: StringName) -> void:
 	pass
+
+
+## Asks the host to bring [param _count] of [param _kind] into [param _area] (empty: the host's
+## choice) for the story event [param _event]. The host decides and makes them; Bustle never
+## creates anything itself. True when the host did. Default: false, and nothing happens.
+## @experimental
+func request_spawn(_kind: StringName, _area: StringName, _count: int, _event: StringName) -> bool:
+	return false

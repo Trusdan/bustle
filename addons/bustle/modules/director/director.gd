@@ -15,7 +15,9 @@ extends RefCounted
 ## [br]- score ([method BustleEventDef.score]), highest first;
 ## [br]- id.
 ## [br]At most one event fires per update, and none within [member BustleDirectorRules.beat_gap_minutes]
-## of the last. Firing emits [signal event_fired]; what the event does is the host's.
+## of the last. Firing emits [signal event_fired], then [member effects] applies what the event
+## declares (thoughts, orders, spawn requests). Population and wealth reach it as host inputs
+## ([method hooks]); Bustle keeps no economy.
 ## [br][br]
 ## With no events, nothing fires, and the director port is left as it is.
 ## @experimental
@@ -28,6 +30,12 @@ const NEED_RAISE := 1
 const NEED_RELIEVE := -1
 ## The saved-state layout version.
 const STATE_VERSION := 1
+## The population hook: the input a host fills with a head count, for preconditions, scores and
+## tension to read ([method hooks]).
+const INPUT_POPULATION := &"fact.population"
+## The wealth hook: the input a host fills with a wealth figure. Bustle has no economy: it only reads
+## the number.
+const INPUT_WEALTH := &"fact.wealth"
 
 ## [param id] fired at game minute [param now].
 signal event_fired(id: StringName, now: int)
@@ -36,6 +44,8 @@ signal event_fired(id: StringName, now: int)
 var rules: BustleDirectorRules
 ## The ports it reads: [code]director[/code], the host's veto. Null: every event is allowed.
 var ports: BustlePorts
+## Applies each fired event's effects, after [signal event_fired]. Null: no effects are applied.
+var effects: BustleDirectorEffects = null
 
 var _defs: Array[BustleEventDef] = []
 # Event id → the game minute it last fired.
@@ -151,7 +161,20 @@ func update(now: int, inputs: Dictionary = {}, locked: bool = false) -> StringNa
 	while not _history.is_empty() and now - int(_history[0][1]) >= rules.memory_minutes:
 		_history.pop_front()
 	event_fired.emit(id, now)
+	if effects != null:
+		effects.apply(candidates[0], now)
 	return id
+
+
+## [param inputs] with the population and wealth hooks set: [param population] as
+## [constant INPUT_POPULATION] and [param wealth] as [constant INPUT_WEALTH]. A copy; the host's
+## dictionary is left alone.
+## @experimental
+static func hooks(population: int, wealth: float, inputs: Dictionary = {}) -> Dictionary:
+	var out := inputs.duplicate()
+	out[INPUT_POPULATION] = float(population)
+	out[INPUT_WEALTH] = wealth
+	return out
 
 
 ## The game minute [param id] last fired, or -1.
