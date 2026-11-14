@@ -13,7 +13,7 @@ One kind of thought, as data: what it does to mood, for how long, how repeats st
 ### `REASON_KINDS`
 
 ```gdscript
-const REASON_KINDS = Array[StringName]([&"need", &"event", &"environment", &"trait", &"deed"])
+const REASON_KINDS = Array[StringName]([&"need", &"event", &"environment", &"trait", &"deed", &"health"])
 ```
 
 The reason kinds a thought can have.

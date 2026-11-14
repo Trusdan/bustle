@@ -14,7 +14,7 @@ The interfaces a host project implements to connect Bustle to its own world (pla
 | `BustleWorkPort` | jobs | none, unless given a schedule roster |
 | `BustleSkillSet` | skill levels | everyone equal (0) |
 | `BustleLifeStagePort` | life stages | ageless: no stage, every goal and option allowed |
-| `BustleHealthPort` | injured, incapacitated, life threatened | everyone healthy |
+| `BustleHealthPort` | injured, incapacitated, life threatened; capacities, pain, care urgency, contagion, visible tags, and a care request | everyone healthy: full capacity, no pain, no care needed, not contagious, no tags, care refused |
 | `BustleEnvironmentPort` | rooms | none |
 | `BustleDirectorPort` | event pacing | allows everything |
 | `BustlePropertyPort` | who owns which things and where they are; protected things; moving an item to a new owner; the host using one up | an in-memory register; theft only moves items, and only the host registers or removes them |

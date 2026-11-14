@@ -6,6 +6,16 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- A health module (`addons/bustle/modules/health/`), opt-in. Bustle reacts to the host's health and keeps none of its own: no wound, illness or body state.
+  - `BustleHealthPort` gains `capacity(id, name)` (1 is full), `pain(id)`, `needs_care(id)` (0 to 1), `is_contagious(id)`, `visible_tags(id)` and `care(healer, patient)` (a request the host carries out). The defaults are healthy, and `care` returns false.
+  - `BustleHealthBehaviour.tick()` reads the port each tick:
+    - `apply()` scales `work.speed`, `move.speed` and `capacity.<name>` by capacities below full, through `BustleHealthConfig.effects`. Each effect has a configurable curve (`at_zero`, `power`), and effects on one key multiply.
+    - `sync()` holds a pain thought (the highest line met) and a thought per visible tag, and clears them with the port. A mood is optional.
+    - `fill_inputs()` sets `health.pain`, `health.needs_care`, `fact.downed` and `fact.contagious` while they are non-zero.
+  - Downed agents: with `BustleBrain.gate = health.allows`, a downed agent picks no goal or option tagged with `downed_blocks` (`work` and `travel` by default).
+  - Experimental defaults: a straight-line capacity curve; `in_pain` (−6) from pain 0.2, `in_great_pain` (−14) from 0.6; `feeling_sick` (−8) for the `sick` tag.
+- `BustleBrain.gate`, an optional `func(agent, goal_tags, option_tags) -> bool` gate on self-chosen candidates, alongside the life-stage gate. Orders aren't gated.
+- The input names `health.pain` and `health.needs_care`; any other `health.` name is still malformed. The thought reason kind `health`.
 - A life-stages module (`addons/bustle/modules/life_stages/`), opt-in.
   - Each agent's age in game days, set by the host with `BustleLifeStages.set_age()`. `BustleLifeStageRules.days_per_year` (an experimental 360) only converts years to days and back; Bustle assumes no calendar.
   - Data-defined stages (`BustleLifeStageDef`: an id, a minimum age in days, blocked goal tags and blocked affordance tags). `validate()` rejects a bad set with a clear reason: no stages, a missing or empty or repeated id, a minimum that is negative, not finite or not above the previous one, or an empty tag. The module ignores rules that aren't valid.
