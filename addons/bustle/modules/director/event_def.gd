@@ -24,6 +24,9 @@ extends Resource
 @export var weight: float = 1.0
 ## Extra score from the host's inputs: input key → points per unit of that input (missing: 0).
 @export var score_inputs: Dictionary[StringName, float] = {}
+## What it does when fired, in order (thoughts, orders, spawn requests), applied by
+## [BustleDirectorEffects]. Empty: only [signal BustleDirector.event_fired].
+@export var effects: Array[BustleEventEffect] = []
 
 
 ## The kind to ask the port about.
@@ -53,6 +56,10 @@ func validate() -> String:
 	for key: StringName in score_inputs:
 		if key == &"" or not is_finite(score_inputs[key]):
 			return "event '%s': a score input is empty or not finite" % id
+	for i: int in effects.size():
+		var why := "effect is missing" if effects[i] == null else effects[i].validate()
+		if why != "":
+			return "event '%s': effect %d: %s" % [id, i, why]
 	return ""
 
 

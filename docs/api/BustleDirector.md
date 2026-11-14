@@ -11,7 +11,7 @@ Each `update()`, an event is eligible when its preconditions hold on the host's 
 - pacing (`need()`): events that move tension the way the story needs come first, those that leave it alone next, and those that push the wrong way last, so they still fire when nothing else can; 
 - score (`BustleEventDef.score()`), highest first; 
 - id. 
-At most one event fires per update, and none within `BustleDirectorRules.beat_gap_minutes` of the last. Firing emits `event_fired`; what the event does is the host's.
+At most one event fires per update, and none within `BustleDirectorRules.beat_gap_minutes` of the last. Firing emits `event_fired`, then `effects` applies what the event declares (thoughts, orders, spawn requests). Population and wealth reach it as host inputs (`hooks()`); Bustle keeps no economy.
 With no events, nothing fires, and the director port is left as it is.
 
 ## Signals
@@ -58,6 +58,22 @@ const STATE_VERSION = 1
 
 The saved-state layout version.
 
+### `INPUT_POPULATION`
+
+```gdscript
+const INPUT_POPULATION = &"fact.population"
+```
+
+The population hook: the input a host fills with a head count, for preconditions, scores and tension to read (`hooks()`).
+
+### `INPUT_WEALTH`
+
+```gdscript
+const INPUT_WEALTH = &"fact.wealth"
+```
+
+The wealth hook: the input a host fills with a wealth figure. Bustle has no economy: it only reads the number.
+
 ## Properties
 
 ### `rules`
@@ -75,6 +91,14 @@ var ports: BustlePorts
 ```
 
 The ports it reads: `director`, the host's veto. Null: every event is allowed.
+
+### `effects`
+
+```gdscript
+var effects: BustleDirectorEffects = null
+```
+
+Applies each fired event's effects, after `event_fired`. Null: no effects are applied.
 
 ## Methods
 
@@ -125,6 +149,14 @@ func update(now: int, inputs: Dictionary = {}, locked: bool = false) -> StringNa
 ```
 
 Fires the best eligible event at `now` on the host's `inputs`, with the quest lock `locked`, and emits `event_fired`. Returns its id, or empty when none fires.
+
+### `hooks`
+
+```gdscript
+static func hooks(population: int, wealth: float, inputs: Dictionary = {}) -> Dictionary
+```
+
+`inputs` with the population and wealth hooks set: `population` as `INPUT_POPULATION` and `wealth` as `INPUT_WEALTH`. A copy; the host's dictionary is left alone.
 
 ### `last_fired`
 

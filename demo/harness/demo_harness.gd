@@ -20,6 +20,8 @@ extends RefCounted
 ## [br]- [code]job[/code]: a board posting changed, with jobs on: [code]{job, what}[/code];
 ## [br]- [code]romance[/code] and [code]jealous[/code], with romance on:
 ## [code]{with, status, reason}[/code] and [code]{partner, rival, cause}[/code];
+## [br]- [code]director[/code] and [code]effect[/code]: a story event fired and what it did, with the
+## director on;
 ## [br]- [code]stage[/code]: an agent's life stage changed, with life stages on: [code]{from, to}[/code];
 ## [br]- [code]born[/code], [code]died[/code] ([code]{cause}[/code]) and [code]vacated[/code]
 ## ([code]{kind, what}[/code]): the life-stage hooks, with life stages on;
@@ -100,6 +102,8 @@ var _started: Array[StringName] = []
 var environment: BustleEnvironmentPort = null
 ## The courtship ladder, with romance on.
 var romance: BustleRomance = null
+## The storyteller, with the director on: it runs each step on the harness's head count.
+var director: BustleDirector = null
 ## Ages and stage gates, with life stages on. A dead agent is no longer stepped.
 var life_stages: BustleLifeStages = null
 ## With life stages on, moves every age on to [member now] at the start of each step
@@ -176,6 +180,30 @@ func enable_romance(rules: BustleRomanceRules) -> BustleRomance:
 		var run: RefCounted = me.get_ref()
 		run.timeline.add(run.now, agent, &"jealous", {"partner": String(partner), "rival": String(rival), "cause": String(cause)}))
 	return romance
+
+
+## Switches the storyteller on with [param events] and [param rules]: each step it may fire one
+## event on the head count ([constant BustleDirector.INPUT_POPULATION]; wealth is 0 here) and apply
+## its effects to the agents. Logs [code]director[/code] ([code]{event}[/code]) and
+## [code]effect[/code] ([code]{event, kind, what, done}[/code]) on the timeline. Spawn requests go to
+## the default world port, which makes nothing.
+func enable_director(events: Array[BustleEventDef], rules: BustleDirectorRules = null) -> BustleDirector:
+	director = BustleDirector.new(rules)
+	for def: BustleEventDef in events:
+		director.add_event(def)
+	var me: WeakRef = weakref(self)
+	var effects := BustleDirectorEffects.new(BustlePorts.new())
+	effects.agents = func() -> Array[StringName]: return me.get_ref().agent_ids()
+	effects.mood_of = func(id: StringName) -> Object: return me.get_ref().mood_of(id)
+	effects.brain_of = func(id: StringName) -> BustleBrain: return me.get_ref().brain_of(id)
+	director.effects = effects
+	director.event_fired.connect(func(id: StringName, _now: int) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, &"", &"director", {"event": String(id)}))
+	effects.applied.connect(func(event: StringName, kind: StringName, target: StringName, what: StringName, done: bool) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, target, &"effect", {"event": String(event), "kind": String(kind), "what": String(what), "done": done}))
+	return director
 
 
 ## Switches life stages on with [param rules], before agents are added: each agent's brain is gated
@@ -410,6 +438,8 @@ func step() -> Dictionary[StringName, BustleIntent]:
 		if life_stages == null or not life_stages.is_dead(id):
 			ids.append(id)
 	_update_events()
+	if director != null:
+		director.update(now, BustleDirector.hooks(ids.size(), 0.0), false)
 	if store != null:
 		store.set_time(now)
 	if perception != null:

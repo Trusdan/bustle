@@ -6,6 +6,15 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- Director effects and hooks.
+  - `BustleEventDef.effects` lists `BustleEventEffect`s, applied in order by `BustleDirectorEffects` (`BustleDirector.effects`) when an event fires:
+    - timed thoughts and orders (through the normal order path) for exactly the agents named by id, by tag or by area;
+    - spawn requests through the new `BustleWorldPort.request_spawn(kind, area, count, event)`, which does nothing by default. The host makes what it chooses; Bustle creates nothing.
+
+    Each application emits `applied`.
+  - Population and wealth hooks: `BustleDirector.hooks(population, wealth, inputs)` sets `fact.population` and `fact.wealth` for preconditions, scores and tension to read. There is no economy in Bustle.
+  - The demo harness's `enable_director(events, rules)` and `Colony.director_events()`, a small neutral deck beside the cold snap. The colony is unchanged without it.
+  - `docs/director.md`.
 - A director module (`addons/bustle/modules/director/`), opt-in: a storyteller that paces host-authored events. Nothing is random: no seed and no deck, and the same events, inputs, locks and clock replay the same timeline.
   - `BustleEventDef`, host data: an id (and an optional kind for the port), preconditions on the host's inputs (`{"input": key}` with optional `at_least` / `at_most`), a tension change (raise or relieve), a cooldown in game minutes, a `lock_sensitive` flag, a weight and optional score inputs.
   - `BustleDirectorRules`: tension (0 to 1) is the host's weighted inputs plus each recently fired event's tension, fading over `memory_minutes` (3 days). At or above `high` (0.7) the story needs relief; at or below `low` (0.3) it needs a raise. An optional `beat_gap_minutes` (0) spaces events out without dropping them. All are experimental defaults.
