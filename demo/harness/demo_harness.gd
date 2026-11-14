@@ -21,6 +21,8 @@ extends RefCounted
 ## [br]- [code]romance[/code] and [code]jealous[/code], with romance on:
 ## [code]{with, status, reason}[/code] and [code]{partner, rival, cause}[/code];
 ## [br]- [code]stage[/code]: an agent's life stage changed, with life stages on: [code]{from, to}[/code];
+## [br]- [code]born[/code], [code]died[/code] ([code]{cause}[/code]) and [code]vacated[/code]
+## ([code]{kind, what}[/code]): the life-stage hooks, with life stages on;
 ## [br]- [code]want[/code], [code]fear[/code] and [code]points[/code], with aspirations on:
 ## [code]{want, what}[/code], [code]{fear, what}[/code] and [code]{amount, total}[/code];
 ## [br]- [code]stuck[/code] and [code]unstuck[/code]: [member stuck] judged an agent stuck
@@ -98,8 +100,11 @@ var _started: Array[StringName] = []
 var environment: BustleEnvironmentPort = null
 ## The courtship ladder, with romance on.
 var romance: BustleRomance = null
-## Ages and stage gates, with life stages on.
+## Ages and stage gates, with life stages on. A dead agent is no longer stepped.
 var life_stages: BustleLifeStages = null
+## With life stages on, moves every age on to [member now] at the start of each step
+## ([method BustleLifeStages.advance_to]). Off by default, so ages stay as set.
+var age_each_step: bool = false
 ## The want and fear library, with aspirations on.
 var aspiration_config: BustleAspirationConfig = null
 ## The job board, with jobs on.
@@ -182,6 +187,15 @@ func enable_life_stages(rules: BustleLifeStageRules) -> BustleLifeStages:
 	life_stages.stage_changed.connect(func(agent: StringName, old: StringName, new: StringName) -> void:
 		var run: RefCounted = me.get_ref()
 		run.timeline.add(run.now, agent, &"stage", {"from": String(old), "to": String(new)}))
+	life_stages.born.connect(func(agent: StringName, _days: float) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, agent, &"born", {}))
+	life_stages.died.connect(func(agent: StringName, cause: String) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, agent, &"died", {"cause": cause}))
+	life_stages.vacated.connect(func(agent: StringName, kind: StringName, what: StringName) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, agent, &"vacated", {"kind": String(kind), "what": String(what)}))
 	return life_stages
 
 
@@ -389,6 +403,12 @@ func dire_minutes(id: StringName, need: StringName) -> int:
 ## Runs one step for every agent, in id order. Returns each agent's intent.
 func step() -> Dictionary[StringName, BustleIntent]:
 	var intents: Dictionary[StringName, BustleIntent] = {}
+	if life_stages != null and age_each_step:
+		life_stages.advance_to(now)
+	var ids: Array[StringName] = []
+	for id: StringName in agent_ids():
+		if life_stages == null or not life_stages.is_dead(id):
+			ids.append(id)
 	_update_events()
 	if store != null:
 		store.set_time(now)
@@ -397,16 +417,16 @@ func step() -> Dictionary[StringName, BustleIntent]:
 	if jobs != null:
 		jobs.expire(now)
 	var home := 0
-	for id: StringName in agent_ids():
+	for id: StringName in ids:
 		if not is_away(id):
 			home += 1
-	for id: StringName in agent_ids():
+	for id: StringName in ids:
 		intents[id] = _step_agent(id, home - (0 if is_away(id) else 1))
 	if jobs != null:
 		jobs.settle(now)
 	if romance != null:
 		var me: WeakRef = weakref(self)
-		romance.update_all(agent_ids(), now, func(id: StringName) -> Object: return me.get_ref().mood_of(id))
+		romance.update_all(ids, now, func(id: StringName) -> Object: return me.get_ref().mood_of(id))
 	now += step_minutes
 	return intents
 

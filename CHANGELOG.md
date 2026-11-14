@@ -14,6 +14,11 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
   - Ages and stages are saved. Nothing is random. See `docs/life_stages.md`.
   - `BustleLifeStagePort.allows_goal()` and `allows_affordance()`, true in the ageless default.
   - The demo harness's `enable_life_stages(rules)`, and `Colony.build(..., Colony.life_stage_rules())` with a child, two adults and an elder.
+  - Aging: `advance_to(minute)` moves every living age on with the clock, at `minutes_per_day` (1440) minutes a day. It is closed-form, so one catch-up call equals stepping day by day. Each stage crossed fires `stage_changed` once, in the order the ages reached it.
+  - Birth: `birth(id, days = 0.0)` adds an agent in a valid stage and emits `born`; a bad birth is refused with a reason.
+  - Death: `note_death(id, cause)` emits `died` once. The agent stops aging and is closed to every goal and option, and `living_ids()` drops it. Its career, job claim and roles are released (through `careers`, `jobs` and `roles`), each with a `vacated` signal; refilling is the host's call. No birth or death is automatic.
+  - The save holds anchors, deaths and the current minute (version 2); version 1 saves still load. `validate()` is checked once and kept (`revalidate()` after changing rules in place).
+  - The demo harness logs `born`, `died` and `vacated`, stops stepping the dead, and ages everyone each step with `age_each_step`.
 - A romance module (`addons/bustle/modules/romance/`): the courtship ladder of courting, partner, engaged and married, written both ways as kinds through the social port.
   - Courting and partner form automatically from mutual opinion, compatibility and courting days (`BustleRomanceRules`).
   - Engaged and married come only from `request()` with the host's `confirm_hook` approving.

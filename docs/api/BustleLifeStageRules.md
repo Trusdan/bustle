@@ -18,6 +18,14 @@ var days_per_year: float = 360.0
 
 Game days in one year, for `days_of()` and `years_of()`. Finite and above 0. An experimental default; Bustle assumes no calendar.
 
+### `minutes_per_day`
+
+```gdscript
+var minutes_per_day: int = 1440
+```
+
+Game minutes in one day, for `BustleLifeStages.advance_to()`. Above 0; 1440 matches the default clock port.
+
 ### `stages`
 
 ```gdscript
@@ -34,7 +42,7 @@ The stages, youngest first.
 func validate() -> String
 ```
 
-Why these rules can't be used, or empty when they can: at least one stage; every stage present, with an id used once and finite, not negative `BustleLifeStageDef.min_days` above the stage before it; no empty blocked tag; and `days_per_year` finite and above 0.
+Why these rules can't be used, or empty when they can: at least one stage; every stage present, with an id used once and finite, not negative `BustleLifeStageDef.min_days` above the stage before it; no empty blocked tag; `days_per_year` finite and above 0; and `minutes_per_day` above 0.
 
 ### `is_valid`
 
