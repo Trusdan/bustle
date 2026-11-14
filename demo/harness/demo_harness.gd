@@ -113,6 +113,10 @@ var age_each_step: bool = false
 var aspiration_config: BustleAspirationConfig = null
 ## The job board, with jobs on.
 var jobs: BustleJobBoard = null
+## [code]func(id, senses)[/code] calls made for each agent each step, just before its brain ticks:
+## where a demo wires a module the harness has no switch for (it may read the run, add inputs and
+## log to the timeline). Empty by default.
+var agent_hooks: Array[Callable] = []
 ## The goal that takes posted jobs, with jobs on.
 var job_goal: StringName = &""
 
@@ -513,6 +517,8 @@ func _step_agent(id: StringName, others_home: int) -> BustleIntent:
 		if agent["using"] != &"":
 			facts["used." + String(agent["using"])] = true
 		asp.update(now, personality, facts, _started, mood)
+	for hook: Callable in agent_hooks:
+		hook.call(id, senses)
 	var intent := brain.tick(step_minutes * 60.0, senses)
 	agent["working"] = false
 	if jobs != null and intent.goal_id == job_goal and intent.option_id != &"":

@@ -6,6 +6,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- The colony demo's full session, `Colony.session(seed, modules)`, run for 15 days.
+  - It switches on every optional module plus social and jobs. Skills, careers, ambitions, health, environment and perception are wired through the harness's new `agent_hooks`, as demo code. `Colony.build()` is unchanged.
+  - Its tests replay a pinned run with a clean stuck watch, check that each module leaves a trace, and run the full toggle matrix: each module left out in turn, and all of them out.
+- The module guide's remaining pages: how each module is switched on in the colony session and what it leaves on the timeline. It now says that romance needs social.
 - The house demo's full week, `House.session(seed, modules)`. It switches on mood, social, jobs, aspirations, romance, life stages and the director through the shared harness, adds a bad-news host event, and leaves `House.build()` unchanged. Its tests replay a pinned week with a clean stuck watch, check that every module leaves a trace, and check that the week holds with each module left out in turn and with all of them out.
 - `docs/tutorial.md`, which builds a one-person household from scratch: needs, goals, the brain loop and a mood. A test checks that its classes and paths exist and runs its script.
 - `docs/modules.md`, the module guide: each optional module, how a host switches it on, and what happens without it.
