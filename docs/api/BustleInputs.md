@@ -16,7 +16,15 @@ The fixed vocabulary of scorer inputs. An input key is a family and a name, such
 const FAMILIES = PackedStringArray("need", "trait", "opinion", "memory", "distance", "schedule", "role", "fact", "time", "health", "threat")
 ```
 
-Every family, by its prefix. `health` stands alone; the others take a name.
+Every family, by its prefix. `health` stands alone or takes one of `HEALTH_NAMES`; the others take a name.
+
+### `HEALTH_NAMES`
+
+```gdscript
+const HEALTH_NAMES = PackedStringArray("pain", "needs_care")
+```
+
+The names `health` takes: `health.pain` and `health.needs_care` (0 to 1, see [BustleHealthBehaviour](BustleHealthBehaviour.md)). Any other `health.` key is malformed.
 
 ### `MOOD`
 
@@ -34,4 +42,4 @@ The input `mood` the scorer's mood curves read (0 to 100). Not a family.
 static func is_valid_input(key: StringName) -> bool
 ```
 
-True when `key` is a well-formed input: `health`, `mood`, or a family followed by one or more dot-separated names of lower-case letters, digits and underscores.
+True when `key` is a well-formed input: `health` (alone or with one of `HEALTH_NAMES`), `mood`, or a family followed by one or more dot-separated names of lower-case letters, digits and underscores.

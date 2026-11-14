@@ -8,23 +8,30 @@ extends RefCounted
 ## Input values reach the scorer already normalised by whoever supplies them.
 ## @experimental
 
-## Every family, by its prefix. [code]health[/code] stands alone; the others take a name.
+## Every family, by its prefix. [code]health[/code] stands alone or takes one of
+## [constant HEALTH_NAMES]; the others take a name.
 const FAMILIES: PackedStringArray = [
 	"need", "trait", "opinion", "memory", "distance", "schedule", "role", "fact", "time", "health", "threat",
 ]
+## The names [code]health[/code] takes: [code]health.pain[/code] and [code]health.needs_care[/code]
+## (0 to 1, see [BustleHealthBehaviour]). Any other [code]health.[/code] key is malformed.
+const HEALTH_NAMES: PackedStringArray = ["pain", "needs_care"]
 ## The input [code]mood[/code] the scorer's mood curves read (0 to 100). Not a family.
 const MOOD := &"mood"
 
 
-## True when [param key] is a well-formed input: [code]health[/code], [code]mood[/code], or a family
-## followed by one or more dot-separated names of lower-case letters, digits and underscores.
+## True when [param key] is a well-formed input: [code]health[/code] (alone or with one of
+## [constant HEALTH_NAMES]), [code]mood[/code], or a family followed by one or more dot-separated
+## names of lower-case letters, digits and underscores.
 ## @experimental
 static func is_valid_input(key: StringName) -> bool:
 	var text := String(key)
 	if text == "health" or key == MOOD:
 		return true
 	var parts := text.split(".")
-	if parts.size() < 2 or not FAMILIES.has(parts[0]) or parts[0] == "health":
+	if parts[0] == "health":
+		return parts.size() == 2 and HEALTH_NAMES.has(parts[1])
+	if parts.size() < 2 or not FAMILIES.has(parts[0]):
 		return false
 	for part: String in parts.slice(1):
 		if part.is_empty() or not _is_name(part):

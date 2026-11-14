@@ -31,7 +31,7 @@ extends Resource
 
 
 ## The reason kinds a thought can have.
-const REASON_KINDS: Array[StringName] = [&"need", &"event", &"environment", &"trait", &"deed"]
+const REASON_KINDS: Array[StringName] = [&"need", &"event", &"environment", &"trait", &"deed", &"health"]
 ## The longest duration: about 1,900 game years, well inside whole minutes.
 const MAX_DURATION_HOURS := 1.0e7
 

@@ -184,6 +184,14 @@ var life_stages: BustleLifeStagePort = null
 
 The life stages that gate its self-chosen goals and options, or null (no gates). Each tick, a candidate whose goal `BustleLifeStagePort.allows_goal()` refuses (by the goal's id and tags), or whose option `BustleLifeStagePort.allows_affordance()` refuses (by its advertisement's tags), is made ineligible with a `stage_gate` reason, so it is never picked. Orders aren't gated.
 
+### `gate`
+
+```gdscript
+var gate: Callable = Callable()
+```
+
+`func(agent_id, goal_tags, option_tags) -> bool`: a further gate on its self-chosen candidates, for example `BustleHealthBehaviour.allows()`. `goal_tags` are the goal's id and tags, `option_tags` its option's advertisement tags (empty with no option). False makes the candidate ineligible with a `gate` reason, so it is never picked. Unset: no gate. Orders aren't gated.
+
 ## Methods
 
 ### `order`

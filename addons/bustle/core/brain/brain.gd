@@ -90,6 +90,12 @@ var score_boost: Callable = Callable()
 ## advertisement's tags), is made ineligible with a [code]stage_gate[/code] reason, so it is never
 ## picked. Orders aren't gated.
 var life_stages: BustleLifeStagePort = null
+## [code]func(agent_id, goal_tags, option_tags) -> bool[/code]: a further gate on its self-chosen
+## candidates, for example [method BustleHealthBehaviour.allows]. [code]goal_tags[/code] are the
+## goal's id and tags, [code]option_tags[/code] its option's advertisement tags (empty with no
+## option). False makes the candidate ineligible with a [code]gate[/code] reason, so it is never
+## picked. Unset: no gate. Orders aren't gated.
+var gate: Callable = Callable()
 
 var _rng := RandomNumberGenerator.new()
 var _scorer := BustleUtilityScorer.new()
@@ -177,7 +183,7 @@ func _think(delta: float, senses: BustleSenses) -> BustleIntent:
 	modifiers.fill_context(context, needs, tags)
 	var candidates := _scorer.evaluate(library, context, config)
 	last_candidates = candidates
-	if life_stages != null:
+	if life_stages != null or gate.is_valid():
 		_apply_stage_gates(candidates, senses.advertisements)
 	var top := _apply_autonomy(candidates)
 	var front := orders.front()
@@ -283,7 +289,7 @@ func _apply_autonomy(candidates: Array[BustleCandidate]) -> int:
 	return top
 
 
-# Makes candidates the agent's life stage rules out ineligible.
+# Makes candidates the agent's life stage, or its gate, rules out ineligible.
 func _apply_stage_gates(candidates: Array[BustleCandidate], ads: Array[BustleAdvertisement]) -> void:
 	var option_tags: Dictionary[StringName, Array] = {}
 	for ad: BustleAdvertisement in ads:
@@ -298,10 +304,13 @@ func _apply_stage_gates(candidates: Array[BustleCandidate], ads: Array[BustleAdv
 			goal_tags.append_array(goal.tags)
 		var tags: Array[StringName] = []
 		tags.assign(option_tags.get(candidate.option_id, []))
-		if not life_stages.allows_goal(agent_id, goal_tags) \
-				or (candidate.option_id != &"" and not life_stages.allows_affordance(agent_id, tags)):
+		if life_stages != null and (not life_stages.allows_goal(agent_id, goal_tags) \
+				or (candidate.option_id != &"" and not life_stages.allows_affordance(agent_id, tags))):
 			candidate.eligible = false
 			candidate.reasons.append({"kind": &"stage_gate", "stage": life_stages.stage_of(agent_id)})
+		elif gate.is_valid() and not bool(gate.call(agent_id, goal_tags, tags)):
+			candidate.eligible = false
+			candidate.reasons.append({"kind": &"gate"})
 
 
 # The paused goal, when it should resume: still eligible and in the highest eligible band. Drops

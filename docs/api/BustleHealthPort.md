@@ -33,3 +33,51 @@ func is_life_threatened(_id: StringName) -> bool
 ```
 
 True when `_id`'s life is in danger right now (for example badly wounded). Default: false.
+
+### `capacity`
+
+```gdscript
+func capacity(_id: StringName, _name: StringName) -> float
+```
+
+How much of capacity `_name` `_id` has, 1 being full and 0 none (for example `moving`, `manipulation` or `consciousness`; names are the host's). Default: 1.
+
+### `pain`
+
+```gdscript
+func pain(_id: StringName) -> float
+```
+
+How much pain `_id` is in, 0 (none) to 1. Default: 0.
+
+### `needs_care`
+
+```gdscript
+func needs_care(_id: StringName) -> float
+```
+
+How urgently `_id` needs care, 0 (not at all) to 1. Default: 0.
+
+### `is_contagious`
+
+```gdscript
+func is_contagious(_id: StringName) -> bool
+```
+
+True when `_id` can pass an illness on. Default: false.
+
+### `visible_tags`
+
+```gdscript
+func visible_tags(_id: StringName) -> StringName[]
+```
+
+What others can see of `_id`'s health, as tags (for example `sick`). Default: none.
+
+### `care`
+
+```gdscript
+func care(_healer: StringName, _patient: StringName) -> bool
+```
+
+Asks the host to have `_healer` care for `_patient`. The host decides and does the treatment; Bustle only asks. True when it was done. Default: false.
