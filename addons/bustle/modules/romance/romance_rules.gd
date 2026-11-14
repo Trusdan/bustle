@@ -38,9 +38,11 @@ extends Resource
 ## fallen below this.
 @export var jealousy_release: int = 60
 ## Each time jealousy is felt, the jealous agent's opinion of the rival moves by this, as one timed
-## opinion entry (a modest drop). 0: no entry.
+## opinion entry. The default is a modest drop. A positive value raises that opinion instead. 0: no
+## entry.
 @export var jealousy_opinion_value: float = -5.0
-## Game days that opinion entry lasts.
+## Game days that opinion entry lasts. It must be finite and above 0 while
+## [member jealousy_opinion_value] isn't 0; with the value at 0 (no entry), 0 is allowed too.
 @export var jealousy_opinion_days: float = 3.0
 ## Interactions (by id) that make a partner's partner jealous when done to a third agent
 ## ([method BustleRomance.notice]). Empty: none. The host names its own.
@@ -49,7 +51,8 @@ extends Resource
 
 ## True when it can be used: opinions from 0 to 100 with each release line below its forming
 ## line (jealousy's too), a finite compatibility line, a non-negative finite courting time, a history of at least
-## one entry, and a finite jealousy opinion entry lasting a positive number of days.
+## one entry, and a finite jealousy opinion entry lasting a positive number of days (or 0 days when
+## the entry is off, with a value of 0).
 ## @experimental
 func is_valid() -> bool:
 	for line: int in [courting_opinion, courting_release, partner_opinion, partner_release, jealousy_opinion,
@@ -58,4 +61,5 @@ func is_valid() -> bool:
 			return false
 	return courting_release < courting_opinion and partner_release < partner_opinion and jealousy_release < jealousy_opinion \
 			and is_finite(courting_compat) and is_finite(partner_days) and partner_days >= 0.0 and history_limit >= 1 \
-			and is_finite(jealousy_opinion_value) and is_finite(jealousy_opinion_days) and jealousy_opinion_days > 0.0
+			and is_finite(jealousy_opinion_value) and is_finite(jealousy_opinion_days) \
+			and (jealousy_opinion_days > 0.0 or (jealousy_opinion_value == 0.0 and jealousy_opinion_days == 0.0))

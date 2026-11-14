@@ -181,13 +181,17 @@ func illness_began(id: StringName, tag: StringName, mood: Object) -> bool:
 	return found
 
 
-## A host event: [param id] recovered. Drops every tag thought from [param mood] at once.
+## A host event: [param id] recovered. Drops from [param mood], at once, every tag thought whose tag
+## the port no longer shows ([method BustleHealthPort.visible_tags]); a tag still shown keeps its
+## thought. The next [method sync] stays the source of truth.
 ## @experimental
 func recovered(id: StringName, mood: Object) -> void:
 	if id == &"" or mood == null or not mood.has_method(&"set_held") or config.validate() != "":
 		return
+	var port := _port()
+	var shown: Array[StringName] = port.visible_tags(id) if port != null else ([] as Array[StringName])
 	for rule: BustleHealthThought in config.thoughts:
-		if rule.tag != &"":
+		if rule.tag != &"" and not shown.has(rule.tag):
 			mood.call(&"set_held", rule.thought, false, {})
 
 

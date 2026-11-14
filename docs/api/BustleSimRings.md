@@ -122,7 +122,7 @@ True when the last `tick()` re-sorted the agents.
 var society: BustleSociety
 ```
 
-The society it sorts.
+The society it sorts. Assigning another one drops the cached id list, so a different society with the same roster version isn't mistaken for this one.
 
 ### `config`
 

@@ -77,7 +77,7 @@ Fulfilling a want earns its `points`. Points only accumulate, and Bustle defines
 - **`points()`** gives the total.
 - **`add_points(amount, reason)`** awards more. Fulfilment uses it with the reason `want:<id>`, and a host may call it too.
 - **`spend_points(amount, reason)`** takes points away. It refuses more than are held.
-- **`on_points`**, the host's reward hook, is `func(agent, amount, reason)`. It is called after points are earned, with the new total already counted, and it may spend them to grant whatever reward the game has. Unset, points just accumulate.
+- **`on_points`**, the host's reward hook, is `func(agent, amount, reason)`. It is called after points are earned, with the new total already counted, and it may spend them to grant whatever reward the game has. It must not call `add_points`, which calls the hook again and would recurse. Unset, points just accumulate.
 - **`points_changed(agent, amount, reason, total)`** fires on every change; `amount` is negative for spending.
 
 ## Fears

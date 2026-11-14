@@ -76,4 +76,4 @@ The agents `effect` targets, in id order: those named, those tagged, those in th
 func apply(def: BustleEventDef, now: int) -> Dictionary[]
 ```
 
-Applies `def`'s effects as fired at `now`, emitting `applied` for each, and returns them as `{event, kind, target, what, done}` records, in order.
+Applies `def`'s effects as fired at `now`, emitting `applied` for each, and returns them as `{event, kind, target, what, done}` records, in order. An order's id is `<event>.<minute>` for the event's first order effect, and `<event>.<minute>.<index>` (the effect's index in `BustleEventDef.effects`) for each later one, so several order effects in one event can all reach the same agent.

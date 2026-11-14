@@ -53,11 +53,18 @@ func targets(effect: BustleEventEffect) -> Array[StringName]:
 
 
 ## Applies [param def]'s effects as fired at [param now], emitting [signal applied] for each, and
-## returns them as [code]{event, kind, target, what, done}[/code] records, in order.
+## returns them as [code]{event, kind, target, what, done}[/code] records, in order. An order's id is
+## [code]<event>.<minute>[/code] for the event's first order effect, and
+## [code]<event>.<minute>.<index>[/code] (the effect's index in [member BustleEventDef.effects]) for
+## each later one, so several order effects in one event can all reach the same agent.
 ## @experimental
 func apply(def: BustleEventDef, now: int) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	for effect: BustleEventEffect in def.effects:
+	var first_order := -1
+	for index: int in def.effects.size():
+		var effect := def.effects[index]
+		if effect.kind == BustleEventEffect.ORDER and first_order < 0:
+			first_order = index
 		if effect.kind == BustleEventEffect.SPAWN:
 			var done := ports != null and ports.world.request_spawn(effect.spawn_kind, effect.spawn_area, effect.count, def.id)
 			out.append(_note(def.id, effect.kind, effect.spawn_area, effect.spawn_kind, done))
@@ -70,11 +77,19 @@ func apply(def: BustleEventDef, now: int) -> Array[Dictionary]:
 				out.append(_note(def.id, effect.kind, id, effect.thought.id, took))
 			else:
 				var brain: Variant = brain_of.call(id) if brain_of.is_valid() else null
-				var order := BustleOrder.new(StringName("%s.%d" % [def.id, now]), effect.sequence)
+				var order := BustleOrder.new(_order_id(def.id, now, index, first_order), effect.sequence)
 				order.place = effect.place
 				var queued := brain is BustleBrain and (brain as BustleBrain).order(order) == &""
 				out.append(_note(def.id, effect.kind, id, order.id, queued))
 	return out
+
+
+# The order id: [code]<event>.<minute>[/code] for the event's first order effect, and
+# [code]<event>.<minute>.<index>[/code] for each later one, so they can all queue on one agent.
+static func _order_id(event: StringName, now: int, index: int, first_order: int) -> StringName:
+	if index == first_order:
+		return StringName("%s.%d" % [event, now])
+	return StringName("%s.%d.%d" % [event, now, index])
 
 
 func _note(event: StringName, kind: StringName, target: StringName, what: StringName, done: bool) -> Dictionary:

@@ -120,7 +120,7 @@ Jealousy over that third agent can come again only after the partner's opinion o
 var jealousy_opinion_value: float = -5.0
 ```
 
-Each time jealousy is felt, the jealous agent's opinion of the rival moves by this, as one timed opinion entry (a modest drop). 0: no entry.
+Each time jealousy is felt, the jealous agent's opinion of the rival moves by this, as one timed opinion entry. The default is a modest drop. A positive value raises that opinion instead. 0: no entry.
 
 ### `jealousy_opinion_days`
 
@@ -128,7 +128,7 @@ Each time jealousy is felt, the jealous agent's opinion of the rival moves by th
 var jealousy_opinion_days: float = 3.0
 ```
 
-Game days that opinion entry lasts.
+Game days that opinion entry lasts. It must be finite and above 0 while `jealousy_opinion_value` isn't 0; with the value at 0 (no entry), 0 is allowed too.
 
 ### `jealousy_verbs`
 
@@ -146,4 +146,4 @@ Interactions (by id) that make a partner's partner jealous when done to a third 
 func is_valid() -> bool
 ```
 
-True when it can be used: opinions from 0 to 100 with each release line below its forming line (jealousy's too), a finite compatibility line, a non-negative finite courting time, a history of at least one entry, and a finite jealousy opinion entry lasting a positive number of days.
+True when it can be used: opinions from 0 to 100 with each release line below its forming line (jealousy's too), a finite compatibility line, a non-negative finite courting time, a history of at least one entry, and a finite jealousy opinion entry lasting a positive number of days (or 0 days when the entry is off, with a value of 0).

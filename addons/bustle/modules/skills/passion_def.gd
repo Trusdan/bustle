@@ -20,11 +20,15 @@ extends Resource
 @export var thought: Resource = null
 
 
-## True when it can be used: a skill id, a positive finite multiplier, and known sliders with finite
-## weights.
+## True when it can be used: a skill id, a positive finite multiplier, known sliders with finite
+## weights, and either no thought or a valid held [BustleThoughtDef] (duration 0). A timed thought,
+## or any other resource, is not valid.
 ## @experimental
 func is_valid() -> bool:
 	if skill == &"" or not is_finite(learn_mult) or learn_mult <= 0.0:
+		return false
+	if thought != null and not (thought is BustleThoughtDef and (thought as BustleThoughtDef).is_valid() \
+			and (thought as BustleThoughtDef).duration_hours == 0.0):
 		return false
 	for slider: StringName in sliders:
 		if not BustlePersonality.SLIDERS.has(slider) or not is_finite(sliders[slider]):

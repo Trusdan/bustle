@@ -44,8 +44,8 @@ var agent_id: StringName
 ## The library and numbers.
 var config: BustleAspirationConfig
 ## The host's reward hook, [code]func(agent, amount, reason)[/code], called after points are earned
-## (with the new total already counted). It may spend them with [method spend_points]. Unset: points
-## only accumulate.
+## (with the new total already counted). It may spend them with [method spend_points]. It must not
+## call [method add_points], which calls it again and would recurse. Unset: points only accumulate.
 var on_points: Callable = Callable()
 
 var _points: int = 0

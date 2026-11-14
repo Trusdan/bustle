@@ -151,8 +151,9 @@ func advance_to(minute: int) -> bool:
 
 ## Records [param id]'s death from [param cause] (a host string Bustle doesn't read), at
 ## [method now]. Emits [signal died], then releases what it held, emitting [signal vacated] for
-## each: its career ([member careers]), its job claim ([member jobs]) and its roles ([member roles],
-## in name order). An agent with no age (never set or born) can die too, the same way. From then
+## each that was actually released: its career ([member careers]), its job claim ([member jobs])
+## and its roles ([member roles], in name order; a role whose holder is still this agent after the
+## port's [code]set_holder[/code] is not reported). An agent with no age (never set or born) can die too, the same way. From then
 ## on it doesn't age, [method set_age] and [method birth] refuse it, every goal and option is closed
 ## to it and [method living_ids] leaves it out. Romance bonds and family links are left alone: the
 ## host handles those from [signal died]. Returns why it was refused, or empty: an empty id, an
@@ -183,7 +184,8 @@ func note_death(id: StringName, cause: String) -> String:
 	if roles != null:
 		for role: String in roles.roles_of(id):
 			roles.set_holder(StringName(role), &"")
-			vacated.emit(id, &"role", StringName(role))
+			if roles.holder_of(StringName(role)) != id:
+				vacated.emit(id, &"role", StringName(role))
 	return ""
 
 
@@ -275,11 +277,12 @@ func export_state() -> Dictionary:
 
 
 ## Restores [method export_state]'s state (or a version 1 save, with ages as of minute 0), without
-## emitting anything. False, changing nothing, for another version, an age that is negative or not
-## finite, a stage for an agent with no age, a stage id the rules don't have, a bad death record
-## (an empty id or cause; a death needs no age), or rules that aren't valid. A stage is restored as saved, even if the rules have changed
-## since and it no longer matches the age; the next [method set_age] or [method advance_to] moves
-## it on.
+## emitting anything. Minutes may be whole floats, as in a save read back from JSON. False, changing
+## nothing, for another version, an age that is negative or not finite, a minute that isn't whole,
+## a stage for an agent with no age, a stage id the rules don't have, a bad death record (an empty
+## id or cause, or a time before 0 or after [code]now[/code]; a death needs no age), or rules that
+## aren't valid. A stage is restored as saved, even if the rules have changed since and it no longer
+## matches the age; the next [method set_age] or [method advance_to] moves it on.
 ## @experimental
 func import_state(saved: Dictionary) -> bool:
 	var version := int(saved.get("version", -1))
@@ -297,24 +300,24 @@ func import_state(saved: Dictionary) -> bool:
 			ages[StringName(str(key))] = float(saved["ages"][key])
 			anchors[StringName(str(key))] = 0
 	else:
-		if not saved.get("now") is int or int(saved["now"]) < 0 or not saved.get("anchors") is Dictionary \
+		if not _whole(saved.get("now")) or int(saved["now"]) < 0 or not saved.get("anchors") is Dictionary \
 				or not saved.get("dead") is Dictionary or (saved["anchors"] as Dictionary).size() != (saved["ages"] as Dictionary).size():
 			return false
-		now = saved["now"]
+		now = int(saved["now"])
 		for key: Variant in saved["ages"]:
 			if not _age_ok(key, saved["ages"][key]):
 				return false
 		for key: Variant in saved["anchors"]:
 			var anchor: Variant = saved["anchors"][key]
-			if not anchor is Array or anchor.size() != 2 or not _age_ok(key, anchor[0]) or not anchor[1] is int \
+			if not anchor is Array or anchor.size() != 2 or not _age_ok(key, anchor[0]) or not _whole(anchor[1]) \
 					or int(anchor[1]) > now or not (saved["ages"] as Dictionary).has(key):
 				return false
 			ages[StringName(str(key))] = float(anchor[0])
-			anchors[StringName(str(key))] = anchor[1]
+			anchors[StringName(str(key))] = int(anchor[1])
 		for key: Variant in saved["dead"]:
 			var record: Variant = saved["dead"][key]
 			if str(key) == "" or not record is Dictionary or str(record.get("cause", "")) == "" \
-					or not record.get("at") is int:
+					or not _whole(record.get("at")) or int(record["at"]) < 0 or int(record["at"]) > now:
 				return false
 			dead[StringName(str(key))] = {"cause": str(record["cause"]), "at": int(record["at"])}
 	var stages: Dictionary[StringName, StringName] = {}
@@ -352,6 +355,11 @@ func _def(id: StringName) -> BustleLifeStageDef:
 	if not _stages.has(id) or error() != "":
 		return null
 	return rules.find(_stages[id])
+
+
+# A whole number of minutes: an int, or a whole float (as a save read back from JSON has).
+static func _whole(value: Variant) -> bool:
+	return value is int or (value is float and is_finite(value) and value == floorf(value))
 
 
 static func _age_ok(key: Variant, value: Variant) -> bool:

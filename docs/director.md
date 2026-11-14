@@ -70,7 +70,7 @@ A lock-sensitive event that is still eligible fires once the lock drops. The hos
 `BustleEventEffect`, in `BustleEventDef.effects`, applied in order by `BustleDirectorEffects` right after `event_fired`:
 
 - **`thought`:** gives a timed `thought` to each target, through its mood's `add_thought`, with the event in its reason.
-- **`order`:** queues an order to run `sequence` (at `place`, if set) on each target's brain, through the normal order path. The order's id is `<event>.<minute>`.
+- **`order`:** queues an order to run `sequence` (at `place`, if set) on each target's brain, through the normal order path. The order's id is `<event>.<minute>` for the event's first order effect. Each later order effect in the same event gets `<event>.<minute>.<index>`, where the index is the effect's place in the event's `effects` list, so several order effects in one event can all reach the same agent.
 - **`spawn`:** asks the world port, `BustleWorldPort.request_spawn(kind, area, count, event)`. The host decides and makes them. The default world port does nothing and answers false. Bustle never creates goods, money or bodies itself.
 
 Thoughts and orders reach exactly the agents the effect names:
@@ -78,6 +78,8 @@ Thoughts and orders reach exactly the agents the effect names:
 - those in `target_ids`;
 - those carrying `target_tag` (the host's `tags_of`);
 - everyone in `target_area` (the world port's `area_of`).
+
+Tags and areas resolve only over `agents`. With `agents` unset, `target_tag` and `target_area` never match anyone, and only the agents named in `target_ids` are reached. Likewise, with `tags_of` unset, nobody carries a tag. The demo harness doesn't wire `tags_of`, so a tag target in the demo reaches nobody.
 
 Nobody else is touched. Each application emits `applied(event, kind, target, what, done)`, where `done` says whether a mood took the thought, a brain queued the order, or the host made the spawn. The applier keeps nothing.
 
