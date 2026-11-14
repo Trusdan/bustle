@@ -164,6 +164,33 @@ func tick(id: StringName, modifiers: BustleModifierSet, mood: Object = null, inp
 		fill_inputs(id, inputs)
 
 
+## A host event: [param id] fell ill with [param tag] (for example [code]sick[/code]). Holds that
+## tag's thoughts on [param mood] at once, without waiting for the next [method sync]. True when a
+## rule has the tag. The next [method sync] follows the port's [method BustleHealthPort.visible_tags]
+## again, so the port stays the truth.
+## @experimental
+func illness_began(id: StringName, tag: StringName, mood: Object) -> bool:
+	if config.validate() != "" or tag == &"" or id == &"":
+		return false
+	var found := false
+	for rule: BustleHealthThought in config.thoughts:
+		if rule.tag == tag:
+			found = true
+			if mood != null and mood.has_method(&"set_held"):
+				mood.call(&"set_held", rule.thought, true, {"tag": String(tag)})
+	return found
+
+
+## A host event: [param id] recovered. Drops every tag thought from [param mood] at once.
+## @experimental
+func recovered(id: StringName, mood: Object) -> void:
+	if id == &"" or mood == null or not mood.has_method(&"set_held") or config.validate() != "":
+		return
+	for rule: BustleHealthThought in config.thoughts:
+		if rule.tag != &"":
+			mood.call(&"set_held", rule.thought, false, {})
+
+
 ## The gate for [member BustleBrain.gate]: false while [param id] is downed and the goal
 ## ([param goal_tags]: its id and tags) or option ([param option_tags]) carries any of
 ## [member BustleHealthConfig.downed_blocks]. True otherwise.

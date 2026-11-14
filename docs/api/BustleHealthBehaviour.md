@@ -139,6 +139,22 @@ func tick(id: StringName, modifiers: BustleModifierSet, mood: Object = null, inp
 
 One tick for `id`: `apply()` on `modifiers`, `sync()` on `mood` and `fill_inputs()` on `inputs` (each skipped when null).
 
+### `illness_began`
+
+```gdscript
+func illness_began(id: StringName, tag: StringName, mood: Object) -> bool
+```
+
+A host event: `id` fell ill with `tag` (for example `sick`). Holds that tag's thoughts on `mood` at once, without waiting for the next `sync()`. True when a rule has the tag. The next `sync()` follows the port's `BustleHealthPort.visible_tags()` again, so the port stays the truth.
+
+### `recovered`
+
+```gdscript
+func recovered(id: StringName, mood: Object) -> void
+```
+
+A host event: `id` recovered. Drops every tag thought from `mood` at once.
+
 ### `allows`
 
 ```gdscript

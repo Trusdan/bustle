@@ -45,7 +45,7 @@ static func defaults() -> BustleHealthConfig
 Experimental defaults: 
 - `moving` scales `move.speed`, `manipulation` scales `work.speed`, and `consciousness` scales both, each in a straight line to 0 at no capacity; 
 - pain of 0.2 or more holds `in_pain` (−6), and of 0.6 or more `in_great_pain` (−14) instead; 
-- the `sick` tag holds `feeling_sick` (−8).
+- the `sick` tag holds `feeling_sick` (−8), and the `fever` tag `feverish` (−6).
 
 ### `validate`
 
