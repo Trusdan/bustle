@@ -30,3 +30,5 @@ extends Resource
 @export var sequence: BustleActionSequence
 ## When true it makes one candidate per advertisement in the context, instead of one candidate.
 @export var uses_advertisements: bool = false
+## Its tags, for gates such as life stages ([method BustleLifeStagePort.allows_goal]). Optional.
+@export var tags: Array[StringName] = []

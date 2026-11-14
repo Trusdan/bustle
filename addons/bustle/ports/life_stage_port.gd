@@ -10,3 +10,17 @@ extends RefCounted
 ## @experimental
 func stage_of(_id: StringName) -> StringName:
 	return &""
+
+
+## Whether [param _id]'s stage lets it choose a goal with any of [param _tags] (the goal's id and
+## tags). The default: always.
+## @experimental
+func allows_goal(_id: StringName, _tags: Array[StringName]) -> bool:
+	return true
+
+
+## Whether [param _id]'s stage lets it use an option with any of [param _tags] (its advertisement's
+## tags). The default: always.
+## @experimental
+func allows_affordance(_id: StringName, _tags: Array[StringName]) -> bool:
+	return true

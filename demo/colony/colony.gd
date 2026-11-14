@@ -38,6 +38,9 @@ const SETTLERS: Array[StringName] = [SETTLER_A, SETTLER_B, SETTLER_C, SETTLER_D]
 ## Each settler's own bed.
 const BEDS: Dictionary[StringName, StringName] = {SETTLER_A: &"bed_a", SETTLER_B: &"bed_b",
 	SETTLER_C: &"bed_c", SETTLER_D: &"bed_d"}
+## Each settler's age in years, with life stages on: two adults, an elder and a child.
+const AGES: Dictionary[StringName, float] = {SETTLER_A: 30.0, SETTLER_B: 34.0, SETTLER_C: 66.0,
+	SETTLER_D: 10.0}
 ## The modules a build can leave out.
 const NEEDS_MOOD := &"needs_mood"
 const SOCIAL := &"social"
@@ -88,11 +91,14 @@ const START := 360
 ## [method aspirations]), settlers also have wants, fears and points. With [param romance] (for
 ## example [method romance_rules], and the social module on), the courtship ladder runs: the third
 ## and fourth settlers start fond of each other, and the first two are fond too but recorded as
-## siblings, so they never court.
+## siblings, so they never court. With [param life_stages] (for example [method life_stage_rules]),
+## each settler has an age ([constant AGES]) and its stage's gates.
 static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, cold_snap: bool = true,
 		board: BustleJobBoard = null, aspirations: BustleAspirationConfig = null,
-		romance: BustleRomanceRules = null) -> Harness:
+		romance: BustleRomanceRules = null, life_stages: BustleLifeStageRules = null) -> Harness:
 	var colony := Harness.new(world_seed)
+	if life_stages != null:
+		colony.enable_life_stages(life_stages)
 	if board != null:
 		colony.enable_jobs(board, TAKE_JOB)
 	if aspirations != null:
@@ -136,6 +142,8 @@ static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, col
 		if board != null:
 			library.goals.append(job_goal())
 		colony.add_agent(SETTLERS[i], library, needs(), own, days)
+		if colony.life_stages != null:
+			colony.life_stages.set_age(SETTLERS[i], life_stages.days_of(AGES[SETTLERS[i]]))
 	if colony.store != null:
 		for pair: Array in [[SETTLER_A, SETTLER_B], [SETTLER_C, SETTLER_D]]:
 			colony.store.set_kind(pair[0], pair[1], &"friend")
@@ -162,6 +170,22 @@ static func romance_rules() -> BustleRomanceRules:
 	rules.jealousy_opinion = 70
 	rules.breakup_thought = thought(&"heartbroken", -10.0, 48.0, &"miserable", 1)
 	rules.jealousy_thought = thought(&"jealous", -5.0, 12.0, &"miserable", 2)
+	return rules
+
+
+## The demo's life stages, with experimental ages: a child (no field work: neither the
+## [constant FARM] goal nor anything tagged [code]work[/code]), an adult from 16 and an elder from 60,
+## with a 360-day year. Demo data, not a calendar.
+static func life_stage_rules() -> BustleLifeStageRules:
+	var rules := BustleLifeStageRules.new()
+	rules.days_per_year = 360.0
+	for row: Array in [[&"child", 0.0, [FARM], [&"work"]], [&"adult", 16.0, [], []], [&"elder", 60.0, [], []]]:
+		var stage := BustleLifeStageDef.new()
+		stage.id = row[0]
+		stage.min_days = rules.days_of(row[1])
+		stage.blocked_goal_tags.assign(row[2])
+		stage.blocked_affordance_tags.assign(row[3])
+		rules.stages.append(stage)
 	return rules
 
 

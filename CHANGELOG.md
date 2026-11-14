@@ -6,6 +6,14 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- A life-stages module (`addons/bustle/modules/life_stages/`), opt-in.
+  - Each agent's age in game days, set by the host with `BustleLifeStages.set_age()`. `BustleLifeStageRules.days_per_year` (an experimental 360) only converts years to days and back; Bustle assumes no calendar.
+  - Data-defined stages (`BustleLifeStageDef`: an id, a minimum age in days, blocked goal tags and blocked affordance tags). `validate()` rejects a bad set with a clear reason: no stages, a missing or empty or repeated id, a minimum that is negative, not finite or not above the previous one, or an empty tag. The module ignores rules that aren't valid.
+  - `stage_changed` fires once per real change of stage, never when an age stays in its stage.
+  - Stage gates: with `BustleBrain.life_stages` set, a candidate whose goal (by id or `BustleGoalDef.tags`, new) or option (by its advertisement's tags) the stage blocks is ineligible, with a `stage_gate` reason, so it is never picked. Orders aren't gated.
+  - Ages and stages are saved. Nothing is random. See `docs/life_stages.md`.
+  - `BustleLifeStagePort.allows_goal()` and `allows_affordance()`, true in the ageless default.
+  - The demo harness's `enable_life_stages(rules)`, and `Colony.build(..., Colony.life_stage_rules())` with a child, two adults and an elder.
 - A romance module (`addons/bustle/modules/romance/`): the courtship ladder of courting, partner, engaged and married, written both ways as kinds through the social port.
   - Courting and partner form automatically from mutual opinion, compatibility and courting days (`BustleRomanceRules`).
   - Engaged and married come only from `request()` with the host's `confirm_hook` approving.
