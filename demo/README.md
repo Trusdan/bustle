@@ -25,6 +25,19 @@ Every number is a starting point, not tuning (see `house/house.gd`). The same ru
 4. Swapping the loner and outgoing traits changes what is chosen.
 5. A player-controlled resident never chooses for itself.
 
+`House.session()` is the full week. It is the same house with the optional modules switched on through the harness:
+
+- a mood, with need and meal thoughts;
+- conversations and a friendship (resident B is also low-spirited, so it can be comforted);
+- a job board with three errands;
+- wants and fears;
+- a courtship;
+- ages and life stages;
+- a small story deck;
+- one host event, bad news on the third evening.
+
+`tests/demo/test_house_session.gd` runs it headless for seven days against a pinned timeline hash. It checks that the stuck watch stays clean, that each module leaves its own trace (`thought`, `talk`, `job`, `want`, `romance`, `stage`, `director`), and that the week still holds with each module left out in turn and with all of them out. `House.build()` stays as it was.
+
 ## Colony
 
 `colony/` is four settlers with a bed each, a stove, a crate of stores and a field plot. To run it, press **Colony** on the start screen, or open `demo/colony/colony.tscn` and press F6. Each second of real time is an hour of game time, and the screen shows what each settler is doing, its needs, its mood and any mental state.

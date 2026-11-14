@@ -6,6 +6,9 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- The house demo's full week, `House.session(seed, modules)`. It switches on mood, social, jobs, aspirations, romance, life stages and the director through the shared harness, adds a bad-news host event, and leaves `House.build()` unchanged. Its tests replay a pinned week with a clean stuck watch, check that every module leaves a trace, and check that the week holds with each module left out in turn and with all of them out.
+- `docs/tutorial.md`, which builds a one-person household from scratch: needs, goals, the brain loop and a mood. A test checks that its classes and paths exist and runs its script.
+- `docs/modules.md`, the module guide: each optional module, how a host switches it on, and what happens without it.
 - Director effects and hooks.
   - `BustleEventDef.effects` lists `BustleEventEffect`s, applied in order by `BustleDirectorEffects` (`BustleDirector.effects`) when an event fires:
     - timed thoughts and orders (through the normal order path) for exactly the agents named by id, by tag or by area;
