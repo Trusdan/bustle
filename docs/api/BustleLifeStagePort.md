@@ -17,3 +17,19 @@ func stage_of(_id: StringName) -> StringName
 ```
 
 The stage `_id` is in, or empty.
+
+### `allows_goal`
+
+```gdscript
+func allows_goal(_id: StringName, _tags: StringName[]) -> bool
+```
+
+Whether `_id`'s stage lets it choose a goal with any of `_tags` (the goal's id and tags). The default: always.
+
+### `allows_affordance`
+
+```gdscript
+func allows_affordance(_id: StringName, _tags: StringName[]) -> bool
+```
+
+Whether `_id`'s stage lets it use an option with any of `_tags` (its advertisement's tags). The default: always.

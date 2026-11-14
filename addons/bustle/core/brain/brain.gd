@@ -84,6 +84,12 @@ var last_intent: BustleIntent
 ## [code]func(goal_id, option_id) -> float[/code]: multiplies each candidate's score (see
 ## [member BustleScoreContext.score_boost]), for example [method BustleAmbitions.boost]. Unset: 1.
 var score_boost: Callable = Callable()
+## The life stages that gate its self-chosen goals and options, or null (no gates). Each tick, a
+## candidate whose goal [method BustleLifeStagePort.allows_goal] refuses (by the goal's id and
+## tags), or whose option [method BustleLifeStagePort.allows_affordance] refuses (by its
+## advertisement's tags), is made ineligible with a [code]stage_gate[/code] reason, so it is never
+## picked. Orders aren't gated.
+var life_stages: BustleLifeStagePort = null
 
 var _rng := RandomNumberGenerator.new()
 var _scorer := BustleUtilityScorer.new()
@@ -171,6 +177,8 @@ func _think(delta: float, senses: BustleSenses) -> BustleIntent:
 	modifiers.fill_context(context, needs, tags)
 	var candidates := _scorer.evaluate(library, context, config)
 	last_candidates = candidates
+	if life_stages != null:
+		_apply_stage_gates(candidates, senses.advertisements)
 	var top := _apply_autonomy(candidates)
 	var front := orders.front()
 	if front != null and front.held:
@@ -273,6 +281,27 @@ func _apply_autonomy(candidates: Array[BustleCandidate]) -> int:
 		if candidate.eligible:
 			top = maxi(top, candidate.band)
 	return top
+
+
+# Makes candidates the agent's life stage rules out ineligible.
+func _apply_stage_gates(candidates: Array[BustleCandidate], ads: Array[BustleAdvertisement]) -> void:
+	var option_tags: Dictionary[StringName, Array] = {}
+	for ad: BustleAdvertisement in ads:
+		if ad != null and not option_tags.has(ad.option_id):
+			option_tags[ad.option_id] = ad.tags
+	for candidate: BustleCandidate in candidates:
+		if not candidate.eligible:
+			continue
+		var goal := library.find(candidate.goal_id)
+		var goal_tags: Array[StringName] = [candidate.goal_id]
+		if goal != null:
+			goal_tags.append_array(goal.tags)
+		var tags: Array[StringName] = []
+		tags.assign(option_tags.get(candidate.option_id, []))
+		if not life_stages.allows_goal(agent_id, goal_tags) \
+				or (candidate.option_id != &"" and not life_stages.allows_affordance(agent_id, tags)):
+			candidate.eligible = false
+			candidate.reasons.append({"kind": &"stage_gate", "stage": life_stages.stage_of(agent_id)})
 
 
 # The paused goal, when it should resume: still eligible and in the highest eligible band. Drops

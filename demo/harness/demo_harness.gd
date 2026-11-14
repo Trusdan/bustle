@@ -20,6 +20,7 @@ extends RefCounted
 ## [br]- [code]job[/code]: a board posting changed, with jobs on: [code]{job, what}[/code];
 ## [br]- [code]romance[/code] and [code]jealous[/code], with romance on:
 ## [code]{with, status, reason}[/code] and [code]{partner, rival, cause}[/code];
+## [br]- [code]stage[/code]: an agent's life stage changed, with life stages on: [code]{from, to}[/code];
 ## [br]- [code]want[/code], [code]fear[/code] and [code]points[/code], with aspirations on:
 ## [code]{want, what}[/code], [code]{fear, what}[/code] and [code]{amount, total}[/code];
 ## [br]- [code]stuck[/code] and [code]unstuck[/code]: [member stuck] judged an agent stuck
@@ -29,8 +30,8 @@ extends RefCounted
 ## [method enable_mood] (needs_mood: a mood and a mental state per agent), [method enable_social]
 ## (the built-in social store, conversations and the comfort hook), [method enable_perception]
 ## (who notices whom), [method enable_jobs] (a job board), [method enable_environment] (indoors
-## and outdoors), [method enable_aspirations] (wants, fears and points) and [method enable_romance]
-## (the courtship ladder). With perception off, an agent notices everyone awake in its area.
+## and outdoors), [method enable_aspirations] (wants, fears and points), [method enable_romance]
+## (the courtship ladder) and [method enable_life_stages] (ages and stage gates). With perception off, an agent notices everyone awake in its area.
 ## [br][br]
 ## Needs move on under these conditions: [code]asleep[/code] while using [member sleep_object];
 ## otherwise [code]awake[/code], plus [code]away[/code] and [code]in_company[/code] while away, or
@@ -97,6 +98,8 @@ var _started: Array[StringName] = []
 var environment: BustleEnvironmentPort = null
 ## The courtship ladder, with romance on.
 var romance: BustleRomance = null
+## Ages and stage gates, with life stages on.
+var life_stages: BustleLifeStages = null
 ## The want and fear library, with aspirations on.
 var aspiration_config: BustleAspirationConfig = null
 ## The job board, with jobs on.
@@ -170,6 +173,18 @@ func enable_romance(rules: BustleRomanceRules) -> BustleRomance:
 	return romance
 
 
+## Switches life stages on with [param rules], before agents are added: each agent's brain is gated
+## by its stage. Set ages with [method BustleLifeStages.set_age]. Logs [code]stage[/code] on the
+## timeline.
+func enable_life_stages(rules: BustleLifeStageRules) -> BustleLifeStages:
+	life_stages = BustleLifeStages.new(rules)
+	var me: WeakRef = weakref(self)
+	life_stages.stage_changed.connect(func(agent: StringName, old: StringName, new: StringName) -> void:
+		var run: RefCounted = me.get_ref()
+		run.timeline.add(run.now, agent, &"stage", {"from": String(old), "to": String(new)}))
+	return life_stages
+
+
 ## Switches aspirations on, before agents are added: each agent gets wants and fears from
 ## [param config]. Each step, it is updated with its inputs, the fact [code]used.<object>[/code] for
 ## the object it is using, and the events that started that step; its [method BustleAspirations.score]
@@ -225,6 +240,7 @@ func add_agent(id: StringName, library: BustleGoalLibrary, need_defs: Array[Bust
 	own.goals = library.goals.duplicate()
 	var brain := BustleBrain.new(id, own, scoring, world_seed)
 	brain.runner.register(&"use", _use)
+	brain.life_stages = life_stages
 	var me: WeakRef = weakref(self)
 	if _converse != null:
 		brain.runner.register(&"converse", _converse)

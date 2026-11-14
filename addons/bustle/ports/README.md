@@ -13,7 +13,7 @@ The interfaces a host project implements to connect Bustle to its own world (pla
 | `BustleDispositionPort` | how actors regard each other | a `BustleDispositionTable`, or neutral |
 | `BustleWorkPort` | jobs | none, unless given a schedule roster |
 | `BustleSkillSet` | skill levels | everyone equal (0) |
-| `BustleLifeStagePort` | life stages | ageless |
+| `BustleLifeStagePort` | life stages | ageless: no stage, every goal and option allowed |
 | `BustleHealthPort` | injured, incapacitated, life threatened | everyone healthy |
 | `BustleEnvironmentPort` | rooms | none |
 | `BustleDirectorPort` | event pacing | allows everything |

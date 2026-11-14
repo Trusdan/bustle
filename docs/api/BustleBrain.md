@@ -176,6 +176,14 @@ var score_boost: Callable = Callable()
 
 `func(goal_id, option_id) -> float`: multiplies each candidate's score (see `BustleScoreContext.score_boost`), for example `BustleAmbitions.boost()`. Unset: 1.
 
+### `life_stages`
+
+```gdscript
+var life_stages: BustleLifeStagePort = null
+```
+
+The life stages that gate its self-chosen goals and options, or null (no gates). Each tick, a candidate whose goal `BustleLifeStagePort.allows_goal()` refuses (by the goal's id and tags), or whose option `BustleLifeStagePort.allows_affordance()` refuses (by its advertisement's tags), is made ineligible with a `stage_gate` reason, so it is never picked. Orders aren't gated.
+
 ## Methods
 
 ### `order`

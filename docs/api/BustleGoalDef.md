@@ -89,3 +89,11 @@ var uses_advertisements: bool = false
 ```
 
 When true it makes one candidate per advertisement in the context, instead of one candidate.
+
+### `tags`
+
+```gdscript
+var tags: StringName[] = []
+```
+
+Its tags, for gates such as life stages (`BustleLifeStagePort.allows_goal()`). Optional.
