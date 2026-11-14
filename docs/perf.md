@@ -51,7 +51,7 @@ What keeps it cheap:
 
 - LIGHT and FULL agents think at their ring's rate, at a fixed per-agent phase, so a ring's thinking is spread across the second rather than landing in one frame.
 - OFF_SCREEN agents think once per game hour, at a fixed per-agent minute.
-- Catch-up runs at most seven game days of hourly thinking (168 thinks) per agent, and summarises anything older.
+- Catch-up runs at most seven game days of hourly thinking (168 thinks) per agent, and summarises anything older. This holds in `tick()` too (see below).
 
 ## Demo soak
 
@@ -107,3 +107,33 @@ The whole frame is more than the three rings' thinking: it also covers the per-a
 
 The rings' own thinking was unchanged or slightly lower (local, after: FULL 0.196 / 0.446 ms, LIGHT 0.107 / 0.303 ms, OFF_SCREEN 0.166 / 0.307 ms).
 
+## Catch-up bound and FULL cap
+
+**Catch-up in `tick()`.** An agent that stays OFF_SCREEN through a long clock jump never falls more than `catch_up_cap_game_days` (7) behind.
+
+- The older time is summarised at once, split exactly as `catch_up()` splits it (whole intervals, the most recent week kept, a part interval carried over), through `summary_hook` and one `caught_up`.
+- The kept week is then thought one interval a tick, as before, so a frame costs what it did.
+- A 365-day jump costs 168 thinks per agent instead of 8,760.
+- A clock that runs several game hours a frame is trimmed the same way.
+- A backlog within the cap is untouched, so normal hourly thinking and the timings above don't change.
+
+**FULL cap.** `max_full_bodies`, and `max_full_bodies_interior` in an interior, are optional. Both are 0 (no cap) by default.
+
+- They limit the FULL ring, and so the FULL brains and, with `manage_bodies`, the bodies.
+- The design's "FULL ≤ 40 bodies (≤ 12 per interior)" are **PROPOSED budgets, not addon defaults**: a host sets its own cap.
+- Over the cap, the extra agents stay LIGHT, so they still think, at the LIGHT rate. The LIGHT ring grows by as many as the cap holds back.
+
+The population bench takes the cap as `--max-full=N` and `--max-full-interior=N`, as bench parameters. Its 40 FULL agents are all in one interior, so the interior cap is the one that bites:
+
+```bash
+godot --headless --path . -s res://bench/population_bench.gd -- --max-full-interior=12
+```
+
+**Measured** (2026-11-14, 22:27 UTC, Godot 4.7.2 headless, Linux cloud machine, 2 vCPU Intel Xeon @ 2.10 GHz, seed 1), uncapped and then with an interior cap of 12:
+
+```
+population bench: 40 FULL, 40 LIGHT, 200 OFF_SCREEN, seed 1, 7200 frames (60 game min), 1 stuck days, Godot 4.7.2-stable (official), build 5fbc3e1c0981cf6049cfcb47d9a495981409aedf: FULL average 0.188 ms p99 0.530 ms (budget 1.0 / 2.0), LIGHT average 0.101 ms p99 0.324 ms (budget 0.3), OFF_SCREEN average 0.226 ms p99 0.532 ms (budget 0.5), frame average 0.870 ms p99 1.926 ms, memory 5548.6 KiB (20292 B an agent), save 546 B an agent (budget 2048), stuck spells 0, longest still 0 min: OK
+population bench: 12 FULL, 68 LIGHT, 200 OFF_SCREEN, seed 1, 7200 frames (60 game min), 1 stuck days, Godot 4.7.2-stable (official), build 5fbc3e1c0981cf6049cfcb47d9a495981409aedf: FULL average 0.057 ms p99 0.228 ms (budget 1.0 / 2.0), LIGHT average 0.171 ms p99 0.465 ms (budget 0.3), OFF_SCREEN average 0.227 ms p99 0.548 ms (budget 0.5), frame average 0.826 ms p99 2.140 ms, memory 5548.6 KiB (20292 B an agent), save 546 B an agent (budget 2048), stuck spells 0, longest still 0 min, FULL cap 0 (interior 12), held back by the cap 28: OK
+```
+
+With the cap, the 28 agents held back think as LIGHT, so LIGHT carries 68 agents rather than the 40 its budget is set for. Its average stays under the budget, but its p99 is above the uncapped one.

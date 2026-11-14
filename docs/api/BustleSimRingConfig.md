@@ -106,6 +106,22 @@ var catch_up_cap_game_days: int = 7
 
 Catch-up simulates at most this many game days; anything older is summarised.
 
+### `max_full_bodies`
+
+```gdscript
+var max_full_bodies: int = 0
+```
+
+The most agents FULL at once (and so, with `manage_bodies`, the most bodies). 0: no cap. Over the cap, the agents already FULL keep their places and the rest stay LIGHT; see [BustleSimRings](BustleSimRings.md). A host sets its own budget; Bustle has no default cap.
+
+### `max_full_bodies_interior`
+
+```gdscript
+var max_full_bodies_interior: int = 0
+```
+
+The cap used instead of `max_full_bodies` while the player is in an interior with `full_whole_interior`. 0: `max_full_bodies` applies there too.
+
 ### `manage_bodies`
 
 ```gdscript

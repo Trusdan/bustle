@@ -23,6 +23,15 @@ extends RefCounted
 ##   out of reach for [member BustleSimRingConfig.light_to_offscreen_delay_seconds].
 ## - **Leaving OFF_SCREEN** (in [method update] as in [method tick]): the agent is caught up
 ##   ([method catch_up]) as it changes ring, before its body appears.
+## - **The FULL cap** ([member BustleSimRingConfig.max_full_bodies], or
+##   [member BustleSimRingConfig.max_full_bodies_interior] in an interior; 0 is no cap): it limits
+##   the FULL ring itself, with or without bodies. Agents already FULL keep their places until the
+##   rules above move them out; a free place goes to a waiting agent by rank (a known position
+##   nearest the player first, then by id, then those with no position, by id), through the usual
+##   rules (the dwell, catch-up first, no pop-in). Nobody already FULL is swapped out for someone
+##   closer. If more are FULL than the cap allows (it was lowered, or a save had more), the
+##   lowest-ranked move to LIGHT at once on the next sort and their bodies are freed. Everyone kept
+##   back stays LIGHT; [member last_held_by_cap] counts them. Deterministic, with no rolls.
 ## - A new agent gets its ring at once, or the ring it was saved with
 ##   ([member BustleNpcState.sim_ring]), so after a load an agent in the hysteresis band stays FULL.
 ## - **When it re-sorts:** [method tick] re-sorts every agent ([method update]) only when something
@@ -67,6 +76,9 @@ var summary_hook: Callable = Callable()
 var last_timings: Dictionary = {"FULL": 0, "LIGHT": 0, "OFF_SCREEN": 0}
 ## True when the last [method tick] re-sorted the agents.
 var last_sorted: bool = false
+## How many agents the last sort kept LIGHT (or moved to LIGHT) only because of the FULL cap
+## ([member BustleSimRingConfig.max_full_bodies]). 0 with no cap.
+var last_held_by_cap: int = 0
 
 ## The society it sorts. Assigning another one drops the cached id list, so a different society
 ## with the same roster version isn't mistaken for this one.
@@ -106,6 +118,12 @@ func _init(p_society: BustleSociety = null, p_config: BustleSimRingConfig = null
 ## [member BustleSimRingConfig.offscreen_interval_game_minutes] of game time, at a fixed phase per
 ## agent so they don't all think in the same frame (FULL and LIGHT are staggered the same way). Each
 ## think sets [member BustleNpcState.last_update_minute].
+## [br][br]
+## An OFF_SCREEN agent never falls further behind than [member BustleSimRingConfig.catch_up_cap_game_days]:
+## when the clock jumps (or runs faster than one interval a tick) past that, the older time is
+## summarised at once, split exactly as [method catch_up] splits it (passed to [member summary_hook],
+## with [signal caught_up] and its report), and the kept window is then thought one interval a tick
+## as usual. A backlog within the cap is untouched.
 ## @experimental
 func tick(delta: float) -> void:
 	if society == null:
@@ -127,6 +145,7 @@ func tick(delta: float) -> void:
 		if ring == Ring.OFF_SCREEN:
 			if state.last_update_minute < 0:
 				state.last_update_minute = now - _phase(id)
+			_bound_backlog(state, now)
 			if now - state.last_update_minute >= config.offscreen_interval_game_minutes:
 				state.last_update_minute += config.offscreen_interval_game_minutes
 				_think(state, Ring.OFF_SCREEN, state.last_update_minute, config.offscreen_interval_game_minutes * 60.0)
@@ -183,6 +202,25 @@ func catch_up(id: StringName) -> Dictionary:
 	return report
 
 
+# Summarises an OFF_SCREEN agent's backlog beyond the catch-up cap, split as [method catch_up]
+# splits it: whole intervals only, the most recent cap kept to think, the rest skipped, a part
+# interval carried over. The report's ticks and simulated minutes are the kept window, which
+# [method tick] then thinks one interval at a time.
+func _bound_backlog(state: BustleNpcState, now: int) -> void:
+	var interval := maxi(config.offscreen_interval_game_minutes, 1)
+	var elapsed := now - state.last_update_minute
+	var kept := maxi(config.catch_up_cap_game_days, 0) * 1440 / interval
+	if elapsed / interval <= kept:
+		return
+	var skipped := elapsed - elapsed % interval - kept * interval
+	var report := {"agent": state.id, "from": state.last_update_minute, "to": now, "ticks": kept,
+		"simulated_minutes": kept * interval, "skipped_minutes": skipped}
+	state.last_update_minute += skipped
+	if summary_hook.is_valid():
+		summary_hook.call(state.id, report)
+	caught_up.emit(state.id, report)
+
+
 ## Has the next [method tick] re-sort every agent, whatever else has changed: for instance after the
 ## host moves an agent to another area.
 ## @experimental
@@ -208,6 +246,8 @@ func update(delta: float) -> void:
 	_sorted_area = player_area
 	_sorted_player = player
 	_sorted_minute = now
+	var held := _held_by_cap(ids, world, player_area, near, interior, player)
+	last_held_by_cap = held.size()
 	var present := {}
 	for id: StringName in ids:
 		present[id] = true
@@ -223,7 +263,9 @@ func update(delta: float) -> void:
 			_agents[id] = entry
 			current = state.sim_ring
 			wanted = _wanted(state, zone, interior, player, current)
-		elif entry.is_empty():
+		if held.has(id):
+			wanted = Ring.LIGHT
+		if entry.is_empty():
 			_agents[id] = {"ring": wanted, "zone": zone, "held": 0.0, "away": 0.0, "entered": now}
 			_set_ring(state, -1, wanted, player)
 			continue
@@ -234,7 +276,10 @@ func update(delta: float) -> void:
 			_set_ring(state, current, current, player)
 			continue
 		var allowed: bool
-		if current == Ring.LIGHT and wanted == Ring.OFF_SCREEN:
+		if held.has(id) and current == Ring.FULL:
+			# Over the cap: moved to LIGHT at once, whatever the dwell.
+			allowed = true
+		elif current == Ring.LIGHT and wanted == Ring.OFF_SCREEN:
 			allowed = float(entry["away"]) >= config.light_to_offscreen_delay_seconds - 1e-9
 		elif zone == _Zone.HERE and entry["zone"] == _Zone.HERE and not interior:
 			allowed = float(entry["held"]) >= config.min_dwell_seconds - 1e-9
@@ -252,6 +297,53 @@ func update(delta: float) -> void:
 	for id: StringName in _agents.keys():
 		if not present.has(id):
 			_agents.erase(id)
+
+
+# With a FULL cap, the agents that want FULL but must stay (or become) LIGHT, as a set. Agents
+# already FULL keep their places first; if they alone are over the cap, the lowest-ranked go. The
+# places left go to waiting agents by rank: those with a known position nearest the player first,
+# then by id, then those with no position, by id. Empty with no cap.
+func _held_by_cap(ids: Array[StringName], world: BustleWorldPort, player_area: StringName,
+		near: Array[StringName], interior: bool, player: Vector3) -> Dictionary:
+	var cap := config.max_full_bodies
+	if interior and config.max_full_bodies_interior > 0:
+		cap = config.max_full_bodies_interior
+	var held := {}
+	if cap <= 0:
+		return held
+	var keeping: Array[BustleNpcState] = []
+	var waiting: Array[BustleNpcState] = []
+	for id: StringName in ids:
+		var state := society.get_agent(id)
+		var area := world.area_of(id)
+		var zone := _Zone.HERE if area == player_area else (_Zone.NEAR if near.has(area) else _Zone.AWAY)
+		var entry: Dictionary = _agents.get(id, {})
+		var current: int = entry.get("ring", -1)
+		if entry.is_empty() and state.sim_ring >= Ring.FULL and state.sim_ring <= Ring.OFF_SCREEN:
+			current = state.sim_ring
+		if _wanted(state, zone, interior, player, current) != Ring.FULL:
+			continue
+		if current == Ring.FULL:
+			keeping.append(state)
+		else:
+			waiting.append(state)
+	var nearest_first := func(a: BustleNpcState, b: BustleNpcState) -> bool:
+		if a.has_position != b.has_position:
+			return a.has_position
+		if a.has_position:
+			var da := a.position.distance_to(player)
+			var db := b.position.distance_to(player)
+			if da != db:
+				return da < db
+		return String(a.id) < String(b.id)
+	keeping.sort_custom(nearest_first)
+	waiting.sort_custom(nearest_first)
+	for i: int in range(cap, keeping.size()):
+		held[keeping[i].id] = true
+	var room := maxi(cap - keeping.size(), 0)
+	for i: int in range(room, waiting.size()):
+		held[waiting[i].id] = true
+	return held
 
 
 # True when a re-sort is due: see "When it re-sorts" above.
