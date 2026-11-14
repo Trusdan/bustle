@@ -59,7 +59,7 @@ func test_a_death_fires_once_and_stops_the_agent() -> void:
 	assert_false(module.allows_goal(&"a", [&"anything"]))
 	assert_false(module.allows_affordance(&"a", []))
 	assert_eq(module.note_death(&"a", "again"), "'a' has already died")
-	assert_eq(module.note_death(&"nobody", "illness"), "'nobody' has no age")
+	assert_eq(module.note_death(&"", "illness"), "an agent needs an id")
 	assert_eq(module.note_death(&"b", ""), "'b': a death needs a cause")
 	assert_false(module.set_age(&"a", 5.0))
 	assert_eq(module.birth(&"a"), "'a' is already known")
@@ -157,7 +157,7 @@ func test_a_version_1_save_loads_and_bad_saves_are_refused() -> void:
 	for i: int in 6:
 		bad.append(good.duplicate(true))
 	bad[0]["dead"]["a"]["cause"] = ""
-	bad[1]["dead"]["z"] = {"cause": "illness", "at": 0}
+	bad[1]["dead"][""] = {"cause": "illness", "at": 0}
 	bad[2]["anchors"]["a"] = [10.0, DAY + 5]
 	bad[3]["anchors"]["a"] = [-1.0, 0]
 	bad[4].erase("anchors")

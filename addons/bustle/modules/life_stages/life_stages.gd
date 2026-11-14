@@ -152,19 +152,24 @@ func advance_to(minute: int) -> bool:
 ## Records [param id]'s death from [param cause] (a host string Bustle doesn't read), at
 ## [method now]. Emits [signal died], then releases what it held, emitting [signal vacated] for
 ## each: its career ([member careers]), its job claim ([member jobs]) and its roles ([member roles],
-## in name order). From then on it doesn't age, [method set_age] refuses it and every goal and
-## option is closed to it. Returns why it was refused, or empty: an unknown or already dead agent,
-## or an empty cause.
+## in name order). An agent with no age (never set or born) can die too, the same way. From then
+## on it doesn't age, [method set_age] and [method birth] refuse it, every goal and option is closed
+## to it and [method living_ids] leaves it out. Romance bonds and family links are left alone: the
+## host handles those from [signal died]. Returns why it was refused, or empty: an empty id, an
+## already dead agent, an empty cause, or rules that aren't valid.
 ## @experimental
 func note_death(id: StringName, cause: String) -> String:
-	if not _ages.has(id):
-		return "'%s' has no age" % id
+	if error() != "":
+		return error()
+	if id == &"":
+		return "an agent needs an id"
 	if _dead.has(id):
 		return "'%s' has already died" % id
 	if cause == "":
 		return "'%s': a death needs a cause" % id
-	_ages[id] = age_days(id)
-	_anchors[id] = _now
+	if _ages.has(id):
+		_ages[id] = age_days(id)
+		_anchors[id] = _now
 	_dead[id] = {"cause": cause, "at": _now}
 	died.emit(id, cause)
 	if careers != null:
@@ -251,7 +256,8 @@ func allows_affordance(id: StringName, tags: Array[StringName]) -> bool:
 
 ## Every age, stage and death as plain data, in id order: [code]ages[/code] (at [method now]),
 ## [code]stages[/code], [code]anchors[/code] (each age as [code][days, minute][/code], so aging
-## carries on exactly), [code]dead[/code] ([code]{cause, at}[/code]) and [code]now[/code].
+## carries on exactly), [code]dead[/code] ([code]{cause, at}[/code], including agents with no age)
+## and [code]now[/code].
 ## @experimental
 func export_state() -> Dictionary:
 	var ages := {}
@@ -263,15 +269,15 @@ func export_state() -> Dictionary:
 		anchors[String(id)] = [_ages[id], _anchors[id]]
 		if _stages.has(id):
 			stages[String(id)] = String(_stages[id])
-		if _dead.has(id):
-			dead[String(id)] = _dead[id].duplicate()
+	for id: StringName in _sorted(_dead.keys()):
+		dead[String(id)] = _dead[id].duplicate()
 	return {"version": STATE_VERSION, "now": _now, "ages": ages, "anchors": anchors, "stages": stages, "dead": dead}
 
 
 ## Restores [method export_state]'s state (or a version 1 save, with ages as of minute 0), without
 ## emitting anything. False, changing nothing, for another version, an age that is negative or not
-## finite, a stage or death for an agent with no age, a stage id the rules don't have, a bad death
-## record, or rules that aren't valid. A stage is restored as saved, even if the rules have changed
+## finite, a stage for an agent with no age, a stage id the rules don't have, a bad death record
+## (an empty id or cause; a death needs no age), or rules that aren't valid. A stage is restored as saved, even if the rules have changed
 ## since and it no longer matches the age; the next [method set_age] or [method advance_to] moves
 ## it on.
 ## @experimental
@@ -307,7 +313,7 @@ func import_state(saved: Dictionary) -> bool:
 			anchors[StringName(str(key))] = anchor[1]
 		for key: Variant in saved["dead"]:
 			var record: Variant = saved["dead"][key]
-			if not ages.has(StringName(str(key))) or not record is Dictionary or str(record.get("cause", "")) == "" \
+			if str(key) == "" or not record is Dictionary or str(record.get("cause", "")) == "" \
 					or not record.get("at") is int:
 				return false
 			dead[StringName(str(key))] = {"cause": str(record["cause"]), "at": int(record["at"])}

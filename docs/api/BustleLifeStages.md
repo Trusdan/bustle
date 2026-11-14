@@ -143,7 +143,7 @@ Moves every living age on to game minute `minute`, in whole minutes of `BustleLi
 func note_death(id: StringName, cause: String) -> String
 ```
 
-Records `id`'s death from `cause` (a host string Bustle doesn't read), at `now()`. Emits `died`, then releases what it held, emitting `vacated` for each: its career (`careers`), its job claim (`jobs`) and its roles (`roles`, in name order). From then on it doesn't age, `set_age()` refuses it and every goal and option is closed to it. Returns why it was refused, or empty: an unknown or already dead agent, or an empty cause.
+Records `id`'s death from `cause` (a host string Bustle doesn't read), at `now()`. Emits `died`, then releases what it held, emitting `vacated` for each: its career (`careers`), its job claim (`jobs`) and its roles (`roles`, in name order). An agent with no age (never set or born) can die too, the same way. From then on it doesn't age, `set_age()` and `birth()` refuse it, every goal and option is closed to it and `living_ids()` leaves it out. Romance bonds and family links are left alone: the host handles those from `died`. Returns why it was refused, or empty: an empty id, an already dead agent, an empty cause, or rules that aren't valid.
 
 ### `is_dead`
 
@@ -223,7 +223,7 @@ False when `id` has died or its stage blocks any of `tags` (an option's advertis
 func export_state() -> Dictionary
 ```
 
-Every age, stage and death as plain data, in id order: `ages` (at `now()`), `stages`, `anchors` (each age as `[days, minute]`, so aging carries on exactly), `dead` (`{cause, at}`) and `now`.
+Every age, stage and death as plain data, in id order: `ages` (at `now()`), `stages`, `anchors` (each age as `[days, minute]`, so aging carries on exactly), `dead` (`{cause, at}`, including agents with no age) and `now`.
 
 ### `import_state`
 
@@ -231,4 +231,4 @@ Every age, stage and death as plain data, in id order: `ages` (at `now()`), `sta
 func import_state(saved: Dictionary) -> bool
 ```
 
-Restores `export_state()`'s state (or a version 1 save, with ages as of minute 0), without emitting anything. False, changing nothing, for another version, an age that is negative or not finite, a stage or death for an agent with no age, a stage id the rules don't have, a bad death record, or rules that aren't valid. A stage is restored as saved, even if the rules have changed since and it no longer matches the age; the next `set_age()` or `advance_to()` moves it on.
+Restores `export_state()`'s state (or a version 1 save, with ages as of minute 0), without emitting anything. False, changing nothing, for another version, an age that is negative or not finite, a stage for an agent with no age, a stage id the rules don't have, a bad death record (an empty id or cause; a death needs no age), or rules that aren't valid. A stage is restored as saved, even if the rules have changed since and it no longer matches the age; the next `set_age()` or `advance_to()` moves it on.

@@ -58,7 +58,11 @@ These are the host's hooks; Bustle never calls them on its own.
 
   Each release emits `vacated(id, kind, what)`, with `kind` one of `career`, `job` or `role`. Leave any of the three null to skip it. The career goes first, because careers ends a career on its own when its role changes hands. Nothing is refilled: that is the host's call.
 
-  A dead agent stops aging and keeps its last stage. `set_age` and `birth` refuse it, and every goal and option is closed to it. `living_ids()` lists the agents still to schedule. `note_death` refuses an agent with no age, one already dead, or an empty cause.
+  An agent with no age (never set or born, as with ageless agents by default) can die too, and its death is recorded, signalled and released the same way.
+
+  A dead agent stops aging and keeps its last stage (none, if it had no age). `set_age` and `birth` refuse it, every goal and option is closed to it, and `living_ids()` (the agents still to schedule) leaves it out. `note_death` refuses an empty id, an agent already dead (firing nothing), an empty cause, or invalid rules.
+
+  A death leaves romance bonds and family links alone. The host ends or keeps those from `died`.
 
 ## Gates
 
@@ -80,16 +84,16 @@ The port has the gate methods too (`allows_goal(id, tags)` and `allows_affordanc
 - every age (at `now()`);
 - each age's anchor (`[days, minute]`), so aging after a load carries on exactly;
 - every stage;
-- every death (`{cause, at}`);
+- every death (`{cause, at}`), including agents with no age;
 - `now`.
 
 `import_state()` restores all of it without emitting anything. It also loads a version 1 save (ages and stages only, taken as of minute 0). It refuses a save, changing nothing, that has:
 
 - another version;
 - a bad age or anchor;
-- a stage or death for an agent with no age;
+- a stage for an agent with no age;
 - a stage id the rules don't have;
-- a death with no cause.
+- a death with no id or no cause.
 
 A stage comes back as saved, even when it no longer matches the saved age because the rules changed between the save and the load. The next `set_age` or `advance_to` moves it on and emits once.
 
