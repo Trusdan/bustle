@@ -10,17 +10,23 @@ extends Resource
 ## Game days in one year, for [method days_of] and [method years_of]. Finite and above 0. An
 ## experimental default; Bustle assumes no calendar.
 @export var days_per_year: float = 360.0
+## Game minutes in one day, for [method BustleLifeStages.advance_to]. Above 0; 1440 matches the
+## default clock port.
+@export var minutes_per_day: int = 1440
 ## The stages, youngest first.
 @export var stages: Array[BustleLifeStageDef] = []
 
 
 ## Why these rules can't be used, or empty when they can: at least one stage; every stage present,
 ## with an id used once and finite, not negative [member BustleLifeStageDef.min_days] above the
-## stage before it; no empty blocked tag; and [member days_per_year] finite and above 0.
+## stage before it; no empty blocked tag; [member days_per_year] finite and above 0; and
+## [member minutes_per_day] above 0.
 ## @experimental
 func validate() -> String:
 	if not is_finite(days_per_year) or days_per_year <= 0.0:
 		return "days_per_year must be a finite number above 0"
+	if minutes_per_day <= 0:
+		return "minutes_per_day must be above 0"
 	if stages.is_empty():
 		return "there are no stages"
 	var seen: Array[StringName] = []
