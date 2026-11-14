@@ -22,7 +22,8 @@ extends Resource
 ## 0 at no capacity;
 ## [br]- pain of 0.2 or more holds [code]in_pain[/code] (−6), and of 0.6 or more
 ## [code]in_great_pain[/code] (−14) instead;
-## [br]- the [code]sick[/code] tag holds [code]feeling_sick[/code] (−8).
+## [br]- the [code]sick[/code] tag holds [code]feeling_sick[/code] (−8), and the [code]fever[/code]
+## tag [code]feverish[/code] (−6).
 ## @experimental
 static func defaults() -> BustleHealthConfig:
 	var config := BustleHealthConfig.new()
@@ -32,7 +33,8 @@ static func defaults() -> BustleHealthConfig:
 		effect.capacity = row[0]
 		effect.key = row[1]
 		config.effects.append(effect)
-	for row: Array in [[&"in_pain", -6.0, 0.2, &""], [&"in_great_pain", -14.0, 0.6, &""], [&"feeling_sick", -8.0, NAN, &"sick"]]:
+	for row: Array in [[&"in_pain", -6.0, 0.2, &""], [&"in_great_pain", -14.0, 0.6, &""], [&"feeling_sick", -8.0, NAN, &"sick"],
+			[&"feverish", -6.0, NAN, &"fever"]]:
 		var def := BustleThoughtDef.new()
 		def.id = row[0]
 		def.value = row[1]

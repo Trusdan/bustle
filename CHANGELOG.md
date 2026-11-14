@@ -6,6 +6,12 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- The tend job (`BustleTendJob`, `BustleTendAction`), opt-in.
+  - An able, free agent tends the most urgent patient near it (`needs_care` above 0, ties in id order). It asks the host through `BustleHealthPort.care()` and emits `tended`; the host owns the recovery.
+  - The `tend` goal (`BustleTendJob.goal_def()`: band `PERSONAL`, tags `tend` and `work`) scores by `fact.tend`, the patient's urgency. It waits 30 minutes between requests and after a refusal.
+  - A downed agent doesn't tend, and a busy one (duty, an urgent need, an order) doesn't either. Orders aren't gated.
+- Illness events: `BustleHealthBehaviour.illness_began(id, tag, mood)` holds that tag's thoughts at once, and `recovered(id, mood)` drops them. The next sync follows the port. A `fever` tag thought (`feverish`, −6) joins the defaults.
+- `docs/health.md`: the port contract, the behaviour, the downed gate, the tend job and the defaults.
 - A health module (`addons/bustle/modules/health/`), opt-in. Bustle reacts to the host's health and keeps none of its own: no wound, illness or body state.
   - `BustleHealthPort` gains `capacity(id, name)` (1 is full), `pain(id)`, `needs_care(id)` (0 to 1), `is_contagious(id)`, `visible_tags(id)` and `care(healer, patient)` (a request the host carries out). The defaults are healthy, and `care` returns false.
   - `BustleHealthBehaviour.tick()` reads the port each tick:
