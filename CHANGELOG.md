@@ -4,6 +4,26 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-14
+
+The living-population release. Optional modules for skills and passions, careers, rooms and indoors/outdoors, short-lived wants and fears, romance, life stages, reactions to the host's health with a tend job, and a causal storyteller join a job board for posted work. The house and colony demos gain full sessions with every module and a module-toggle matrix, alongside a tutorial and a module guide. Simulation rings bound an off-screen backlog by the catch-up cap and gain an optional FULL cap. Every module is opt-in; nothing is random. APIs remain experimental before 1.0.
+
+### Breaking changes since 0.8.0
+
+No public class, method, signal or setting was removed or renamed, and every new setting defaults to the 0.8.0 behaviour. Three changes can still affect a 0.8.0 host:
+
+- **Behaviour:** `BustleSimRings.tick()` no longer replays an OFF_SCREEN backlog longer than `catch_up_cap_game_days` hour by hour. The older time goes to `summary_hook` with a `caught_up` report, as `catch_up()` already did. A host that relied on every missed hour being thought after a long clock jump now gets the summary instead.
+- **Signature:** `BustleSchedule.report()` takes an optional fourth argument, `activity`. Callers are unaffected, but a host subclass that overrides `report()` must add the parameter.
+- **New methods on existing ports:**
+  - `BustleSocialPort`: `supports_kinds`, `set_kind`, `clear_kind`;
+  - `BustleWorkPort`: `board`, `can_do`, `claimed_of`;
+  - `BustleEnvironmentPort`: room scores and its store;
+  - `BustleLifeStagePort`: `allows_goal`, `allows_affordance`;
+  - `BustleHealthPort`: `capacity`, `pain`, `needs_care`, `is_contagious`, `visible_tags`, `care`;
+  - `BustleWorldPort`: `request_spawn`.
+
+  Each has a safe default, so existing hosts keep working. A host subclass that already defines a method with one of these names and a different signature must rename it.
+
 ### Added
 
 - An optional cap on the FULL ring: `BustleSimRingConfig.max_full_bodies`, and `max_full_bodies_interior`, which applies instead while the player is in an interior with `full_whole_interior`. Both are 0 (no cap) by default, which leaves everything as before.

@@ -7,3 +7,4 @@ Thumbs.db
 
 # Never commit user:// data copied into the repo
 /user_data/
+/build/

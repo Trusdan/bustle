@@ -171,6 +171,9 @@ jobs:
       - name: API docs are up to date
         run: tools/gen_api_docs.sh --check
 
+      - name: Release zips build reproducibly
+        run: tools/build_release.sh --check --list --out "$RUNNER_TEMP/release"
+
       # Opens the project in the editor (headless) with the Bustle and GUT plugins
       # enabled. Fails on a non-zero exit, on any ERROR / SCRIPT ERROR line, or if
       # project.godot is not in Godot's own format (the GUI editor would rewrite it).
