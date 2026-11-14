@@ -68,7 +68,7 @@ An agent with a romantic bond (courting or above; never a friend) gets jealous w
 Each time, three things happen:
 
 - **A thought.** The agent gets `jealousy_thought` (timed), with the partner, the rival and the cause in its reason. It is an ordinary timed thought, under its own stack rules.
-- **An opinion entry.** The agent's opinion of the rival gets one timed entry of `jealousy_opinion_value` (−5) for `jealousy_opinion_days` (3), with the cause, partner and rival in its reason. It is written through the port's `add_opinion`, which the built-in store has. A port without opinion entries, such as the Wyrd bridge, whose opinions come from deeds, gets none. Set the value to 0 to turn it off.
+- **An opinion entry.** The agent's opinion of the rival gets one timed entry of `jealousy_opinion_value` (−5) for `jealousy_opinion_days` (3), with the cause, partner and rival in its reason. It is written through the port's `add_opinion`, which the built-in store has. A port without opinion entries, such as the Wyrd bridge, whose opinions come from deeds, gets none. A positive value raises the jealous agent's opinion of the rival instead of lowering it. Set the value to 0 to turn the entry off; then a length of 0 is allowed too. With any other value, the length must be above 0.
 - **A signal.** `jealous(agent, partner, rival, cause)` fires.
 
 The entry is never toward the partner, and it never changes a status by itself: it only moves the opinion of the rival, which no romance line reads for this pair.

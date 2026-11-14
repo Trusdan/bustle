@@ -68,8 +68,13 @@ var last_timings: Dictionary = {"FULL": 0, "LIGHT": 0, "OFF_SCREEN": 0}
 ## True when the last [method tick] re-sorted the agents.
 var last_sorted: bool = false
 
-## The society it sorts.
-var society: BustleSociety
+## The society it sorts. Assigning another one drops the cached id list, so a different society
+## with the same roster version isn't mistaken for this one.
+var society: BustleSociety:
+	set(value):
+		society = value
+		_ids = []
+		_ids_version = -1
 ## The thresholds.
 var config: BustleSimRingConfig
 

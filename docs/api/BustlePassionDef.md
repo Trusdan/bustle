@@ -50,7 +50,7 @@ A thought (a `BustleThoughtDef` from the needs_mood module, with a duration of 0
 func is_valid() -> bool
 ```
 
-True when it can be used: a skill id, a positive finite multiplier, and known sliders with finite weights.
+True when it can be used: a skill id, a positive finite multiplier, known sliders with finite weights, and either no thought or a valid held [BustleThoughtDef](BustleThoughtDef.md) (duration 0). A timed thought, or any other resource, is not valid.
 
 ### `score`
 

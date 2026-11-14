@@ -198,8 +198,9 @@ func export_state() -> Dictionary:
 	return {"version": STATE_VERSION, "last": last, "history": history}
 
 
-## Restores [method export_state]. False, changing nothing, for another version, a malformed entry,
-## an event id the director doesn't have, or history out of order.
+## Restores [method export_state]. Minutes may be whole floats, as in a save read back from JSON.
+## False, changing nothing, for another version, a malformed entry, a minute that isn't whole, an
+## event id the director doesn't have, or history out of order.
 ## @experimental
 func import_state(saved: Dictionary) -> bool:
 	if int(saved.get("version", -1)) != STATE_VERSION or not saved.get("last") is Dictionary \
@@ -208,15 +209,20 @@ func import_state(saved: Dictionary) -> bool:
 	var last: Dictionary[StringName, int] = {}
 	for key: Variant in saved["last"]:
 		var minute: Variant = saved["last"][key]
-		if find(StringName(str(key))) == null or not minute is int:
+		if find(StringName(str(key))) == null or not _whole(minute):
 			return false
-		last[StringName(str(key))] = minute
+		last[StringName(str(key))] = int(minute)
 	var history: Array[Array] = []
 	for entry: Variant in saved["history"]:
-		if not entry is Array or entry.size() != 2 or find(StringName(str(entry[0]))) == null or not entry[1] is int \
+		if not entry is Array or entry.size() != 2 or find(StringName(str(entry[0]))) == null or not _whole(entry[1]) \
 				or (not history.is_empty() and int(entry[1]) < int(history[-1][1])):
 			return false
 		history.append([StringName(str(entry[0])), int(entry[1])])
 	_last = last
 	_history = history
 	return true
+
+
+# A whole number of minutes: an int, or a whole float (as a save read back from JSON has).
+static func _whole(value: Variant) -> bool:
+	return value is int or (value is float and is_finite(value) and value == floorf(value))

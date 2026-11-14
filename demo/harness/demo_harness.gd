@@ -166,7 +166,9 @@ func enable_social(p_store: BustleSocialStore, interactions: Array[BustleInterac
 
 
 ## Switches the environment on: each step, every agent's needs also move on under
-## [code]indoors[/code] while [param port] has it in a room, else [code]outdoors[/code].
+## [code]indoors[/code] while [param port] has it in a room, else [code]outdoors[/code]. These apply
+## while the agent is asleep too; a host that wants sleep to pause those needs can leave them out
+## during sleep.
 func enable_environment(port: BustleEnvironmentPort) -> void:
 	environment = port
 
@@ -234,7 +236,8 @@ func enable_life_stages(rules: BustleLifeStageRules) -> BustleLifeStages:
 ## Switches aspirations on, before agents are added: each agent gets wants and fears from
 ## [param config]. Each step, it is updated with its inputs, the fact [code]used.<object>[/code] for
 ## the object it is using, and the events that started that step; its [method BustleAspirations.score]
-## goes into its brain's scores.
+## goes into its brain's scores. That sets the brain's score boost, so the option-fit filter (people
+## goals only to agents, object goals only to objects) applies too, even with social and jobs off.
 func enable_aspirations(config: BustleAspirationConfig) -> void:
 	aspiration_config = config
 
@@ -508,8 +511,9 @@ func _step_agent(id: StringName, others_home: int) -> BustleIntent:
 	senses.advertisements = affordances.advertisements(id, now)
 	if comfort != null:
 		comfort.advertise(id, noticed_by(id), store, mood_of, senses)
-	var seeker := BustleJobSeeker.new(id, personality, senses.inputs, agent["tags"])
+	var seeker: BustleJobSeeker = null
 	if jobs != null:
+		seeker = BustleJobSeeker.new(id, personality, senses.inputs, agent["tags"])
 		jobs.advertise(seeker, senses)
 	var asp: BustleAspirations = _aspirations.get(id)
 	if asp != null:
@@ -527,6 +531,8 @@ func _step_agent(id: StringName, others_home: int) -> BustleIntent:
 		else:
 			jobs.request(seeker, intent.option_id)
 	agent["away"] = intent.goal_id == AWAY_GOAL and intent.order_id == &""
+	# The clock resets only when the object changes, so two back-to-back uses of the same object
+	# share one clock (consumption still counts as progress).
 	if intent.use_affordance != agent["using"]:
 		agent["using_since"] = now
 	agent["using"] = intent.use_affordance

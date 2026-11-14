@@ -37,7 +37,7 @@ Thoughts are held thoughts (duration 0) with the reason kind `health`. They are 
 The host can also report an illness as it happens:
 
 - `illness_began(id, tag, mood)` holds that tag's thoughts at once;
-- `recovered(id, mood)` drops every tag thought at once.
+- `recovered(id, mood)` drops at once every tag thought whose tag the port no longer shows. A tag still shown (in `visible_tags`) keeps its thought, so recovering from one illness doesn't clear another.
 
 The next `sync` follows the port's `visible_tags` again, so the port stays the truth: report the tag there too for as long as the illness lasts.
 

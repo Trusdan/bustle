@@ -153,7 +153,7 @@ A host event: `id` fell ill with `tag` (for example `sick`). Holds that tag's th
 func recovered(id: StringName, mood: Object) -> void
 ```
 
-A host event: `id` recovered. Drops every tag thought from `mood` at once.
+A host event: `id` recovered. Drops from `mood`, at once, every tag thought whose tag the port no longer shows (`BustleHealthPort.visible_tags()`); a tag still shown keeps its thought. The next `sync()` stays the source of truth.
 
 ### `allows`
 

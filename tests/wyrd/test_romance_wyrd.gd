@@ -102,3 +102,28 @@ func test_family_goes_through_wyrd_and_blocks_courting() -> void:
 	assert_eq(_romance.update(&"a1", &"a2", 0), &"", "family is never courted")
 	assert_true(_romance.unlink_family(&"a1", &"a2", &"parent"))
 	assert_false(_wyrd.social.has_kind(&"a2", &"a1", &"child"))
+
+
+# Jealousy with the bridge: the thought and the signal fire once, and no opinion entry is written,
+# since the bridge's opinions come from Wyrd's deeds.
+func test_jealousy_through_wyrd_writes_no_opinion_entry() -> void:
+	_help(&"a1", &"a2")
+	_help(&"a2", &"a1")
+	assert_eq(_romance.update(&"a1", &"a2", 0), BustleRomance.COURTING)
+	var thought := BustleThoughtDef.new()
+	thought.id = &"jealous"
+	thought.value = -5.0
+	thought.duration_hours = 6.0
+	_romance.rules.jealousy_thought = thought
+	_romance.rules.jealousy_verbs = [&"flirted"]
+	var mood := BustleMood.new()
+	var felt: Array = []
+	_romance.jealous.connect(func(agent: StringName, partner: StringName, rival: StringName, cause: StringName) -> void:
+		felt.append([agent, partner, rival, cause]))
+	var before := _social.opinion(&"a1", &"a3")
+	assert_true(_romance.notice(&"a2", &"flirted", &"a3", func(_id: StringName) -> Object: return mood))
+	assert_eq(felt, [[&"a1", &"a2", &"a3", &"flirted"]], "the signal fires once")
+	assert_eq(mood.count(&"jealous"), 1, "the thought is felt")
+	assert_false(_social.has_method(&"add_opinion"), "the bridge has no opinion entries")
+	assert_eq(_social.opinion(&"a1", &"a3"), before, "no opinion change toward the rival")
+	assert_push_error_count(0)

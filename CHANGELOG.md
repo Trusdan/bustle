@@ -124,6 +124,27 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 - `BustleSkills.apply(id, modifiers, using_skill, personality, mood)` writes the skill in use onto the agent's `BustleModifierSet` under the existing `work.speed` and `work.quality` keys, and `work.speed.<skill>` / `work.quality.<skill>`. The value is the skill's share of `BustleSkillDef.speed_add` (0.5) and `quality_add` (1.0), in proportion to its level. With a mood, `apply` holds the passion's thought while the agent does that work.
 - `docs/skills.md`, and a generic demo skill set in `demo/skills/` (cooking, farming and crafts, with a passion each).
 
+### Fixed
+
+- Saves read back from JSON load. `BustleLifeStages.import_state()` and `BustleDirector.import_state()` accept whole-number floats (such as `1440.0`) for every minute they store. A part minute is still refused, and a refused load still changes nothing.
+- `BustleLifeStages.import_state()` refuses a death whose time is before 0 or after the saved `now`.
+- After a death, `BustleLifeStages` reports a role `vacated` only when the role really changed hands. It re-reads the holder after `set_holder`, so a host port that keeps the holder gets no false report.
+- Two or more order effects in one director event can all reach the same agent. The first keeps the id `<event>.<minute>`, and each later one gets `<event>.<minute>.<index>`.
+- `BustlePassionDef.is_valid()` refuses a thought that isn't a held `BustleThoughtDef` (duration 0). No thought is still fine.
+- `BustleHealthBehaviour.recovered()` keeps the thought of any tag the port still shows, and drops only the tags that have gone.
+- `BustleRomanceRules.is_valid()` allows a jealousy entry length of 0 when the entry is off (a value of 0). A non-zero value still needs a positive, finite length.
+- `BustleSimRings` drops its cached roster when its society is replaced.
+
+### Changed
+
+- Documentation:
+  - A positive jealousy opinion value raises the opinion of the rival.
+  - With no rules, `note_death` is refused with "no rules", and the host should stop ordering the dead.
+  - Director tag and area targets need `agents` (the demo harness doesn't wire `tags_of`).
+  - `on_points` must not call `add_points`.
+  - Three notes in the demo harness: the option-fit filter, environment conditions during sleep, and the use clock.
+- The demo harness builds a job seeker only with jobs on. The population bench reads the off-screen interval from the ring config.
+
 ## [0.8.0] - 2026-11-12
 
 Soak, stuck diagnostics and performance. The demo harness gains a stuck watch that tells a stuck agent from one in a long, legitimate activity, and its timeline logs thoughts and stuck spells on the same hash. A 30-day soak runs both demos from a fixed seed and checks the replay hash. CI runs a two-day smoke, and a nightly job runs the full soak. A synthetic bench of 40 FULL, 40 LIGHT and 200 OFF_SCREEN agents times the simulation rings against the proposed budgets and checks for stuck agents at that scale. The rings now re-sort only when something calls for it, which halves the bench's whole frame on the CI runner (1.278 to 0.620 ms on average). APIs remain experimental before 1.0.

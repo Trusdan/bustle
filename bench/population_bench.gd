@@ -212,7 +212,7 @@ static func stuck_pass(town: Dictionary, days: int) -> Dictionary:
 			if seen.get("key", "") != key:
 				seen = {"key": key, "since": now}
 				steps[id] = seen
-			var interval := 60 if state.sim_ring == BustleSimRings.Ring.OFF_SCREEN else 1
+			var interval := rings.config.offscreen_interval_game_minutes if state.sim_ring == BustleSimRings.Ring.OFF_SCREEN else 1
 			watch.observe(id, now, 1, {"goal": goal,
 				"step": state.brain.runner.step_index, "place": (town["town"] as Town).area_of(id),
 				"legit": intent == null or now - int(seen["since"]) <= _step_minutes(state.brain) + interval

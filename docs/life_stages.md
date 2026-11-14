@@ -62,7 +62,11 @@ These are the host's hooks; Bustle never calls them on its own.
 
   A dead agent stops aging and keeps its last stage (none, if it had no age). `set_age` and `birth` refuse it, every goal and option is closed to it, and `living_ids()` (the agents still to schedule) leaves it out. `note_death` refuses an empty id, an agent already dead (firing nothing), an empty cause, or invalid rules.
 
+  With no rules installed, `note_death` is refused with "no rules", so recording deaths and releasing what the dead held needs a rules table, even for ageless agents.
+
   A death leaves romance bonds and family links alone. The host ends or keeps those from `died`.
+
+  Orders stay ungated, even for the dead: an order is the host's call. When `died` fires, the host should stop ordering that agent.
 
 ## Gates
 
