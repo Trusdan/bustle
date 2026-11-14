@@ -71,6 +71,8 @@ Every number is a starting point, not tuning (see `house/house.gd`). The same ru
 13. Two settlers who pick one posting in the same step never share it: the higher score claims it.
 14. A completed job pays its wage once and gives practice in its skill, and the same run gives the same timeline.
 
+`Colony.session()` is the colony's full run. It has every optional module plus social and jobs, and runs for 15 days in `tests/demo/test_colony_session.gd` (see `docs/modules.md` for how each module is wired).
+
 ## The harness and the timeline
 
 `harness/demo_harness.gd` runs a demo population headless, one fixed step of game time at a time (10 minutes by default), the way a host would. For each agent, in id order, it:

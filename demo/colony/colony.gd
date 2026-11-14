@@ -159,6 +159,163 @@ static func build(world_seed: int = 1, modules: Array[StringName] = MODULES, col
 	return colony
 
 
+## The modules a full session can leave out, beyond [constant MODULES]: each one switched on
+## through the shared harness (an enable call or, for the modules it has no switch for, an agent
+## hook in [method session]).
+const JOBS := &"jobs"
+const SKILLS := &"skills"
+const CAREERS := &"careers"
+const ENVIRONMENT := &"environment"
+const ASPIRATIONS := &"aspirations"
+const AMBITIONS := &"ambitions"
+const ROMANCE := &"romance"
+const LIFE_STAGES := &"life_stages"
+const HEALTH := &"health"
+const DIRECTOR := &"director"
+const SESSION_MODULES: Array[StringName] = [NEEDS_MOOD, SOCIAL, PERCEPTION, JOBS, SKILLS, CAREERS, ENVIRONMENT,
+	ASPIRATIONS, AMBITIONS, ROMANCE, LIFE_STAGES, HEALTH, DIRECTOR]
+## The farming career's role, held by settler A.
+const FARMER := &"farmer"
+## Settler C is ill (in some pain, needing care, visibly sick) from day 5 to day 8, with health on.
+const ILL_FROM := 5 * 1440
+const ILL_TO := 8 * 1440
+
+
+## A roster that reads the harness's own schedules, so careers see real attendance.
+class SharedRoster extends BustleScheduleRoster:
+	var run: WeakRef
+
+	func schedule_of(id: StringName) -> BustleSchedule:
+		return run.get_ref().schedule_of(id)
+
+
+## The demo's host health: settler C falls ill for three days. Readings only; Bustle keeps none.
+class SickBay extends BustleHealthPort:
+	var run: WeakRef
+
+	func _ill(id: StringName) -> bool:
+		var now: int = run.get_ref().now
+		return id == SETTLER_C and now >= ILL_FROM and now < ILL_TO
+
+	func pain(id: StringName) -> float:
+		return 0.4 if _ill(id) else 0.0
+
+	func needs_care(id: StringName) -> float:
+		return 0.5 if _ill(id) else 0.0
+
+	func visible_tags(id: StringName) -> Array[StringName]:
+		var out: Array[StringName] = []
+		if _ill(id):
+			out.append(&"sick")
+		return out
+
+
+## A full colony session seeded [param world_seed], with [param modules] on (all by default): the
+## colony of [method build] with its board, wants, courtship and life stages, plus the story deck,
+## farming skill, a farming career for settler A (with an ambition to be promoted), rooms indoors at
+## home, a three-day illness, and a log of who first notices whom. Run it for 15 days. Without any
+## module it runs like [code]build(seed, [])[/code]. Every number is a starting point, not tuning.
+static func session(world_seed: int = 1, modules: Array[StringName] = SESSION_MODULES) -> Harness:
+	var core: Array[StringName] = []
+	core.assign(MODULES.filter(func(m: StringName) -> bool: return modules.has(m)))
+	var ports := BustlePorts.new()
+	ports.trade.set_balance(&"store", 100)
+	var board := BustleJobBoard.new(work_types(), ports) if modules.has(JOBS) else null
+	var run := build(world_seed, core, true, board, aspirations() if modules.has(ASPIRATIONS) else null,
+		romance_rules() if modules.has(ROMANCE) else null, life_stage_rules() if modules.has(LIFE_STAGES) else null)
+	var me: WeakRef = weakref(run)
+	if board != null:
+		for i: int in 3:
+			board.post(&"errand", &"store", run.now)
+	if modules.has(DIRECTOR):
+		var rules := BustleDirectorRules.new()
+		rules.beat_gap_minutes = 360
+		run.enable_director(director_events(), rules)
+	if modules.has(SKILLS):
+		var farming := BustleSkillDef.new()
+		farming.id = &"farming"
+		farming.xp_curve = [60.0]
+		ports.skills = BustleSkills.new([farming] as Array[BustleSkillDef])
+		run.agent_hooks.append(func(id: StringName, _senses: BustleSenses) -> void:
+			var skills: BustleSkills = ports.skills
+			var before: int = floori(skills.level(id, &"farming"))
+			if me.get_ref().using_of(id) == &"field":
+				skills.add_xp(id, &"farming", 1.0)
+			if floori(skills.level(id, &"farming")) > before:
+				me.get_ref().timeline.add(me.get_ref().now, id, &"skill", {"skill": "farming", "level": floori(skills.level(id, &"farming"))}))
+	if modules.has(CAREERS):
+		ports.roles.set_holder(FARMER, SETTLER_A)
+		var schedules := BustleRoleSchedules.new()
+		schedules.schedules = {FARMER: routine()}
+		var roster := SharedRoster.new(ports.roles, schedules)
+		roster.run = me
+		roster.add_agent(SETTLER_A)
+		var rank := BustleCareerRank.new()
+		rank.id = &"hand"
+		var lead := BustleCareerRank.new()
+		lead.id = &"lead_hand"
+		var track := BustleCareerDef.new()
+		track.id = &"farming"
+		track.role = FARMER
+		track.activity = FARM
+		track.off_site = false
+		track.ranks = [rank, lead]
+		var careers := BustleCareers.new([track] as Array[BustleCareerDef], roster, ports)
+		careers.assign(SETTLER_A, &"farming", &"hand", run.now)
+		careers.reviewed.connect(func(id: StringName, career: StringName, _performance: float, outcome: StringName, _at: int) -> void:
+			me.get_ref().timeline.add(me.get_ref().now, id, &"career", {"career": String(career), "outcome": String(outcome)}))
+		var track_ref: WeakRef = weakref(careers)
+		careers.promotion_due.connect(func(id: StringName, career: StringName, _from: StringName, to: StringName) -> void:
+			track_ref.get_ref().assign(id, career, to, me.get_ref().now))
+		run.agent_hooks.append(func(id: StringName, senses: BustleSenses) -> void:
+			if id == SETTLER_A:
+				careers.update(id, me.get_ref().now, me.get_ref().mood_of(id))
+				careers.fill_inputs(id, senses.inputs))
+	if modules.has(AMBITIONS):
+		var hopes := BustleAmbitions.new(SETTLER_A)
+		hopes.pin = &"get_promoted"
+		hopes.ambition_started.connect(func(agent: StringName, id: StringName, _info: Dictionary) -> void:
+			me.get_ref().timeline.add(me.get_ref().now, agent, &"ambition", {"ambition": String(id), "what": "started"}))
+		hopes.ambition_completed.connect(func(agent: StringName, id: StringName, _info: Dictionary) -> void:
+			me.get_ref().timeline.add(me.get_ref().now, agent, &"ambition", {"ambition": String(id), "what": "completed"}))
+		run.agent_hooks.append(func(id: StringName, senses: BustleSenses) -> void:
+			if id == SETTLER_A:
+				var facts: Dictionary = senses.inputs.duplicate()
+				facts[&"has_role"] = true
+				hopes.update(me.get_ref().now, me.get_ref().personality_of(id), facts))
+	if modules.has(ENVIRONMENT):
+		var rooms := BustleEnvironmentPort.new()
+		run.enable_environment(rooms)
+		run.agent_hooks.append(func(id: StringName, _senses: BustleSenses) -> void:
+			var room: StringName = &"hall" if me.get_ref().area_of(id) == HOME else &""
+			if rooms.room_of(id) != room:
+				rooms.set_room(id, room)
+				me.get_ref().timeline.add(me.get_ref().now, id, &"room", {"room": String(room)}))
+	if modules.has(PERCEPTION):
+		var seen := {}
+		run.agent_hooks.append(func(id: StringName, _senses: BustleSenses) -> void:
+			for other: StringName in me.get_ref().noticed_by(id):
+				if not seen.has([id, other]):
+					seen[[id, other]] = true
+					me.get_ref().timeline.add(me.get_ref().now, id, &"notice", {"of": String(other)}))
+	if modules.has(HEALTH):
+		var sick_bay := SickBay.new()
+		sick_bay.run = me
+		ports.health = sick_bay
+		var health := BustleHealthBehaviour.new(null, ports)
+		var held := {}
+		for id: StringName in SETTLERS:
+			run.brain_of(id).gate = health.allows
+		run.agent_hooks.append(func(id: StringName, senses: BustleSenses) -> void:
+			health.apply(id, null)
+			health.fill_inputs(id, senses.inputs)
+			var thoughts: Array[StringName] = health.sync(id, me.get_ref().mood_of(id))
+			if thoughts != held.get(id, []):
+				held[id] = thoughts
+				me.get_ref().timeline.add(me.get_ref().now, id, &"health", {"thoughts": thoughts.map(func(t: StringName) -> String: return String(t))}))
+	return run
+
+
 ## The demo's courtship lines: lower than the defaults so a week shows a partnership (courting at
 ## 70, partners after two days at 75). It carries a breakup thought and a jealousy thought for when
 ## they happen; the fixture itself shows no breakup, and jealousy only once a partner takes to

@@ -37,7 +37,7 @@ The whole script:
 extends RefCounted
 
 ## A one-person household: food and sleep, a stove and a bed, and a mood.
-## Returns how often each object was chosen, and the mood's thoughts.
+## Returns, for each object, how many 10-minute steps it was chosen in, and how many thoughts the mood holds.
 func run(days: int = 2) -> Dictionary:
 	var needs := BustleNeedSet.new()
 	needs.add_need(need(&"food", 0.06))
