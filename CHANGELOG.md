@@ -6,6 +6,13 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- A director module (`addons/bustle/modules/director/`), opt-in: a storyteller that paces host-authored events. Nothing is random: no seed and no deck, and the same events, inputs, locks and clock replay the same timeline.
+  - `BustleEventDef`, host data: an id (and an optional kind for the port), preconditions on the host's inputs (`{"input": key}` with optional `at_least` / `at_most`), a tension change (raise or relieve), a cooldown in game minutes, a `lock_sensitive` flag, a weight and optional score inputs.
+  - `BustleDirectorRules`: tension (0 to 1) is the host's weighted inputs plus each recently fired event's tension, fading over `memory_minutes` (3 days). At or above `high` (0.7) the story needs relief; at or below `low` (0.3) it needs a raise. An optional `beat_gap_minutes` (0) spaces events out without dropping them. All are experimental defaults.
+  - `BustleDirector.update(now, inputs, locked)` fires at most one eligible event and emits `event_fired(id, now)`.
+    - Eligible means: preconditions hold, the cooldown has passed, it isn't lock-sensitive while the quest lock is held, and `BustleDirectorPort.allows` agrees.
+    - The pick goes by pacing (events that move tension the way the story needs first, those that push the wrong way last but never blocked), then score, then id.
+  - Effects are the host's for now. `export_state()` / `import_state()` keep cooldowns and recent history, from which tension follows.
 - The tend job (`BustleTendJob`, `BustleTendAction`), opt-in.
   - An able, free agent tends the most urgent patient near it (`needs_care` above 0, ties in id order). It asks the host through `BustleHealthPort.care()` and emits `tended`; the host owns the recovery.
   - The `tend` goal (`BustleTendJob.goal_def()`: band `PERSONAL`, tags `tend` and `work`) scores by `fact.tend`, the patient's urgency. It waits 30 minutes between requests and after a refusal.
