@@ -35,6 +35,13 @@ extends Resource
 @export var resort_move: float = 1.0
 ## Catch-up simulates at most this many game days; anything older is summarised.
 @export var catch_up_cap_game_days: int = 7
+## The most agents FULL at once (and so, with [member manage_bodies], the most bodies). 0: no cap.
+## Over the cap, the agents already FULL keep their places and the rest stay LIGHT; see
+## [BustleSimRings]. A host sets its own budget; Bustle has no default cap.
+@export var max_full_bodies: int = 0
+## The cap used instead of [member max_full_bodies] while the player is in an interior with
+## [member full_whole_interior]. 0: [member max_full_bodies] applies there too.
+@export var max_full_bodies_interior: int = 0
 ## When true, [BustleSimRings] spawns a body when an agent becomes FULL and frees it when it stops
 ## being FULL, through the world port.
 @export var manage_bodies: bool = true

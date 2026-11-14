@@ -18,8 +18,13 @@ extends SceneTree
 ## expected time, or off-screen catch-up still advancing, is legitimate; anything else needs
 ## progress (a new goal or step).
 ##
+## [b]FULL cap.[/b] [code]--max-full=N[/code] and [code]--max-full-interior=N[/code] set
+## [member BustleSimRingConfig.max_full_bodies] and [member BustleSimRingConfig.max_full_bodies_interior]
+## (bench parameters, not budgets). The FULL agents here are all in one interior, so the interior cap
+## is the one that bites. With either set, the report adds the cap and how many agents it held back.
+##
 ## It exits 1 when an average is over budget, the save size is over budget, or an agent was stuck.
-##   godot --headless --path . -s res://bench/population_bench.gd [-- --full=40 --light=40 --offscreen=200 --frames=7200 --days=1 --seed=1]
+##   godot --headless --path . -s res://bench/population_bench.gd [-- --full=40 --light=40 --offscreen=200 --frames=7200 --days=1 --seed=1 --max-full=0 --max-full-interior=0]
 
 const StuckWatch := preload("res://demo/harness/demo_stuck_watch.gd")
 
@@ -43,6 +48,8 @@ var _offscreen := 200
 var _frames := 7200
 var _days := 1
 var _seed := 1
+var _max_full := 0
+var _max_full_interior := 0
 
 
 ## Puts FULL agents in the player's area (indoors, so the whole of it is FULL), LIGHT ones next
@@ -75,35 +82,48 @@ func _initialize() -> void:
 			"--frames": _frames = value
 			"--days": _days = value
 			"--seed": _seed = value
+			"--max-full": _max_full = value
+			"--max-full-interior": _max_full_interior = value
 	_run.call_deferred()
 
 
 func _run() -> void:
 	var memory_before := OS.get_static_memory_usage()
-	var town := build(_full, _light, _offscreen, _seed)
+	var town := build(_full, _light, _offscreen, _seed, _max_full, _max_full_interior)
 	var memory := OS.get_static_memory_usage() - memory_before
 	var perf := time_hour(town, _frames)
 	var save := save_bytes(town)
-	var stuck := stuck_pass(build(_full, _light, _offscreen, _seed), _days)
+	var stuck := stuck_pass(build(_full, _light, _offscreen, _seed, _max_full, _max_full_interior), _days)
 	var counts: Dictionary = perf["counts"]
 	var agents := _full + _light + _offscreen
 	var ok: bool = perf["full_avg"] <= BUDGET_FULL_MS and perf["full_p99"] <= BUDGET_FULL_P99_MS \
 		and perf["light_avg"] <= BUDGET_LIGHT_MS and perf["off_avg"] <= BUDGET_OFFSCREEN_MS \
 		and save / agents <= BUDGET_SAVE_BYTES and (stuck["spells"] as Array).is_empty()
-	print("population bench: %d FULL, %d LIGHT, %d OFF_SCREEN, seed %d, %d frames (%d game min), %d stuck days, Godot %s, build %s: FULL average %.3f ms p99 %.3f ms (budget %.1f / %.1f), LIGHT average %.3f ms p99 %.3f ms (budget %.1f), OFF_SCREEN average %.3f ms p99 %.3f ms (budget %.1f), frame average %.3f ms p99 %.3f ms, memory %.1f KiB (%.0f B an agent), save %d B an agent (budget %d), stuck spells %d, longest still %d min: %s" % [
+	print("population bench: %d FULL, %d LIGHT, %d OFF_SCREEN, seed %d, %d frames (%d game min), %d stuck days, Godot %s, build %s: FULL average %.3f ms p99 %.3f ms (budget %.1f / %.1f), LIGHT average %.3f ms p99 %.3f ms (budget %.1f), OFF_SCREEN average %.3f ms p99 %.3f ms (budget %.1f), frame average %.3f ms p99 %.3f ms, memory %.1f KiB (%.0f B an agent), save %d B an agent (budget %d), stuck spells %d, longest still %d min%s: %s" % [
 		counts["FULL"], counts["LIGHT"], counts["OFF_SCREEN"], _seed, _frames, perf["minutes"], _days,
 		Engine.get_version_info()["string"], _build_sha(), perf["full_avg"], perf["full_p99"], BUDGET_FULL_MS,
 		BUDGET_FULL_P99_MS, perf["light_avg"], perf["light_p99"], BUDGET_LIGHT_MS, perf["off_avg"], perf["off_p99"],
 		BUDGET_OFFSCREEN_MS, perf["frame_avg"], perf["frame_p99"], memory / 1024.0, float(memory) / agents,
-		save / agents, BUDGET_SAVE_BYTES, (stuck["spells"] as Array).size(), stuck["longest"], "OK" if ok else "OVER BUDGET"])
+		save / agents, BUDGET_SAVE_BYTES, (stuck["spells"] as Array).size(), stuck["longest"], _cap_note(town),
+		"OK" if ok else "OVER BUDGET"])
 	for spell: Dictionary in stuck["spells"]:
 		print("  stuck: %s" % JSON.stringify(spell, "", true))
 	quit(0 if ok else 1)
 
 
+# The FULL cap and how many it held back at the first sort, or empty with no cap.
+func _cap_note(town: Dictionary) -> String:
+	if _max_full <= 0 and _max_full_interior <= 0:
+		return ""
+	return ", FULL cap %d (interior %d), held back by the cap %d" % [_max_full, _max_full_interior,
+		(town["rings"] as BustleSimRings).last_held_by_cap]
+
+
 ## A town of [param full] FULL, [param light] LIGHT and [param offscreen] OFF_SCREEN agents seeded
-## [param world_seed]: {society, rings, town}. The rings are sorted once.
-static func build(full: int, light: int, offscreen: int, world_seed: int) -> Dictionary:
+## [param world_seed], with an optional FULL cap ([param max_full], [param max_full_interior]; 0 is
+## none): {society, rings, town}. The rings are sorted once.
+static func build(full: int, light: int, offscreen: int, world_seed: int, max_full: int = 0,
+		max_full_interior: int = 0) -> Dictionary:
 	var society := BustleSociety.new(world_seed)
 	society.register_archetype(&"townsfolk", library())
 	var town := Town.new()
@@ -114,6 +134,8 @@ static func build(full: int, light: int, offscreen: int, world_seed: int) -> Dic
 		town.area[id] = &"square" if i < full else (&"lane" if i < full + light else &"far")
 	var config := BustleSimRingConfig.new()
 	config.manage_bodies = false
+	config.max_full_bodies = max_full
+	config.max_full_bodies_interior = max_full_interior
 	var rings := BustleSimRings.new(society, config)
 	rings.senses_provider = func(id: StringName, _ring: int, minute: int) -> BustleSenses:
 		return senses_for(world_seed, id, minute)

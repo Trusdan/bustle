@@ -6,6 +6,12 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- An optional cap on the FULL ring: `BustleSimRingConfig.max_full_bodies`, and `max_full_bodies_interior`, which applies instead while the player is in an interior with `full_whole_interior`. Both are 0 (no cap) by default, which leaves everything as before.
+  - Over the cap, the extra agents stay LIGHT. Agents already FULL keep their places until the usual rules move them out. A free place goes to the waiting agent nearest the player (then by id, and those with no position last), through the usual dwell, catch-up and no-pop-in rules.
+  - Nobody already FULL is swapped out for a closer arrival. If more are FULL than the cap allows (it was lowered, or a save had more), the lowest-ranked move to LIGHT at once and their bodies are freed.
+  - The cap limits the FULL ring itself, with or without `manage_bodies`. `BustleSimRings.last_held_by_cap` counts the agents the last sort held back. Deterministic, with no rolls.
+- `--max-full=N` and `--max-full-interior=N` on the population bench. With either set, its report adds the cap and how many agents it held back.
+
 - The colony demo's full session, `Colony.session(seed, modules)`, run for 15 days.
   - It switches on every optional module plus social and jobs. Skills, careers, ambitions, health, environment and perception are wired through the harness's new `agent_hooks`, as demo code. `Colony.build()` is unchanged.
   - Its tests replay a pinned run with a clean stuck watch, check that each module leaves a trace, and run the full toggle matrix: each module left out in turn, and all of them out.
@@ -137,6 +143,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Changed
 
+- `BustleSimRings.tick()` bounds an OFF_SCREEN agent's backlog by the catch-up cap. When a clock jump, or a clock running faster than one interval a tick, leaves it more than `catch_up_cap_game_days` behind, the older time is summarised at once, split exactly as `catch_up()` splits it, through `summary_hook` and `caught_up`. The kept week is then thought one interval a tick as before. A 365-day jump now costs 168 thinks, the same as `catch_up()`, instead of 8,760. A backlog within the cap is unchanged.
 - Documentation:
   - A positive jealousy opinion value raises the opinion of the rival.
   - With no rules, `note_death` is refused with "no rules", and the host should stop ordering the dead.
