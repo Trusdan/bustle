@@ -177,5 +177,3 @@ Cooldowns and recent history as plain data. Tension comes from these and the inp
 ```gdscript
 func import_state(saved: Dictionary) -> bool
 ```
-
-Restores `export_state()`. Minutes may be whole floats, as in a save read back from JSON. False, changing nothing, for another version, a malformed entry, a minute that isn't whole, an event id the director doesn't have, or history out of order.

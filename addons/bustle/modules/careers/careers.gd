@@ -274,6 +274,8 @@ func export_state() -> Dictionary:
 ## ([code]closed[/code], [code]window[/code], [code]promoted[/code]) starts it afresh from
 ## [code]since[/code]. It doesn't check who holds which role: restore the roles first.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary:
 		return false
 	var restored: Dictionary[StringName, Dictionary] = {}

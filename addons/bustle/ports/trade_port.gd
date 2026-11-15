@@ -90,6 +90,8 @@ func export_state() -> Dictionary:
 ## Restores [method export_state]. False (and nothing changes) when malformed: not a dictionary, an
 ## empty id, or an amount that isn't a whole number of at least 0.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not (saved as Dictionary).get("balances") is Dictionary:
 		return false
 	var staged: Dictionary[StringName, int] = {}

@@ -230,6 +230,8 @@ func export_state() -> Dictionary:
 ## malformed or holds a status off the ladder. A pair saved without [code]armed[/code] is armed,
 ## and a save without [code]jealousy[/code] has felt none.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary:
 		return false
 	var restored: Dictionary[String, Dictionary] = {}

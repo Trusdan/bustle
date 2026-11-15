@@ -258,6 +258,8 @@ func export_state() -> Dictionary:
 ## Restores [method export_state], replacing everything. False (and nothing changes) when malformed
 ## or naming a want or fear the config doesn't have. A save without [code]points[/code] has none.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not saved.get("wants") is Array or not saved.get("fears") is Array \
 			or not saved.get("ended") is Dictionary:
 		return false

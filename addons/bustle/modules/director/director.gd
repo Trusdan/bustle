@@ -191,7 +191,13 @@ func export_state() -> Dictionary:
 ## Restores [method export_state]. Minutes may be whole floats, as in a save read back from JSON.
 ## False, changing nothing, for another version, a malformed entry, a minute that isn't whole, an
 ## event id the director doesn't have, or history out of order.
+static func _save_format() -> Dictionary:
+	return {"key": "version", "current": STATE_VERSION, "steps": {}}
+
+
 func import_state(saved: Dictionary) -> bool:
+	if not BustleSaveFormat._read(&"BustleDirector", saved, _save_format())["ok"]:
+		return false
 	if int(saved.get("version", -1)) != STATE_VERSION or not saved.get("last") is Dictionary \
 			or not saved.get("history") is Array:
 		return false

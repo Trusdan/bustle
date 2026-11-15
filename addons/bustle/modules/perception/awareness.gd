@@ -77,6 +77,8 @@ func export_state() -> Dictionary:
 ## Restores [method export_state]'s data, making each meter with [param profile]. Emits no
 ## signals.
 func import_state(data: Dictionary, profile: BustlePerceptionProfile) -> void:
+	if not BustleSaveFormat._readable(data):
+		return
 	_meters.clear()
 	for key: Variant in data:
 		var value: Variant = data[key]

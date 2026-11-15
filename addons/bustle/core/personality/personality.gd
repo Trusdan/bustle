@@ -172,6 +172,8 @@ func export_state() -> Dictionary:
 ## changes) when malformed, a trait is unknown, or the traits couldn't be combined. Call
 ## [method apply] afterwards.
 func import_state(saved: Variant, defs: Array[BustleTraitDef]) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not (saved as Dictionary).get("sliders") is Dictionary \
 			or not (saved as Dictionary).get("traits") is Array:
 		return false

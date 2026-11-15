@@ -145,6 +145,8 @@ func export_state() -> Dictionary:
 ## data or a thought id no rule has. The next [method sync] brings the mood in line; holding a
 ## thought that is already held adds no second one.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary:
 		return false
 	var known: Array[StringName] = []

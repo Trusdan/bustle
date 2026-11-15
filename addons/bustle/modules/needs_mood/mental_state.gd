@@ -140,6 +140,8 @@ func export_state() -> Dictionary:
 ## Restores [method export_state]. False (and nothing changes) when malformed or naming a state
 ## the config doesn't have.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not saved.get("active") is Dictionary:
 		return false
 	var row: Dictionary = saved["active"]

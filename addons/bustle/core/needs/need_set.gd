@@ -150,6 +150,8 @@ func export_state() -> Dictionary:
 ## missing from [param saved] keep their pressure. False (and nothing changes) when the data is
 ## malformed: not a dictionary, a key that isn't a string, or a pressure that isn't a finite number.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not (saved as Dictionary).get("pressures") is Dictionary:
 		return false
 	var pressures: Dictionary = saved["pressures"]
