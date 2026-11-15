@@ -48,7 +48,7 @@ A frozen symbol is retired in two steps.
    ```
 
    A symbol is a class (`BustleExample`, which covers all its members) or a member (`BustleExample.old_name`). `since` is the release that deprecated it. `replacement` and `note` are optional.
-2. **Remove it, only in a major release.** A deprecated symbol must ship, with its deprecation warning, in at least one minor release before the major release that removes it. For example, a symbol deprecated in `1.3.0` can be removed in `2.0.0` at the earliest. The deprecations.json entry stays: it's what lets the check accept the removal. The CHANGELOG lists the removal under `### Removed` and "Breaking changes".
+2. **Remove it, only in a major release.** A deprecated symbol must ship, with its deprecation warning, in at least one minor release before the major release that removes it. For example, a symbol deprecated in `1.3.0` can be removed in `2.0.0` at the earliest. The deprecations.json entry stays: it's what lets the check accept the removal, and only in such a major release. The CHANGELOG lists the removal under `### Removed` and "Breaking changes".
 
 A signature change goes the same way: add the new form, deprecate the old one, and remove it in the next major release. The removal needs its deprecations.json entry too.
 
@@ -57,6 +57,12 @@ A signature change goes the same way: add the new form, deprecate the old one, a
 `tools/public_api.sh` regenerates the manifest from the `##` doc comments (with Godot's doctool) and compares it with the committed `docs/public-api/public_api.json`. In CI it also compares it with the manifest on the pull request's base branch.
 
 - It **fails** when a frozen symbol is removed, renamed or changed, or stops being frozen, and deprecations.json has no entry for it or its class. It also fails when deprecations.json is malformed, or when PUBLIC_API.md doesn't match the manifest.
+- It **fails a covered removal** too (a symbol removed, renamed or moved back to `@experimental`, with an entry for it or its class) unless both of these hold:
+  - the current version's major is above the major of the entry's `since`;
+  - `since` is a minor release (`x.y.0` or a later patch, with `y` of 1 or more), so the warning shipped in a minor release before the major.
+
+  The current version is the manifest's `version`, which `tools/public_api.sh` takes from `addons/bustle/VERSION`. A `since` of `X.0.0` names a major release with no minor after it, so a removal under it always fails. For example, with `since` 1.3.0, removing the symbol fails at 1.4.0 or 1.3.1 and passes at 2.0.0 or later. Each failure names the symbol, the current version and `since`. A covered signature change is not held to this rule.
+- **When a removal can land.** `addons/bustle/VERSION` holds the last released version until the release-prep pull request bumps it. So a removal lands in the pull request that bumps the major version, or after it.
 - It **passes** on new symbols, and notes that the manifest is behind the code.
 - It **notes** a raised `STATE_VERSION` as a save-format change, so a reviewer can confirm that `import_state()` still reads the older shape.
 
@@ -66,7 +72,9 @@ tools/public_api.sh --check --base origin/main # also against the base branch, a
 tools/public_api.sh --write                   # record the current surface (refuses a breaking change with no entry)
 ```
 
-`tests/api/test_public_api_check.gd` proves the rules on fixtures in `tests/api/fixtures/`: a removal fails, and the same removal with a deprecation entry passes.
+`tests/api/test_public_api_check.gd` and `tests/api/test_public_api_removals.gd` prove the rules on fixtures in `tests/api/fixtures/`:
+- a removal fails, and the same removal with a deprecation entry passes in the next major release;
+- a covered removal in the same major, or one whose `since` was a major release, fails.
 
 ## Marking what isn't frozen
 

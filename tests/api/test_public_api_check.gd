@@ -44,6 +44,7 @@ func test_a_removed_method_fails() -> void:
 func test_a_removed_method_with_a_deprecation_entry_passes() -> void:
 	var current := _base()
 	_example(current)["methods"].erase("old_name")
+	current["version"] = "2.0.0"
 	var result := ApiDiff.compare(_base(), current, _load("deprecations_method.json"))
 	assert_true(ApiDiff.passes(result))
 	assert_eq(result["breaking"], [])
@@ -107,6 +108,7 @@ func test_new_symbols_pass() -> void:
 func test_a_removed_class_fails_once_and_a_class_entry_covers_it() -> void:
 	var current := _base()
 	current["frozen"].erase("BustleExamplePort")
+	current["version"] = "2.0.0"
 	var result := ApiDiff.compare(_base(), current, null)
 	assert_eq(result["breaking"], ["BustleExamplePort: removed or renamed"], "its members aren't listed again")
 	var covered := ApiDiff.compare(_base(), current, _load("deprecations_class.json"))
@@ -117,6 +119,7 @@ func test_a_removed_class_fails_once_and_a_class_entry_covers_it() -> void:
 func test_a_class_entry_covers_its_members() -> void:
 	var current := _base()
 	current["frozen"]["BustleExamplePort"]["methods"].erase("lookup")
+	current["version"] = "2.0.0"
 	assert_true(ApiDiff.passes(ApiDiff.compare(_base(), current, _load("deprecations_class.json"))))
 
 
