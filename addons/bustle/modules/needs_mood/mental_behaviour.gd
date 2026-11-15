@@ -40,17 +40,17 @@ var society: BustleSociety
 var config: BustleMentalConfig
 ## Optional: the insulted agent quarrels through it.
 var conflict: BustleConflict
-## (id) → true while the agent is locked to a task. Made with a society, it's that society's
+## [code]func(id: StringName) -> bool[/code]: true while the agent is locked to a task. Made with a society, it's that society's
 ## [method BustleSociety.is_locked]; a host or test may replace it. Empty: never.
 var is_locked: Callable = Callable()
-## (id) → the affordance it would indulge in (an id), or empty. Empty: none.
+## [code]func(id: StringName) -> StringName[/code]: the affordance it would indulge in (an id), or empty. Empty: none.
 var indulgence_of: Callable = Callable()
-## (id) → where the agent or person is (a [Vector3]), or null. Empty: the world position of its
+## [code]func(id: StringName) -> Variant[/code]: where the agent or person is (a [Vector3]), or null. Empty: the world position of its
 ## area.
 var position_of: Callable = Callable()
-## (id) → where home is (a [Vector3]), or null. Empty: none (withdraw then stays put).
+## [code]func(id: StringName) -> Variant[/code]: where home is (a [Vector3]), or null. Empty: none (withdraw then stays put).
 var home_of: Callable = Callable()
-## (id, now) → where to wander to (a [Vector3]), or null. Empty: the agent's neighbouring areas in
+## [code]func(id: StringName, now: int) -> Variant[/code]: where to wander to (a [Vector3]), or null. Empty: the agent's neighbouring areas in
 ## turn, by the hour.
 var wander_to: Callable = Callable()
 

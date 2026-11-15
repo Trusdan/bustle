@@ -47,7 +47,7 @@ The advertisements' tags.
 var low_state_of: Callable = Callable()
 ```
 
-(id) → true while that agent is in a low mental state (for example `BustleMentalBehaviour.in_low_state()`). A friend in one needs comforting even once its mood has started to rise. Empty: mood alone decides.
+`func(id: StringName) -> bool`: true while that agent is in a low mental state (for example `BustleMentalBehaviour.in_low_state()`). A friend in one needs comforting even once its mood has started to rise. Empty: mood alone decides.
 
 ### `low_state_urgency`
 

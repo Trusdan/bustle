@@ -16,11 +16,11 @@ signal applied(event: StringName, kind: StringName, target: StringName, what: St
 var ports: BustlePorts
 ## [code]func() -> Array[StringName][/code]: every agent. Unset: only agents named by id.
 var agents: Callable = Callable()
-## [code]func(id) -> Array[StringName][/code]: an agent's tags. Unset: no tags.
+## [code]func(id: StringName) -> Array[StringName][/code]: an agent's tags. Unset: no tags.
 var tags_of: Callable = Callable()
-## [code]func(id) -> Object[/code]: an agent's mood (with [code]add_thought(def, details)[/code]), or null.
+## [code]func(id: StringName) -> Object[/code]: an agent's mood (with [code]add_thought(def, details)[/code]), or null.
 var mood_of: Callable = Callable()
-## [code]func(id) -> BustleBrain[/code]: an agent's brain, or null.
+## [code]func(id: StringName) -> BustleBrain[/code]: an agent's brain, or null.
 var brain_of: Callable = Callable()
 
 

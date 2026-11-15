@@ -40,7 +40,7 @@ var agents: Callable = Callable()
 var tags_of: Callable = Callable()
 ```
 
-`func(id) -> Array`StringName``: an agent's tags. Unset: no tags.
+`func(id: StringName) -> Array`StringName``: an agent's tags. Unset: no tags.
 
 ### `mood_of`
 
@@ -48,7 +48,7 @@ var tags_of: Callable = Callable()
 var mood_of: Callable = Callable()
 ```
 
-`func(id) -> Object`: an agent's mood (with `add_thought(def, details)`), or null.
+`func(id: StringName) -> Object`: an agent's mood (with `add_thought(def, details)`), or null.
 
 ### `brain_of`
 
@@ -56,7 +56,7 @@ var mood_of: Callable = Callable()
 var brain_of: Callable = Callable()
 ```
 
-`func(id) -> BustleBrain`: an agent's brain, or null.
+`func(id: StringName) -> BustleBrain`: an agent's brain, or null.
 
 ## Methods
 

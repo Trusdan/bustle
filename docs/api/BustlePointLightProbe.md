@@ -30,7 +30,7 @@ The point sources.
 var occluded: Callable
 ```
 
-Optional: `func(from: Vector3, to: Vector3) -> bool`, true when something blocks the light from a source at `from` to the sample point `to`. Unset: nothing ever blocks.
+`func(from: Vector3, to: Vector3) -> bool`: optional; true when something blocks the light from a source at `from` to the sample point `to`. Unset: nothing ever blocks.
 
 ## Methods
 

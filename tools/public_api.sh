@@ -7,7 +7,9 @@
 #                                           entry in docs/public-api/deprecations.json; new symbols pass.
 #                                           A covered removal (or move back to @experimental) also fails unless
 #                                           addons/bustle/VERSION's major is above the entry's "since" major and
-#                                           "since" is a minor release (x.y.0 with y >= 1)
+#                                           "since" is a minor release (x.y.0 with y >= 1). A Callable hook's call
+#                                           (the func(...) -> T opening its doc comment) is part of its signature;
+#                                           a call recorded for the first time is only a note
 #   tools/public_api.sh --check --base REF  also check against the manifest at a git ref (CI: the base branch)
 # Needs the pinned Godot (tools/pins.env) on PATH as `godot`.
 set -euo pipefail

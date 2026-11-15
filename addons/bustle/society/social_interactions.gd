@@ -22,7 +22,7 @@ var greeting: BustleInteractionDef
 var pair_cooldown_minutes: int = 120
 ## Game minutes before an agent greets anyone again.
 var agent_cooldown_minutes: int = 10
-## (id) → that agent's mood (anything with a [code]mood[/code] number and [code]add_thought[/code]),
+## [code]func(id: StringName) -> Object[/code]: that agent's mood (anything with a [code]mood[/code] number and [code]add_thought[/code]),
 ## or null. Empty: nobody has a mood.
 var mood_of: Callable = Callable()
 

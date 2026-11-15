@@ -172,7 +172,7 @@ The intent of the last tick, or null. Not saved.
 var score_boost: Callable = Callable()
 ```
 
-`func(goal_id, option_id) -> float`: multiplies each candidate's score (see `BustleScoreContext.score_boost`), for example `BustleAmbitions.boost()`. Unset: 1.
+`func(goal_id: StringName, option_id: StringName) -> float`: multiplies each candidate's score (see `BustleScoreContext.score_boost`), for example `BustleAmbitions.boost()`. Unset: 1.
 
 ### `life_stages`
 
@@ -188,7 +188,7 @@ The life stages that gate its self-chosen goals and options, or null (no gates).
 var gate: Callable = Callable()
 ```
 
-`func(agent_id, goal_tags, option_tags) -> bool`: a further gate on its self-chosen candidates, for example `BustleHealthBehaviour.allows()`. `goal_tags` are the goal's id and tags, `option_tags` its option's advertisement tags (empty with no option). False makes the candidate ineligible with a `gate` reason, so it is never picked. Unset: no gate. Orders aren't gated.
+`func(agent_id: StringName, goal_tags: Array`StringName`, option_tags: Array`StringName`) -> bool`: a further gate on its self-chosen candidates, for example `BustleHealthBehaviour.allows()`. `goal_tags` are the goal's id and tags, `option_tags` its option's advertisement tags (empty with no option). False makes the candidate ineligible with a `gate` reason, so it is never picked. Unset: no gate. Orders aren't gated.
 
 ## Methods
 

@@ -23,10 +23,10 @@ extends RefCounted
 var society: BustleSociety
 ## The like line and family kinds.
 var config: BustleAmbitionConfig
-## (id) → true when that person is dead or gone for good. Empty: when they're no longer an agent
+## [code]func(id: StringName) -> bool[/code]: true when that person is dead or gone for good. Empty: when they're no longer an agent
 ## of the society.
 var is_gone: Callable = Callable()
-## (id) → the settlement that agent lives in. Empty: its area.
+## [code]func(id: StringName) -> StringName[/code]: the settlement that agent lives in. Empty: its area.
 var settlement_of: Callable = Callable()
 
 

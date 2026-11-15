@@ -43,15 +43,15 @@ var config: BustleCrimeConfig
 var enabled: bool = true
 ## Agents that never steal (for example the player's own character, if it is an agent).
 var exempt: Array[StringName] = []
-## (id) → that agent's [BustlePersonality], or null (neutral sliders).
+## [code]func(id: StringName) -> BustlePersonality[/code]: that agent's personality, or null (neutral sliders).
 var personality_of: Callable = Callable()
-## (id) → that agent's [BustleNeedSet], or null (no needs, so no theft).
+## [code]func(id: StringName) -> BustleNeedSet[/code]: that agent's needs, or null (no needs, so no theft).
 var needs_of: Callable = Callable()
-## (thief, place) → true when the thief judges someone would see a theft there. Empty: whenever
+## [code]func(thief: StringName, place: StringName) -> bool[/code]: true when the thief judges someone would see a theft there. Empty: whenever
 ## another agent of the society who isn't incapacitated (the health port) is in that area. Who
 ## really perceived a theft is [BustleCrimeWatch]'s business.
 var is_observed: Callable = Callable()
-## (id) → true while the host holds that agent to a story or task. Made with a society, it's that
+## [code]func(id: StringName) -> bool[/code]: true while the host holds that agent to a story or task. Made with a society, it's that
 ## society's [method BustleSociety.is_locked]; a host or test may replace it. Empty: never.
 var is_locked: Callable = Callable()
 

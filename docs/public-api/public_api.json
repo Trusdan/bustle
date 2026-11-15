@@ -204,11 +204,13 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"access_hook": {
-					"purpose": "(agent id, affordance) → a multiplier from 0 (refused) to 1.",
+					"call": "func(agent: StringName, affordance: BustleAffordance) -> float",
+					"purpose": "a multiplier from 0 (refused) to 1.",
 					"signature": "var access_hook: Callable"
 				},
 				"cost_hook": {
-					"purpose": "(agent id, affordance) → the price of one use.",
+					"call": "func(agent: StringName, affordance: BustleAffordance) -> int",
+					"purpose": "the price of one use.",
 					"signature": "var cost_hook: Callable"
 				}
 			},
@@ -355,11 +357,13 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"is_gone": {
-					"purpose": "(id) → true when that person is dead or gone for good.",
+					"call": "func(id: StringName) -> bool",
+					"purpose": "true when that person is dead or gone for good.",
 					"signature": "var is_gone: Callable"
 				},
 				"settlement_of": {
-					"purpose": "(id) → the settlement that agent lives in.",
+					"call": "func(id: StringName) -> StringName",
+					"purpose": "the settlement that agent lives in.",
 					"signature": "var settlement_of: Callable"
 				}
 			},
@@ -386,7 +390,8 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"is_locked": {
-					"purpose": "Optional: (id) → true while the agent is locked, checked by `boost()` at once (made with a society, it's that society's `BustleSociety.is_locked()`; without it, only `locked` in the last `update()`'s inputs counts, so call `update()` whenever a lock starts or ends).",
+					"call": "func(id: StringName) -> bool",
+					"purpose": "optional; true while the agent is locked, checked by `boost()` at once (made with a society, it's that society's `BustleSociety.is_locked()`; without it, only `locked` in the last `update()`'s inputs counts, so call `update()` whenever a lock starts or ends).",
 					"signature": "var is_locked: Callable"
 				}
 			},
@@ -458,7 +463,8 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"on_points": {
-					"purpose": "The host's reward hook, `func(agent, amount, reason)`, called after points are earned (with the new total already counted).",
+					"call": "func(agent: StringName, amount: int, reason: StringName) -> void",
+					"purpose": "the host's reward hook, called after points are earned (with the new total already counted).",
 					"signature": "var on_points: Callable"
 				}
 			},
@@ -611,11 +617,13 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"gate": {
-					"purpose": "`func(agent_id, goal_tags, option_tags) -> bool`: a further gate on its self-chosen candidates, for example `BustleHealthBehaviour.allows()`.",
+					"call": "func(agent_id: StringName, goal_tags: Array[StringName], option_tags: Array[StringName]) -> bool",
+					"purpose": "a further gate on its self-chosen candidates, for example `BustleHealthBehaviour.allows()`.",
 					"signature": "var gate: Callable"
 				},
 				"score_boost": {
-					"purpose": "`func(goal_id, option_id) -> float`: multiplies each candidate's score (see `BustleScoreContext.score_boost`), for example `BustleAmbitions.boost()`.",
+					"call": "func(goal_id: StringName, option_id: StringName) -> float",
+					"purpose": "multiplies each candidate's score (see `BustleScoreContext.score_boost`), for example `BustleAmbitions.boost()`.",
 					"signature": "var score_boost: Callable"
 				}
 			},
@@ -713,7 +721,8 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"review_hook": {
-					"purpose": "`func(id, career, from_rank, to_rank, kind) -> bool`, where kind is `PROMOTED` or `DEMOTED`: true grants the change.",
+					"call": "func(id: StringName, career: StringName, from_rank: StringName, to_rank: StringName, kind: StringName) -> bool",
+					"purpose": "where kind is `PROMOTED` or `DEMOTED`: true grants the change.",
 					"signature": "var review_hook: Callable"
 				}
 			},
@@ -820,7 +829,8 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"low_state_of": {
-					"purpose": "(id) → true while that agent is in a low mental state (for example `BustleMentalBehaviour.in_low_state()`).",
+					"call": "func(id: StringName) -> bool",
+					"purpose": "true while that agent is in a low mental state (for example `BustleMentalBehaviour.in_low_state()`).",
 					"signature": "var low_state_of: Callable"
 				}
 			},
@@ -871,27 +881,33 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"cornered_of": {
-					"purpose": "(agent, threat) → true when `agent` can't get away from `threat`.",
+					"call": "func(agent: StringName, threat: StringName) -> bool",
+					"purpose": "true when `agent` can't get away from `threat`.",
 					"signature": "var cornered_of: Callable"
 				},
 				"group_of": {
-					"purpose": "(id) → that agent's group (for the disposition port).",
+					"call": "func(id: StringName) -> StringName",
+					"purpose": "that agent's group (for the disposition port).",
 					"signature": "var group_of: Callable"
 				},
 				"lethal_reason_of": {
-					"purpose": "(agent, threat, cause) → the host's reason for `agent` to kill `threat`, or empty for none.",
+					"call": "func(agent: StringName, threat: StringName, cause: StringName) -> StringName",
+					"purpose": "the host's reason for `agent` to kill `threat`, or empty for none.",
 					"signature": "var lethal_reason_of: Callable"
 				},
 				"mood_of": {
-					"purpose": "(id) → that agent's mood (anything with a `mood` number), or null.",
+					"call": "func(id: StringName) -> Object",
+					"purpose": "that agent's mood (anything with a `mood` number), or null.",
 					"signature": "var mood_of: Callable"
 				},
 				"personality_of": {
-					"purpose": "(id) → that agent's `BustlePersonality`, or null (neutral sliders).",
+					"call": "func(id: StringName) -> BustlePersonality",
+					"purpose": "that agent's personality, or null (neutral sliders).",
 					"signature": "var personality_of: Callable"
 				},
 				"position_of": {
-					"purpose": "(id) → that agent's position (a `Vector3`), or null.",
+					"call": "func(id: StringName) -> Variant",
+					"purpose": "that agent's position (a `Vector3`), or null.",
 					"signature": "var position_of: Callable"
 				}
 			},
@@ -997,15 +1013,18 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"accepts": {
-					"purpose": "(recipient, initiator, opener) → false when the recipient turns the conversation away (for example `BustleMentalBehaviour.accepts()` while it's withdrawn).",
+					"call": "func(recipient: StringName, initiator: StringName, opener: StringName) -> bool",
+					"purpose": "false when the recipient turns the conversation away (for example `BustleMentalBehaviour.accepts()` while it's withdrawn).",
 					"signature": "var accepts: Callable"
 				},
 				"modifiers_of": {
-					"purpose": "(id) → that agent's `BustleModifierSet`, or null.",
+					"call": "func(id: StringName) -> BustleModifierSet",
+					"purpose": "that agent's modifiers, or null.",
 					"signature": "var modifiers_of: Callable"
 				},
 				"personality_of": {
-					"purpose": "(id) → that agent's `BustlePersonality`, or null.",
+					"call": "func(id: StringName) -> BustlePersonality",
+					"purpose": "that agent's personality, or null.",
 					"signature": "var personality_of: Callable"
 				}
 			},
@@ -1063,19 +1082,23 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"is_locked": {
-					"purpose": "(id) → true while the host holds that agent to a story or task.",
+					"call": "func(id: StringName) -> bool",
+					"purpose": "true while the host holds that agent to a story or task.",
 					"signature": "var is_locked: Callable"
 				},
 				"is_observed": {
-					"purpose": "(thief, place) → true when the thief judges someone would see a theft there.",
+					"call": "func(thief: StringName, place: StringName) -> bool",
+					"purpose": "true when the thief judges someone would see a theft there.",
 					"signature": "var is_observed: Callable"
 				},
 				"needs_of": {
-					"purpose": "(id) → that agent's `BustleNeedSet`, or null (no needs, so no theft).",
+					"call": "func(id: StringName) -> BustleNeedSet",
+					"purpose": "that agent's needs, or null (no needs, so no theft).",
 					"signature": "var needs_of: Callable"
 				},
 				"personality_of": {
-					"purpose": "(id) → that agent's `BustlePersonality`, or null (neutral sliders).",
+					"call": "func(id: StringName) -> BustlePersonality",
+					"purpose": "that agent's personality, or null (neutral sliders).",
 					"signature": "var personality_of: Callable"
 				}
 			},
@@ -1141,31 +1164,38 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"can_reach": {
-					"purpose": "(agent, other) → true when `agent` can reach `other` now.",
+					"call": "func(agent: StringName, other: StringName) -> bool",
+					"purpose": "true when `agent` can reach `other` now.",
 					"signature": "var can_reach: Callable"
 				},
 				"can_travel": {
-					"purpose": "(agent, now) → false while the agent can't go on its errands (night, fear: the host's call).",
+					"call": "func(agent: StringName, now: int) -> bool",
+					"purpose": "false while the agent can't go on its errands (night, fear: the host's call).",
 					"signature": "var can_travel: Callable"
 				},
 				"gossip_to": {
-					"purpose": "(agent, record) → who `agent` would gossip to, or empty (then it can't).",
+					"call": "func(agent: StringName, record: Dictionary) -> StringName",
+					"purpose": "who `agent` would gossip to, or empty (then it can't).",
 					"signature": "var gossip_to: Callable"
 				},
 				"memory_of": {
-					"purpose": "(id) → that agent's `BustleMemory`, or null.",
+					"call": "func(id: StringName) -> BustleMemory",
+					"purpose": "that agent's memory, or null.",
 					"signature": "var memory_of: Callable"
 				},
 				"perceives": {
-					"purpose": "(agent, thief, place) → true when `agent` perceived `thief` stealing at `place`.",
+					"call": "func(agent: StringName, thief: StringName, place: StringName) -> bool",
+					"purpose": "true when `agent` perceived `thief` stealing at `place`.",
 					"signature": "var perceives: Callable"
 				},
 				"should_report": {
-					"purpose": "(agent, case) → one of `BustleWitnessJudge.OUTCOMES`.",
+					"call": "func(agent: StringName, case: Dictionary) -> StringName",
+					"purpose": "one of `BustleWitnessJudge.OUTCOMES`.",
 					"signature": "var should_report: Callable"
 				},
 				"where": {
-					"purpose": "(id) → where that agent or person is now (a `Vector3`), or null.",
+					"call": "func(id: StringName) -> Variant",
+					"purpose": "where that agent or person is now (a `Vector3`), or null.",
 					"signature": "var where: Callable"
 				}
 			},
@@ -1369,19 +1399,23 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"agents": {
-					"purpose": "`func() -> Array`StringName``: every agent.",
+					"call": "func() -> Array[StringName]",
+					"purpose": "every agent.",
 					"signature": "var agents: Callable"
 				},
 				"brain_of": {
-					"purpose": "`func(id) -> BustleBrain`: an agent's brain, or null.",
+					"call": "func(id: StringName) -> BustleBrain",
+					"purpose": "an agent's brain, or null.",
 					"signature": "var brain_of: Callable"
 				},
 				"mood_of": {
-					"purpose": "`func(id) -> Object`: an agent's mood (with `add_thought(def, details)`), or null.",
+					"call": "func(id: StringName) -> Object",
+					"purpose": "an agent's mood (with `add_thought(def, details)`), or null.",
 					"signature": "var mood_of: Callable"
 				},
 				"tags_of": {
-					"purpose": "`func(id) -> Array`StringName``: an agent's tags.",
+					"call": "func(id: StringName) -> Array[StringName]",
+					"purpose": "an agent's tags.",
 					"signature": "var tags_of: Callable"
 				}
 			},
@@ -2350,15 +2384,18 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"area_of": {
-					"purpose": "(id) → the area an actor is in.",
+					"call": "func(id: StringName) -> StringName",
+					"purpose": "the area an actor is in.",
 					"signature": "var area_of: Callable"
 				},
 				"clock": {
-					"purpose": "() → the current game minute.",
+					"call": "func() -> int",
+					"purpose": "the current game minute.",
 					"signature": "var clock: Callable"
 				},
 				"memory_of": {
-					"purpose": "(id) → that agent's `BustleMemory`, or null for agents without one.",
+					"call": "func(id: StringName) -> BustleMemory",
+					"purpose": "that agent's memory, or null for agents without one.",
 					"signature": "var memory_of: Callable"
 				}
 			},
@@ -2399,23 +2436,28 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"home_of": {
-					"purpose": "(id) → where home is (a `Vector3`), or null.",
+					"call": "func(id: StringName) -> Variant",
+					"purpose": "where home is (a `Vector3`), or null.",
 					"signature": "var home_of: Callable"
 				},
 				"indulgence_of": {
-					"purpose": "(id) → the affordance it would indulge in (an id), or empty.",
+					"call": "func(id: StringName) -> StringName",
+					"purpose": "the affordance it would indulge in (an id), or empty.",
 					"signature": "var indulgence_of: Callable"
 				},
 				"is_locked": {
-					"purpose": "(id) → true while the agent is locked to a task.",
+					"call": "func(id: StringName) -> bool",
+					"purpose": "true while the agent is locked to a task.",
 					"signature": "var is_locked: Callable"
 				},
 				"position_of": {
-					"purpose": "(id) → where the agent or person is (a `Vector3`), or null.",
+					"call": "func(id: StringName) -> Variant",
+					"purpose": "where the agent or person is (a `Vector3`), or null.",
 					"signature": "var position_of: Callable"
 				},
 				"wander_to": {
-					"purpose": "(id, now) → where to wander to (a `Vector3`), or null.",
+					"call": "func(id: StringName, now: int) -> Variant",
+					"purpose": "where to wander to (a `Vector3`), or null.",
 					"signature": "var wander_to: Callable"
 				}
 			},
@@ -2997,7 +3039,8 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"line_of_sight": {
-					"purpose": "`func(from: Vector3, to: Vector3, perceiver_id: StringName, target_id: StringName) -> bool`: true when nothing blocks the view.",
+					"call": "func(from: Vector3, to: Vector3, perceiver_id: StringName, target_id: StringName) -> bool",
+					"purpose": "true when nothing blocks the view.",
 					"signature": "var line_of_sight: Callable"
 				}
 			},
@@ -3076,7 +3119,8 @@
 			"extends": "BustleLightProbe",
 			"hooks": {
 				"occluded": {
-					"purpose": "Optional: `func(from: Vector3, to: Vector3) -> bool`, true when something blocks the light from a source at `from` to the sample point `to`.",
+					"call": "func(from: Vector3, to: Vector3) -> bool",
+					"purpose": "optional; true when something blocks the light from a source at `from` to the sample point `to`.",
 					"signature": "var occluded: Callable"
 				}
 			},
@@ -3243,15 +3287,18 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"compatibility": {
-					"purpose": "`func(a, b) -> float`, their compatibility from -1 to 1.",
+					"call": "func(a: StringName, b: StringName) -> float",
+					"purpose": "their compatibility from -1 to 1.",
 					"signature": "var compatibility: Callable"
 				},
 				"confirm_hook": {
-					"purpose": "`func(a, b, status) -> bool`: the host approves engaged or married.",
+					"call": "func(a: StringName, b: StringName, status: StringName) -> bool",
+					"purpose": "the host approves engaged or married.",
 					"signature": "var confirm_hook: Callable"
 				},
 				"ratings_policy": {
-					"purpose": "`func(a, b, status) -> bool`: the host's own rules (age, rating, setting) for every step up the ladder, automatic or requested, asked before anything changes.",
+					"call": "func(a: StringName, b: StringName, status: StringName) -> bool",
+					"purpose": "the host's own rules (age, rating, setting) for every step up the ladder, automatic or requested, asked before anything changes.",
 					"signature": "var ratings_policy: Callable"
 				}
 			},
@@ -3523,7 +3570,8 @@
 			"extends": "Resource",
 			"hooks": {
 				"expected_thought_gain": {
-					"purpose": "An optional preview of how an option would make the agent feel: `func(ad: BustleAdvertisement, context: BustleScoreContext) -> float`.",
+					"call": "func(ad: BustleAdvertisement, context: RefCounted) -> float",
+					"purpose": "an optional preview of how an option would make the agent feel.",
 					"signature": "var expected_thought_gain: Callable"
 				}
 			},
@@ -3658,11 +3706,13 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"senses_provider": {
-					"purpose": "`func(id: StringName, ring: Ring, minute: int) -> BustleSenses`, what an agent senses when its brain thinks in `tick()` or `catch_up()`.",
+					"call": "func(id: StringName, ring: BustleSimRings.Ring, minute: int) -> BustleSenses",
+					"purpose": "what an agent senses when its brain thinks in `tick()` or `catch_up()`.",
 					"signature": "var senses_provider: Callable"
 				},
 				"summary_hook": {
-					"purpose": "`func(id: StringName, report: Dictionary) -> void`, called when catch-up skipped time beyond the cap, so modules can apply what the skipped time did in summary.",
+					"call": "func(id: StringName, report: Dictionary) -> void",
+					"purpose": "called when catch-up skipped time beyond the cap, so modules can apply what the skipped time did in summary.",
 					"signature": "var summary_hook: Callable"
 				}
 			},
@@ -3796,7 +3846,8 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"mood_of": {
-					"purpose": "(id) → that agent's mood (anything with a `mood` number and `add_thought`), or null.",
+					"call": "func(id: StringName) -> Object",
+					"purpose": "that agent's mood (anything with a `mood` number and `add_thought`), or null.",
 					"signature": "var mood_of: Callable"
 				}
 			},
@@ -4014,7 +4065,8 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"nearby": {
-					"purpose": "`func(healer) -> Array`StringName``: who `healer` could tend now (for example the agents in its area).",
+					"call": "func(healer: StringName) -> Array[StringName]",
+					"purpose": "who `healer` could tend now (for example the agents in its area).",
 					"signature": "var nearby: Callable"
 				}
 			},
@@ -4319,7 +4371,8 @@
 			"extends": "RefCounted",
 			"hooks": {
 				"mood_of": {
-					"purpose": "(id) → that agent's mood: anything with a `mood` number, an `emotion` and `reasons()`, such as a `BustleMood`; or null.",
+					"call": "func(id: StringName) -> Object",
+					"purpose": "that agent's mood: anything with a `mood` number, an `emotion` and `reasons()`, such as a `BustleMood`; or null.",
 					"signature": "var mood_of: Callable"
 				}
 			},

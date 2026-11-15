@@ -45,7 +45,7 @@ var config: BustleAmbitionConfig
 var pin: StringName = &""
 ## False: nothing is assigned and the current ambition is left as it is (the host's own switch).
 var enabled: bool = true
-## Optional: (id) → true while the agent is locked, checked by [method boost] at once (made with a
+## [code]func(id: StringName) -> bool[/code]: optional; true while the agent is locked, checked by [method boost] at once (made with a
 ## society, it's that society's [method BustleSociety.is_locked]; without it,
 ## only [code]locked[/code] in the last [method update]'s inputs counts, so call [method update]
 ## whenever a lock starts or ends).

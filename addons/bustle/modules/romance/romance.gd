@@ -49,15 +49,15 @@ const FAMILY: Dictionary[StringName, StringName] = {&"parent": &"child", &"child
 var social: BustleSocialPort
 ## The lines.
 var rules: BustleRomanceRules
-## [code]func(a, b) -> float[/code], their compatibility from -1 to 1. Unset:
+## [code]func(a: StringName, b: StringName) -> float[/code], their compatibility from -1 to 1. Unset:
 ## [method BustleCompatibility.of] in [member world_seed].
 var compatibility: Callable = Callable()
 ## The world seed for the default compatibility.
 var world_seed: int = 0
-## [code]func(a, b, status) -> bool[/code]: the host approves engaged or married. Unset: refused, so
+## [code]func(a: StringName, b: StringName, status: StringName) -> bool[/code]: the host approves engaged or married. Unset: refused, so
 ## Bustle never gets there on its own.
 var confirm_hook: Callable = Callable()
-## [code]func(a, b, status) -> bool[/code]: the host's own rules (age, rating, setting) for every
+## [code]func(a: StringName, b: StringName, status: StringName) -> bool[/code]: the host's own rules (age, rating, setting) for every
 ## step up the ladder, automatic or requested, asked before anything changes. False vetoes it: no
 ## state changes and no signal fires. Unset: everything the ladder allows.
 var ratings_policy: Callable = Callable()

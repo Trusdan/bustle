@@ -59,18 +59,18 @@ var health: BustleHealthPort
 var social: BustleSocialPort
 ## The numbers.
 var config: BustleConflictConfig
-## (id) → that agent's [BustlePersonality], or null (neutral sliders).
+## [code]func(id: StringName) -> BustlePersonality[/code]: that agent's personality, or null (neutral sliders).
 var personality_of: Callable = Callable()
-## (id) → that agent's mood (anything with a [code]mood[/code] number), or null.
+## [code]func(id: StringName) -> Object[/code]: that agent's mood (anything with a [code]mood[/code] number), or null.
 var mood_of: Callable = Callable()
-## (id) → that agent's group (for the disposition port). Empty: no groups.
+## [code]func(id: StringName) -> StringName[/code]: that agent's group (for the disposition port). Empty: no groups.
 var group_of: Callable = Callable()
-## (id) → that agent's position (a [Vector3]), or null. Empty: nobody has one, so allies can't be
+## [code]func(id: StringName) -> Variant[/code]: that agent's position (a [Vector3]), or null. Empty: nobody has one, so allies can't be
 ## found and fleeing ends at once.
 var position_of: Callable = Callable()
-## (agent, threat) → true when [param agent] can't get away from [param threat]. Empty: never.
+## [code]func(agent: StringName, threat: StringName) -> bool[/code]: true when [param agent] can't get away from [param threat]. Empty: never.
 var cornered_of: Callable = Callable()
-## (agent, threat, cause) → the host's reason for [param agent] to kill [param threat], or empty
+## [code]func(agent: StringName, threat: StringName, cause: StringName) -> StringName[/code]: the host's reason for [param agent] to kill [param threat], or empty
 ## for none. Empty: the host never gives one.
 var lethal_reason_of: Callable = Callable()
 

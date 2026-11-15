@@ -15,6 +15,7 @@ extends Resource
 @export var mood_curves: Dictionary[StringName, Curve] = {}
 ## How close to the best score a candidate must be to be picked: within this part of it.
 @export var pick_window: float = 0.10
-## An optional preview of how an option would make the agent feel:
-## [code]func(ad: BustleAdvertisement, context: BustleScoreContext) -> float[/code]. Unset is 1.0.
+## [code]func(ad: BustleAdvertisement, context: RefCounted) -> float[/code]: an optional preview of how an
+## option would make the agent feel. [code]context[/code] is the scorer's [BustleScoreContext], whose
+## fields are experimental. Unset is 1.0.
 var expected_thought_gain: Callable = Callable()

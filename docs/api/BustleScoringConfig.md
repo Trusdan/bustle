@@ -46,4 +46,4 @@ How close to the best score a candidate must be to be picked: within this part o
 var expected_thought_gain: Callable = Callable()
 ```
 
-An optional preview of how an option would make the agent feel: `func(ad: BustleAdvertisement, context: BustleScoreContext) -> float`. Unset is 1.0.
+`func(ad: BustleAdvertisement, context: RefCounted) -> float`: an optional preview of how an option would make the agent feel. `context` is the scorer's [BustleScoreContext](BustleScoreContext.md), whose fields are experimental. Unset is 1.0.

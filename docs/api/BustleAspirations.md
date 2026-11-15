@@ -84,7 +84,7 @@ The library and numbers.
 var on_points: Callable = Callable()
 ```
 
-The host's reward hook, `func(agent, amount, reason)`, called after points are earned (with the new total already counted). It may spend them with `spend_points()`. It must not call `add_points()`, which calls it again and would recurse. Unset: points only accumulate.
+`func(agent: StringName, amount: int, reason: StringName) -> void`: the host's reward hook, called after points are earned (with the new total already counted). It may spend them with `spend_points()`. It must not call `add_points()`, which calls it again and would recurse. Unset: points only accumulate.
 
 ## Methods
 

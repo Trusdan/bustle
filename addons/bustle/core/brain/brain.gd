@@ -82,7 +82,7 @@ var last_candidates: Array[BustleCandidate] = []
 ## The intent of the last tick, or null. Not saved.
 var last_intent: BustleIntent
 
-## [code]func(goal_id, option_id) -> float[/code]: multiplies each candidate's score (see
+## [code]func(goal_id: StringName, option_id: StringName) -> float[/code]: multiplies each candidate's score (see
 ## [member BustleScoreContext.score_boost]), for example [method BustleAmbitions.boost]. Unset: 1.
 var score_boost: Callable = Callable()
 ## The life stages that gate its self-chosen goals and options, or null (no gates). Each tick, a
@@ -91,7 +91,7 @@ var score_boost: Callable = Callable()
 ## advertisement's tags), is made ineligible with a [code]stage_gate[/code] reason, so it is never
 ## picked. Orders aren't gated.
 var life_stages: BustleLifeStagePort = null
-## [code]func(agent_id, goal_tags, option_tags) -> bool[/code]: a further gate on its self-chosen
+## [code]func(agent_id: StringName, goal_tags: Array[StringName], option_tags: Array[StringName]) -> bool[/code]: a further gate on its self-chosen
 ## candidates, for example [method BustleHealthBehaviour.allows]. [code]goal_tags[/code] are the
 ## goal's id and tags, [code]option_tags[/code] its option's advertisement tags (empty with no
 ## option). False makes the candidate ineligible with a [code]gate[/code] reason, so it is never

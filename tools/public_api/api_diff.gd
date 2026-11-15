@@ -10,6 +10,11 @@ extends RefCounted
 ## deprecated it: see [method removal_problem]. New symbols never fail. A raised save version
 ## ([code]STATE_VERSION[/code]) is a save-format change and is reported, not failed: the policy
 ## requires [code]import_state()[/code] to migrate the older shape.
+##
+## A Callable hook's call ([code]func(...) -> T[/code], from its doc comment) is part of its
+## flattened signature: a changed call, or a call dropped from the doc comment, is a signature
+## change. A call recorded for the first time on a hook whose baseline had none is a note, not a
+## change.
 
 const ApiManifest := preload("res://tools/public_api/api_manifest.gd")
 const SAVE_VERSION: String = "STATE_VERSION"
@@ -50,6 +55,10 @@ static func compare(baseline: Dictionary, current: Dictionary, deprecations: Var
 			if symbol.ends_with("." + SAVE_VERSION) and _version_of(new[symbol]) > _version_of(old[symbol]):
 				(result["notes"] as Array).append("%s: save format raised (%s -> %s); import_state() must still read the older shape" % [
 					symbol, old[symbol], new[symbol]])
+				continue
+			if _first_call(str(old[symbol]), str(new[symbol])):
+				(result["notes"] as Array).append("%s: call recorded: %s" % [symbol,
+					str(new[symbol]).trim_prefix(str(old[symbol]) + ApiManifest.CALL_SEPARATOR)])
 				continue
 			problem = "%s: signature changed\n    was: %s\n    now: %s" % [symbol, old[symbol], new[symbol]]
 		if problem == "":
@@ -148,6 +157,11 @@ static func _gone(symbol: String, current: Dictionary) -> String:
 			or (current.get("experimental_members", {}) as Dictionary).has(symbol):
 		return "%s: no longer frozen (now @experimental)" % symbol
 	return "%s: removed or renamed" % symbol
+
+
+## True when [param new] is [param old] (a hook with no call) with a call added.
+static func _first_call(old: String, new: String) -> bool:
+	return not old.contains(ApiManifest.CALL_SEPARATOR) and new.begins_with(old + ApiManifest.CALL_SEPARATOR)
 
 
 static func _version_of(text: String) -> int:

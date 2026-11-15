@@ -69,32 +69,32 @@ const _ERRANDS: Array[StringName] = [&"report", &"tell_victim", &"gossip"]
 var crime: BustleCrime
 ## The role reports go to.
 var authority_role: StringName = AUTHORITY
-## (agent, thief, place) → true when [code]agent[/code] perceived [code]thief[/code] stealing at
+## [code]func(agent: StringName, thief: StringName, place: StringName) -> bool[/code]: true when [code]agent[/code] perceived [code]thief[/code] stealing at
 ## [code]place[/code]. Empty: any agent in that place who isn't incapacitated.
 var perceives: Callable = Callable()
-## (id) → that agent's [BustleMemory], or null. Witnesses note the thief and the item there; an
+## [code]func(id: StringName) -> BustleMemory[/code]: that agent's memory, or null. Witnesses note the thief and the item there; an
 ## owner who finds a deed notes the item where it was taken.
 var memory_of: Callable = Callable()
 ## The default decision.
 ## @experimental: Its type, [BustleWitnessJudge], is internal and may change in any minor release.
 var judge: BustleWitnessJudge
-## (agent, case) → one of [constant BustleWitnessJudge.OUTCOMES]. Empty: [member judge]. The case
+## [code]func(agent: StringName, case: Dictionary) -> StringName[/code]: one of [constant BustleWitnessJudge.OUTCOMES]. Empty: [member judge]. The case
 ## is [code]{record, thief, owner_id, place, can_confront, gossip_to}[/code]; a thief the agent
 ## doesn't know is empty. Anything else means silent.
 var should_report: Callable = Callable()
-## (agent, other) → true when [code]agent[/code] can reach [code]other[/code] now. Empty: both are
+## [code]func(agent: StringName, other: StringName) -> bool[/code]: true when [code]agent[/code] can reach [code]other[/code] now. Empty: both are
 ## agents in the same area.
 var can_reach: Callable = Callable()
-## (agent, record) → who [code]agent[/code] would gossip to, or empty (then it can't).
+## [code]func(agent: StringName, record: Dictionary) -> StringName[/code]: who [code]agent[/code] would gossip to, or empty (then it can't).
 ## Empty: nobody.
 var gossip_to: Callable = Callable()
 ## True: reports, telling the victim and gossip are delivered the moment they're decided, without
 ## travel. For developers and tests; off unless [constant INSTANT_SETTING] is on.
 var instant: bool = bool(ProjectSettings.get_setting(INSTANT_SETTING, false))
-## (agent, now) → false while the agent can't go on its errands (night, fear: the host's call).
+## [code]func(agent: StringName, now: int) -> bool[/code]: false while the agent can't go on its errands (night, fear: the host's call).
 ## Empty: it always can.
 var can_travel: Callable = Callable()
-## (id) → where that agent or person is now (a [Vector3]), or null. Empty: the world port's
+## [code]func(id: StringName) -> Variant[/code]: where that agent or person is now (a [Vector3]), or null. Empty: the world port's
 ## position of its area.
 var where: Callable = Callable()
 ## The movement gear an errand asks for ([code]gear[/code] in the action output).

@@ -42,7 +42,7 @@ signal points_changed(agent: StringName, amount: int, reason: StringName, total:
 var agent_id: StringName
 ## The library and numbers.
 var config: BustleAspirationConfig
-## The host's reward hook, [code]func(agent, amount, reason)[/code], called after points are earned
+## [code]func(agent: StringName, amount: int, reason: StringName) -> void[/code]: the host's reward hook, called after points are earned
 ## (with the new total already counted). It may spend them with [method spend_points]. It must not
 ## call [method add_points], which calls it again and would recurse. Unset: points only accumulate.
 var on_points: Callable = Callable()

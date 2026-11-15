@@ -88,7 +88,7 @@ const AWAY = 2
 var senses_provider: Callable = Callable()
 ```
 
-`func(id: StringName, ring: Ring, minute: int) -> BustleSenses`, what an agent senses when its brain thinks in `tick()` or `catch_up()`. Unset: senses with only the time.
+`func(id: StringName, ring: BustleSimRings.Ring, minute: int) -> BustleSenses`, what an agent senses when its brain thinks in `tick()` or `catch_up()`. Unset: senses with only the time.
 
 ### `summary_hook`
 

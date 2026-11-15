@@ -42,11 +42,11 @@ var curt_mood_scale: float = 1.0
 ## [code]1 + opinion_weight × (opinion − 50) / 50[/code], a negative one's by
 ## [code]1 − ...[/code] (never below 0).
 var opinion_weight: float = 1.0
-## (id) → that agent's [BustlePersonality], or null. Empty: nobody has one.
+## [code]func(id: StringName) -> BustlePersonality[/code]: that agent's personality, or null. Empty: nobody has one.
 var personality_of: Callable = Callable()
-## (id) → that agent's [BustleModifierSet], or null. Empty: nobody has one.
+## [code]func(id: StringName) -> BustleModifierSet[/code]: that agent's modifiers, or null. Empty: nobody has one.
 var modifiers_of: Callable = Callable()
-## (recipient, initiator, opener) → false when the recipient turns the conversation away (for
+## [code]func(recipient: StringName, initiator: StringName, opener: StringName) -> bool[/code]: false when the recipient turns the conversation away (for
 ## example [method BustleMentalBehaviour.accepts] while it's withdrawn). Empty: everyone accepts.
 var accepts: Callable = Callable()
 

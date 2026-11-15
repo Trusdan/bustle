@@ -41,9 +41,9 @@ var position := Vector3.ZERO
 var owner: StringName = &""
 ## Who is paid when nobody owns it, or empty (then a priced use can't be paid).
 var payee: StringName = &""
-## (agent id, affordance) → a multiplier from 0 (refused) to 1. Empty: the ownership rule above.
+## [code]func(agent: StringName, affordance: BustleAffordance) -> float[/code]: a multiplier from 0 (refused) to 1. Empty: the ownership rule above.
 var access_hook: Callable = Callable()
-## (agent id, affordance) → the price of one use. Empty: the def's price, 0 for the owner.
+## [code]func(agent: StringName, affordance: BustleAffordance) -> int[/code]: the price of one use. Empty: the def's price, 0 for the owner.
 var cost_hook: Callable = Callable()
 
 var _holds: Dictionary[StringName, int] = {}

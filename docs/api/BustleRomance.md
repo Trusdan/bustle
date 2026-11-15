@@ -92,7 +92,7 @@ The lines.
 var compatibility: Callable = Callable()
 ```
 
-`func(a, b) -> float`, their compatibility from -1 to 1. Unset: `BustleCompatibility.of()` in `world_seed`.
+`func(a: StringName, b: StringName) -> float`, their compatibility from -1 to 1. Unset: `BustleCompatibility.of()` in `world_seed`.
 
 ### `world_seed`
 
@@ -108,7 +108,7 @@ The world seed for the default compatibility.
 var confirm_hook: Callable = Callable()
 ```
 
-`func(a, b, status) -> bool`: the host approves engaged or married. Unset: refused, so Bustle never gets there on its own.
+`func(a: StringName, b: StringName, status: StringName) -> bool`: the host approves engaged or married. Unset: refused, so Bustle never gets there on its own.
 
 ### `ratings_policy`
 
@@ -116,7 +116,7 @@ var confirm_hook: Callable = Callable()
 var ratings_policy: Callable = Callable()
 ```
 
-`func(a, b, status) -> bool`: the host's own rules (age, rating, setting) for every step up the ladder, automatic or requested, asked before anything changes. False vetoes it: no state changes and no signal fires. Unset: everything the ladder allows.
+`func(a: StringName, b: StringName, status: StringName) -> bool`: the host's own rules (age, rating, setting) for every step up the ladder, automatic or requested, asked before anything changes. False vetoes it: no state changes and no signal fires. Unset: everything the ladder allows.
 
 ## Methods
 
