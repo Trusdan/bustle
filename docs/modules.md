@@ -1,6 +1,6 @@
 # Module guide
 
-The core (`addons/bustle/core/`) is always there: needs, the brain, affordances, schedules, personality, memory, conflict, crime, jobs and the social rings. Everything in `addons/bustle/modules/` is optional. Each module is off until a host switches it on, and the rest of the addon runs the same without it. The demos prove this with a module-toggle test that leaves each one out in turn, and all of them together. How the core's and each module's saves load across Bustle versions is in [saves.md](saves.md).
+The core (`addons/bustle/core/`) is always there: needs, the brain, affordances, schedules, personality, memory, conflict, crime, jobs and the social rings. Everything in `addons/bustle/modules/` is optional. Each module is off until a host switches it on, and the rest of the addon runs the same without it. The demos prove this with a module-toggle test that leaves each one out in turn, and all of them together. How the core's and each module's saves load across Bustle versions is in [saves.md](saves.md). How every public entry point answers bad input (refuse, warn once, or assert) is in [errors.md](errors.md).
 
 | Module | What it adds | How a host switches it on | Without it | Guide |
 | --- | --- | --- | --- | --- |
