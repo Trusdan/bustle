@@ -1,0 +1,12 @@
+{
+"affordances": {
+"well": {
+"holds": {
+"baker": 660,
+"smith": 670
+},
+"owner": "miller",
+"payee": "smith"
+}
+}
+}

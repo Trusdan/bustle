@@ -1,0 +1,10 @@
+{
+"baker": {
+"career": "bakery",
+"closed": 0,
+"promoted": false,
+"rank": "apprentice",
+"since": 600,
+"window": Array[float]([])
+}
+}

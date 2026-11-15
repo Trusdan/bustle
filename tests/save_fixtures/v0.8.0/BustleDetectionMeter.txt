@@ -1,0 +1,9 @@
+{
+"has_last_known": true,
+"last_known": [1.0, 0.0, 2.0],
+"level": 0.6,
+"lost_time": 0.0,
+"search_left": 0.0,
+"since_sensed": -1.0,
+"state": "unaware"
+}

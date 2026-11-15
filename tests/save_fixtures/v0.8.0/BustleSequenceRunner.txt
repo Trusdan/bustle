@@ -1,0 +1,17 @@
+{
+"active": false,
+"agent": "baker",
+"attempt": 1,
+"data": {
+"loaves": 3
+},
+"failure": {
+"action": &"ring_bell",
+"reason": &"unknown_action",
+"step": 1
+},
+"now": 641,
+"option": "bake",
+"state": 3,
+"step": 1
+}

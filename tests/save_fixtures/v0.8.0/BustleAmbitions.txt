@@ -1,0 +1,12 @@
+{
+"active": {
+"id": "train_an_apprentice",
+"last_target": "",
+"progress": 0.25,
+"since": 1500,
+"target": ""
+},
+"completed": {
+"open_a_bakery": 1500
+}
+}

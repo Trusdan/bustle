@@ -51,11 +51,24 @@ When a change alters what an `export_state()` returns:
    ```
 
    A step takes a copy of the version N payload and returns the N + 1 layout, with its version set. It never fails: anything malformed is left for `import_state()`'s own checks, which run on the result. `import_state()` starts with `BustleSaveFormat._read(&"BustleExample", saved, _save_format())` and carries on with its `data`. Keep every step until the next major release; a step for a format older than that can go then.
-3. **Keep the old saves.** Don't rewrite anything an older release wrote. Saved files from the release that wrote the old shape are what prove the step works.
+3. **Keep the old saves.** Don't rewrite anything an older release wrote. The golden fixtures from the release that wrote the old shape (below) are what prove the step works.
 4. **Note it in the CHANGELOG** under "Changed", naming the class and both versions.
 
 A format change with no step is a breaking change, and needs a major release.
 
+## Golden save fixtures
+
+`tests/save_fixtures/<tag>/` holds what each released version's `export_state()` wrote: one `<Class>.txt` per saved class, as `var_to_str()` text so every value keeps its exact Godot type (ints stay ints, and 64-bit numbers survive), and `index.json` with the tag, commit, Godot version and files. The brain is saved inside the society's agents. `tests/save/test_save_fixtures.gd` loads every fixture into the current code and checks it field by field and through the public getters, then checks that a newer copy of it is refused and changes nothing.
+
+The fixtures are never written by hand. `tools/save_fixtures/save_builder.gd` builds each class with state, using only what that release has, and the generator writes it out:
+
+```bash
+tools/save_fixtures.sh --tag v0.9.0   # regenerate tests/save_fixtures/v0.9.0/ from the tag
+tools/save_fixtures.sh --check        # regenerate every tag's fixtures into a temp dir; fail on any difference
+```
+
+Each run checks the tag out in a temporary git worktree outside the repo, imports it, runs the generator there and removes the worktree. It never creates a tag. CI runs `--check`. Add a fixture directory for each release: a format change needs a fixture from a release that wrote the old shape (step 3 above).
+
 ## Tests
 
-`tests/save/test_save_format.gd` checks the step runner on small payloads, and checks that every save refuses a newer version, changes nothing and gives a reason through `check()`. Each class's own tests cover what its import accepts.
+`tests/save/test_save_format.gd` checks the step runner on small payloads, and checks that every save refuses a newer version, changes nothing and gives a reason through `check()`. `tests/save/test_save_fixtures.gd` checks the golden fixtures. Each class's own tests cover what its import accepts.

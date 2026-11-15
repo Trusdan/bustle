@@ -1,0 +1,32 @@
+{
+"conflicts": {
+"baker": {
+"act": "5:baker|5:smith|600",
+"cause": "quarrel",
+"cause_detail": {
+"grudge": 0.0,
+"provocation": 1.0,
+"threshold": 1.0
+},
+"helper": "",
+"intent": "subdue",
+"intent_reason": "none",
+"stance": "fight",
+"threat": "smith"
+},
+"smith": {
+"act": "5:smith|5:baker|600",
+"cause": "quarrel",
+"cause_detail": {
+"grudge": 0.0,
+"provocation": 1.0,
+"threshold": 1.0
+},
+"helper": "",
+"intent": "subdue",
+"intent_reason": "none",
+"stance": "flee",
+"threat": "baker"
+}
+}
+}

@@ -1,0 +1,10 @@
+{
+"passions": {
+"baker": ["baking"]
+},
+"xp": {
+"baker": {
+"baking": 150.0
+}
+}
+}

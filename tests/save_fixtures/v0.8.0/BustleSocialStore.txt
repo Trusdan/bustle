@@ -1,0 +1,60 @@
+{
+"deeds": {
+"deed_1": {
+"actor": "baker",
+"first_hand": ["baker", "miller"],
+"knowers": ["baker", "miller"],
+"place": "square",
+"target": "smith",
+"verb": "helped"
+},
+"deed_2": {
+"actor": "baker",
+"first_hand": ["baker", "miller"],
+"knowers": ["baker", "miller"],
+"place": "square",
+"target": "smith",
+"verb": "helped"
+},
+"deed_3": {
+"actor": "baker",
+"first_hand": ["baker", "miller"],
+"knowers": ["baker", "miller"],
+"place": "square",
+"target": "smith",
+"verb": "helped"
+}
+},
+"entries": {
+"smith>baker": [{
+"at": 600,
+"reason": {
+"deed": "deed_1"
+},
+"until": 4920,
+"value": 30.0
+}, {
+"at": 600,
+"reason": {
+"deed": "deed_2"
+},
+"until": 4920,
+"value": 30.0
+}, {
+"at": 600,
+"reason": {
+"deed": "deed_3"
+},
+"until": 4920,
+"value": 30.0
+}]
+},
+"host_kinds": {
+"baker>smith": ["neighbour"]
+},
+"next_deed": 4,
+"now": 600,
+"rule_kinds": {
+"smith>baker": ["friend"]
+}
+}

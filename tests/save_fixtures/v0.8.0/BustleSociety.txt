@@ -1,0 +1,98 @@
+{
+"agents": [{
+"archetype": "baker",
+"area": "square",
+"brain": {
+"agent": "baker",
+"autonomy": 3,
+"keeper": {
+"band": 2,
+"cooldowns": {},
+"failed_at": {},
+"goal": "bake",
+"option": "",
+"since": 10
+},
+"player_controlled": false,
+"rng_state": "-4548987271747644718",
+"runner": {
+"active": true,
+"agent": "baker",
+"attempt": 1,
+"data": {
+"until": 40
+},
+"failure": {},
+"now": 10,
+"option": "",
+"state": 1,
+"step": 0
+},
+"running_goal": "bake",
+"running_option": "",
+"version": 1,
+"world_seed": "4242"
+},
+"data": {
+"loaves": 3,
+"notes": ["early"]
+},
+"group": "village",
+"id": "baker",
+"last_update_minute": -1,
+"position": null,
+"protection": 0,
+"sim_ring": -1
+}, {
+"archetype": "smith",
+"area": "",
+"brain": {
+"agent": "smith",
+"autonomy": 3,
+"keeper": {
+"band": 2,
+"cooldowns": {},
+"failed_at": {},
+"goal": "forge",
+"option": "",
+"since": 10
+},
+"player_controlled": false,
+"rng_state": "-7317195310913726388",
+"runner": {
+"active": true,
+"agent": "smith",
+"attempt": 1,
+"data": {
+"until": 40
+},
+"failure": {},
+"now": 10,
+"option": "",
+"state": 1,
+"step": 0
+},
+"running_goal": "forge",
+"running_option": "",
+"version": 1,
+"world_seed": "4242"
+},
+"data": {},
+"group": "",
+"id": "smith",
+"last_update_minute": -1,
+"position": [1.5, 0.0, -2.0],
+"protection": 1,
+"sim_ring": -1
+}],
+"locks": {
+"baker": [{
+"goal": "",
+"lock_id": "curfew",
+"place": "home",
+"steps": null
+}]
+},
+"schema": 1,
+"world_seed": "4242"
+}

@@ -1,0 +1,17 @@
+{
+"items": [{
+"id": "anvil",
+"owner_id": "smith",
+"place": "forge",
+"protected": true,
+"relieves": {}
+}, {
+"id": "bread_basket",
+"owner_id": "baker",
+"place": "bakehouse",
+"protected": false,
+"relieves": {
+"hunger": 20.0
+}
+}]
+}

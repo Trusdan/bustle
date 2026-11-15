@@ -183,6 +183,11 @@ jobs:
             tools/public_api.sh --check
           fi
 
+      # docs/saves.md: the committed golden save fixtures are exactly what the tagged releases
+      # write. It regenerates each from its tag in a temporary worktree and fails on any difference.
+      - name: Save fixtures match the tags
+        run: tools/save_fixtures.sh --check
+
       - name: Release zips build reproducibly
         run: tools/build_release.sh --check --list --out "$RUNNER_TEMP/release"
 

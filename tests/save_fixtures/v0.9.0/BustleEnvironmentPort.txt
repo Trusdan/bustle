@@ -1,0 +1,11 @@
+{
+"rooms": {
+"baker": "bakehouse"
+},
+"scores": {
+"bakehouse": {
+"beauty": 0.5,
+"comfort": 0.25
+}
+}
+}

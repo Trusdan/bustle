@@ -1,0 +1,14 @@
+{
+"next": 2,
+"postings": [{
+"claimed_at": -1,
+"claimed_by": "",
+"due": 720,
+"employer": "miller",
+"id": "job_1",
+"opened": 600,
+"place": "well",
+"progress": 0,
+"type": "fetch_water"
+}]
+}

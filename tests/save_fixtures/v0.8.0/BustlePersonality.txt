@@ -1,0 +1,7 @@
+{
+"sliders": {
+"diligence": 75.0,
+"sociability": 40.0
+},
+"traits": ["early_riser"]
+}
