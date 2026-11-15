@@ -13,6 +13,8 @@ extends RefCounted
 ## no last-known position, nothing is written. The note is stamped with the minute track was lost.
 ## Suspicion alone writes nothing.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [code]func(id: StringName) -> BustleMemory[/code]: that agent's memory, or null for agents without one.
 var memory_of: Callable = Callable()
 ## [code]func() -> int[/code]: the current game minute.
@@ -44,10 +46,10 @@ func _on_perception_changed(perceiver_id: StringName, target_id: StringName, _ol
 	var memory := memory_of.call(perceiver_id) as BustleMemory
 	if memory == null:
 		return
-	var now := int(clock.call()) if clock.is_valid() else 0
+	var now := _Warn.as_int(clock.call(), 0, "BustleMemoryFeed.clock") if clock.is_valid() else 0
 	var key := "%s>%s" % [perceiver_id, target_id]
 	if new == BustleDetectionMeter.State.ALERT:
-		var area := StringName(area_of.call(target_id)) if area_of.is_valid() else &""
+		var area := _Warn.as_name(area_of.call(target_id), &"", "BustleMemoryFeed.area_of") if area_of.is_valid() else &""
 		_seen_area[key] = area
 		var target := _world.actor(target_id)
 		memory.note(BustleMemory.PERSON, target_id, area, target.position if target != null else null, BustleMemory.SAW, now)

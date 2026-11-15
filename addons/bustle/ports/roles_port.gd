@@ -7,6 +7,8 @@ extends RefCounted
 ## default is a static table, read from a [BustleRoleTable] if one is given, changed with
 ## [method set_holder]. What a role means is the host's business.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param role] passed from [param old] to [param new] (either may be empty).
 signal holder_changed(role: StringName, old: StringName, new: StringName)
 
@@ -41,6 +43,8 @@ func roles_of(id: StringName) -> PackedStringArray:
 ## changes anything. Empty roles are ignored.
 func set_holder(role: StringName, id: StringName) -> void:
 	var old := holder_of(role)
+	if role == &"":
+		_Warn.warn("BustleRolesPort.empty_role", "BustleRolesPort: set_holder() got an empty role; ignored")
 	if role == &"" or old == id:
 		return
 	if id == &"":

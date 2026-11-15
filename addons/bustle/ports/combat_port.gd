@@ -12,6 +12,8 @@ extends RefCounted
 ## [method BustleConflict.filter_damage]. A target may still die, then or later of its wounds; the
 ## host's health system decides, and reports it in [method outcome].
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## Where a fight stands for one agent.
 enum Status { NONE, ENGAGED, RESOLVED }
 
@@ -24,6 +26,7 @@ var _outcomes: Dictionary[StringName, Dictionary] = {}
 ## are the same.
 func engage(id: StringName, target: StringName, intent: StringName = &"subdue") -> void:
 	if id == &"" or target == &"" or id == target:
+		_Warn.warn("BustleCombatPort.no_pair", "BustleCombatPort: engage() needs two different ids; ignored")
 		return
 	_status[id] = Status.RESOLVED
 	_outcomes[id] = {"target": target, "intent": intent, "killed": false, "downed": false}

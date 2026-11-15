@@ -238,4 +238,4 @@ The brain's whole state as plain data: the generator, the keeper, the runner and
 func import_state(saved: Dictionary) -> bool
 ```
 
-Restores `export_state()`'s state into a brain made for the same agent and library. False when the state doesn't fit: another version changes nothing ([BustleSaveFormat](BustleSaveFormat.md) gives the reason), and another agent, a running goal the library lacks, or a runner state that doesn't fit its sequence leaves the brain as freshly made.
+Restores `export_state()`'s state into a brain made for the same agent and library. False, changing nothing, when the state doesn't fit: another version ([BustleSaveFormat](BustleSaveFormat.md) gives the reason), another agent, a running goal the library lacks, or a runner state that doesn't fit its sequence. Everything is checked before the brain changes.

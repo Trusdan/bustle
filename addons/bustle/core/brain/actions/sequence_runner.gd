@@ -138,20 +138,19 @@ func export_state() -> Dictionary:
 
 
 ## Restores [method export_state]'s state for [param p_sequence], the same sequence it was saved
-## with. False, leaving the runner IDLE, when the saved state doesn't fit that sequence.
+## with. False, changing nothing, when the saved state doesn't fit that sequence.
 func import_state(p_sequence: BustleActionSequence, saved: Dictionary) -> bool:
 	if not BustleSaveFormat._readable(saved):
 		return false
-	_active = false
-	state = State.IDLE
-	sequence = p_sequence
 	var saved_state := int(saved.get("state", -1))
 	var step := int(saved.get("step", -1))
-	var steps := sequence.steps.size() if sequence != null else 0
+	var steps := p_sequence.steps.size() if p_sequence != null else 0
 	if saved_state < State.IDLE or saved_state > State.INTERRUPTED \
 			or (saved_state in [State.RUNNING, State.INTERRUPTED] and (step < 0 or step >= steps)) \
 			or not saved.get("data", {}) is Dictionary or not saved.get("failure", {}) is Dictionary:
 		return false
+	_active = false
+	sequence = p_sequence
 	context = BustleActionContext.new()
 	context.agent_id = StringName(str(saved.get("agent", "")))
 	context.option_id = StringName(str(saved.get("option", "")))

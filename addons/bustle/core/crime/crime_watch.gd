@@ -25,6 +25,8 @@ extends RefCounted
 ## tests only. A confrontation is words, never a fight or an intent to harm. Nothing here
 ## punishes, fines or harms anyone.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param witness] perceived [param thief] taking [param item]. [param record]: see [method record].
 signal witnessed(witness: StringName, thief: StringName, item: StringName, record: Dictionary)
 ## [param reporter] reported a theft to [param role]. [param report]: the record as the reporter
@@ -210,7 +212,7 @@ func errands_of(agent: StringName) -> Array[Dictionary]:
 ## on it at minute [param now]; erases it otherwise.
 func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float], now: int) -> void:
 	inputs.erase(INPUT)
-	if can_travel.is_valid() and not bool(can_travel.call(agent, now)):
+	if can_travel.is_valid() and not _Warn.as_bool(can_travel.call(agent, now), true, "BustleCrimeWatch.can_travel"):
 		return
 	for errand: Dictionary in errands_of(agent):
 		if errand["target"] != "":
@@ -341,7 +343,9 @@ func _on_theft(thief: StringName, owner_id: StringName, item: StringName, circum
 
 func _perceived(agent: StringName, thief: StringName, place: StringName) -> bool:
 	if perceives.is_valid():
-		return bool(perceives.call(agent, thief, place))
+		var perceived: Variant = perceives.call(agent, thief, place)
+		if _Warn.fits(perceived, "bool", "BustleCrimeWatch.perceives"):
+			return bool(perceived)
 	var state := crime.society.get_agent(agent)
 	return state != null and state.area == place and not crime.society.ports.health.is_incapacitated(agent)
 
@@ -362,10 +366,11 @@ func _decide(row: Dictionary, agent: StringName, knows_thief: bool, source: Stri
 	var owner_id := StringName(row["owner_id"])
 	var case := {"record": record(int(row["id"])), "thief": String(thief), "owner_id": String(owner_id),
 		"place": row["place"], "can_confront": thief != &"" and _reaches(agent, thief),
-		"gossip_to": String(gossip_to.call(agent, record(int(row["id"])))) if gossip_to.is_valid() else ""}
+		"gossip_to": String(_Warn.as_name(gossip_to.call(agent, record(int(row["id"]))), &"", "BustleCrimeWatch.gossip_to")) if gossip_to.is_valid() else ""}
 	var outcome := BustleWitnessJudge.SILENT
-	if should_report.is_valid():
-		outcome = StringName(should_report.call(agent, case))
+	var reported: Variant = should_report.call(agent, case) if should_report.is_valid() else null
+	if should_report.is_valid() and _Warn.fits(reported, "name", "BustleCrimeWatch.should_report"):
+		outcome = StringName(reported)
 	else:
 		judge.authority_role = authority_role
 		outcome = StringName(judge.decide(agent, case)["outcome"])
@@ -419,7 +424,9 @@ func _hear(row: Dictionary, listener: StringName, knows_thief: bool, now: int) -
 
 func _reaches(agent: StringName, other: StringName) -> bool:
 	if can_reach.is_valid():
-		return bool(can_reach.call(agent, other))
+		var reached: Variant = can_reach.call(agent, other)
+		if _Warn.fits(reached, "bool", "BustleCrimeWatch.can_reach"):
+			return bool(reached)
 	var a := crime.society.get_agent(agent)
 	var b := crime.society.get_agent(other)
 	return a != null and b != null and a.area == b.area

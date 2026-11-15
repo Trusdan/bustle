@@ -21,6 +21,8 @@ extends RefCounted
 ## [br][br]
 ## With no events, nothing fires, and the director port is left as it is.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The story needs nothing in particular.
 const NEED_NONE := 0
 ## The story needs tension raised.
@@ -78,7 +80,7 @@ func find(id: StringName) -> BustleEventDef:
 ## The story's tension at [param now] on [param inputs], 0 to 1: the weighted inputs plus each
 ## remembered event's tension, fading over the memory.
 func tension(now: int, inputs: Dictionary) -> float:
-	if rules.validate() != "":
+	if not _rules_ok():
 		return 0.0
 	var out := 0.0
 	for key: StringName in rules.tension_inputs:
@@ -108,7 +110,7 @@ func need(now: int, inputs: Dictionary) -> int:
 ## beat gap, before the last fired event, or with invalid rules.
 func eligible(now: int, inputs: Dictionary, locked: bool) -> Array[BustleEventDef]:
 	var out: Array[BustleEventDef] = []
-	if rules.validate() != "":
+	if not _rules_ok():
 		return out
 	if not _history.is_empty():
 		var last_beat := int(_history[-1][1])
@@ -157,6 +159,13 @@ func update(now: int, inputs: Dictionary = {}, locked: bool = false) -> StringNa
 	if effects != null:
 		effects.apply(candidates[0], now)
 	return id
+
+
+func _rules_ok() -> bool:
+	var why := rules.validate()
+	if why != "":
+		_Warn.warn("BustleDirector.invalid_rules", "BustleDirector: the rules are invalid (%s); no event fires until they're fixed" % why)
+	return why == ""
 
 
 ## [param inputs] with the population and wealth hooks set: [param population] as

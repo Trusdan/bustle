@@ -16,7 +16,7 @@ Numbers that sources (a trait, a mood, an injury) add to or multiply, by key, so
 func set_source(source_id: StringName, key: StringName, add: float = 0.0, mult: float = 1.0) -> bool
 ```
 
-Sets `source_id`'s contribution to `key`, replacing any earlier one. False (with an error) when the key is malformed or a number isn't finite.
+Sets `source_id`'s contribution to `key`, replacing any earlier one. False when the key is malformed or a number isn't finite, with one warning per run.
 
 ### `remove_source`
 

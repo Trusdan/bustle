@@ -10,15 +10,17 @@ extends RefCounted
 ## source-id order, so the result never depends on the order sources were set. A source has at most
 ## one entry per key; setting it again replaces it.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 # key → source id → [add, mult]
 var _entries: Dictionary = {}
 
 
-## Sets [param source_id]'s contribution to [param key], replacing any earlier one. False (with an
-## error) when the key is malformed or a number isn't finite.
+## Sets [param source_id]'s contribution to [param key], replacing any earlier one. False when the
+## key is malformed or a number isn't finite, with one warning per run.
 func set_source(source_id: StringName, key: StringName, add: float = 0.0, mult: float = 1.0) -> bool:
 	if not is_valid_key(key) or source_id == &"" or not is_finite(add) or not is_finite(mult):
-		push_error("BustleModifierSet: refused %s from %s" % [key, source_id])
+		_Warn.warn("BustleModifierSet.refused", "BustleModifierSet: refused %s from %s (a malformed key, an empty source or a number that isn't finite)" % [key, source_id])
 		return false
 	if not _entries.has(key):
 		_entries[key] = {}

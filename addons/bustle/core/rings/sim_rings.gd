@@ -51,6 +51,8 @@ extends RefCounted
 ##   updates. An agent that stops being FULL has its position kept and its body freed
 ##   ([method BustleWorldPort.free_body]).
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The rings.
 enum Ring { FULL, LIGHT, OFF_SCREEN }
 
@@ -125,6 +127,7 @@ func _init(p_society: BustleSociety = null, p_config: BustleSimRingConfig = null
 ## as usual. A backlog within the cap is untouched.
 func tick(delta: float) -> void:
 	if society == null:
+		_Warn.warn("BustleSimRings.no_society", "BustleSimRings: no society; nothing is simulated")
 		return
 	var ids := _roster()
 	_since_sort += maxf(delta, 0.0)
@@ -227,6 +230,7 @@ func request_sort() -> void:
 ## Re-sorts every agent after [param delta] real seconds.
 func update(delta: float) -> void:
 	if society == null:
+		_Warn.warn("BustleSimRings.no_society", "BustleSimRings: no society; nothing is simulated")
 		return
 	var step := maxf(delta, 0.0)
 	var world := society.ports.world

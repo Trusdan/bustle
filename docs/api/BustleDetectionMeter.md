@@ -199,7 +199,7 @@ The meter as plain data, for a save.
 func import_state(data: Dictionary) -> void
 ```
 
-Restores `export_state()`'s data. Unknown or missing values fall back to unaware. Emits no signals.
+Restores `export_state()`'s data. Unknown or missing values fall back to unaware, with one warning per run for a value of the wrong type or range. Emits no signals.
 
 ### `state_name`
 

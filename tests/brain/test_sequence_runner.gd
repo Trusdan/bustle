@@ -138,4 +138,4 @@ func test_a_runner_saved_mid_step_carries_on_exactly() -> void:
 	copy.tick(0.1, 30)
 	assert_eq(copy.step_index, 1)
 	assert_false(copy.import_state(_sequence([[&"act"]]), {"state": 1, "step": 3}), "a step the sequence lacks")
-	assert_eq(copy.state, BustleSequenceRunner.State.IDLE)
+	assert_eq(copy.state, BustleSequenceRunner.State.RUNNING)

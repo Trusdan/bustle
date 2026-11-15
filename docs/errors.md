@@ -1,6 +1,6 @@
 # Errors and bad input
 
-How Bustle answers a host that passes bad input or misconfigures it: one consistent signal, never silence, and never a flooded log. The first part is the policy every public entry point follows. The second is the audit of the frozen public API ([public-api/PUBLIC_API.md](public-api/PUBLIC_API.md)) against it: what does what today, and the changes proposed to bring it in line.
+How Bustle answers a host that passes bad input or misconfigures it: one consistent signal, never silence, and never a flooded log. The first part is the policy every public entry point follows. The second is the audit of the frozen public API ([public-api/PUBLIC_API.md](public-api/PUBLIC_API.md)) against it: what each entry point did, and what it does now.
 
 ## The policy
 
@@ -21,6 +21,8 @@ For a host mistake the call can't report through its return value: a setup probl
 - `push_warning()` once per problem per run, through the shared limiter. The key is the class and the problem, plus a definition id when that's what's wrong, such as `BustleSchedule.invalid_block`. **It is never an agent id or a minute**, so the number of keys stays bounded and a problem in a per-tick path warns once, not every tick.
 - The message starts with the class, names the problem and says what Bustle does instead: `BustleHealthBehaviour: the config is invalid (pain_scale isn't finite); health has no effect until it's fixed`.
 - The call then does what it did before the warning existed (skips the definition, treats the hook as unset, does nothing). A warning never changes state or results.
+- A hook that returns the wrong type, including `null`, is treated **as if it were unset**, whatever kind of hook it is. That holds for gates too: a broken `BustleBrain.gate`, `BustleConversation.accepts`, `BustleCareers.review_hook` or `BustleRomance.ratings_policy` lets everything through, as it does with no hook. Where a hook only overrides a fallback of Bustle's own (an affordance's access or cost, line of sight, compatibility), the fallback is used.
+- Warnings print in every build, release included: a misconfigured shipped game is worth one line per problem.
 - Tests read whether a key has warned; they don't depend on the log.
 
 ### 3. Assert, in debug builds only
@@ -38,7 +40,7 @@ Writing new code: check the input at the public entry point, pick the one answer
 
 ## The audit
 
-The frozen public API was checked against the policy at `main` `28aef7d6`. Paths are under `addons/`; line numbers are at that commit. Each group below is one decision. The proposals are not implemented yet: they change what a host can observe (a new warning, a kept state, a different log line), so each needs a decision first.
+The frozen public API was checked against the policy at `main` `28aef7d6`. Paths are under `addons/`; line numbers are at that commit. Each group below was one decision, and every group is now done.
 
 ### A. Already fine
 
@@ -47,11 +49,11 @@ The frozen public API was checked against the policy at `main` `28aef7d6`. Paths
 - **Setters with numbers** refuse a non-finite value with `false`, for example `BustleNeedSet.set_pressure`.
 - **Constructors that are handed definitions** (`BustleSkills`, `BustleCareers`, `BustleJobBoard`, `BustleRoomThoughts`) warn about each one they skip. That's once per call, at setup, so it fits the policy as it stands.
 
-### B. Silently ignored at run time: propose warn once, with no other change
+### B. Silently ignored at run time: done, warn once with no other change
 
-The call keeps doing what it does today; it also warns once.
+The call keeps doing what it did; it also warns once.
 
-| Entry point | Today | Where |
+| Entry point | Before (now also warns once) | Where |
 | --- | --- | --- |
 | `BustleHealthBehaviour` `apply`, `chosen`, `sync`, `recovered` with an invalid `BustleHealthConfig` | does nothing, or nothing chosen, every tick (`illness_began` refuses with `false` and is fine) | `bustle/modules/health/health_behaviour.gd:72, 94, 121, 178` |
 | `BustleHealthBehaviour.fill_inputs` with no health port | does nothing | `health_behaviour.gd:136` |
@@ -71,16 +73,16 @@ The call keeps doing what it does today; it also warns once.
 | `BustleScheduleRoster.add_agent` with an empty id | nothing | `bustle/core/schedules/schedule_roster.gd:35` |
 | `BustleSocialStore.set_kind` with an empty id or kind, or an agent and itself | nothing | `bustle/society/social_store.gd:115` |
 | `BustleSocialStore.set_time` with a time earlier than its own | the clock stays | `social_store.gd:36` |
-| `BustleWyrdRolesPort.set_holder` with no roles port | nothing | `bustle_wyrd/bustle_wyrd_roles_port.gd:58` |
+| `BustleWyrdRolesPort.set_holder` with no roles port | nothing | `bustle_wyrd/bustle_wyrd_roles_port.gd:60` |
 
-### C. Hooks that return the wrong type: propose warn once, keeping today's value
+### C. Hooks that return the wrong type: done, warn once and treat the hook as unset
 
-A Callable hook's call (its `func(...) -> T` in the doc comment) promises a type. Today, 27 of the 53 frozen hooks have whatever comes back coerced: `bool()`, `float()`, `int()`, `StringName()`. Tested on Godot 4.7.2:
+A Callable hook's call (its `func(...) -> T` in the doc comment) promises a type. Before, 27 of the 53 frozen hooks had whatever came back coerced: `bool()`, `float()`, `int()`, `StringName()`. Tested on Godot 4.7.2:
 
 - A hook that returns `null` (for example a lambda that forgets its `return`) or a type with no conversion stops the calling function with `SCRIPT ERROR: Invalid call. Nonexistent 'bool' constructor` (or `int`, `float`, `StringName`), at every call, which can be every tick.
 - A String where a number is expected silently becomes `0.0`.
 
-Proposed: check the type, warn once per hook, and use the value Bustle uses for an unset hook (documented per hook). The check is one `typeof` comparison on the valid path.
+Now: the type is checked, the hook warns once (key `<Class>.<hook>.wrong_type`), and the call uses what it uses for an unset hook. A hook returning `null` warns once and never raises a script error, however often it is called. A bool hook accepts an int, a number hook an int or float, an int hook a whole float, a name hook a String. The check is one `typeof` comparison on the valid path.
 
 | Hooks | Where |
 | --- | --- |
@@ -102,38 +104,34 @@ Of the other 26:
 - 14 check what comes back (`is BustleX`, `is Array`, `is Vector3`) and treat a mismatch as unset: the brain's `score_boost`, the `mood_of`, `personality_of`, `memory_of` and `position_of` hooks, `BustleCrime.needs_of` and `BustleTendJob.nearby`.
 - 12 use the result as it comes: `BustleAspirations.on_points` (void), `BustleConversation.modifiers_of`, `BustleCrimeWatch.where`, `BustleDirectorEffects.agents`, `brain_of` and `tags_of`, `BustleMentalBehaviour.home_of` and `wander_to`, `BustlePerceptionWorld.line_of_sight`, `BustlePointLightProbe.occluded`, and `BustleSimRings.senses_provider` and `summary_hook`.
 
-For these 26, the proposal adds the warning where a mismatch is possible and changes nothing else.
+These 26 already treat a mismatch as unset or use the value as it is, so they are unchanged.
 
-### D. Changes state before refusing: propose validate first and change nothing
+### D. Changed state before refusing: done, validate first and change nothing
 
-| Entry point | Today | Where |
+| Entry point | Before | Where |
 | --- | --- | --- |
 | `BustleBrain.import_state` | Resets the brain, then refuses another agent, a running goal the library lacks, or a runner state that doesn't fit. Its doc comment says the brain is left "as freshly made". | `bustle/core/brain/brain.gd:252` |
 | `BustleSequenceRunner.import_state` | Sets itself idle, takes the new sequence, then refuses a bad state or step. | `bustle/core/brain/actions/sequence_runner.gd:145` |
 
-Proposed: check everything first, then reset and load, so a refused import leaves the brain or runner as it was. A host that relied on a refused import clearing the brain would see the old state kept.
+Now: both check everything first (the brain dry-runs the runner import), then reset and load, so a refused import leaves the brain or runner as it was. A host that relied on a refused import clearing the brain sees the old state kept.
 
-### E. Imports that can't refuse: `BustleAwareness` and `BustleDetectionMeter`
+### E. Imports that can't refuse: done, option A
 
-Their `import_state()` returns `void` and the signatures are frozen. Today they coerce bad values (an unknown awareness state becomes unaware, a malformed position becomes zero) and skip rows that aren't dictionaries, with no signal. Options:
+`BustleAwareness.import_state()` and `BustleDetectionMeter.import_state()` return `void` and the signatures are frozen. They coerce bad values (an unknown awareness state becomes unaware, a malformed position becomes zero) and skip rows that aren't dictionaries. They now also warn once (`BustleDetectionMeter.bad_value`, `BustleAwareness.bad_row`) and keep importing as before.
 
-- **A:** warn once when anything was coerced or skipped, and keep importing as today.
-- **B:** check the whole payload first, and on any problem import nothing and warn once.
-- **C:** leave them as they are.
+### F. Messages that repeated: done
 
-### F. Messages that repeat
-
-| Entry point | Today | Where |
+| Entry point | Before | Where |
 | --- | --- | --- |
 | `BustleModifierSet.set_source` | `push_error` on every refused call, which can be every tick | `bustle/core/modifier_set.gd:21` |
 | `BustleSociety.register_archetype` and `add_agent` | `push_error` on every refused call | `bustle/society/society.gd:63, 89` |
 
-Proposed: keep the refusal (`false` or `null`) and make the message a once-per-problem warning, per "never `push_error()` for host input".
+Now: the refusal (`false` or `null`) stays and the message is a once-per-problem warning, per "never `push_error()` for host input". `register_archetype` returns nothing, so the warning is its only signal.
 
-### G. Warnings in release builds
+### G. Warnings in release builds: done
 
-`push_warning()` prints in release builds too. Options: warn in every build (proposed: a misconfigured shipped game is worth one line per problem), or only when `OS.is_debug_build()`.
+Warnings print in every build; there is no `OS.is_debug_build()` check.
 
 ## Tests
 
-Each change in part 2 comes with a test for its refused or warned path that reads the limiter's state rather than the log, and the perf benches are run against [perf.md](perf.md).
+Each change has a test for its refused or warned path in `tests/errors/`, reading the limiter's state rather than the log. The limiter is an internal script with no `class_name` (`bustle/core/warn_once.gd`); tests call its `reset()` before each case. The perf benches were run against [perf.md](perf.md) with no regression.

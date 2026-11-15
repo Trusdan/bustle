@@ -22,6 +22,8 @@ extends RefCounted
 ## [br]A low mood also lowers the chance of starting at all ([member start_mood_scale]), and a
 ## recipient can turn a start away ([member accepts]).
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## Where the interactions are recorded, with the world seed and moods.
 var social: BustleSocialInteractions
 ## The interactions a conversation picks from.
@@ -70,7 +72,7 @@ func wants_to_start(initiator: StringName, recipient: StringName, now: int) -> b
 
 ## True when [param recipient] won't talk with [param initiator] now ([member accepts]).
 func turned_away(initiator: StringName, recipient: StringName, opener: StringName = &"") -> bool:
-	return accepts.is_valid() and not bool(accepts.call(recipient, initiator, opener))
+	return accepts.is_valid() and not _Warn.as_bool(accepts.call(recipient, initiator, opener), true, "BustleConversation.accepts")
 
 
 ## A new conversation's state (plain data, safe to save), or an empty dictionary when the pair is
@@ -148,7 +150,10 @@ func weights(speaker: StringName, listener: StringName) -> Dictionary[StringName
 	var opinion_lift := opinion_weight * (social.store.opinion(speaker, listener) - 50.0) / 50.0
 	var curt := 1.0 + curt_mood_scale * _low(_mood(speaker))
 	for def: BustleInteractionDef in interactions:
-		if def == null or not def.is_valid() or out.has(def.id):
+		if def == null or not def.is_valid():
+			_Warn.warn("BustleConversation.invalid_interaction:%s" % (def.id if def != null else &""), "BustleConversation: the interaction %s is invalid; it's skipped" % (def.id if def != null else &"<null>"))
+			continue
+		if out.has(def.id):
 			continue
 		var w := def.weight
 		if personality is BustlePersonality:

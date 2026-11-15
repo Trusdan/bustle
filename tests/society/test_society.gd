@@ -47,7 +47,7 @@ func test_agents_are_registered_once_from_known_archetypes() -> void:
 	assert_null(society.add_agent(&"ann", &"smith"), "a taken id")
 	assert_null(society.add_agent(&"cy", &"weaver"), "an unknown archetype")
 	assert_null(society.add_agent(&"", &"baker"), "an empty id")
-	assert_push_error_count(3)
+	assert_push_error_count(0)
 	assert_eq(society.agent_ids(), [&"ann", &"bo"])
 	assert_eq(society.get_agent(&"ann").brain.library, society.get_agent(&"ann").brain.library)
 	society.remove_agent(&"ann")

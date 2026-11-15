@@ -45,7 +45,7 @@ func test_malformed_keys_and_non_finite_numbers_are_refused() -> void:
 	assert_false(set.set_source(&"t", &"work.speed", 0.0, NAN))
 	assert_false(set.set_source(&"", &"work.speed", 1.0))
 	assert_false(set.has(&"work.speed"))
-	assert_push_error_count(6)
+	assert_push_error_count(0)
 
 
 func test_it_fills_a_score_contexts_weights_and_multipliers() -> void:

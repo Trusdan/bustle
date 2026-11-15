@@ -20,6 +20,8 @@ extends RefCounted
 ## goes through the trade port. A payee doesn't buy from itself. Time is whole game minutes, given
 ## by the caller.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## Why [method reserve] or [method use] said no.
 const REFUSED_ACCESS := &"no_access"
 ## Every place is held by someone else.
@@ -59,8 +61,9 @@ func _init(p_id: StringName = &"", p_def: BustleAffordanceDef = null, p_area: St
 ## How welcome [param agent] is, from 0 (refused) to 1. Results that aren't finite count as 0.
 func access(agent: StringName) -> float:
 	var out := 1.0
-	if access_hook.is_valid():
-		out = float(access_hook.call(agent, self))
+	var granted: Variant = access_hook.call(agent, self) if access_hook.is_valid() else null
+	if access_hook.is_valid() and _Warn.fits(granted, "number", "BustleAffordance.access_hook"):
+		out = float(granted)
 	elif owner != &"" and agent != owner:
 		out = def.others_mult
 	return clampf(out, 0.0, 1.0) if is_finite(out) else 0.0
@@ -70,7 +73,9 @@ func access(agent: StringName) -> float:
 ## [member BustleAffordanceDef.item], which the trade port prices.
 func price_for(agent: StringName) -> int:
 	if cost_hook.is_valid():
-		return maxi(int(cost_hook.call(agent, self)), 0)
+		var cost: Variant = cost_hook.call(agent, self)
+		if _Warn.fits(cost, "int", "BustleAffordance.cost_hook"):
+			return maxi(int(cost), 0)
 	return 0 if owner != &"" and agent == owner else maxi(def.price, 0)
 
 
@@ -97,12 +102,19 @@ func has_room(agent: StringName, now: int) -> bool:
 ## Holds a place for [param agent] from minute [param now] for the def's hold time (holding again
 ## renews it). Returns [constant OK], [constant REFUSED_ACCESS] or [constant REFUSED_FULL].
 func reserve(agent: StringName, now: int) -> StringName:
-	if agent == &"" or not def.is_valid() or access(agent) <= 0.0:
+	if agent == &"" or not _def_ok() or access(agent) <= 0.0:
 		return REFUSED_ACCESS
 	if not has_room(agent, now):
 		return REFUSED_FULL
 	_holds[agent] = now + def.hold_minutes
 	return OK
+
+
+func _def_ok() -> bool:
+	if def != null and def.is_valid():
+		return true
+	_Warn.warn("BustleAffordance.invalid_def:%s" % (def.id if def != null else &""), "BustleAffordance: the definition %s is invalid; the affordance refuses everyone" % (def.id if def != null else &"<null>"))
+	return false
 
 
 ## Lets go of [param agent]'s place.
@@ -115,7 +127,7 @@ func release(agent: StringName) -> void:
 ## effects are scaled by [method access]; leisure relief also by [param leisure]'s tolerance.
 func advertise(agent: StringName, now: int, distance: float = 0.0, trade: BustleTradePort = null, leisure: BustleLeisure = null) -> BustleAdvertisement:
 	var welcome := access(agent)
-	if not def.is_valid() or welcome <= 0.0 or not has_room(agent, now):
+	if not _def_ok() or welcome <= 0.0 or not has_room(agent, now):
 		return null
 	if not _affordable(agent, trade):
 		return null
@@ -135,7 +147,7 @@ func advertise(agent: StringName, now: int, distance: float = 0.0, trade: Bustle
 ## [constant REFUSED_ACCESS], [constant REFUSED_FULL] (no hold and no room) or
 ## [constant REFUSED_PRICE] (it can't pay, or can't buy the def's item).
 func use(agent: StringName, now: int, needs: BustleNeedSet, leisure: BustleLeisure = null, trade: BustleTradePort = null) -> StringName:
-	if agent == &"" or not def.is_valid() or access(agent) <= 0.0:
+	if agent == &"" or not _def_ok() or access(agent) <= 0.0:
 		return REFUSED_ACCESS
 	if not has_room(agent, now):
 		return REFUSED_FULL

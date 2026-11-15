@@ -34,6 +34,8 @@ extends RefCounted
 ## world seed and the agent id, the same on every platform), and its state is saved with the brain,
 ## so a run repeats exactly from the same seed and inputs.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The saved-state layout version.
 const STATE_VERSION := 1
 
@@ -242,14 +244,13 @@ static func _save_format() -> Dictionary:
 	return {"key": "version", "current": STATE_VERSION, "steps": {}}
 
 
-## Restores [method export_state]'s state into a brain made for the same agent and library. False
-## when the state doesn't fit: another version changes nothing ([BustleSaveFormat] gives the
-## reason), and another agent, a running goal the library lacks, or a runner state that doesn't fit
-## its sequence leaves the brain as freshly made.
+## Restores [method export_state]'s state into a brain made for the same agent and library. False,
+## changing nothing, when the state doesn't fit: another version ([BustleSaveFormat] gives the
+## reason), another agent, a running goal the library lacks, or a runner state that doesn't fit its
+## sequence. Everything is checked before the brain changes.
 func import_state(saved: Dictionary) -> bool:
 	if not BustleSaveFormat._read(&"BustleBrain", saved, _save_format())["ok"]:
 		return false
-	_reset()
 	if int(saved.get("version", -1)) != STATE_VERSION or StringName(str(saved.get("agent", ""))) != agent_id \
 			or typeof(saved.get("rng_state")) != TYPE_INT or not saved.get("keeper") is Dictionary \
 			or not saved.get("runner") is Dictionary:
@@ -261,9 +262,10 @@ func import_state(saved: Dictionary) -> bool:
 		if goal == null or goal.sequence == null:
 			return false
 		sequence = goal.sequence
-	if not runner.import_state(sequence, saved["runner"]):
-		_reset()
+	if not BustleSequenceRunner.new().import_state(sequence, saved["runner"]):
 		return false
+	_reset()
+	runner.import_state(sequence, saved["runner"])
 	world_seed = int(saved.get("world_seed", world_seed))
 	_rng.seed = seed_for(world_seed, agent_id)
 	_rng.state = saved["rng_state"]
@@ -310,7 +312,7 @@ func _apply_stage_gates(candidates: Array[BustleCandidate], ads: Array[BustleAdv
 				or (candidate.option_id != &"" and not life_stages.allows_affordance(agent_id, tags))):
 			candidate.eligible = false
 			candidate.reasons.append({"kind": &"stage_gate", "stage": life_stages.stage_of(agent_id)})
-		elif gate.is_valid() and not bool(gate.call(agent_id, goal_tags, tags)):
+		elif gate.is_valid() and not _Warn.as_bool(gate.call(agent_id, goal_tags, tags), true, "BustleBrain.gate"):
 			candidate.eligible = false
 			candidate.reasons.append({"kind": &"gate"})
 

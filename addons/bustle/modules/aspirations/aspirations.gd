@@ -24,6 +24,8 @@ extends RefCounted
 ## [br][br]
 ## Nothing is random: wants and fears come only from causes and state.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## A want was taken; [param info] is its row ([method wants]).
 signal want_added(agent: StringName, id: StringName, info: Dictionary)
 ## A want was fulfilled, and its thought added (with a mood).
@@ -104,7 +106,10 @@ func choose(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 	var best: BustleWantDef = null
 	var best_score := -INF
 	for def: BustleWantDef in config.wants:
-		if def == null or not def.is_valid() or not def.auto or _wants.has(def.id) or def.is_done(inputs):
+		if def == null or not def.is_valid():
+			_Warn.warn("BustleAspirations.invalid_want:%s" % (def.id if def != null else &""), "BustleAspirations: the want %s is invalid; it's skipped" % (def.id if def != null else &"<null>"))
+			continue
+		if not def.auto or _wants.has(def.id) or def.is_done(inputs):
 			continue
 		if not def.requires.all(func(fact: StringName) -> bool: return bool(inputs.get(fact, false))):
 			continue
