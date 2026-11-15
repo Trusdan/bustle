@@ -7,10 +7,17 @@ extends RefCounted
 ## A class is frozen unless its class doc carries [code]@experimental[/code]. In a frozen class, a
 ## member tagged [code]@experimental[/code] is left out of the frozen surface. Names starting with
 ## [code]_[/code] and scripts without a [code]class_name[/code] are internal and never listed.
+##
+## A Callable hook's call is the first [code][code]func(...) -> T[/code][/code] span in its doc
+## comment, which comes first. It's recorded as the hook's [code]call[/code] (see [method call_of])
+## and is part of the hook's flattened signature, so the check compares it like any other.
 
 const FORMAT: int = 1
 const SAVE_CALLS: Array[String] = ["export_state", "import_state"]
 const PORTS_DIR: String = "addons/bustle/ports/"
+## Joins a hook's signature and its call in [method flatten]. A hook with no call flattens to its
+## signature alone.
+const CALL_SEPARATOR: String = " called as "
 
 
 ## Reads one doctool XML file into a class record: name, inherits, experimental reason (null when
@@ -24,7 +31,7 @@ static func parse_class(path: String) -> Dictionary:
 	var item: Dictionary = {}
 	var text_target: String = ""
 	while xml.read() == OK:
-		var node: String = xml.get_node_name()
+		var node: String = xml.get_node_name() if xml.get_node_type() != XMLParser.NODE_TEXT else ""
 		match xml.get_node_type():
 			XMLParser.NODE_ELEMENT:
 				match node:
@@ -118,7 +125,11 @@ static func build(records: Array[Dictionary], paths: Dictionary, version: String
 						constants[item["name"]] = signature(item)
 					"member":
 						if item["type"] == "Callable":
-							hooks[item["name"]] = {"signature": signature(item), "purpose": purpose(item["text"])}
+							var hook: Dictionary = {"signature": signature(item), "purpose": purpose(_without_call(item["text"]))}
+							var call: String = call_of(item["text"])
+							if call != "":
+								hook["call"] = call
+							hooks[item["name"]] = hook
 						else:
 							properties[item["name"]] = signature(item)
 		base.merge({"methods": methods, "properties": properties, "hooks": hooks, "signals": signals,
@@ -145,7 +156,11 @@ static func flatten(manifest: Dictionary) -> Dictionary:
 		for group: String in ["hooks", "signals"]:
 			var members: Dictionary = entry.get(group, {})
 			for member: String in members:
-				out["%s.%s" % [name, member]] = str((members[member] as Dictionary).get("signature", ""))
+				var data: Dictionary = members[member]
+				var flat: String = str(data.get("signature", ""))
+				if group == "hooks" and str(data.get("call", "")) != "":
+					flat += CALL_SEPARATOR + str(data["call"])
+				out["%s.%s" % [name, member]] = flat
 	return out
 
 
@@ -201,7 +216,7 @@ static func render(manifest: Dictionary) -> String:
 		func(n: String) -> bool: return frozen[n]["kind"] == "port"), func(n: String) -> Array:
 			return ["`%s`" % n, "`%s`" % frozen[n]["path"], frozen[n]["purpose"]]))
 	lines.append_array(_member_table(frozen, names, "hooks", "Callable hooks", "Hook",
-		"A hook is a public `Callable` property the host may set; its doc comment gives the call it expects."))
+		"A hook is a public `Callable` property the host may set. Its call is the `func(...) -> T` that opens its doc comment; the check compares it like a signature."))
 	lines.append_array(_member_table(frozen, names, "signals", "Signals", "Signal", ""))
 	var save_rows: Array = []
 	for n: String in names:
@@ -238,6 +253,15 @@ static func render(manifest: Dictionary) -> String:
 	return "\n".join(lines) + "\n"
 
 
+## A hook's call from its raw doc text: the first [code][code]func(...) -> T[/code][/code] span,
+## verbatim with its whitespace collapsed, or [code]""[/code] when there is none.
+static func call_of(text: String) -> String:
+	var found := RegEx.create_from_string("\\[code\\](func\\([\\s\\S]*?\\)\\s*->[\\s\\S]*?)\\[/code\\]").search(text)
+	if found == null:
+		return ""
+	return RegEx.create_from_string("\\s+").sub(found.get_string(1), " ", true).strip_edges()
+
+
 ## The first sentence of a doc text, as one Markdown table cell.
 static func purpose(text: String) -> String:
 	var flat: String = text.replace("\n", " ").strip_edges()
@@ -259,6 +283,11 @@ static func signature(item: Dictionary) -> String:
 			var in_enum: String = " (enum %s)" % item["enum"] if str(item["enum"]) != "" else ""
 			return "const %s = %s%s" % [item["name"], item["value"], in_enum]
 	return "var %s: %s" % [item["name"], item["type"]]
+
+
+static func _without_call(text: String) -> String:
+	var found := RegEx.create_from_string("^\\s*\\[code\\]func\\([\\s\\S]*?\\)\\s*->[\\s\\S]*?\\[/code\\][:,.]?\\s*").search(text)
+	return text.substr(found.get_end()) if found != null else text
 
 
 static func _flag(xml: XMLParser, attribute: String) -> Variant:
@@ -292,8 +321,14 @@ static func _member_table(frozen: Dictionary, names: Array, group: String, title
 		keys.sort()
 		for member: String in keys:
 			var entry: Dictionary = members[member]
+			if group == "hooks":
+				var call: String = str(entry.get("call", ""))
+				rows.append(["`%s.%s`" % [n, member], "`%s`" % call if call != "" else "(none)", "`%s`" % frozen[n]["path"], entry["purpose"]])
+				continue
 			var shown: String = str(entry["signature"]).trim_prefix("signal ") if group == "signals" else member
 			rows.append(["`%s.%s`" % [n, shown], "`%s`" % frozen[n]["path"], entry["purpose"]])
+	if group == "hooks":
+		return _rows(title, [label, "Call", "File", "Purpose"], rows, note)
 	return _rows(title, [label, "File", "Purpose"], rows, note)
 
 

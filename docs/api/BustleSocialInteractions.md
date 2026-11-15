@@ -54,7 +54,7 @@ Game minutes before an agent greets anyone again.
 var mood_of: Callable = Callable()
 ```
 
-(id) → that agent's mood (anything with a `mood` number and `add_thought`), or null. Empty: nobody has a mood.
+`func(id: StringName) -> Object`: that agent's mood (anything with a `mood` number and `add_thought`), or null. Empty: nobody has a mood.
 
 ## Methods
 

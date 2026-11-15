@@ -21,7 +21,7 @@ var kinds: Array[StringName] = [&"friend"]
 var need: StringName = &"comfort"
 ## The advertisements' tags.
 var tags: Array[StringName] = [&"social", &"comfort"]
-## (id) → true while that agent is in a low mental state (for example
+## [code]func(id: StringName) -> bool[/code]: true while that agent is in a low mental state (for example
 ## [method BustleMentalBehaviour.in_low_state]). A friend in one needs comforting even once its
 ## mood has started to rise. Empty: mood alone decides.
 var low_state_of: Callable = Callable()

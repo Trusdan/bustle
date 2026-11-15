@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="BustleExample" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		An example class.
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="gate_hook" type="Callable" setter="" getter="" default="Callable()">
+			[code]func(agent_id: StringName, goal_tags: Array[StringName], weight: float) -> bool[/code]: true lets the
+			agent through. Unset: everyone passes.
+		</member>
+		<member name="plain_hook" type="Callable" setter="" getter="" default="Callable()">
+			(id) → a score. Unset: [code]1.0[/code].
+		</member>
+		<member name="weight" type="float" setter="" getter="" default="1.0">
+			A plain property.
+		</member>
+	</members>
+</class>

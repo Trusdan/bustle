@@ -32,7 +32,7 @@ The like line and family kinds.
 var is_gone: Callable = Callable()
 ```
 
-(id) → true when that person is dead or gone for good. Empty: when they're no longer an agent of the society.
+`func(id: StringName) -> bool`: true when that person is dead or gone for good. Empty: when they're no longer an agent of the society.
 
 ### `settlement_of`
 
@@ -40,7 +40,7 @@ var is_gone: Callable = Callable()
 var settlement_of: Callable = Callable()
 ```
 
-(id) → the settlement that agent lives in. Empty: its area.
+`func(id: StringName) -> StringName`: the settlement that agent lives in. Empty: its area.
 
 ## Methods
 

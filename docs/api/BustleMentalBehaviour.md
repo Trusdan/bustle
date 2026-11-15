@@ -78,7 +78,7 @@ Optional: the insulted agent quarrels through it.
 var is_locked: Callable = Callable()
 ```
 
-(id) → true while the agent is locked to a task. Made with a society, it's that society's `BustleSociety.is_locked()`; a host or test may replace it. Empty: never.
+`func(id: StringName) -> bool`: true while the agent is locked to a task. Made with a society, it's that society's `BustleSociety.is_locked()`; a host or test may replace it. Empty: never.
 
 ### `indulgence_of`
 
@@ -86,7 +86,7 @@ var is_locked: Callable = Callable()
 var indulgence_of: Callable = Callable()
 ```
 
-(id) → the affordance it would indulge in (an id), or empty. Empty: none.
+`func(id: StringName) -> StringName`: the affordance it would indulge in (an id), or empty. Empty: none.
 
 ### `position_of`
 
@@ -94,7 +94,7 @@ var indulgence_of: Callable = Callable()
 var position_of: Callable = Callable()
 ```
 
-(id) → where the agent or person is (a `Vector3`), or null. Empty: the world position of its area.
+`func(id: StringName) -> Variant`: where the agent or person is (a `Vector3`), or null. Empty: the world position of its area.
 
 ### `home_of`
 
@@ -102,7 +102,7 @@ var position_of: Callable = Callable()
 var home_of: Callable = Callable()
 ```
 
-(id) → where home is (a `Vector3`), or null. Empty: none (withdraw then stays put).
+`func(id: StringName) -> Variant`: where home is (a `Vector3`), or null. Empty: none (withdraw then stays put).
 
 ### `wander_to`
 
@@ -110,7 +110,7 @@ var home_of: Callable = Callable()
 var wander_to: Callable = Callable()
 ```
 
-(id, now) → where to wander to (a `Vector3`), or null. Empty: the agent's neighbouring areas in turn, by the hour.
+`func(id: StringName, now: int) -> Variant`: where to wander to (a `Vector3`), or null. Empty: the agent's neighbouring areas in turn, by the hour.
 
 ## Methods
 

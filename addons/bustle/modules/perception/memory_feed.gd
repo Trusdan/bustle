@@ -13,11 +13,11 @@ extends RefCounted
 ## no last-known position, nothing is written. The note is stamped with the minute track was lost.
 ## Suspicion alone writes nothing.
 
-## (id) → that agent's [BustleMemory], or null for agents without one.
+## [code]func(id: StringName) -> BustleMemory[/code]: that agent's memory, or null for agents without one.
 var memory_of: Callable = Callable()
-## () → the current game minute.
+## [code]func() -> int[/code]: the current game minute.
 var clock: Callable = Callable()
-## (id) → the area an actor is in. Empty: every actor is in one unnamed area.
+## [code]func(id: StringName) -> StringName[/code]: the area an actor is in. Empty: every actor is in one unnamed area.
 var area_of: Callable = Callable()
 
 var _world: BustlePerceptionWorld

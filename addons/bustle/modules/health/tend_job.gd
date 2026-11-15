@@ -24,7 +24,7 @@ signal tended(healer: StringName, patient: StringName, done: bool)
 
 ## The health behaviour it reads the port through.
 var health: BustleHealthBehaviour
-## [code]func(healer) -> Array[StringName][/code]: who [code]healer[/code] could tend now (for example
+## [code]func(healer: StringName) -> Array[StringName][/code]: who [code]healer[/code] could tend now (for example
 ## the agents in its area). Unset: nobody, so nobody tends.
 var nearby: Callable = Callable()
 

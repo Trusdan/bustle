@@ -34,7 +34,7 @@ const NORMAL := &"normal"
 ## [method mood_band] above [member BustleMentalConfig.high_spirits_above].
 const HIGH := &"high"
 
-## (id) → that agent's mood: anything with a [code]mood[/code] number, an [code]emotion[/code] and
+## [code]func(id: StringName) -> Object[/code]: that agent's mood: anything with a [code]mood[/code] number, an [code]emotion[/code] and
 ## [code]reasons()[/code], such as a [BustleMood]; or null. Empty: nobody has a mood.
 var mood_of: Callable = Callable()
 ## The lines between mood bands: the mental states' own lines, so a low band is where low states

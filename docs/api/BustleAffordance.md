@@ -97,7 +97,7 @@ Who is paid when nobody owns it, or empty (then a priced use can't be paid).
 var access_hook: Callable = Callable()
 ```
 
-(agent id, affordance) → a multiplier from 0 (refused) to 1. Empty: the ownership rule above.
+`func(agent: StringName, affordance: BustleAffordance) -> float`: a multiplier from 0 (refused) to 1. Empty: the ownership rule above.
 
 ### `cost_hook`
 
@@ -105,7 +105,7 @@ var access_hook: Callable = Callable()
 var cost_hook: Callable = Callable()
 ```
 
-(agent id, affordance) → the price of one use. Empty: the def's price, 0 for the owner.
+`func(agent: StringName, affordance: BustleAffordance) -> int`: the price of one use. Empty: the def's price, 0 for the owner.
 
 ## Methods
 

@@ -15,7 +15,7 @@ Both halves of a loss-of-track note come from what the perceiver actually observ
 var memory_of: Callable = Callable()
 ```
 
-(id) → that agent's [BustleMemory](BustleMemory.md), or null for agents without one.
+`func(id: StringName) -> BustleMemory`: that agent's memory, or null for agents without one.
 
 ### `clock`
 
@@ -23,7 +23,7 @@ var memory_of: Callable = Callable()
 var clock: Callable = Callable()
 ```
 
-() → the current game minute.
+`func() -> int`: the current game minute.
 
 ### `area_of`
 
@@ -31,7 +31,7 @@ var clock: Callable = Callable()
 var area_of: Callable = Callable()
 ```
 
-(id) → the area an actor is in. Empty: every actor is in one unnamed area.
+`func(id: StringName) -> StringName`: the area an actor is in. Empty: every actor is in one unnamed area.
 
 ## Methods
 

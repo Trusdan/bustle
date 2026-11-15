@@ -85,7 +85,7 @@ How much opinion bends weights: a positive interaction's weight is multiplied by
 var personality_of: Callable = Callable()
 ```
 
-(id) → that agent's [BustlePersonality](BustlePersonality.md), or null. Empty: nobody has one.
+`func(id: StringName) -> BustlePersonality`: that agent's personality, or null. Empty: nobody has one.
 
 ### `modifiers_of`
 
@@ -93,7 +93,7 @@ var personality_of: Callable = Callable()
 var modifiers_of: Callable = Callable()
 ```
 
-(id) → that agent's [BustleModifierSet](BustleModifierSet.md), or null. Empty: nobody has one.
+`func(id: StringName) -> BustleModifierSet`: that agent's modifiers, or null. Empty: nobody has one.
 
 ### `accepts`
 
@@ -101,7 +101,7 @@ var modifiers_of: Callable = Callable()
 var accepts: Callable = Callable()
 ```
 
-(recipient, initiator, opener) → false when the recipient turns the conversation away (for example `BustleMentalBehaviour.accepts()` while it's withdrawn). Empty: everyone accepts.
+`func(recipient: StringName, initiator: StringName, opener: StringName) -> bool`: false when the recipient turns the conversation away (for example `BustleMentalBehaviour.accepts()` while it's withdrawn). Empty: everyone accepts.
 
 ## Methods
 

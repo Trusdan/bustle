@@ -10,7 +10,7 @@ extends BustleLightProbe
 var ambient: float = 0.0
 ## The point sources.
 var sources: Array[BustleLightSource] = []
-## Optional: [code]func(from: Vector3, to: Vector3) -> bool[/code], true when something blocks
+## [code]func(from: Vector3, to: Vector3) -> bool[/code]: optional; true when something blocks
 ## the light from a source at [code]from[/code] to the sample point [code]to[/code]. Unset:
 ## nothing ever blocks.
 var occluded: Callable

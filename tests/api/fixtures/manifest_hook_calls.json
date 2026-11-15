@@ -1,0 +1,40 @@
+{
+	"format": 1,
+	"version": "1.0.0",
+	"addons": ["bustle"],
+	"frozen": {
+		"BustleExample": {
+			"addon": "bustle",
+			"path": "addons/bustle/example.gd",
+			"kind": "class",
+			"extends": "RefCounted",
+			"purpose": "An example class.",
+			"methods": {
+				"old_name": "func old_name(id: StringName) -> void",
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Dictionary) -> bool"
+			},
+			"properties": {"weight": "var weight: float"},
+			"hooks": {"score_hook": {"signature": "var score_hook: Callable", "call": "func(id: StringName) -> float", "purpose": "a score."}},
+			"signals": {"changed": {"signature": "signal changed(id: StringName, value: float)", "purpose": "Something changed."}},
+			"constants": {"STATE_VERSION": "const STATE_VERSION = 2"},
+			"save": {"export_state": "Its state.", "import_state": "Restores it."}
+		},
+		"BustleExamplePort": {
+			"addon": "bustle",
+			"path": "addons/bustle/ports/example_port.gd",
+			"kind": "port",
+			"extends": "RefCounted",
+			"purpose": "An example port.",
+			"methods": {"lookup": "func lookup(id: StringName) -> int"},
+			"properties": {},
+			"hooks": {},
+			"signals": {},
+			"constants": {},
+			"save": {}
+		}
+	},
+	"experimental": {},
+	"experimental_members": {},
+	"deprecated": {}
+}

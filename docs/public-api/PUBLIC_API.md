@@ -178,63 +178,63 @@ Behaviour and tuning defaults are documented in the guides; the frozen surface f
 
 ## Callable hooks (53)
 
-A hook is a public `Callable` property the host may set; its doc comment gives the call it expects.
+A hook is a public `Callable` property the host may set. Its call is the `func(...) -> T` that opens its doc comment; the check compares it like a signature.
 
-| Hook | File | Purpose |
-| --- | --- | --- |
-| `BustleAffordance.access_hook` | `addons/bustle/core/affordances/affordance.gd` | (agent id, affordance) → a multiplier from 0 (refused) to 1. |
-| `BustleAffordance.cost_hook` | `addons/bustle/core/affordances/affordance.gd` | (agent id, affordance) → the price of one use. |
-| `BustleAmbitionTargets.is_gone` | `addons/bustle/modules/ambitions/ambition_targets.gd` | (id) → true when that person is dead or gone for good. |
-| `BustleAmbitionTargets.settlement_of` | `addons/bustle/modules/ambitions/ambition_targets.gd` | (id) → the settlement that agent lives in. |
-| `BustleAmbitions.is_locked` | `addons/bustle/modules/ambitions/ambitions.gd` | Optional: (id) → true while the agent is locked, checked by `boost()` at once (made with a society, it's that society's `BustleSociety.is_locked()`; without it, only `locked` in the last `update()`'s inputs counts, so call `update()` whenever a lock starts or ends). |
-| `BustleAspirations.on_points` | `addons/bustle/modules/aspirations/aspirations.gd` | The host's reward hook, `func(agent, amount, reason)`, called after points are earned (with the new total already counted). |
-| `BustleBrain.gate` | `addons/bustle/core/brain/brain.gd` | `func(agent_id, goal_tags, option_tags) -> bool`: a further gate on its self-chosen candidates, for example `BustleHealthBehaviour.allows()`. |
-| `BustleBrain.score_boost` | `addons/bustle/core/brain/brain.gd` | `func(goal_id, option_id) -> float`: multiplies each candidate's score (see `BustleScoreContext.score_boost`), for example `BustleAmbitions.boost()`. |
-| `BustleCareers.review_hook` | `addons/bustle/modules/careers/careers.gd` | `func(id, career, from_rank, to_rank, kind) -> bool`, where kind is `PROMOTED` or `DEMOTED`: true grants the change. |
-| `BustleComfort.low_state_of` | `addons/bustle/society/comfort.gd` | (id) → true while that agent is in a low mental state (for example `BustleMentalBehaviour.in_low_state()`). |
-| `BustleConflict.cornered_of` | `addons/bustle/core/conflict/conflict.gd` | (agent, threat) → true when `agent` can't get away from `threat`. |
-| `BustleConflict.group_of` | `addons/bustle/core/conflict/conflict.gd` | (id) → that agent's group (for the disposition port). |
-| `BustleConflict.lethal_reason_of` | `addons/bustle/core/conflict/conflict.gd` | (agent, threat, cause) → the host's reason for `agent` to kill `threat`, or empty for none. |
-| `BustleConflict.mood_of` | `addons/bustle/core/conflict/conflict.gd` | (id) → that agent's mood (anything with a `mood` number), or null. |
-| `BustleConflict.personality_of` | `addons/bustle/core/conflict/conflict.gd` | (id) → that agent's `BustlePersonality`, or null (neutral sliders). |
-| `BustleConflict.position_of` | `addons/bustle/core/conflict/conflict.gd` | (id) → that agent's position (a `Vector3`), or null. |
-| `BustleConversation.accepts` | `addons/bustle/society/conversation.gd` | (recipient, initiator, opener) → false when the recipient turns the conversation away (for example `BustleMentalBehaviour.accepts()` while it's withdrawn). |
-| `BustleConversation.modifiers_of` | `addons/bustle/society/conversation.gd` | (id) → that agent's `BustleModifierSet`, or null. |
-| `BustleConversation.personality_of` | `addons/bustle/society/conversation.gd` | (id) → that agent's `BustlePersonality`, or null. |
-| `BustleCrime.is_locked` | `addons/bustle/core/crime/crime.gd` | (id) → true while the host holds that agent to a story or task. |
-| `BustleCrime.is_observed` | `addons/bustle/core/crime/crime.gd` | (thief, place) → true when the thief judges someone would see a theft there. |
-| `BustleCrime.needs_of` | `addons/bustle/core/crime/crime.gd` | (id) → that agent's `BustleNeedSet`, or null (no needs, so no theft). |
-| `BustleCrime.personality_of` | `addons/bustle/core/crime/crime.gd` | (id) → that agent's `BustlePersonality`, or null (neutral sliders). |
-| `BustleCrimeWatch.can_reach` | `addons/bustle/core/crime/crime_watch.gd` | (agent, other) → true when `agent` can reach `other` now. |
-| `BustleCrimeWatch.can_travel` | `addons/bustle/core/crime/crime_watch.gd` | (agent, now) → false while the agent can't go on its errands (night, fear: the host's call). |
-| `BustleCrimeWatch.gossip_to` | `addons/bustle/core/crime/crime_watch.gd` | (agent, record) → who `agent` would gossip to, or empty (then it can't). |
-| `BustleCrimeWatch.memory_of` | `addons/bustle/core/crime/crime_watch.gd` | (id) → that agent's `BustleMemory`, or null. |
-| `BustleCrimeWatch.perceives` | `addons/bustle/core/crime/crime_watch.gd` | (agent, thief, place) → true when `agent` perceived `thief` stealing at `place`. |
-| `BustleCrimeWatch.should_report` | `addons/bustle/core/crime/crime_watch.gd` | (agent, case) → one of `BustleWitnessJudge.OUTCOMES`. |
-| `BustleCrimeWatch.where` | `addons/bustle/core/crime/crime_watch.gd` | (id) → where that agent or person is now (a `Vector3`), or null. |
-| `BustleDirectorEffects.agents` | `addons/bustle/modules/director/director_effects.gd` | `func() -> Array`StringName``: every agent. |
-| `BustleDirectorEffects.brain_of` | `addons/bustle/modules/director/director_effects.gd` | `func(id) -> BustleBrain`: an agent's brain, or null. |
-| `BustleDirectorEffects.mood_of` | `addons/bustle/modules/director/director_effects.gd` | `func(id) -> Object`: an agent's mood (with `add_thought(def, details)`), or null. |
-| `BustleDirectorEffects.tags_of` | `addons/bustle/modules/director/director_effects.gd` | `func(id) -> Array`StringName``: an agent's tags. |
-| `BustleMemoryFeed.area_of` | `addons/bustle/modules/perception/memory_feed.gd` | (id) → the area an actor is in. |
-| `BustleMemoryFeed.clock` | `addons/bustle/modules/perception/memory_feed.gd` | () → the current game minute. |
-| `BustleMemoryFeed.memory_of` | `addons/bustle/modules/perception/memory_feed.gd` | (id) → that agent's `BustleMemory`, or null for agents without one. |
-| `BustleMentalBehaviour.home_of` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | (id) → where home is (a `Vector3`), or null. |
-| `BustleMentalBehaviour.indulgence_of` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | (id) → the affordance it would indulge in (an id), or empty. |
-| `BustleMentalBehaviour.is_locked` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | (id) → true while the agent is locked to a task. |
-| `BustleMentalBehaviour.position_of` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | (id) → where the agent or person is (a `Vector3`), or null. |
-| `BustleMentalBehaviour.wander_to` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | (id, now) → where to wander to (a `Vector3`), or null. |
-| `BustlePerceptionWorld.line_of_sight` | `addons/bustle/modules/perception/perception_world.gd` | `func(from: Vector3, to: Vector3, perceiver_id: StringName, target_id: StringName) -> bool`: true when nothing blocks the view. |
-| `BustlePointLightProbe.occluded` | `addons/bustle/modules/perception/point_light_probe.gd` | Optional: `func(from: Vector3, to: Vector3) -> bool`, true when something blocks the light from a source at `from` to the sample point `to`. |
-| `BustleRomance.compatibility` | `addons/bustle/modules/romance/romance.gd` | `func(a, b) -> float`, their compatibility from -1 to 1. |
-| `BustleRomance.confirm_hook` | `addons/bustle/modules/romance/romance.gd` | `func(a, b, status) -> bool`: the host approves engaged or married. |
-| `BustleRomance.ratings_policy` | `addons/bustle/modules/romance/romance.gd` | `func(a, b, status) -> bool`: the host's own rules (age, rating, setting) for every step up the ladder, automatic or requested, asked before anything changes. |
-| `BustleScoringConfig.expected_thought_gain` | `addons/bustle/core/brain/scoring_config.gd` | An optional preview of how an option would make the agent feel: `func(ad: BustleAdvertisement, context: BustleScoreContext) -> float`. |
-| `BustleSimRings.senses_provider` | `addons/bustle/core/rings/sim_rings.gd` | `func(id: StringName, ring: Ring, minute: int) -> BustleSenses`, what an agent senses when its brain thinks in `tick()` or `catch_up()`. |
-| `BustleSimRings.summary_hook` | `addons/bustle/core/rings/sim_rings.gd` | `func(id: StringName, report: Dictionary) -> void`, called when catch-up skipped time beyond the cap, so modules can apply what the skipped time did in summary. |
-| `BustleSocialInteractions.mood_of` | `addons/bustle/society/social_interactions.gd` | (id) → that agent's mood (anything with a `mood` number and `add_thought`), or null. |
-| `BustleTendJob.nearby` | `addons/bustle/modules/health/tend_job.gd` | `func(healer) -> Array`StringName``: who `healer` could tend now (for example the agents in its area). |
-| `BustleWyrdFacts.mood_of` | `addons/bustle_wyrd/bustle_wyrd_facts.gd` | (id) → that agent's mood: anything with a `mood` number, an `emotion` and `reasons()`, such as a `BustleMood`; or null. |
+| Hook | Call | File | Purpose |
+| --- | --- | --- | --- |
+| `BustleAffordance.access_hook` | `func(agent: StringName, affordance: BustleAffordance) -> float` | `addons/bustle/core/affordances/affordance.gd` | a multiplier from 0 (refused) to 1. |
+| `BustleAffordance.cost_hook` | `func(agent: StringName, affordance: BustleAffordance) -> int` | `addons/bustle/core/affordances/affordance.gd` | the price of one use. |
+| `BustleAmbitionTargets.is_gone` | `func(id: StringName) -> bool` | `addons/bustle/modules/ambitions/ambition_targets.gd` | true when that person is dead or gone for good. |
+| `BustleAmbitionTargets.settlement_of` | `func(id: StringName) -> StringName` | `addons/bustle/modules/ambitions/ambition_targets.gd` | the settlement that agent lives in. |
+| `BustleAmbitions.is_locked` | `func(id: StringName) -> bool` | `addons/bustle/modules/ambitions/ambitions.gd` | optional; true while the agent is locked, checked by `boost()` at once (made with a society, it's that society's `BustleSociety.is_locked()`; without it, only `locked` in the last `update()`'s inputs counts, so call `update()` whenever a lock starts or ends). |
+| `BustleAspirations.on_points` | `func(agent: StringName, amount: int, reason: StringName) -> void` | `addons/bustle/modules/aspirations/aspirations.gd` | the host's reward hook, called after points are earned (with the new total already counted). |
+| `BustleBrain.gate` | `func(agent_id: StringName, goal_tags: Array[StringName], option_tags: Array[StringName]) -> bool` | `addons/bustle/core/brain/brain.gd` | a further gate on its self-chosen candidates, for example `BustleHealthBehaviour.allows()`. |
+| `BustleBrain.score_boost` | `func(goal_id: StringName, option_id: StringName) -> float` | `addons/bustle/core/brain/brain.gd` | multiplies each candidate's score (see `BustleScoreContext.score_boost`), for example `BustleAmbitions.boost()`. |
+| `BustleCareers.review_hook` | `func(id: StringName, career: StringName, from_rank: StringName, to_rank: StringName, kind: StringName) -> bool` | `addons/bustle/modules/careers/careers.gd` | where kind is `PROMOTED` or `DEMOTED`: true grants the change. |
+| `BustleComfort.low_state_of` | `func(id: StringName) -> bool` | `addons/bustle/society/comfort.gd` | true while that agent is in a low mental state (for example `BustleMentalBehaviour.in_low_state()`). |
+| `BustleConflict.cornered_of` | `func(agent: StringName, threat: StringName) -> bool` | `addons/bustle/core/conflict/conflict.gd` | true when `agent` can't get away from `threat`. |
+| `BustleConflict.group_of` | `func(id: StringName) -> StringName` | `addons/bustle/core/conflict/conflict.gd` | that agent's group (for the disposition port). |
+| `BustleConflict.lethal_reason_of` | `func(agent: StringName, threat: StringName, cause: StringName) -> StringName` | `addons/bustle/core/conflict/conflict.gd` | the host's reason for `agent` to kill `threat`, or empty for none. |
+| `BustleConflict.mood_of` | `func(id: StringName) -> Object` | `addons/bustle/core/conflict/conflict.gd` | that agent's mood (anything with a `mood` number), or null. |
+| `BustleConflict.personality_of` | `func(id: StringName) -> BustlePersonality` | `addons/bustle/core/conflict/conflict.gd` | that agent's personality, or null (neutral sliders). |
+| `BustleConflict.position_of` | `func(id: StringName) -> Variant` | `addons/bustle/core/conflict/conflict.gd` | that agent's position (a `Vector3`), or null. |
+| `BustleConversation.accepts` | `func(recipient: StringName, initiator: StringName, opener: StringName) -> bool` | `addons/bustle/society/conversation.gd` | false when the recipient turns the conversation away (for example `BustleMentalBehaviour.accepts()` while it's withdrawn). |
+| `BustleConversation.modifiers_of` | `func(id: StringName) -> BustleModifierSet` | `addons/bustle/society/conversation.gd` | that agent's modifiers, or null. |
+| `BustleConversation.personality_of` | `func(id: StringName) -> BustlePersonality` | `addons/bustle/society/conversation.gd` | that agent's personality, or null. |
+| `BustleCrime.is_locked` | `func(id: StringName) -> bool` | `addons/bustle/core/crime/crime.gd` | true while the host holds that agent to a story or task. |
+| `BustleCrime.is_observed` | `func(thief: StringName, place: StringName) -> bool` | `addons/bustle/core/crime/crime.gd` | true when the thief judges someone would see a theft there. |
+| `BustleCrime.needs_of` | `func(id: StringName) -> BustleNeedSet` | `addons/bustle/core/crime/crime.gd` | that agent's needs, or null (no needs, so no theft). |
+| `BustleCrime.personality_of` | `func(id: StringName) -> BustlePersonality` | `addons/bustle/core/crime/crime.gd` | that agent's personality, or null (neutral sliders). |
+| `BustleCrimeWatch.can_reach` | `func(agent: StringName, other: StringName) -> bool` | `addons/bustle/core/crime/crime_watch.gd` | true when `agent` can reach `other` now. |
+| `BustleCrimeWatch.can_travel` | `func(agent: StringName, now: int) -> bool` | `addons/bustle/core/crime/crime_watch.gd` | false while the agent can't go on its errands (night, fear: the host's call). |
+| `BustleCrimeWatch.gossip_to` | `func(agent: StringName, record: Dictionary) -> StringName` | `addons/bustle/core/crime/crime_watch.gd` | who `agent` would gossip to, or empty (then it can't). |
+| `BustleCrimeWatch.memory_of` | `func(id: StringName) -> BustleMemory` | `addons/bustle/core/crime/crime_watch.gd` | that agent's memory, or null. |
+| `BustleCrimeWatch.perceives` | `func(agent: StringName, thief: StringName, place: StringName) -> bool` | `addons/bustle/core/crime/crime_watch.gd` | true when `agent` perceived `thief` stealing at `place`. |
+| `BustleCrimeWatch.should_report` | `func(agent: StringName, case: Dictionary) -> StringName` | `addons/bustle/core/crime/crime_watch.gd` | one of `BustleWitnessJudge.OUTCOMES`. |
+| `BustleCrimeWatch.where` | `func(id: StringName) -> Variant` | `addons/bustle/core/crime/crime_watch.gd` | where that agent or person is now (a `Vector3`), or null. |
+| `BustleDirectorEffects.agents` | `func() -> Array[StringName]` | `addons/bustle/modules/director/director_effects.gd` | every agent. |
+| `BustleDirectorEffects.brain_of` | `func(id: StringName) -> BustleBrain` | `addons/bustle/modules/director/director_effects.gd` | an agent's brain, or null. |
+| `BustleDirectorEffects.mood_of` | `func(id: StringName) -> Object` | `addons/bustle/modules/director/director_effects.gd` | an agent's mood (with `add_thought(def, details)`), or null. |
+| `BustleDirectorEffects.tags_of` | `func(id: StringName) -> Array[StringName]` | `addons/bustle/modules/director/director_effects.gd` | an agent's tags. |
+| `BustleMemoryFeed.area_of` | `func(id: StringName) -> StringName` | `addons/bustle/modules/perception/memory_feed.gd` | the area an actor is in. |
+| `BustleMemoryFeed.clock` | `func() -> int` | `addons/bustle/modules/perception/memory_feed.gd` | the current game minute. |
+| `BustleMemoryFeed.memory_of` | `func(id: StringName) -> BustleMemory` | `addons/bustle/modules/perception/memory_feed.gd` | that agent's memory, or null for agents without one. |
+| `BustleMentalBehaviour.home_of` | `func(id: StringName) -> Variant` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | where home is (a `Vector3`), or null. |
+| `BustleMentalBehaviour.indulgence_of` | `func(id: StringName) -> StringName` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | the affordance it would indulge in (an id), or empty. |
+| `BustleMentalBehaviour.is_locked` | `func(id: StringName) -> bool` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | true while the agent is locked to a task. |
+| `BustleMentalBehaviour.position_of` | `func(id: StringName) -> Variant` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | where the agent or person is (a `Vector3`), or null. |
+| `BustleMentalBehaviour.wander_to` | `func(id: StringName, now: int) -> Variant` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | where to wander to (a `Vector3`), or null. |
+| `BustlePerceptionWorld.line_of_sight` | `func(from: Vector3, to: Vector3, perceiver_id: StringName, target_id: StringName) -> bool` | `addons/bustle/modules/perception/perception_world.gd` | true when nothing blocks the view. |
+| `BustlePointLightProbe.occluded` | `func(from: Vector3, to: Vector3) -> bool` | `addons/bustle/modules/perception/point_light_probe.gd` | optional; true when something blocks the light from a source at `from` to the sample point `to`. |
+| `BustleRomance.compatibility` | `func(a: StringName, b: StringName) -> float` | `addons/bustle/modules/romance/romance.gd` | their compatibility from -1 to 1. |
+| `BustleRomance.confirm_hook` | `func(a: StringName, b: StringName, status: StringName) -> bool` | `addons/bustle/modules/romance/romance.gd` | the host approves engaged or married. |
+| `BustleRomance.ratings_policy` | `func(a: StringName, b: StringName, status: StringName) -> bool` | `addons/bustle/modules/romance/romance.gd` | the host's own rules (age, rating, setting) for every step up the ladder, automatic or requested, asked before anything changes. |
+| `BustleScoringConfig.expected_thought_gain` | `func(ad: BustleAdvertisement, context: RefCounted) -> float` | `addons/bustle/core/brain/scoring_config.gd` | an optional preview of how an option would make the agent feel. |
+| `BustleSimRings.senses_provider` | `func(id: StringName, ring: BustleSimRings.Ring, minute: int) -> BustleSenses` | `addons/bustle/core/rings/sim_rings.gd` | what an agent senses when its brain thinks in `tick()` or `catch_up()`. |
+| `BustleSimRings.summary_hook` | `func(id: StringName, report: Dictionary) -> void` | `addons/bustle/core/rings/sim_rings.gd` | called when catch-up skipped time beyond the cap, so modules can apply what the skipped time did in summary. |
+| `BustleSocialInteractions.mood_of` | `func(id: StringName) -> Object` | `addons/bustle/society/social_interactions.gd` | that agent's mood (anything with a `mood` number and `add_thought`), or null. |
+| `BustleTendJob.nearby` | `func(healer: StringName) -> Array[StringName]` | `addons/bustle/modules/health/tend_job.gd` | who `healer` could tend now (for example the agents in its area). |
+| `BustleWyrdFacts.mood_of` | `func(id: StringName) -> Object` | `addons/bustle_wyrd/bustle_wyrd_facts.gd` | that agent's mood: anything with a `mood` number, an `emotion` and `reasons()`, such as a `BustleMood`; or null. |
 
 ## Signals (53)
 

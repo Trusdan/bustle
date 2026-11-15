@@ -52,7 +52,7 @@ The health behaviour it reads the port through.
 var nearby: Callable = Callable()
 ```
 
-`func(healer) -> Array`StringName``: who `healer` could tend now (for example the agents in its area). Unset: nobody, so nobody tends.
+`func(healer: StringName) -> Array`StringName``: who `healer` could tend now (for example the agents in its area). Unset: nobody, so nobody tends.
 
 ## Methods
 

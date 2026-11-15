@@ -22,7 +22,7 @@ For any frozen symbol:
 - **A removed or renamed symbol:** a class, method, property, Callable hook, signal or constant. Moving a frozen symbol back to `@experimental` counts as removing it.
 - **A changed method signature:** a parameter added, removed, renamed, retyped or reordered, a changed default value, a changed return type, or a method made static or no longer static. This includes adding an optional parameter. Port methods are overridden by hosts, and GDScript requires an override to match, so any change to one breaks them. Add a new method instead, and deprecate the old one.
 - **Changed signal arguments:** an argument added, removed, renamed, retyped or reordered.
-- **A changed hook signature:** the call a Callable hook makes (its arguments and what it must return, as its doc comment states), or the hook's type.
+- **A changed hook signature:** the call a Callable hook makes (its arguments and what it must return), or the hook's type. The call is the `[code]func(<params>) -> <Return>[/code]` that opens the hook's doc comment, with every parameter named and typed. The manifest records it as the hook's `call`.
 - **A changed property type, base class, or constant or enum value.**
 - **A save-format change without migration:** a change to what an `export_state()` returns, unless `import_state()` still reads every format written since the last major release. A format change raises that class's `STATE_VERSION` (where it has one) and comes with the code that reads the older shape.
 
@@ -63,6 +63,8 @@ A signature change goes the same way: add the new form, deprecate the old one, a
 
   The current version is the manifest's `version`, which `tools/public_api.sh` takes from `addons/bustle/VERSION`. A `since` of `X.0.0` names a major release with no minor after it, so a removal under it always fails. For example, with `since` 1.3.0, removing the symbol fails at 1.4.0 or 1.3.1 and passes at 2.0.0 or later. Each failure names the symbol, the current version and `since`. A covered signature change is not held to this rule.
 - **When a removal can land.** `addons/bustle/VERSION` holds the last released version until the release-prep pull request bumps it. So a removal lands in the pull request that bumps the major version, or after it.
+- It **fails a changed hook call**, like any other signature change: an argument added, removed, renamed or retyped, or a changed return type. It also fails a call that disappears from a hook's doc comment. A deprecations.json entry for the hook or its class covers a changed call, as it does any covered signature change.
+- It **notes** a call recorded for the first time on a hook whose baseline had none. That documents an existing contract; it doesn't change it.
 - It **passes** on new symbols, and notes that the manifest is behind the code.
 - It **notes** a raised `STATE_VERSION` as a save-format change, so a reviewer can confirm that `import_state()` still reads the older shape.
 
@@ -72,9 +74,10 @@ tools/public_api.sh --check --base origin/main # also against the base branch, a
 tools/public_api.sh --write                   # record the current surface (refuses a breaking change with no entry)
 ```
 
-`tests/api/test_public_api_check.gd` and `tests/api/test_public_api_removals.gd` prove the rules on fixtures in `tests/api/fixtures/`:
+`tests/api/test_public_api_check.gd`, `tests/api/test_public_api_removals.gd` and `tests/api/test_public_api_hook_calls.gd` prove the rules on fixtures in `tests/api/fixtures/`:
 - a removal fails, and the same removal with a deprecation entry passes in the next major release;
-- a covered removal in the same major, or one whose `since` was a major release, fails.
+- a covered removal in the same major, or one whose `since` was a major release, fails;
+- a changed or dropped hook call fails, a covered one passes, and a first-recorded call is a note. Every frozen hook has a call.
 
 ## Marking what isn't frozen
 

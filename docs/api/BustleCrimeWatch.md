@@ -156,7 +156,7 @@ The role reports go to.
 var perceives: Callable = Callable()
 ```
 
-(agent, thief, place) → true when `agent` perceived `thief` stealing at `place`. Empty: any agent in that place who isn't incapacitated.
+`func(agent: StringName, thief: StringName, place: StringName) -> bool`: true when `agent` perceived `thief` stealing at `place`. Empty: any agent in that place who isn't incapacitated.
 
 ### `memory_of`
 
@@ -164,7 +164,7 @@ var perceives: Callable = Callable()
 var memory_of: Callable = Callable()
 ```
 
-(id) → that agent's [BustleMemory](BustleMemory.md), or null. Witnesses note the thief and the item there; an owner who finds a deed notes the item where it was taken.
+`func(id: StringName) -> BustleMemory`: that agent's memory, or null. Witnesses note the thief and the item there; an owner who finds a deed notes the item where it was taken.
 
 ### `judge`
 
@@ -180,7 +180,7 @@ The default decision.
 var should_report: Callable = Callable()
 ```
 
-(agent, case) → one of `BustleWitnessJudge.OUTCOMES`. Empty: `judge`. The case is `{record, thief, owner_id, place, can_confront, gossip_to}`; a thief the agent doesn't know is empty. Anything else means silent.
+`func(agent: StringName, case: Dictionary) -> StringName`: one of `BustleWitnessJudge.OUTCOMES`. Empty: `judge`. The case is `{record, thief, owner_id, place, can_confront, gossip_to}`; a thief the agent doesn't know is empty. Anything else means silent.
 
 ### `can_reach`
 
@@ -188,7 +188,7 @@ var should_report: Callable = Callable()
 var can_reach: Callable = Callable()
 ```
 
-(agent, other) → true when `agent` can reach `other` now. Empty: both are agents in the same area.
+`func(agent: StringName, other: StringName) -> bool`: true when `agent` can reach `other` now. Empty: both are agents in the same area.
 
 ### `gossip_to`
 
@@ -196,7 +196,7 @@ var can_reach: Callable = Callable()
 var gossip_to: Callable = Callable()
 ```
 
-(agent, record) → who `agent` would gossip to, or empty (then it can't). Empty: nobody.
+`func(agent: StringName, record: Dictionary) -> StringName`: who `agent` would gossip to, or empty (then it can't). Empty: nobody.
 
 ### `instant`
 
@@ -212,7 +212,7 @@ True: reports, telling the victim and gossip are delivered the moment they're de
 var can_travel: Callable = Callable()
 ```
 
-(agent, now) → false while the agent can't go on its errands (night, fear: the host's call). Empty: it always can.
+`func(agent: StringName, now: int) -> bool`: false while the agent can't go on its errands (night, fear: the host's call). Empty: it always can.
 
 ### `where`
 
@@ -220,7 +220,7 @@ var can_travel: Callable = Callable()
 var where: Callable = Callable()
 ```
 
-(id) → where that agent or person is now (a `Vector3`), or null. Empty: the world port's position of its area.
+`func(id: StringName) -> Variant`: where that agent or person is now (a `Vector3`), or null. Empty: the world port's position of its area.
 
 ### `travel_gear`
 

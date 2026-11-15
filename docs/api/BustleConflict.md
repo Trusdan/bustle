@@ -144,7 +144,7 @@ The numbers.
 var personality_of: Callable = Callable()
 ```
 
-(id) → that agent's [BustlePersonality](BustlePersonality.md), or null (neutral sliders).
+`func(id: StringName) -> BustlePersonality`: that agent's personality, or null (neutral sliders).
 
 ### `mood_of`
 
@@ -152,7 +152,7 @@ var personality_of: Callable = Callable()
 var mood_of: Callable = Callable()
 ```
 
-(id) → that agent's mood (anything with a `mood` number), or null.
+`func(id: StringName) -> Object`: that agent's mood (anything with a `mood` number), or null.
 
 ### `group_of`
 
@@ -160,7 +160,7 @@ var mood_of: Callable = Callable()
 var group_of: Callable = Callable()
 ```
 
-(id) → that agent's group (for the disposition port). Empty: no groups.
+`func(id: StringName) -> StringName`: that agent's group (for the disposition port). Empty: no groups.
 
 ### `position_of`
 
@@ -168,7 +168,7 @@ var group_of: Callable = Callable()
 var position_of: Callable = Callable()
 ```
 
-(id) → that agent's position (a `Vector3`), or null. Empty: nobody has one, so allies can't be found and fleeing ends at once.
+`func(id: StringName) -> Variant`: that agent's position (a `Vector3`), or null. Empty: nobody has one, so allies can't be found and fleeing ends at once.
 
 ### `cornered_of`
 
@@ -176,7 +176,7 @@ var position_of: Callable = Callable()
 var cornered_of: Callable = Callable()
 ```
 
-(agent, threat) → true when `agent` can't get away from `threat`. Empty: never.
+`func(agent: StringName, threat: StringName) -> bool`: true when `agent` can't get away from `threat`. Empty: never.
 
 ### `lethal_reason_of`
 
@@ -184,7 +184,7 @@ var cornered_of: Callable = Callable()
 var lethal_reason_of: Callable = Callable()
 ```
 
-(agent, threat, cause) → the host's reason for `agent` to kill `threat`, or empty for none. Empty: the host never gives one.
+`func(agent: StringName, threat: StringName, cause: StringName) -> StringName`: the host's reason for `agent` to kill `threat`, or empty for none. Empty: the host never gives one.
 
 ## Methods
 

@@ -64,7 +64,7 @@ signal body_freed(id: StringName)
 ## Agent [param id] was caught up; see [method catch_up] for [param report].
 signal caught_up(id: StringName, report: Dictionary)
 
-## [code]func(id: StringName, ring: Ring, minute: int) -> BustleSenses[/code], what an agent senses
+## [code]func(id: StringName, ring: BustleSimRings.Ring, minute: int) -> BustleSenses[/code], what an agent senses
 ## when its brain thinks in [method tick] or [method catch_up]. Unset: senses with only the time.
 var senses_provider: Callable = Callable()
 ## [code]func(id: StringName, report: Dictionary) -> void[/code], called when catch-up skipped time

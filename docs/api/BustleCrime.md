@@ -74,7 +74,7 @@ Agents that never steal (for example the player's own character, if it is an age
 var personality_of: Callable = Callable()
 ```
 
-(id) → that agent's [BustlePersonality](BustlePersonality.md), or null (neutral sliders).
+`func(id: StringName) -> BustlePersonality`: that agent's personality, or null (neutral sliders).
 
 ### `needs_of`
 
@@ -82,7 +82,7 @@ var personality_of: Callable = Callable()
 var needs_of: Callable = Callable()
 ```
 
-(id) → that agent's [BustleNeedSet](BustleNeedSet.md), or null (no needs, so no theft).
+`func(id: StringName) -> BustleNeedSet`: that agent's needs, or null (no needs, so no theft).
 
 ### `is_observed`
 
@@ -90,7 +90,7 @@ var needs_of: Callable = Callable()
 var is_observed: Callable = Callable()
 ```
 
-(thief, place) → true when the thief judges someone would see a theft there. Empty: whenever another agent of the society who isn't incapacitated (the health port) is in that area. Who really perceived a theft is [BustleCrimeWatch](BustleCrimeWatch.md)'s business.
+`func(thief: StringName, place: StringName) -> bool`: true when the thief judges someone would see a theft there. Empty: whenever another agent of the society who isn't incapacitated (the health port) is in that area. Who really perceived a theft is [BustleCrimeWatch](BustleCrimeWatch.md)'s business.
 
 ### `is_locked`
 
@@ -98,7 +98,7 @@ var is_observed: Callable = Callable()
 var is_locked: Callable = Callable()
 ```
 
-(id) → true while the host holds that agent to a story or task. Made with a society, it's that society's `BustleSociety.is_locked()`; a host or test may replace it. Empty: never.
+`func(id: StringName) -> bool`: true while the host holds that agent to a story or task. Made with a society, it's that society's `BustleSociety.is_locked()`; a host or test may replace it. Empty: never.
 
 ## Methods
 

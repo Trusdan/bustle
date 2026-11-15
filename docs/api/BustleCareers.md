@@ -112,7 +112,7 @@ The ports it reads: `skills` for rank skill minimums and performance. Null (or a
 var review_hook: Callable = Callable()
 ```
 
-`func(id, career, from_rank, to_rank, kind) -> bool`, where kind is `PROMOTED` or `DEMOTED`: true grants the change. Unset: every change is granted. The host's employer policy goes here. A refusal delays the change: the next window starts at once, and the hook is asked again after it if the agent is still due. The hook must only answer; it must not change careers itself.
+`func(id: StringName, career: StringName, from_rank: StringName, to_rank: StringName, kind: StringName) -> bool`, where kind is `PROMOTED` or `DEMOTED`: true grants the change. Unset: every change is granted. The host's employer policy goes here. A refusal delays the change: the next window starts at once, and the hook is asked again after it if the agent is still due. The hook must only answer; it must not change careers itself.
 
 ### `thoughts`
 
