@@ -1,0 +1,6 @@
+{
+	"format": 1,
+	"deprecations": [
+		{"symbol": "BustleExample.old_name", "since": "2.0.0", "replacement": "BustleExample.new_name"}
+	]
+}

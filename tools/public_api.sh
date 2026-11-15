@@ -4,7 +4,10 @@
 #   tools/public_api.sh --write             regenerate docs/public-api/public_api.json and PUBLIC_API.md
 #                                           (refuses a breaking change without a deprecation entry)
 #   tools/public_api.sh [--check]           fail on a frozen symbol removed, renamed or changed without an
-#                                           entry in docs/public-api/deprecations.json; new symbols pass
+#                                           entry in docs/public-api/deprecations.json; new symbols pass.
+#                                           A covered removal (or move back to @experimental) also fails unless
+#                                           addons/bustle/VERSION's major is above the entry's "since" major and
+#                                           "since" is a minor release (x.y.0 with y >= 1)
 #   tools/public_api.sh --check --base REF  also check against the manifest at a git ref (CI: the base branch)
 # Needs the pinned Godot (tools/pins.env) on PATH as `godot`.
 set -euo pipefail

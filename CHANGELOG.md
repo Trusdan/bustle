@@ -14,6 +14,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 ### Changed
 
 - `@experimental` is removed from the proposed frozen surface. It stays, with a reason, on the debug tools (`BustleDebug`, `BustleDebugConsole`, `BustleDebugOverlay`, `BustleInspector`), the brain's internals (`BustleCandidate`, `BustleChoiceKeeper`, `BustleScoreContext`, `BustleUtilityScorer`), `BustleWitnessJudge` and `BustleFindPerson`, and on the four members whose types are among them (`BustleBrain.keeper`, `BustleBrain.last_candidates`, `BustleCrimeWatch.judge`, `BustleModifierSet.fill_context`). No code or behaviour changed.
+- The public API check accepts a covered removal only in a major release after the minor release that deprecated it (`since`). A removal in the same major, or under a `since` of `X.0.0`, fails with a one-line reason.
 
 ## [0.9.0] - 2026-11-14
 
