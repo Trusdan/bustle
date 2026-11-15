@@ -1,0 +1,4393 @@
+{
+	"addons": [
+		"bustle",
+		"bustle_wyrd"
+	],
+	"deprecated": {},
+	"experimental": {
+		"BustleCandidate": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/core/brain/candidate.gd",
+			"purpose": "One scored choice: a goal, and the option it would use (empty for a goal without advertisements).",
+			"reason": "Internal to `BustleBrain` and `BustleInspector`: the scorer's working record. Hosts read choices through the brain."
+		},
+		"BustleChoiceKeeper": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/core/brain/choice_keeper.gd",
+			"purpose": "Hysteresis around `BustleUtilityScorer`: it remembers an agent's current choice so the agent doesn't flicker between near-equal goals, and keeps failed goals out for a while.",
+			"reason": "Internal to `BustleBrain`: its hysteresis bookkeeping may change. Its save data is part of the brain's."
+		},
+		"BustleDebug": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/debug/debug_gate.gd",
+			"purpose": "Whether Bustle's debug tools may run.",
+			"reason": "Development tool. The debug gate may gain or change switches along with the debug tools."
+		},
+		"BustleDebugConsole": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/debug/debug_console.gd",
+			"purpose": "Text commands for inspecting and steering a `BustleSociety` while developing.",
+			"reason": "Development tool. Its commands and their output may change in any minor release."
+		},
+		"BustleDebugOverlay": {
+			"addon": "bustle",
+			"extends": "Node3D",
+			"kind": "class",
+			"path": "addons/bustle/debug/debug_overlay.gd",
+			"purpose": "A world overlay for developing: a label above each agent's attached body with its ring, band, goal, step, top 3 scores and need inputs (from `BustleInspector`).",
+			"reason": "Development tool. What it draws may change in any minor release."
+		},
+		"BustleFindPerson": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/core/memory/find_person.gd",
+			"purpose": "Works out where to look for someone, in order: sense them now (`sense`); remember where they were (`BustleMemory`); guess from their routine (`routine`); ask the people the seeker can ask (`ask_whom`), whose memories answer; or give up.",
+			"reason": "A search helper whose steps and hooks may still change; the guides document its current order."
+		},
+		"BustleInspector": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/debug/inspector.gd",
+			"purpose": "Reads an agent's state for debugging, from what the brain already holds: the scorer's own candidates from the last tick (never recomputed), the last intent, the runner and the order queue.",
+			"reason": "Development tool. The snapshot's keys follow the brain's internals and may change in any minor release."
+		},
+		"BustleScoreContext": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/core/brain/score_context.gd",
+			"purpose": "What the scorer knows about one agent at one moment: its input values, the options it knows of, its need weights and tag multipliers, and how to check preconditions it doesn't know itself.",
+			"reason": "Internal to `BustleBrain`: the scorer's per-tick view. The brain's own hooks are the frozen way in."
+		},
+		"BustleUtilityScorer": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/core/brain/utility_scorer.gd",
+			"purpose": "Scores an agent's goals and picks one.",
+			"reason": "Internal to `BustleBrain`: hosts shape scores through goals, considerations and the brain's hooks."
+		},
+		"BustleWitnessJudge": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/core/crime/witness_judge.gd",
+			"purpose": "What someone who knows of a theft does about it: exactly one of `OUTCOMES`.",
+			"reason": "The default witness decision; its scoring terms may change. Hosts replace it with `BustleCrimeWatch.should_report`."
+		}
+	},
+	"experimental_members": {
+		"BustleBrain.keeper": "Its type, `BustleChoiceKeeper`, is internal and may change in any minor release.",
+		"BustleBrain.last_candidates": "Its type, `BustleCandidate`, is internal and may change in any minor release.",
+		"BustleCrimeWatch.judge": "Its type, `BustleWitnessJudge`, is internal and may change in any minor release.",
+		"BustleModifierSet.fill_context": "Its type, `BustleScoreContext`, is internal and may change in any minor release."
+	},
+	"format": 1,
+	"frozen": {
+		"BustleActionContext": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/brain/actions/action_context.gd",
+			"properties": {
+				"agent_id": "var agent_id: StringName",
+				"data": "var data: Dictionary",
+				"failure": "var failure: StringName",
+				"now_minutes": "var now_minutes: int",
+				"option_id": "var option_id: StringName",
+				"output": "var output: Dictionary",
+				"params": "var params: Dictionary"
+			},
+			"purpose": "What a `BustleActionHandler` works with for one step: who, the step's parameters, the game time, and two dictionaries it owns.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleActionHandler": {
+			"addon": "bustle",
+			"constants": {
+				"DONE": "const DONE = 1 (enum Status)",
+				"FAILED": "const FAILED = 2 (enum Status)",
+				"RUNNING": "const RUNNING = 0 (enum Status)"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"cancel": "func cancel(_context: BustleActionContext) -> void",
+				"start": "func start(_context: BustleActionContext) -> void",
+				"tick": "func tick(_context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/core/brain/actions/action_handler.gd",
+			"properties": {},
+			"purpose": "The code behind one action id.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleActionSequence": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/brain/actions/action_sequence.gd",
+			"properties": {
+				"steps": "var steps: BustleActionStep[]"
+			},
+			"purpose": "A short plan as data: steps run in order, with no branching beyond each step's `BustleActionStep.on_fail`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleActionStep": {
+			"addon": "bustle",
+			"constants": {
+				"ABORT": "const ABORT = 2 (enum OnFail)",
+				"RETRY": "const RETRY = 0 (enum OnFail)",
+				"SKIP": "const SKIP = 1 (enum OnFail)"
+			},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/brain/actions/action_step.gd",
+			"properties": {
+				"action": "var action: StringName",
+				"max_retries": "var max_retries: int",
+				"on_fail": "var on_fail: int",
+				"params": "var params: Dictionary"
+			},
+			"purpose": "One step of a `BustleActionSequence`: an action id, its parameters, and what to do when it fails.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleAdvertisement": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/brain/advertisement.gd",
+			"properties": {
+				"adds": "var adds: Dictionary[StringName, float]",
+				"distance": "var distance: float",
+				"option_id": "var option_id: StringName",
+				"position": "var position: Variant",
+				"relief": "var relief: Dictionary[StringName, float]",
+				"tags": "var tags: StringName[]"
+			},
+			"purpose": "What one option (an object, a place, someone to talk to) offers an agent: how much it relieves each need, what it adds to each need as a side effect, its tags and how far away it is.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleAffordance": {
+			"addon": "bustle",
+			"constants": {
+				"OK": "const OK = &\"ok\"",
+				"REFUSED_ACCESS": "const REFUSED_ACCESS = &\"no_access\"",
+				"REFUSED_FULL": "const REFUSED_FULL = &\"full\"",
+				"REFUSED_PRICE": "const REFUSED_PRICE = &\"cannot_pay\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"access_hook": {
+					"purpose": "(agent id, affordance) → a multiplier from 0 (refused) to 1.",
+					"signature": "var access_hook: Callable"
+				},
+				"cost_hook": {
+					"purpose": "(agent id, affordance) → the price of one use.",
+					"signature": "var cost_hook: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"access": "func access(agent: StringName) -> float",
+				"advertise": "func advertise(agent: StringName, now: int, distance: float = 0.0, trade: BustleTradePort = null, leisure: BustleLeisure = null) -> BustleAdvertisement",
+				"export_state": "func export_state() -> Dictionary",
+				"has_room": "func has_room(agent: StringName, now: int) -> bool",
+				"holders": "func holders(now: int) -> StringName[]",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"is_held_by": "func is_held_by(agent: StringName, now: int) -> bool",
+				"price_for": "func price_for(agent: StringName) -> int",
+				"release": "func release(agent: StringName) -> void",
+				"reserve": "func reserve(agent: StringName, now: int) -> StringName",
+				"use": "func use(agent: StringName, now: int, needs: BustleNeedSet, leisure: BustleLeisure = null, trade: BustleTradePort = null) -> StringName"
+			},
+			"path": "addons/bustle/core/affordances/affordance.gd",
+			"properties": {
+				"area": "var area: StringName",
+				"def": "var def: BustleAffordanceDef",
+				"id": "var id: StringName",
+				"owner": "var owner: StringName",
+				"payee": "var payee: StringName",
+				"position": "var position: Vector3"
+			},
+			"purpose": "One placed smart object: a `BustleAffordanceDef` at a place, perhaps owned.",
+			"save": {
+				"export_state": "Its changing state as plain data: owner, payee and holds.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {}
+		},
+		"BustleAffordanceDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool"
+			},
+			"path": "addons/bustle/core/affordances/affordance_def.gd",
+			"properties": {
+				"adds": "var adds: Dictionary[StringName, float]",
+				"capacity": "var capacity: int",
+				"hold_minutes": "var hold_minutes: int",
+				"id": "var id: StringName",
+				"item": "var item: StringName",
+				"others_mult": "var others_mult: float",
+				"price": "var price: int",
+				"relief": "var relief: Dictionary[StringName, float]",
+				"tags": "var tags: StringName[]"
+			},
+			"purpose": "A kind of smart object, as data: what using it does to needs, its tags, how many can use it at once, how long a reservation holds and its price.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleAffordanceSet": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add": "func add(affordance: BustleAffordance) -> bool",
+				"advertisements": "func advertisements(agent: StringName, now: int, distance: Callable = Callable(), trade: BustleTradePort = null, leisure: BustleLeisure = null, only: StringName[] = []) -> BustleAdvertisement[]",
+				"export_state": "func export_state() -> Dictionary",
+				"get_affordance": "func get_affordance(id: StringName) -> BustleAffordance",
+				"ids": "func ids() -> StringName[]",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"in_area": "func in_area(area: StringName) -> StringName[]",
+				"remove": "func remove(id: StringName) -> void"
+			},
+			"path": "addons/bustle/core/affordances/affordance_set.gd",
+			"properties": {},
+			"purpose": "The placed affordances of a population, by id, so one generic \"use something\" goal can score them all.",
+			"save": {
+				"export_state": "Every affordance's state (`BustleAffordance.export_state()`) by id.",
+				"import_state": "Restores `export_state()` for the affordances it has (others are skipped)."
+			},
+			"signals": {}
+		},
+		"BustleAmbitionConfig": {
+			"addon": "bustle",
+			"constants": {
+				"SETTING": "const SETTING = \"bustle/simulation/ambitions\""
+			},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"allowed": "static func allowed() -> bool",
+				"default_templates": "static func default_templates() -> BustleAmbitionDef[]",
+				"find": "func find(id: StringName) -> BustleAmbitionDef"
+			},
+			"path": "addons/bustle/modules/ambitions/ambition_config.gd",
+			"properties": {
+				"cooldown_days": "var cooldown_days: float",
+				"family_kinds": "var family_kinds: StringName[]",
+				"like_line": "var like_line: float",
+				"never_boost": "var never_boost: StringName[]",
+				"templates": "var templates: BustleAmbitionDef[]"
+			},
+			"purpose": "The ambition library and its numbers, for `BustleAmbitions`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleAmbitionDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_done": "func is_done(inputs: Dictionary) -> bool",
+				"is_moot": "func is_moot(inputs: Dictionary) -> bool",
+				"is_valid": "func is_valid() -> bool",
+				"make": "static func make(p_id: StringName, p_weights: Dictionary[StringName, float], p_requires: StringName[] = [], p_progress: StringName = &\"\", p_target: float = 0.0) -> BustleAmbitionDef"
+			},
+			"path": "addons/bustle/modules/ambitions/ambition_def.gd",
+			"properties": {
+				"boosts": "var boosts: Dictionary[StringName, float]",
+				"done_fact": "var done_fact: StringName",
+				"done_facts": "var done_facts: StringName[]",
+				"enabled": "var enabled: bool",
+				"id": "var id: StringName",
+				"min_sliders": "var min_sliders: Dictionary[StringName, float]",
+				"moot_facts": "var moot_facts: StringName[]",
+				"next": "var next: StringName",
+				"progress_input": "var progress_input: StringName",
+				"requires": "var requires: StringName[]",
+				"target": "var target: float",
+				"target_input": "var target_input: StringName",
+				"weights": "var weights: Dictionary[StringName, float]"
+			},
+			"purpose": "One ambition template, as data: who it suits (personality and circumstances), when it's done, and when it can no longer happen.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleAmbitionTargets": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {
+				"is_gone": {
+					"purpose": "(id) → true when that person is dead or gone for good.",
+					"signature": "var is_gone: Callable"
+				},
+				"settlement_of": {
+					"purpose": "(id) → the settlement that agent lives in.",
+					"signature": "var settlement_of: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"court_target": "func court_target(agent: StringName) -> StringName",
+				"fill": "func fill(agent: StringName, active: Dictionary, inputs: Dictionary) -> void",
+				"rival_of": "func rival_of(agent: StringName) -> StringName"
+			},
+			"path": "addons/bustle/modules/ambitions/ambition_targets.gd",
+			"properties": {
+				"config": "var config: BustleAmbitionConfig",
+				"society": "var society: BustleSociety"
+			},
+			"purpose": "Who the courting and feud ambitions are about, from the society and its social port: fills the inputs `BustleAmbitions` reads for `court_someone` and `settle_feud`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleAmbitions": {
+			"addon": "bustle",
+			"constants": {
+				"DEED": "const DEED = &\"achieved_ambition\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"is_locked": {
+					"purpose": "Optional: (id) → true while the agent is locked, checked by `boost()` at once (made with a society, it's that society's `BustleSociety.is_locked()`; without it, only `locked` in the last `update()`'s inputs counts, so call `update()` whenever a lock starts or ends).",
+					"signature": "var is_locked: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"active": "func active() -> Dictionary",
+				"boost": "func boost(goal_id: StringName, option_id: StringName = &\"\") -> float",
+				"choose": "func choose(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> BustleAmbitionDef",
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"is_eligible": "func is_eligible(def: BustleAmbitionDef, now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> bool",
+				"score_of": "func score_of(def: BustleAmbitionDef, personality: BustlePersonality = null) -> float",
+				"update": "func update(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> Dictionary"
+			},
+			"path": "addons/bustle/modules/ambitions/ambitions.gd",
+			"properties": {
+				"agent_id": "var agent_id: StringName",
+				"config": "var config: BustleAmbitionConfig",
+				"enabled": "var enabled: bool",
+				"pin": "var pin: StringName",
+				"social": "var social: BustleSocialPort"
+			},
+			"purpose": "One agent's ambition: a long-term aim, one at a time, from `BustleAmbitionConfig.templates`.",
+			"save": {
+				"export_state": "The ambition and when each template was last completed, as plain data.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {
+				"ambition_completed": {
+					"purpose": "`agent` achieved ambition `id`.",
+					"signature": "signal ambition_completed(agent: StringName, id: StringName, info: Dictionary)"
+				},
+				"ambition_started": {
+					"purpose": "`agent` took on ambition `id`.",
+					"signature": "signal ambition_started(agent: StringName, id: StringName, info: Dictionary)"
+				},
+				"ended_moot": {
+					"purpose": "`agent`'s ambition `id` can no longer happen; `fact` is what made it so.",
+					"signature": "signal ended_moot(agent: StringName, id: StringName, fact: StringName)"
+				}
+			}
+		},
+		"BustleAspirationConfig": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"find_fear": "func find_fear(id: StringName) -> BustleFearDef",
+				"find_want": "func find_want(id: StringName) -> BustleWantDef"
+			},
+			"path": "addons/bustle/modules/aspirations/aspiration_config.gd",
+			"properties": {
+				"auto_wants": "var auto_wants: int",
+				"fears": "var fears: BustleFearDef[]",
+				"max_want_boost": "var max_want_boost: float",
+				"never_boost": "var never_boost: StringName[]",
+				"want_cap": "var want_cap: int",
+				"wants": "var wants: BustleWantDef[]"
+			},
+			"purpose": "The want and fear library and its numbers, for `BustleAspirations`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleAspirations": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {
+				"on_points": {
+					"purpose": "The host's reward hook, `func(agent, amount, reason)`, called after points are earned (with the new total already counted).",
+					"signature": "var on_points: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"add_points": "func add_points(amount: int, reason: StringName) -> bool",
+				"avoidance": "func avoidance(goal_id: StringName, option_id: StringName = &\"\") -> float",
+				"boost": "func boost(goal_id: StringName, option_id: StringName = &\"\") -> float",
+				"choose": "func choose(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> BustleWantDef",
+				"export_state": "func export_state() -> Dictionary",
+				"fears": "func fears() -> Dictionary[]",
+				"fulfill": "func fulfill(id: StringName, now: int, mood: Object = null) -> bool",
+				"has_fear": "func has_fear(id: StringName) -> bool",
+				"has_want": "func has_want(id: StringName) -> bool",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"points": "func points() -> int",
+				"post_want": "func post_want(id: StringName, now: int) -> bool",
+				"score": "func score(goal_id: StringName, option_id: StringName = &\"\") -> float",
+				"score_of": "func score_of(def: BustleWantDef, personality: BustlePersonality = null) -> float",
+				"spend_points": "func spend_points(amount: int, reason: StringName) -> bool",
+				"update": "func update(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}, events: StringName[] = [], mood: Object = null) -> void",
+				"wants": "func wants() -> Dictionary[]"
+			},
+			"path": "addons/bustle/modules/aspirations/aspirations.gd",
+			"properties": {
+				"agent_id": "var agent_id: StringName",
+				"config": "var config: BustleAspirationConfig"
+			},
+			"purpose": "The aspirations module, for one agent: short-lived wants and event-formed fears.",
+			"save": {
+				"export_state": "Active wants, formed fears, when each want last ended and the points, as plain data, with absolute game minutes, so expiry carries over a save.",
+				"import_state": "Restores `export_state()`, replacing everything."
+			},
+			"signals": {
+				"fear_ended": {
+					"purpose": "A fear ended: `reason` is `expired` or `cleared`.",
+					"signature": "signal fear_ended(agent: StringName, id: StringName, reason: StringName)"
+				},
+				"fear_formed": {
+					"purpose": "A fear formed, or was renewed by its trigger (`info.renewed`).",
+					"signature": "signal fear_formed(agent: StringName, id: StringName, info: Dictionary)"
+				},
+				"points_changed": {
+					"purpose": "Points changed by `amount` (negative when spent) for `reason`; `total` is the new total.",
+					"signature": "signal points_changed(agent: StringName, amount: int, reason: StringName, total: int)"
+				},
+				"want_added": {
+					"purpose": "A want was taken; `info` is its row (`wants()`).",
+					"signature": "signal want_added(agent: StringName, id: StringName, info: Dictionary)"
+				},
+				"want_expired": {
+					"purpose": "A want expired unfulfilled.",
+					"signature": "signal want_expired(agent: StringName, id: StringName, info: Dictionary)"
+				},
+				"want_fulfilled": {
+					"purpose": "A want was fulfilled, and its thought added (with a mood).",
+					"signature": "signal want_fulfilled(agent: StringName, id: StringName, info: Dictionary)"
+				}
+			}
+		},
+		"BustleAwareness": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"entries": "func entries() -> BustleAwarenessEntry[]",
+				"entry": "func entry(target_id: StringName) -> BustleAwarenessEntry",
+				"export_state": "func export_state() -> Dictionary",
+				"forget": "func forget(target_id: StringName) -> void",
+				"has": "func has(target_id: StringName) -> bool",
+				"import_state": "func import_state(data: Dictionary, profile: BustlePerceptionProfile) -> void",
+				"meter": "func meter(target_id: StringName) -> BustleDetectionMeter",
+				"meter_for": "func meter_for(target_id: StringName, profile: BustlePerceptionProfile) -> BustleDetectionMeter",
+				"target_ids": "func target_ids() -> StringName[]"
+			},
+			"path": "addons/bustle/modules/perception/awareness.gd",
+			"properties": {},
+			"purpose": "One perceiver's awareness list: a `BustleDetectionMeter` per target it has sensed, keyed by the target's id.",
+			"save": {
+				"export_state": "Every meter as plain data, for a save.",
+				"import_state": "Restores `export_state()`'s data, making each meter with `profile`."
+			},
+			"signals": {
+				"state_changed": {
+					"purpose": "A target's meter changed state.",
+					"signature": "signal state_changed(target_id: StringName, old: int, new: int)"
+				}
+			}
+		},
+		"BustleAwarenessEntry": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"from_meter": "static func from_meter(p_target_id: StringName, meter: BustleDetectionMeter) -> BustleAwarenessEntry",
+				"perceived_now": "func perceived_now() -> bool"
+			},
+			"path": "addons/bustle/modules/perception/awareness_entry.gd",
+			"properties": {
+				"confidence": "var confidence: float",
+				"freshness": "var freshness: float",
+				"has_last_known": "var has_last_known: bool",
+				"heard_now": "var heard_now: bool",
+				"last_known_position": "var last_known_position: Vector3",
+				"seen_now": "var seen_now: bool",
+				"state": "var state: int",
+				"target_id": "var target_id: StringName"
+			},
+			"purpose": "One line of a perceiver's awareness list: what it knows about one target right now.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleBands": {
+			"addon": "bustle",
+			"constants": {
+				"CRITICAL": "const CRITICAL = 100",
+				"DUTY": "const DUTY = 60",
+				"FORCED": "const FORCED = 110",
+				"GUARDED": "const GUARDED = 75",
+				"IDLE": "const IDLE = 20",
+				"ORDERED": "const ORDERED = 70",
+				"PERSONAL": "const PERSONAL = 40",
+				"URGENT": "const URGENT = 80"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"name_of": "static func name_of(band: int) -> String"
+			},
+			"path": "addons/bustle/core/brain/bands.gd",
+			"properties": {},
+			"purpose": "The priority bands goals sit in.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleBrain": {
+			"addon": "bustle",
+			"constants": {
+				"FULL": "const FULL = 3 (enum Autonomy)",
+				"LOW": "const LOW = 1 (enum Autonomy)",
+				"NORMAL": "const NORMAL = 2 (enum Autonomy)",
+				"OFF": "const OFF = 0 (enum Autonomy)",
+				"STATE_VERSION": "const STATE_VERSION = 1"
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"gate": {
+					"purpose": "`func(agent_id, goal_tags, option_tags) -> bool`: a further gate on its self-chosen candidates, for example `BustleHealthBehaviour.allows()`.",
+					"signature": "var gate: Callable"
+				},
+				"score_boost": {
+					"purpose": "`func(goal_id, option_id) -> float`: multiplies each candidate's score (see `BustleScoreContext.score_boost`), for example `BustleAmbitions.boost()`.",
+					"signature": "var score_boost: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Dictionary) -> bool",
+				"order": "func order(p_order: BustleOrder) -> StringName",
+				"seed_for": "static func seed_for(p_world_seed: int, p_agent_id: StringName) -> int",
+				"set_player_controlled": "func set_player_controlled(on: bool) -> void",
+				"tick": "func tick(delta: float, senses: BustleSenses) -> BustleIntent"
+			},
+			"path": "addons/bustle/core/brain/brain.gd",
+			"properties": {
+				"agent_id": "var agent_id: StringName",
+				"autonomy": "var autonomy: int",
+				"config": "var config: BustleScoringConfig",
+				"last_intent": "var last_intent: BustleIntent",
+				"last_senses": "var last_senses: BustleSenses",
+				"library": "var library: BustleGoalLibrary",
+				"life_stages": "var life_stages: BustleLifeStagePort",
+				"modifiers": "var modifiers: BustleModifierSet",
+				"orders": "var orders: BustleOrderQueue",
+				"player_controlled": "var player_controlled: bool",
+				"runner": "var runner: BustleSequenceRunner",
+				"world_seed": "var world_seed: int"
+			},
+			"purpose": "One agent's brain, headless: `tick()` takes `BustleSenses` and returns a `BustleIntent`.",
+			"save": {
+				"export_state": "The brain's whole state as plain data: the generator, the keeper, the runner and which goal the runner is running.",
+				"import_state": "Restores `export_state()`'s state into a brain made for the same agent and library."
+			},
+			"signals": {
+				"player_control_changed": {
+					"purpose": "Direct player control was turned on or off (`set_player_controlled()`).",
+					"signature": "signal player_control_changed(on: bool)"
+				}
+			}
+		},
+		"BustleCareerDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool",
+				"rank_index": "func rank_index(rank_id: StringName) -> int"
+			},
+			"path": "addons/bustle/modules/careers/career_def.gd",
+			"properties": {
+				"activity": "var activity: StringName",
+				"id": "var id: StringName",
+				"off_site": "var off_site: bool",
+				"ranks": "var ranks: BustleCareerRank[]",
+				"role": "var role: StringName",
+				"skill": "var skill: StringName"
+			},
+			"purpose": "A career track, as data: the ranks of one standing job.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleCareerRank": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool"
+			},
+			"path": "addons/bustle/modules/careers/career_rank.gd",
+			"properties": {
+				"demote_if": "var demote_if: float",
+				"id": "var id: StringName",
+				"min_skill": "var min_skill: float",
+				"promote_if": "var promote_if: float",
+				"review_days": "var review_days: int",
+				"wage": "var wage: int"
+			},
+			"purpose": "One rank of a career track, as data: its id, the wage a career block earns at it, the skill level an agent needs to hold it, and how it is reviewed.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleCareers": {
+			"addon": "bustle",
+			"constants": {
+				"DEMOTED": "const DEMOTED = &\"demoted\"",
+				"GOOD_REVIEW": "const GOOD_REVIEW = &\"good_review\"",
+				"POOR_REVIEW": "const POOR_REVIEW = &\"poor_review\"",
+				"PROMOTED": "const PROMOTED = &\"promoted\"",
+				"PROMOTION_GRANTED": "const PROMOTION_GRANTED = &\"promotion_granted\"",
+				"STEADY": "const STEADY = &\"steady\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"review_hook": {
+					"purpose": "`func(id, career, from_rank, to_rank, kind) -> bool`, where kind is `PROMOTED` or `DEMOTED`: true grants the change.",
+					"signature": "var review_hook: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"add_def": "func add_def(def: BustleCareerDef) -> bool",
+				"agent_ids": "func agent_ids() -> StringName[]",
+				"assign": "func assign(id: StringName, career: StringName, rank: StringName, now: int) -> bool",
+				"can_hold": "func can_hold(id: StringName, career: StringName, rank: StringName) -> bool",
+				"career_of": "func career_of(id: StringName) -> StringName",
+				"day_performance": "func day_performance(mood: float, skill: float = nan, attendance: float = nan) -> float",
+				"def_of": "func def_of(career: StringName) -> BustleCareerDef",
+				"end": "func end(id: StringName) -> bool",
+				"export_state": "func export_state() -> Dictionary",
+				"fill_inputs": "func fill_inputs(id: StringName, inputs: Dictionary) -> void",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"is_away": "func is_away(id: StringName, now: int, season: StringName = &\"\") -> bool",
+				"performance": "func performance(id: StringName) -> float",
+				"rank_of": "func rank_of(id: StringName) -> StringName",
+				"since_of": "func since_of(id: StringName) -> int",
+				"update": "func update(id: StringName, now: int, mood: Object = null) -> Dictionary[]"
+			},
+			"path": "addons/bustle/modules/careers/careers.gd",
+			"properties": {
+				"attendance_weight": "var attendance_weight: float",
+				"late_credit": "var late_credit: float",
+				"mood_weight": "var mood_weight: float",
+				"neutral_mood": "var neutral_mood: float",
+				"ports": "var ports: BustlePorts",
+				"roster": "var roster: BustleScheduleRoster",
+				"skill_full": "var skill_full: float",
+				"skill_weight": "var skill_weight: float",
+				"thoughts": "var thoughts: Dictionary[StringName, Resource]"
+			},
+			"purpose": "The careers module: ranks on standing jobs.",
+			"save": {
+				"export_state": "Every career as plain data: `{agent: {career, rank, since, closed, window, promoted}}`.",
+				"import_state": "Restores `export_state()`, replacing every career."
+			},
+			"signals": {
+				"career_changed": {
+					"purpose": "`id`'s career changed: `career` at `old_rank` became `new_rank`.",
+					"signature": "signal career_changed(id: StringName, career: StringName, old_rank: StringName, new_rank: StringName)"
+				},
+				"demotion_due": {
+					"purpose": "A review found `id` due a demotion from `from_rank` to `to_rank`.",
+					"signature": "signal demotion_due(id: StringName, career: StringName, from_rank: StringName, to_rank: StringName)"
+				},
+				"promotion_due": {
+					"purpose": "A review found `id` due a promotion from `from_rank` to `to_rank`.",
+					"signature": "signal promotion_due(id: StringName, career: StringName, from_rank: StringName, to_rank: StringName)"
+				},
+				"reviewed": {
+					"purpose": "`id` was reviewed at game minute `at` with `performance`; `outcome` is one of `PROMOTED`, `DEMOTED`, `GOOD_REVIEW`, `POOR_REVIEW` or `STEADY`.",
+					"signature": "signal reviewed(id: StringName, career: StringName, performance: float, outcome: StringName, at: int)"
+				}
+			}
+		},
+		"BustleClockPort": {
+			"addon": "bustle",
+			"constants": {
+				"MINUTES_PER_DAY": "const MINUTES_PER_DAY = 1440"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"advance": "func advance(minutes: int) -> bool",
+				"day_key": "func day_key() -> StringName",
+				"now_minutes": "func now_minutes() -> int",
+				"season": "func season() -> StringName"
+			},
+			"path": "addons/bustle/ports/clock_port.gd",
+			"properties": {},
+			"purpose": "The game clock, in whole game minutes.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleCombatPort": {
+			"addon": "bustle",
+			"constants": {
+				"ENGAGED": "const ENGAGED = 1 (enum Status)",
+				"NONE": "const NONE = 0 (enum Status)",
+				"RESOLVED": "const RESOLVED = 2 (enum Status)"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"disengage": "func disengage(id: StringName) -> void",
+				"engage": "func engage(id: StringName, target: StringName, intent: StringName = &\"subdue\") -> void",
+				"outcome": "func outcome(id: StringName) -> Dictionary",
+				"status": "func status(id: StringName) -> int"
+			},
+			"path": "addons/bustle/ports/combat_port.gd",
+			"properties": {},
+			"purpose": "Fighting, handed to the host.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleComfort": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {
+				"low_state_of": {
+					"purpose": "(id) → true while that agent is in a low mental state (for example `BustleMentalBehaviour.in_low_state()`).",
+					"signature": "var low_state_of: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"advertise": "func advertise(agent_id: StringName, noticed: StringName[], social: BustleSocialPort, mood_of: Callable, senses: BustleSenses) -> int",
+				"urgency": "func urgency(mood: float) -> float"
+			},
+			"path": "addons/bustle/society/comfort.gd",
+			"properties": {
+				"kinds": "var kinds: StringName[]",
+				"low_mood": "var low_mood: float",
+				"low_state_urgency": "var low_state_urgency: float",
+				"need": "var need: StringName",
+				"tags": "var tags: StringName[]"
+			},
+			"purpose": "The comfort hook: an agent who notices a friend in a low mood is offered comforting them.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleCompatibility": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"of": "static func of(a: StringName, b: StringName, world_seed: int, a_personality: BustlePersonality = null, b_personality: BustlePersonality = null, slider_weight: float = 0.0) -> float"
+			},
+			"path": "addons/bustle/society/compatibility.gd",
+			"properties": {},
+			"purpose": "How well two agents get on by nature, from -1 (they grate) to 1 (they click).",
+			"save": {},
+			"signals": {}
+		},
+		"BustleConflict": {
+			"addon": "bustle",
+			"constants": {
+				"DEFEND_LIFE": "const DEFEND_LIFE = &\"defend_life\"",
+				"FETCH_HELP": "const FETCH_HELP = &\"fetch_help\"",
+				"FIGHT": "const FIGHT = &\"fight\"",
+				"FLEE": "const FLEE = &\"flee\"",
+				"KILL": "const KILL = &\"kill\"",
+				"NO_REASON": "const NO_REASON = &\"none\"",
+				"STANCES": "const STANCES = Array[StringName]([&\"fight\", &\"flee\", &\"fetch_help\"])",
+				"SUBDUE": "const SUBDUE = &\"subdue\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"cornered_of": {
+					"purpose": "(agent, threat) → true when `agent` can't get away from `threat`.",
+					"signature": "var cornered_of: Callable"
+				},
+				"group_of": {
+					"purpose": "(id) → that agent's group (for the disposition port).",
+					"signature": "var group_of: Callable"
+				},
+				"lethal_reason_of": {
+					"purpose": "(agent, threat, cause) → the host's reason for `agent` to kill `threat`, or empty for none.",
+					"signature": "var lethal_reason_of: Callable"
+				},
+				"mood_of": {
+					"purpose": "(id) → that agent's mood (anything with a `mood` number), or null.",
+					"signature": "var mood_of: Callable"
+				},
+				"personality_of": {
+					"purpose": "(id) → that agent's `BustlePersonality`, or null (neutral sliders).",
+					"signature": "var personality_of: Callable"
+				},
+				"position_of": {
+					"purpose": "(id) → that agent's position (a `Vector3`), or null.",
+					"signature": "var position_of: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"act_id": "static func act_id(attacker: StringName, victim: StringName, now: int) -> String",
+				"call_help": "func call_help(helper: StringName, agent: StringName, now: int) -> bool",
+				"clear": "func clear(agent: StringName) -> void",
+				"conflict_of": "func conflict_of(agent: StringName) -> Dictionary",
+				"end_involving": "func end_involving(agent: StringName) -> void",
+				"export_state": "func export_state() -> Dictionary",
+				"fill_inputs": "func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> void",
+				"filter_damage": "func filter_damage(damage: float, current_health: float, intent: StringName) -> float",
+				"finish": "func finish(agent: StringName, now: int) -> void",
+				"goal_defs": "static func goal_defs() -> BustleGoalDef[]",
+				"grudge": "func grudge(a: StringName, b: StringName) -> float",
+				"helper_of": "func helper_of(agent: StringName) -> StringName",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"intent_of": "func intent_of(agent: StringName) -> StringName",
+				"intent_reason_of": "func intent_reason_of(agent: StringName) -> StringName",
+				"nearest_ally": "func nearest_ally(agent: StringName, nearby: StringName[], exclude: StringName = &\"\") -> StringName",
+				"notice": "func notice(agent: StringName, other: StringName, now: int, nearby: StringName[] = []) -> StringName",
+				"quarrel": "func quarrel(a: StringName, b: StringName, now: int, provocation: float, nearby: StringName[] = []) -> bool",
+				"quarrel_threshold": "func quarrel_threshold(agent: StringName) -> float",
+				"stance_for": "func stance_for(agent: StringName, has_help: bool) -> StringName",
+				"stance_of": "func stance_of(agent: StringName) -> StringName",
+				"switch_to_flee": "func switch_to_flee(agent: StringName) -> void",
+				"threat_of": "func threat_of(agent: StringName) -> StringName",
+				"update_intent": "func update_intent(agent: StringName) -> StringName",
+				"where": "func where(agent: StringName) -> Variant"
+			},
+			"path": "addons/bustle/core/conflict/conflict.gd",
+			"properties": {
+				"combat": "var combat: BustleCombatPort",
+				"config": "var config: BustleConflictConfig",
+				"disposition": "var disposition: BustleDispositionPort",
+				"health": "var health: BustleHealthPort",
+				"social": "var social: BustleSocialPort"
+			},
+			"purpose": "Fight, flee or fetch help, in the CRITICAL band.",
+			"save": {
+				"export_state": "The conflicts in progress as plain data, by agent id in order.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {
+				"assaulted": {
+					"purpose": "`attacker` fought `victim`.",
+					"signature": "signal assaulted(attacker: StringName, victim: StringName, circumstances: Dictionary)"
+				},
+				"intent_changed": {
+					"purpose": "`agent`'s intent towards `threat` changed to `intent`, for `reason`.",
+					"signature": "signal intent_changed(agent: StringName, threat: StringName, intent: StringName, reason: StringName)"
+				},
+				"killed": {
+					"purpose": "`victim` died in `attacker`'s fight (after `assaulted`).",
+					"signature": "signal killed(attacker: StringName, victim: StringName, circumstances: Dictionary)"
+				}
+			}
+		},
+		"BustleConflictConfig": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/conflict/conflict_config.gd",
+			"properties": {
+				"fight_threshold": "var fight_threshold: float",
+				"flee_distance": "var flee_distance: float",
+				"flee_margin": "var flee_margin: float",
+				"grudge_scale": "var grudge_scale: float",
+				"help_radius": "var help_radius: float",
+				"quarrel_mood_scale": "var quarrel_mood_scale: float",
+				"quarrel_threshold": "var quarrel_threshold: float",
+				"quarrel_threshold_calm": "var quarrel_threshold_calm: float",
+				"quarrel_threshold_hot": "var quarrel_threshold_hot: float",
+				"scuffle_floor": "var scuffle_floor: float"
+			},
+			"purpose": "The numbers behind `BustleConflict`: who fights, how far help is looked for, how far agents flee, and how much it takes for a quarrel to come to blows.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleConsideration": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/brain/consideration.gd",
+			"properties": {
+				"curve": "var curve: Curve",
+				"input": "var input: StringName"
+			},
+			"purpose": "One factor in a goal's score: a `Curve` sampled at one input (see `BustleInputs`).",
+			"save": {},
+			"signals": {}
+		},
+		"BustleConversation": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {
+				"accepts": {
+					"purpose": "(recipient, initiator, opener) → false when the recipient turns the conversation away (for example `BustleMentalBehaviour.accepts()` while it's withdrawn).",
+					"signature": "var accepts: Callable"
+				},
+				"modifiers_of": {
+					"purpose": "(id) → that agent's `BustleModifierSet`, or null.",
+					"signature": "var modifiers_of: Callable"
+				},
+				"personality_of": {
+					"purpose": "(id) → that agent's `BustlePersonality`, or null.",
+					"signature": "var personality_of: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"begin": "func begin(initiator: StringName, recipient: StringName, now: int, opener: StringName = &\"\", place: StringName = &\"\") -> Dictionary",
+				"chance_to_start": "func chance_to_start(initiator: StringName) -> float",
+				"is_finished": "func is_finished(state: Dictionary) -> bool",
+				"next_minute": "func next_minute(state: Dictionary) -> int",
+				"pick": "func pick(speaker: StringName, listener: StringName, roll: float) -> BustleInteractionDef",
+				"run": "func run(initiator: StringName, recipient: StringName, now: int, opener: StringName = &\"\", place: StringName = &\"\") -> Dictionary",
+				"step": "func step(state: Dictionary) -> Dictionary",
+				"turned_away": "func turned_away(initiator: StringName, recipient: StringName, opener: StringName = &\"\") -> bool",
+				"wants_to_start": "func wants_to_start(initiator: StringName, recipient: StringName, now: int) -> bool",
+				"weights": "func weights(speaker: StringName, listener: StringName) -> Dictionary[StringName, float]"
+			},
+			"path": "addons/bustle/society/conversation.gd",
+			"properties": {
+				"curt_mood_scale": "var curt_mood_scale: float",
+				"interactions": "var interactions: BustleInteractionDef[]",
+				"opinion_weight": "var opinion_weight: float",
+				"social": "var social: BustleSocialInteractions",
+				"start_chance": "var start_chance: float",
+				"start_mood_scale": "var start_mood_scale: float",
+				"turn_minutes": "var turn_minutes: int",
+				"turns": "var turns: int"
+			},
+			"purpose": "A conversation: a few turns between two agents, each turn one interaction picked by weight and recorded through `BustleSocialInteractions.interact()`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleConverseAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"start": "func start(context: BustleActionContext) -> void",
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/society/converse_action.gd",
+			"properties": {
+				"conversation": "var conversation: BustleConversation"
+			},
+			"purpose": "`converse`: a `BustleConversation` one turn per tick, for agents in view.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleCrime": {
+			"addon": "bustle",
+			"constants": {
+				"INPUT": "const INPUT = &\"fact.steal\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"is_locked": {
+					"purpose": "(id) → true while the host holds that agent to a story or task.",
+					"signature": "var is_locked: Callable"
+				},
+				"is_observed": {
+					"purpose": "(thief, place) → true when the thief judges someone would see a theft there.",
+					"signature": "var is_observed: Callable"
+				},
+				"needs_of": {
+					"purpose": "(id) → that agent's `BustleNeedSet`, or null (no needs, so no theft).",
+					"signature": "var needs_of: Callable"
+				},
+				"personality_of": {
+					"purpose": "(id) → that agent's `BustlePersonality`, or null (neutral sliders).",
+					"signature": "var personality_of: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"clear": "func clear(agent: StringName) -> void",
+				"consider": "func consider(agent: StringName, now: int) -> Dictionary",
+				"fill_inputs": "func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> void",
+				"goal_defs": "static func goal_defs() -> BustleGoalDef[]",
+				"record_theft": "func record_theft(thief: StringName, owner_id: StringName, item: StringName, circumstances: Dictionary) -> bool",
+				"steal": "func steal(agent: StringName, now: int) -> Dictionary",
+				"target_of": "func target_of(agent: StringName) -> Dictionary"
+			},
+			"path": "addons/bustle/core/crime/crime.gd",
+			"properties": {
+				"config": "var config: BustleCrimeConfig",
+				"enabled": "var enabled: bool",
+				"exempt": "var exempt: StringName[]",
+				"society": "var society: BustleSociety"
+			},
+			"purpose": "Desperate theft, in the `BustleBands.GUARDED` band.",
+			"save": {},
+			"signals": {
+				"theft": {
+					"purpose": "`thief` took `item` from `owner_id`.",
+					"signature": "signal theft(thief: StringName, owner_id: StringName, item: StringName, circumstances: Dictionary)"
+				}
+			}
+		},
+		"BustleCrimeConfig": {
+			"addon": "bustle",
+			"constants": {
+				"SETTING": "const SETTING = \"bustle/simulation/npc_crime\""
+			},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"crime_allowed": "static func crime_allowed() -> bool"
+			},
+			"path": "addons/bustle/core/crime/crime_config.gd",
+			"properties": {
+				"min_need": "var min_need: float",
+				"needs": "var needs: StringName[]",
+				"slider_weights": "var slider_weights: Dictionary[StringName, float]",
+				"threshold": "var threshold: float"
+			},
+			"purpose": "The numbers behind `BustleCrime`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleCrimeWatch": {
+			"addon": "bustle",
+			"constants": {
+				"AUTHORITY": "const AUTHORITY = &\"authority\"",
+				"EYEWITNESS": "const EYEWITNESS = &\"eyewitness\"",
+				"INPUT": "const INPUT = &\"fact.errand\"",
+				"INSTANT_SETTING": "const INSTANT_SETTING = \"bustle/simulation/instant_crime_reports\"",
+				"OWNER_DEED": "const OWNER_DEED = &\"owner_deed\"",
+				"SECONDHAND": "const SECONDHAND = &\"secondhand\"",
+				"SOURCES": "const SOURCES = Array[StringName]([&\"eyewitness\", &\"secondhand\", &\"owner_deed\"])"
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"can_reach": {
+					"purpose": "(agent, other) → true when `agent` can reach `other` now.",
+					"signature": "var can_reach: Callable"
+				},
+				"can_travel": {
+					"purpose": "(agent, now) → false while the agent can't go on its errands (night, fear: the host's call).",
+					"signature": "var can_travel: Callable"
+				},
+				"gossip_to": {
+					"purpose": "(agent, record) → who `agent` would gossip to, or empty (then it can't).",
+					"signature": "var gossip_to: Callable"
+				},
+				"memory_of": {
+					"purpose": "(id) → that agent's `BustleMemory`, or null.",
+					"signature": "var memory_of: Callable"
+				},
+				"perceives": {
+					"purpose": "(agent, thief, place) → true when `agent` perceived `thief` stealing at `place`.",
+					"signature": "var perceives: Callable"
+				},
+				"should_report": {
+					"purpose": "(agent, case) → one of `BustleWitnessJudge.OUTCOMES`.",
+					"signature": "var should_report: Callable"
+				},
+				"where": {
+					"purpose": "(id) → where that agent or person is now (a `Vector3`), or null.",
+					"signature": "var where: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"deliver": "func deliver(agent: StringName, now: int) -> Dictionary",
+				"errands_of": "func errands_of(agent: StringName) -> Dictionary[]",
+				"export_state": "func export_state() -> Dictionary",
+				"fill_inputs": "func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float], now: int) -> void",
+				"goal_defs": "static func goal_defs() -> BustleGoalDef[]",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"intimidate": "func intimidate(thief: StringName, witness: StringName, _now: int) -> int",
+				"known_by": "func known_by(agent: StringName) -> int[]",
+				"notice_losses": "func notice_losses(owner_id: StringName, place: StringName, now: int) -> int[]",
+				"open_deeds": "func open_deeds() -> Dictionary[]",
+				"position_of": "func position_of(id: StringName) -> Variant",
+				"question": "func question(agent: StringName, now: int) -> Dictionary[]",
+				"reconsider": "func reconsider(agent: StringName, id: int, now: int) -> StringName",
+				"record": "func record(id: int) -> Dictionary",
+				"records": "func records() -> Dictionary[]",
+				"stolen_goods_of": "func stolen_goods_of(agent: StringName) -> Dictionary[]"
+			},
+			"path": "addons/bustle/core/crime/crime_watch.gd",
+			"properties": {
+				"authority_role": "var authority_role: StringName",
+				"crime": "var crime: BustleCrime",
+				"instant": "var instant: bool",
+				"travel_gear": "var travel_gear: StringName"
+			},
+			"purpose": "What becomes of each theft: who perceived it, who it's reported to, and the deed it leaves when nobody did.",
+			"save": {
+				"export_state": "The records as plain data, by id.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {
+				"confronted": {
+					"purpose": "`witness` accused `thief` to its face.",
+					"signature": "signal confronted(witness: StringName, thief: StringName, record: Dictionary)"
+				},
+				"crime_reported": {
+					"purpose": "`reporter` reported a theft to `role`.",
+					"signature": "signal crime_reported(reporter: StringName, role: StringName, report: Dictionary)"
+				},
+				"decided": {
+					"purpose": "`agent` decided `outcome` (one of `BustleWitnessJudge.OUTCOMES`) about a record it knows of.",
+					"signature": "signal decided(agent: StringName, outcome: StringName, record: Dictionary)"
+				},
+				"deed_found": {
+					"purpose": "`finder`, the owner, found `item` gone: a deed came to light.",
+					"signature": "signal deed_found(finder: StringName, item: StringName, record: Dictionary)"
+				},
+				"errand_dropped": {
+					"purpose": "`agent` gave up `errand` (see `errands_of()`): `forgot` or `intimidated`.",
+					"signature": "signal errand_dropped(agent: StringName, errand: Dictionary, reason: StringName)"
+				},
+				"gossiped": {
+					"purpose": "`teller` told `listener` about the theft.",
+					"signature": "signal gossiped(teller: StringName, listener: StringName, record: Dictionary)"
+				},
+				"victim_told": {
+					"purpose": "`witness` told `owner_id` what it saw.",
+					"signature": "signal victim_told(witness: StringName, owner_id: StringName, record: Dictionary)"
+				},
+				"witnessed": {
+					"purpose": "`witness` perceived `thief` taking `item`.",
+					"signature": "signal witnessed(witness: StringName, thief: StringName, item: StringName, record: Dictionary)"
+				}
+			}
+		},
+		"BustleDeliverAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/core/crime/deliver_action.gd",
+			"properties": {
+				"watch": "var watch: BustleCrimeWatch"
+			},
+			"purpose": "`deliver`: goes on with the agent's oldest errand through `BustleCrimeWatch.deliver()`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleDeprecation": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"has_warned": "static func has_warned(symbol: String) -> bool",
+				"message": "static func message(symbol: String, instead: String = \"\") -> String",
+				"reset": "static func reset() -> void",
+				"warn": "static func warn(symbol: String, instead: String = \"\") -> bool"
+			},
+			"path": "addons/bustle/core/deprecation.gd",
+			"properties": {},
+			"purpose": "Warns when deprecated public API is used: once per symbol per run, with [method @GlobalScope.push_warning].",
+			"save": {},
+			"signals": {}
+		},
+		"BustleDetectionMeter": {
+			"addon": "bustle",
+			"constants": {
+				"ALERT": "const ALERT = 3 (enum State)",
+				"SEARCHING": "const SEARCHING = 2 (enum State)",
+				"SUSPICIOUS": "const SUSPICIOUS = 1 (enum State)",
+				"UNAWARE": "const UNAWARE = 0 (enum State)"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"export_state": "func export_state() -> Dictionary",
+				"hear_event": "func hear_event(event: BustleNoiseEvent, observer_position: Vector3) -> bool",
+				"hearing_rate": "func hearing_rate(observer_position: Vector3, target: BustleSenseTarget) -> float",
+				"import_state": "func import_state(data: Dictionary) -> void",
+				"is_unaware": "func is_unaware() -> bool",
+				"light_allows": "func light_allows(target: BustleSenseTarget) -> bool",
+				"sight_cone": "func sight_cone(observer_position: Vector3, observer_forward: Vector3, point: Vector3) -> float",
+				"sight_rate": "func sight_rate(observer_position: Vector3, observer_forward: Vector3, target: BustleSenseTarget) -> float",
+				"state_name": "static func state_name(value: int) -> String",
+				"tick": "func tick(delta: float, observer_position: Vector3, observer_forward: Vector3, target: BustleSenseTarget) -> bool"
+			},
+			"path": "addons/bustle/modules/perception/detection_meter.gd",
+			"properties": {
+				"has_last_known": "var has_last_known: bool",
+				"heard_now": "var heard_now: bool",
+				"last_known_position": "var last_known_position: Vector3",
+				"level": "var level: float",
+				"profile": "var profile: BustlePerceptionProfile",
+				"seen_now": "var seen_now: bool",
+				"since_sensed": "var since_sensed: float",
+				"state": "var state: int"
+			},
+			"purpose": "One observer's awareness of one target: a meter from 0 to 1 that sight and hearing fill and that decays when neither reaches the target, and four states driven by it.",
+			"save": {
+				"export_state": "The meter as plain data, for a save.",
+				"import_state": "Restores `export_state()`'s data."
+			},
+			"signals": {
+				"noticed": {
+					"purpose": "It became suspicious of something at `position`.",
+					"signature": "signal noticed(position: Vector3)"
+				},
+				"state_changed": {
+					"purpose": "The state changed from `old` to `new`.",
+					"signature": "signal state_changed(old: int, new: int)"
+				}
+			}
+		},
+		"BustleDirector": {
+			"addon": "bustle",
+			"constants": {
+				"INPUT_POPULATION": "const INPUT_POPULATION = &\"fact.population\"",
+				"INPUT_WEALTH": "const INPUT_WEALTH = &\"fact.wealth\"",
+				"NEED_NONE": "const NEED_NONE = 0",
+				"NEED_RAISE": "const NEED_RAISE = 1",
+				"NEED_RELIEVE": "const NEED_RELIEVE = -1",
+				"STATE_VERSION": "const STATE_VERSION = 1"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_event": "func add_event(def: BustleEventDef) -> bool",
+				"eligible": "func eligible(now: int, inputs: Dictionary, locked: bool) -> BustleEventDef[]",
+				"export_state": "func export_state() -> Dictionary",
+				"find": "func find(id: StringName) -> BustleEventDef",
+				"hooks": "static func hooks(population: int, wealth: float, inputs: Dictionary = {}) -> Dictionary",
+				"import_state": "func import_state(saved: Dictionary) -> bool",
+				"last_fired": "func last_fired(id: StringName) -> int",
+				"need": "func need(now: int, inputs: Dictionary) -> int",
+				"tension": "func tension(now: int, inputs: Dictionary) -> float",
+				"update": "func update(now: int, inputs: Dictionary = {}, locked: bool = false) -> StringName"
+			},
+			"path": "addons/bustle/modules/director/director.gd",
+			"properties": {
+				"effects": "var effects: BustleDirectorEffects",
+				"ports": "var ports: BustlePorts",
+				"rules": "var rules: BustleDirectorRules"
+			},
+			"purpose": "The storyteller: it paces host-authored events (`BustleEventDef`) by the story's tension and fires the one the story needs most.",
+			"save": {
+				"export_state": "Cooldowns and recent history as plain data.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {
+				"event_fired": {
+					"purpose": "`id` fired at game minute `now`.",
+					"signature": "signal event_fired(id: StringName, now: int)"
+				}
+			}
+		},
+		"BustleDirectorEffects": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {
+				"agents": {
+					"purpose": "`func() -> Array`StringName``: every agent.",
+					"signature": "var agents: Callable"
+				},
+				"brain_of": {
+					"purpose": "`func(id) -> BustleBrain`: an agent's brain, or null.",
+					"signature": "var brain_of: Callable"
+				},
+				"mood_of": {
+					"purpose": "`func(id) -> Object`: an agent's mood (with `add_thought(def, details)`), or null.",
+					"signature": "var mood_of: Callable"
+				},
+				"tags_of": {
+					"purpose": "`func(id) -> Array`StringName``: an agent's tags.",
+					"signature": "var tags_of: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"apply": "func apply(def: BustleEventDef, now: int) -> Dictionary[]",
+				"targets": "func targets(effect: BustleEventEffect) -> StringName[]"
+			},
+			"path": "addons/bustle/modules/director/director_effects.gd",
+			"properties": {
+				"ports": "var ports: BustlePorts"
+			},
+			"purpose": "Applies a fired event's `BustleEventDef.effects`, in order, to exactly the targets each names (`BustleEventEffect`).",
+			"save": {},
+			"signals": {
+				"applied": {
+					"purpose": "One effect was applied: `target` is the agent (or, for a spawn, the area), `what` the thought, order or spawn kind, and `done` whether it took (a mood that took the thought, a brain that queued the order, a host that made the spawn).",
+					"signature": "signal applied(event: StringName, kind: StringName, target: StringName, what: StringName, done: bool)"
+				}
+			}
+		},
+		"BustleDirectorPort": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"allows": "func allows(_event_kind: StringName) -> bool"
+			},
+			"path": "addons/bustle/ports/director_port.gd",
+			"properties": {},
+			"purpose": "A storyteller that paces events.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleDirectorRules": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"validate": "func validate() -> String"
+			},
+			"path": "addons/bustle/modules/director/director_rules.gd",
+			"properties": {
+				"beat_gap_minutes": "var beat_gap_minutes: int",
+				"high": "var high: float",
+				"low": "var low: float",
+				"memory_minutes": "var memory_minutes: int",
+				"tension_inputs": "var tension_inputs: Dictionary[StringName, float]"
+			},
+			"purpose": "How `BustleDirector` reads tension and paces the story.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleDispositionPort": {
+			"addon": "bustle",
+			"constants": {
+				"FRIENDLY": "const FRIENDLY = 2 (enum Disposition)",
+				"HOSTILE": "const HOSTILE = 0 (enum Disposition)",
+				"NEUTRAL": "const NEUTRAL = 1 (enum Disposition)"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"disposition": "func disposition(a_id: StringName, a_group: StringName, b_id: StringName, b_group: StringName) -> int"
+			},
+			"path": "addons/bustle/ports/disposition_port.gd",
+			"properties": {
+				"table": "var table: BustleDispositionTable"
+			},
+			"purpose": "How one actor regards another: hostile, neutral or friendly.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleDispositionTable": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"lookup": "func lookup(a_id: StringName, a_group: StringName, b_id: StringName, b_group: StringName) -> int",
+				"set_group_rule": "func set_group_rule(a: StringName, b: StringName, value: int) -> void"
+			},
+			"path": "addons/bustle/society/disposition_table.gd",
+			"properties": {
+				"actors": "var actors: Dictionary",
+				"default_disposition": "var default_disposition: int",
+				"groups": "var groups: Dictionary",
+				"same_group": "var same_group: int",
+				"symmetric": "var symmetric: bool"
+			},
+			"purpose": "A data table of dispositions between groups, and optionally between two actors.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleEnvironmentPort": {
+			"addon": "bustle",
+			"constants": {
+				"INDOORS": "const INDOORS = &\"indoors\"",
+				"OUTDOORS": "const OUTDOORS = &\"outdoors\"",
+				"SCORES": "const SCORES = Array[StringName]([&\"beauty\", &\"comfort\", &\"cleanliness\", &\"impressiveness\"])"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"conditions": "func conditions(id: StringName) -> StringName[]",
+				"conditions_of": "static func conditions_of(port: BustleEnvironmentPort, id: StringName) -> StringName[]",
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"is_indoors": "func is_indoors(id: StringName) -> bool",
+				"room_of": "func room_of(id: StringName) -> StringName",
+				"scores": "func scores(room: StringName) -> Dictionary[StringName, float]",
+				"set_room": "func set_room(id: StringName, room: StringName) -> bool",
+				"set_scores": "func set_scores(room: StringName, values: Dictionary) -> bool"
+			},
+			"path": "addons/bustle/ports/environment_port.gd",
+			"properties": {},
+			"purpose": "Rooms and surroundings.",
+			"save": {
+				"export_state": "The built-in store as plain data: `{\"rooms\": {agent: room}, \"scores\": {room: {score: value}}}`, sorted.",
+				"import_state": "Restores `export_state()`, replacing the store."
+			},
+			"signals": {}
+		},
+		"BustleEventDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"event_kind": "func event_kind() -> StringName",
+				"preconditions_hold": "func preconditions_hold(inputs: Dictionary) -> bool",
+				"score": "func score(inputs: Dictionary) -> float",
+				"validate": "func validate() -> String"
+			},
+			"path": "addons/bustle/modules/director/event_def.gd",
+			"properties": {
+				"cooldown_minutes": "var cooldown_minutes: int",
+				"effects": "var effects: BustleEventEffect[]",
+				"id": "var id: StringName",
+				"kind": "var kind: StringName",
+				"lock_sensitive": "var lock_sensitive: bool",
+				"requires": "var requires: Dictionary[]",
+				"score_inputs": "var score_inputs: Dictionary[StringName, float]",
+				"tension": "var tension: float",
+				"weight": "var weight: float"
+			},
+			"purpose": "One story event, as host data: when it may fire, how it moves tension, how often, and whether a quest lock holds it back.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleEventEffect": {
+			"addon": "bustle",
+			"constants": {
+				"ORDER": "const ORDER = &\"order\"",
+				"SPAWN": "const SPAWN = &\"spawn\"",
+				"THOUGHT": "const THOUGHT = &\"thought\""
+			},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"has_targets": "func has_targets() -> bool",
+				"validate": "func validate() -> String"
+			},
+			"path": "addons/bustle/modules/director/event_effect.gd",
+			"properties": {
+				"count": "var count: int",
+				"kind": "var kind: StringName",
+				"place": "var place: StringName",
+				"sequence": "var sequence: BustleActionSequence",
+				"spawn_area": "var spawn_area: StringName",
+				"spawn_kind": "var spawn_kind: StringName",
+				"target_area": "var target_area: StringName",
+				"target_ids": "var target_ids: StringName[]",
+				"target_tag": "var target_tag: StringName",
+				"thought": "var thought: BustleThoughtDef"
+			},
+			"purpose": "One thing a fired `BustleEventDef` does, as host data, applied by `BustleDirectorEffects`:  - `THOUGHT`: gives `thought` to each target;  - `ORDER`: orders each target to run `sequence` (at `place`, if set);  - `SPAWN`: asks the world port to bring `count` of `spawn_kind` into `spawn_area`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleFearDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool"
+			},
+			"path": "addons/bustle/modules/aspirations/fear_def.gd",
+			"properties": {
+				"avoid_goals": "var avoid_goals: StringName[]",
+				"avoid_input": "var avoid_input: StringName",
+				"avoid_mult": "var avoid_mult: float",
+				"avoid_options": "var avoid_options: StringName[]",
+				"cleared_fact": "var cleared_fact: StringName",
+				"duration_hours": "var duration_hours: float",
+				"id": "var id: StringName",
+				"thought": "var thought: Resource",
+				"trigger": "var trigger: StringName"
+			},
+			"purpose": "One fear, as data: the event that forms it, what it makes the agent avoid and for how long.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleFetchHelpAction": {
+			"addon": "bustle",
+			"constants": {
+				"REACH": "const REACH = 2.0"
+			},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/core/conflict/fetch_help_action.gd",
+			"properties": {
+				"conflict": "var conflict: BustleConflict"
+			},
+			"purpose": "`fetch_help`: goes to the ally `BustleConflict.notice()` picked (`move_to` and `talk_to` in the output) and, once within `REACH` metres (or at once without positions), hands the threat to it with `BustleConflict.call_help()`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleFightAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"cancel": "func cancel(context: BustleActionContext) -> void",
+				"start": "func start(context: BustleActionContext) -> void",
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/core/conflict/fight_action.gd",
+			"properties": {
+				"conflict": "var conflict: BustleConflict"
+			},
+			"purpose": "`fight`: engages the agent's threat through the combat port with its intent, and names it as the output's `attack_target`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleFleeAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/core/conflict/flee_action.gd",
+			"properties": {
+				"conflict": "var conflict: BustleConflict"
+			},
+			"purpose": "`flee`: runs straight away from the agent's threat (`move_to` in the output, aimed `BustleConflictConfig.flee_margin` past the safe distance so a body that stops a little short still gets there) until it is `BustleConflictConfig.flee_distance` away, then clears the conflict.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleGoalDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/brain/goal_def.gd",
+			"properties": {
+				"band": "var band: int",
+				"base_weight": "var base_weight: float",
+				"considerations": "var considerations: BustleConsideration[]",
+				"fail_cooldown_minutes": "var fail_cooldown_minutes: int",
+				"id": "var id: StringName",
+				"min_commit_minutes": "var min_commit_minutes: int",
+				"min_score": "var min_score: float",
+				"preconditions": "var preconditions: Dictionary[]",
+				"sequence": "var sequence: BustleActionSequence",
+				"tags": "var tags: StringName[]",
+				"uses_advertisements": "var uses_advertisements: bool"
+			},
+			"purpose": "A goal an agent can choose: its band, base weight, preconditions and considerations.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleGoalLibrary": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"find": "func find(id: StringName) -> BustleGoalDef",
+				"problems": "func problems() -> PackedStringArray"
+			},
+			"path": "addons/bustle/core/brain/goal_library.gd",
+			"properties": {
+				"goals": "var goals: BustleGoalDef[]"
+			},
+			"purpose": "The goals an agent chooses from.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleHealthBehaviour": {
+			"addon": "bustle",
+			"constants": {
+				"INPUT_CARE": "const INPUT_CARE = &\"health.needs_care\"",
+				"INPUT_CONTAGIOUS": "const INPUT_CONTAGIOUS = &\"fact.contagious\"",
+				"INPUT_DOWNED": "const INPUT_DOWNED = &\"fact.downed\"",
+				"INPUT_PAIN": "const INPUT_PAIN = &\"health.pain\"",
+				"SOURCE": "const SOURCE = &\"health\""
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"allows": "func allows(id: StringName, goal_tags: StringName[], option_tags: StringName[]) -> bool",
+				"apply": "func apply(id: StringName, modifiers: BustleModifierSet) -> void",
+				"capacity": "func capacity(id: StringName, name: StringName) -> float",
+				"chosen": "func chosen(id: StringName) -> BustleHealthThought[]",
+				"fill_inputs": "func fill_inputs(id: StringName, inputs: Dictionary[StringName, float]) -> void",
+				"illness_began": "func illness_began(id: StringName, tag: StringName, mood: Object) -> bool",
+				"is_downed": "func is_downed(id: StringName) -> bool",
+				"pain": "func pain(id: StringName) -> float",
+				"recovered": "func recovered(id: StringName, mood: Object) -> void",
+				"sync": "func sync(id: StringName, mood: Object = null) -> StringName[]",
+				"tick": "func tick(id: StringName, modifiers: BustleModifierSet, mood: Object = null, inputs: Variant = null) -> void"
+			},
+			"path": "addons/bustle/modules/health/health_behaviour.gd",
+			"properties": {
+				"config": "var config: BustleHealthConfig",
+				"ports": "var ports: BustlePorts"
+			},
+			"purpose": "The health behaviour: agents react to the host's health.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleHealthConfig": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"defaults": "static func defaults() -> BustleHealthConfig",
+				"validate": "func validate() -> String"
+			},
+			"path": "addons/bustle/modules/health/health_config.gd",
+			"properties": {
+				"downed_blocks": "var downed_blocks: StringName[]",
+				"effects": "var effects: BustleHealthEffect[]",
+				"thoughts": "var thoughts: BustleHealthThought[]"
+			},
+			"purpose": "What the health behaviour does with the host's readings: the capacity effects on modifiers, the thoughts, and what a downed agent may not choose.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleHealthEffect": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool",
+				"mult": "func mult(amount: float) -> float"
+			},
+			"path": "addons/bustle/modules/health/health_effect.gd",
+			"properties": {
+				"at_zero": "var at_zero: float",
+				"capacity": "var capacity: StringName",
+				"key": "var key: StringName",
+				"power": "var power: float"
+			},
+			"purpose": "How one host capacity scales one modifier key: at full capacity the key is untouched, and below it the key is multiplied by `at_zero + (1 - at_zero) × capacity^power`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleHealthPort": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"capacity": "func capacity(_id: StringName, _name: StringName) -> float",
+				"care": "func care(_healer: StringName, _patient: StringName) -> bool",
+				"is_contagious": "func is_contagious(_id: StringName) -> bool",
+				"is_incapacitated": "func is_incapacitated(_id: StringName) -> bool",
+				"is_injured": "func is_injured(_id: StringName) -> bool",
+				"is_life_threatened": "func is_life_threatened(_id: StringName) -> bool",
+				"needs_care": "func needs_care(_id: StringName) -> float",
+				"pain": "func pain(_id: StringName) -> float",
+				"visible_tags": "func visible_tags(_id: StringName) -> StringName[]"
+			},
+			"path": "addons/bustle/ports/health_port.gd",
+			"properties": {},
+			"purpose": "Health, owned by the host (damage, illness, medicine).",
+			"save": {},
+			"signals": {}
+		},
+		"BustleHealthThought": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool"
+			},
+			"path": "addons/bustle/modules/health/health_thought.gd",
+			"properties": {
+				"pain_at_least": "var pain_at_least: float",
+				"tag": "var tag: StringName",
+				"thought": "var thought: BustleThoughtDef"
+			},
+			"purpose": "A thought held while the host reports a health state: either pain of at least `pain_at_least`, or a visible tag such as `sick` (`tag`).",
+			"save": {},
+			"signals": {}
+		},
+		"BustleHoldAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/core/brain/actions/hold_action.gd",
+			"properties": {},
+			"purpose": "`hold`: stays put and never finishes (`held` in the output), so an order that ends with it holds until it's cancelled, as a lock's order does.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleIdleAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"start": "func start(context: BustleActionContext) -> void",
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/core/brain/actions/idle_action.gd",
+			"properties": {},
+			"purpose": "`idle`: idles in `params.style` (put in the output as `animation`) for `params.minutes` game minutes, default 0 (one tick).",
+			"save": {},
+			"signals": {}
+		},
+		"BustleImportReport": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"fail": "func fail(reason: String) -> void"
+			},
+			"path": "addons/bustle/society/import_report.gd",
+			"properties": {
+				"errors": "var errors: PackedStringArray",
+				"ok": "var ok: bool",
+				"schema": "var schema: int"
+			},
+			"purpose": "What happened when a saved society was imported.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleInfo": {
+			"addon": "bustle",
+			"constants": {
+				"FOLDERS": "const FOLDERS = {\"core\": \"Plain data and rules with no nodes, tested headless.\", \"debug\": \"Tools for inspecting a running population.\", \"modules\": \"Optional features, each usable on its own.\", \"ports\": \"The interfaces a host project implements to connect Bustle to its world.\", \"society\": \"How the members of a population relate to each other.\"}",
+				"VERSION": "const VERSION = \"0.9.0\""
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"version_parts": "static func version_parts() -> PackedInt32Array"
+			},
+			"path": "addons/bustle/core/bustle_info.gd",
+			"properties": {},
+			"purpose": "Facts about the installed Bustle addon.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleInputs": {
+			"addon": "bustle",
+			"constants": {
+				"FAMILIES": "const FAMILIES = PackedStringArray(\"need\", \"trait\", \"opinion\", \"memory\", \"distance\", \"schedule\", \"role\", \"fact\", \"time\", \"health\", \"threat\")",
+				"HEALTH_NAMES": "const HEALTH_NAMES = PackedStringArray(\"pain\", \"needs_care\")",
+				"MOOD": "const MOOD = &\"mood\""
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid_input": "static func is_valid_input(key: StringName) -> bool"
+			},
+			"path": "addons/bustle/core/brain/inputs.gd",
+			"properties": {},
+			"purpose": "The fixed vocabulary of scorer inputs.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleIntent": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"read_output": "func read_output(output: Dictionary) -> void",
+				"to_dictionary": "func to_dictionary() -> Dictionary"
+			},
+			"path": "addons/bustle/core/brain/intent.gd",
+			"properties": {
+				"action": "var action: StringName",
+				"animation": "var animation: StringName",
+				"attack_target": "var attack_target: StringName",
+				"band": "var band: int",
+				"face": "var face: Vector3",
+				"failure": "var failure: Dictionary",
+				"gear": "var gear: StringName",
+				"goal_id": "var goal_id: StringName",
+				"has_face": "var has_face: bool",
+				"has_move_to": "var has_move_to: bool",
+				"idle": "var idle: bool",
+				"move_to": "var move_to: Vector3",
+				"option_id": "var option_id: StringName",
+				"order_id": "var order_id: StringName",
+				"order_results": "var order_results: Dictionary[]",
+				"player_controlled": "var player_controlled: bool",
+				"reasons": "var reasons: Dictionary[]",
+				"score": "var score: float",
+				"speed": "var speed: float",
+				"talk_to": "var talk_to: StringName",
+				"use_affordance": "var use_affordance: StringName"
+			},
+			"purpose": "What a `BustleBrain` wants its agent to do after one tick.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleInteractionDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool"
+			},
+			"path": "addons/bustle/society/interaction_def.gd",
+			"properties": {
+				"compatibility_scale": "var compatibility_scale: float",
+				"days": "var days: float",
+				"id": "var id: StringName",
+				"initiator_thought": "var initiator_thought: Resource",
+				"initiator_value": "var initiator_value: float",
+				"mood_scale": "var mood_scale: float",
+				"recipient_thought": "var recipient_thought: Resource",
+				"recipient_value": "var recipient_value: float",
+				"slider_weights": "var slider_weights: Dictionary[StringName, float]",
+				"spread": "var spread: float",
+				"tags": "var tags: StringName[]",
+				"weight": "var weight: float"
+			},
+			"purpose": "One kind of interaction between two agents, as data (a greeting, a chat, kind words, a slight, an insult): how much it moves each side's opinion of the other, for how long, how much the pair's compatibility and each side's mood bend that, and the thoughts it leaves.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleJobBoard": {
+			"addon": "bustle",
+			"constants": {
+				"NEED": "const NEED = &\"job\"",
+				"TAG": "const TAG = &\"job\""
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_type": "func add_type(def: BustleWorkType) -> bool",
+				"advertise": "func advertise(seeker: BustleJobSeeker, senses: BustleSenses) -> int",
+				"appeal": "func appeal(seeker: BustleJobSeeker, job: StringName) -> float",
+				"assign": "func assign(seekers: BustleJobSeeker[], now: int) -> Dictionary[StringName, StringName]",
+				"best_for": "func best_for(seeker: BustleJobSeeker) -> StringName",
+				"can_do": "func can_do(seeker: BustleJobSeeker, job: StringName) -> bool",
+				"cancel": "func cancel(job: StringName) -> bool",
+				"claim": "func claim(seeker: BustleJobSeeker, job: StringName, now: int) -> bool",
+				"claimed_of": "func claimed_of(agent: StringName) -> StringName",
+				"complete": "func complete(job: StringName) -> bool",
+				"eligible": "func eligible(seeker: BustleJobSeeker, job: StringName) -> bool",
+				"expire": "func expire(now: int) -> StringName[]",
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"job_ids": "func job_ids(open_only: bool = false) -> StringName[]",
+				"post": "func post(type: StringName, employer: StringName, now: int, due: int = -1, place: StringName = &\"\") -> StringName",
+				"posting": "func posting(job: StringName) -> BustleJobPosting",
+				"release": "func release(job: StringName) -> bool",
+				"request": "func request(seeker: BustleJobSeeker, job: StringName) -> void",
+				"score": "func score(seeker: BustleJobSeeker, job: StringName) -> float",
+				"settle": "func settle(now: int) -> Dictionary[StringName, StringName]",
+				"type_of": "func type_of(id: StringName) -> BustleWorkType",
+				"work": "func work(seeker: BustleJobSeeker, minutes: int) -> bool"
+			},
+			"path": "addons/bustle/core/jobs/job_board.gd",
+			"properties": {
+				"appeal_base": "var appeal_base: float",
+				"ports": "var ports: BustlePorts"
+			},
+			"purpose": "A board of posted, one-off work that agents claim.",
+			"save": {
+				"export_state": "Every posting, open and claimed, as plain data: `{\"next\": n, \"postings\": [...]}`.",
+				"import_state": "Restores `export_state()`, replacing every posting."
+			},
+			"signals": {
+				"changed": {
+					"purpose": "Every board change: `job` was posted, claimed, released, completed, cancelled or expired, or its wage was paid or couldn't be (`what`); `agent` is the claimant, if any.",
+					"signature": "signal changed(job: StringName, what: StringName, agent: StringName)"
+				}
+			}
+		},
+		"BustleJobPosting": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_open": "func is_open() -> bool",
+				"to_dict": "func to_dict() -> Dictionary"
+			},
+			"path": "addons/bustle/core/jobs/job_posting.gd",
+			"properties": {
+				"claimed_at": "var claimed_at: int",
+				"claimed_by": "var claimed_by: StringName",
+				"due": "var due: int",
+				"employer": "var employer: StringName",
+				"id": "var id: StringName",
+				"opened": "var opened: int",
+				"place": "var place: StringName",
+				"progress": "var progress: int",
+				"type": "var type: StringName"
+			},
+			"purpose": "One posting on a `BustleJobBoard`: a work type someone wants done, open until an agent claims it, and gone once it's completed, cancelled or expired.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleJobSeeker": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/jobs/job_seeker.gd",
+			"properties": {
+				"id": "var id: StringName",
+				"inputs": "var inputs: Dictionary[StringName, float]",
+				"personality": "var personality: BustlePersonality",
+				"tags": "var tags: StringName[]"
+			},
+			"purpose": "One agent looking at the job board: its id and what the board's scores and gates read about it.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleLeisure": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"adjust": "func adjust(ad: BustleAdvertisement) -> BustleAdvertisement",
+				"advance": "func advance(minutes: float) -> void",
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"is_bored": "func is_bored(kind: StringName) -> bool",
+				"kind_of": "func kind_of(ad: BustleAdvertisement) -> StringName",
+				"relief_factor": "func relief_factor(kind: StringName) -> float",
+				"tolerance": "func tolerance(kind: StringName) -> float",
+				"use": "func use(kind: StringName) -> float"
+			},
+			"path": "addons/bustle/core/needs/leisure.gd",
+			"properties": {
+				"boredom_threshold": "var boredom_threshold: float",
+				"kinds": "var kinds: StringName[]",
+				"need": "var need: StringName",
+				"tolerance_decay_per_day": "var tolerance_decay_per_day: float",
+				"tolerance_per_use": "var tolerance_per_use: float"
+			},
+			"purpose": "Leisure with kinds and tolerance, so agents vary what they do for fun.",
+			"save": {
+				"export_state": "The tolerances as plain data: `{\"tolerance\": {kind: value}}`.",
+				"import_state": "Restores tolerances from `export_state()`."
+			},
+			"signals": {}
+		},
+		"BustleLifeStageDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/modules/life_stages/life_stage_def.gd",
+			"properties": {
+				"blocked_affordance_tags": "var blocked_affordance_tags: StringName[]",
+				"blocked_goal_tags": "var blocked_goal_tags: StringName[]",
+				"id": "var id: StringName",
+				"min_days": "var min_days: float"
+			},
+			"purpose": "One life stage, as data: where it starts (an age in game days) and what it rules out.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleLifeStagePort": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"allows_affordance": "func allows_affordance(_id: StringName, _tags: StringName[]) -> bool",
+				"allows_goal": "func allows_goal(_id: StringName, _tags: StringName[]) -> bool",
+				"stage_of": "func stage_of(_id: StringName) -> StringName"
+			},
+			"path": "addons/bustle/ports/life_stage_port.gd",
+			"properties": {},
+			"purpose": "Life stages (child, adult and so on, as the host defines them).",
+			"save": {},
+			"signals": {}
+		},
+		"BustleLifeStageRules": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"days_of": "func days_of(years: float) -> float",
+				"find": "func find(id: StringName) -> BustleLifeStageDef",
+				"is_valid": "func is_valid() -> bool",
+				"stage_for": "func stage_for(days: float) -> BustleLifeStageDef",
+				"validate": "func validate() -> String",
+				"years_of": "func years_of(days: float) -> float"
+			},
+			"path": "addons/bustle/modules/life_stages/life_stage_rules.gd",
+			"properties": {
+				"days_per_year": "var days_per_year: float",
+				"minutes_per_day": "var minutes_per_day: int",
+				"stages": "var stages: BustleLifeStageDef[]"
+			},
+			"purpose": "The life stages and the calendar they are read with.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleLifeStages": {
+			"addon": "bustle",
+			"constants": {
+				"STATE_VERSION": "const STATE_VERSION = 2"
+			},
+			"extends": "BustleLifeStagePort",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"advance_to": "func advance_to(minute: int) -> bool",
+				"age_days": "func age_days(id: StringName) -> float",
+				"age_years": "func age_years(id: StringName) -> float",
+				"allows_affordance": "func allows_affordance(id: StringName, tags: StringName[]) -> bool",
+				"allows_goal": "func allows_goal(id: StringName, tags: StringName[]) -> bool",
+				"birth": "func birth(id: StringName, days: float = 0.0) -> String",
+				"cause_of": "func cause_of(id: StringName) -> String",
+				"error": "func error() -> String",
+				"export_state": "func export_state() -> Dictionary",
+				"has_age": "func has_age(id: StringName) -> bool",
+				"import_state": "func import_state(saved: Dictionary) -> bool",
+				"is_dead": "func is_dead(id: StringName) -> bool",
+				"living_ids": "func living_ids() -> StringName[]",
+				"note_death": "func note_death(id: StringName, cause: String) -> String",
+				"now": "func now() -> int",
+				"revalidate": "func revalidate() -> String",
+				"set_age": "func set_age(id: StringName, days: float) -> bool",
+				"stage_of": "func stage_of(id: StringName) -> StringName"
+			},
+			"path": "addons/bustle/modules/life_stages/life_stages.gd",
+			"properties": {
+				"careers": "var careers: BustleCareers",
+				"jobs": "var jobs: BustleJobBoard",
+				"roles": "var roles: BustleRolesPort",
+				"rules": "var rules: BustleLifeStageRules"
+			},
+			"purpose": "The life-stages module: each agent's age in game days, the stage that age falls in, and the gates that stage puts on its goals and options.",
+			"save": {
+				"export_state": "Every age, stage and death as plain data, in id order: `ages` (at `now()`), `stages`, `anchors` (each age as `[days, minute]`, so aging carries on exactly), `dead` (`{cause, at}`, including agents with no age) and `now`.",
+				"import_state": "Restores `export_state()`'s state (or a version 1 save, with ages as of minute 0), without emitting anything."
+			},
+			"signals": {
+				"born": {
+					"purpose": "`birth()` added `id` at `age_days`.",
+					"signature": "signal born(id: StringName, age_days: float)"
+				},
+				"died": {
+					"purpose": "`note_death()` recorded `id`'s death, with the host's `cause`.",
+					"signature": "signal died(id: StringName, cause: String)"
+				},
+				"stage_changed": {
+					"purpose": "`id`'s stage changed from `old_stage` to `new_stage` (either may be empty: no stage).",
+					"signature": "signal stage_changed(id: StringName, old_stage: StringName, new_stage: StringName)"
+				},
+				"vacated": {
+					"purpose": "A death released something `id` held: `kind` is `career`, `job` or `role`, and `what` the career, posting or role.",
+					"signature": "signal vacated(id: StringName, kind: StringName, what: StringName)"
+				}
+			}
+		},
+		"BustleLightProbe": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"sample": "func sample(_position: Vector3) -> BustleLightSample"
+			},
+			"path": "addons/bustle/modules/perception/light_probe.gd",
+			"properties": {},
+			"purpose": "Answers how much light reaches a point.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleLightSample": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/modules/perception/light_sample.gd",
+			"properties": {
+				"level": "var level: float",
+				"sources": "var sources: StringName[]"
+			},
+			"purpose": "How much light reaches one point, from a `BustleLightProbe`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleLightSource": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"contribution": "func contribution(point: Vector3) -> float"
+			},
+			"path": "addons/bustle/modules/perception/light_source.gd",
+			"properties": {
+				"enabled": "var enabled: bool",
+				"energy": "var energy: float",
+				"id": "var id: StringName",
+				"position": "var position: Vector3",
+				"range": "var range: float"
+			},
+			"purpose": "One point light, as `BustlePointLightProbe` sees it.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleLock": {
+			"addon": "bustle",
+			"constants": {
+				"ESSENTIAL": "const ESSENTIAL = 2 (enum Protection)",
+				"NONE": "const NONE = 0 (enum Protection)",
+				"QUEST_LOCKED": "const QUEST_LOCKED = 1 (enum Protection)"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"from_dict": "static func from_dict(saved: Variant) -> BustleLock",
+				"is_valid": "func is_valid() -> bool",
+				"make": "static func make(p_id: StringName, p_place: StringName = &\"\", p_goal: StringName = &\"\", p_sequence: BustleActionSequence = null) -> BustleLock",
+				"to_dict": "func to_dict() -> Dictionary"
+			},
+			"path": "addons/bustle/society/lock.gd",
+			"properties": {
+				"goal": "var goal: StringName",
+				"lock_id": "var lock_id: StringName",
+				"place": "var place: StringName",
+				"sequence": "var sequence: BustleActionSequence"
+			},
+			"purpose": "A host's pin on one agent: a place to stay at, a goal (or sequence) to run, or both, under a `lock_id`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleMemory": {
+			"addon": "bustle",
+			"constants": {
+				"HEARD": "const HEARD = &\"heard\"",
+				"ITEM": "const ITEM = &\"item\"",
+				"PERSON": "const PERSON = &\"person\"",
+				"PLACE": "const PLACE = &\"place\"",
+				"ROUTINE": "const ROUTINE = &\"routine\"",
+				"SAW": "const SAW = &\"saw\"",
+				"TOLD": "const TOLD = &\"told\""
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"confidence": "func confidence(kind: StringName, subject: StringName, now: int) -> float",
+				"export_state": "func export_state() -> Dictionary",
+				"forget": "func forget(now: int) -> void",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"note": "func note(kind: StringName, subject: StringName, area: StringName, position: Variant, source: StringName, now: int) -> bool",
+				"recall": "func recall(kind: StringName, subject: StringName, now: int) -> Dictionary",
+				"size": "func size() -> int"
+			},
+			"path": "addons/bustle/core/memory/memory.gd",
+			"properties": {
+				"config": "var config: BustleMemoryConfig"
+			},
+			"purpose": "One agent's memory of where people, places and items are.",
+			"save": {
+				"export_state": "The entries as plain data, sorted by key.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {}
+		},
+		"BustleMemoryConfig": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"half_life_minutes": "func half_life_minutes(kind: StringName) -> float",
+				"strength_of": "func strength_of(source: StringName) -> float"
+			},
+			"path": "addons/bustle/core/memory/memory_config.gd",
+			"properties": {
+				"capacity": "var capacity: int",
+				"default_half_life_hours": "var default_half_life_hours: float",
+				"forget_below": "var forget_below: float",
+				"half_life_hours": "var half_life_hours: Dictionary[StringName, float]",
+				"source_strength": "var source_strength: Dictionary[StringName, float]"
+			},
+			"purpose": "How a `BustleMemory` holds and forgets, as data.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleMemoryFeed": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {
+				"area_of": {
+					"purpose": "(id) → the area an actor is in.",
+					"signature": "var area_of: Callable"
+				},
+				"clock": {
+					"purpose": "() → the current game minute.",
+					"signature": "var clock: Callable"
+				},
+				"memory_of": {
+					"purpose": "(id) → that agent's `BustleMemory`, or null for agents without one.",
+					"signature": "var memory_of: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"disconnect_world": "func disconnect_world() -> void"
+			},
+			"path": "addons/bustle/modules/perception/memory_feed.gd",
+			"properties": {},
+			"purpose": "Writes what agents perceive into their memories, driven by events: each time a perceiver becomes alert to a target (`BustlePerceptionWorld.perception_changed`), the perceiver's `BustleMemory` notes where the target is (`BustleMemory.SAW`), and when it loses track (back to unaware) it notes where the target was last known.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleMentalAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/modules/needs_mood/mental_action.gd",
+			"properties": {
+				"behaviour": "var behaviour: BustleMentalBehaviour"
+			},
+			"purpose": "`mental`: acts out the agent's mental state through `BustleMentalBehaviour`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleMentalBehaviour": {
+			"addon": "bustle",
+			"constants": {
+				"GOAL_STATES": "const GOAL_STATES = Array[StringName]([&\"withdraw\", &\"wander\", &\"binge\", &\"lash_out\"])",
+				"INPUT_PREFIX": "const INPUT_PREFIX = \"fact.mental.\"",
+				"SOURCE": "const SOURCE = &\"mental_state\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"home_of": {
+					"purpose": "(id) → where home is (a `Vector3`), or null.",
+					"signature": "var home_of: Callable"
+				},
+				"indulgence_of": {
+					"purpose": "(id) → the affordance it would indulge in (an id), or empty.",
+					"signature": "var indulgence_of: Callable"
+				},
+				"is_locked": {
+					"purpose": "(id) → true while the agent is locked to a task.",
+					"signature": "var is_locked: Callable"
+				},
+				"position_of": {
+					"purpose": "(id) → where the agent or person is (a `Vector3`), or null.",
+					"signature": "var position_of: Callable"
+				},
+				"wander_to": {
+					"purpose": "(id, now) → where to wander to (a `Vector3`), or null.",
+					"signature": "var wander_to: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"accepts": "func accepts(agent: StringName, _visitor: StringName, opener: StringName = &\"\") -> bool",
+				"applied_state": "func applied_state(agent: StringName) -> StringName",
+				"circumstances_of": "func circumstances_of(agent: StringName, _personality: BustlePersonality = null) -> Dictionary",
+				"destination": "func destination(agent: StringName, now: int) -> Variant",
+				"export_state": "func export_state() -> Dictionary",
+				"fill_inputs": "func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> void",
+				"goal_defs": "static func goal_defs() -> BustleGoalDef[]",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"in_low_state": "func in_low_state(agent: StringName) -> bool",
+				"indulgence": "func indulgence(agent: StringName) -> StringName",
+				"insult": "func insult(agent: StringName, target: StringName, now: int) -> bool",
+				"lash_target": "func lash_target(agent: StringName) -> StringName",
+				"position": "func position(id: StringName) -> Variant",
+				"state_of": "func state_of(agent: StringName) -> BustleMentalState",
+				"update": "func update(agent: StringName, now: int, mood: BustleMood, personality: BustlePersonality = null) -> Dictionary"
+			},
+			"path": "addons/bustle/modules/needs_mood/mental_behaviour.gd",
+			"properties": {
+				"config": "var config: BustleMentalConfig",
+				"conflict": "var conflict: BustleConflict",
+				"society": "var society: BustleSociety"
+			},
+			"purpose": "What agents do in a mental state, for a whole society: the circumstances each `BustleMentalState` decides from, the state's modifiers, the goals that act it out (in `BustleBands.GUARDED`, so urgent self-care outranks them and orders and duty don't), and lashing out.",
+			"save": {
+				"export_state": "Every agent's state and this episode's insults, as plain data.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {
+				"insulted": {
+					"purpose": "`agent`, in a state, insulted `target` (words only).",
+					"signature": "signal insulted(agent: StringName, target: StringName, provocation: float)"
+				}
+			}
+		},
+		"BustleMentalConfig": {
+			"addon": "bustle",
+			"constants": {
+				"SETTING": "const SETTING = \"bustle/simulation/mental_states\""
+			},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"allowed": "static func allowed() -> bool",
+				"catharsis_def": "func catharsis_def() -> BustleThoughtDef",
+				"default_states": "static func default_states() -> BustleMentalStateDef[]"
+			},
+			"path": "addons/bustle/modules/needs_mood/mental_config.gd",
+			"properties": {
+				"break_threshold": "var break_threshold: float",
+				"catharsis_hours": "var catharsis_hours: float",
+				"catharsis_stack": "var catharsis_stack: int",
+				"catharsis_stack_mult": "var catharsis_stack_mult: float",
+				"catharsis_value": "var catharsis_value: float",
+				"dislike_line": "var dislike_line: float",
+				"dislike_weight": "var dislike_weight: float",
+				"extreme_fraction": "var extreme_fraction: float",
+				"high_spirits_above": "var high_spirits_above: float",
+				"high_spirits_exit": "var high_spirits_exit: float",
+				"inspired_above": "var inspired_above: float",
+				"inspired_exit": "var inspired_exit: float",
+				"inspired_slider": "var inspired_slider: float",
+				"insults_per_victim": "var insults_per_victim: int",
+				"lash_radius": "var lash_radius: float",
+				"lash_reach": "var lash_reach: float",
+				"major_fraction": "var major_fraction: float",
+				"provocation": "var provocation: Dictionary[StringName, float]",
+				"recover_margin": "var recover_margin: float",
+				"state_modifiers": "var state_modifiers: Dictionary[StringName, Dictionary]",
+				"states": "var states: BustleMentalStateDef[]",
+				"welcome_openers": "var welcome_openers: StringName[]"
+			},
+			"purpose": "The numbers behind `BustleMentalState`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleMentalState": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"active": "func active() -> Dictionary",
+				"break_threshold": "func break_threshold(mood: BustleMood) -> float",
+				"choose": "func choose(mood: BustleMood, personality: BustlePersonality = null, circumstances: Dictionary = {}) -> BustleMentalStateDef",
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"is_active": "func is_active() -> bool",
+				"score_of": "func score_of(def: BustleMentalStateDef, personality: BustlePersonality, circumstances: Dictionary = {}) -> float",
+				"update": "func update(now: int, mood: BustleMood, personality: BustlePersonality = null, circumstances: Dictionary = {}) -> Dictionary"
+			},
+			"path": "addons/bustle/modules/needs_mood/mental_state.gd",
+			"properties": {
+				"agent_id": "var agent_id: StringName",
+				"config": "var config: BustleMentalConfig",
+				"enabled": "var enabled: bool"
+			},
+			"purpose": "One agent's mental state: which of `BustleMentalConfig.states` it's in, if any, and when that starts and ends.",
+			"save": {
+				"export_state": "The state as plain data.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {
+				"state_entered": {
+					"purpose": "`agent` entered state `id`.",
+					"signature": "signal state_entered(agent: StringName, id: StringName, info: Dictionary)"
+				},
+				"state_exited": {
+					"purpose": "`agent` left state `id`: `reason` is ended, recovered, replaced (high spirits giving way to inspiration) or disabled.",
+					"signature": "signal state_exited(agent: StringName, id: StringName, reason: StringName)"
+				}
+			}
+		},
+		"BustleMentalStateDef": {
+			"addon": "bustle",
+			"constants": {
+				"BINGE": "const BINGE = 3 (enum Behaviour)",
+				"HIGH": "const HIGH = &\"high\"",
+				"HIGH_SPIRITS": "const HIGH_SPIRITS = 5 (enum Behaviour)",
+				"INDULGENCE": "const INDULGENCE = &\"indulgence\"",
+				"INSPIRED": "const INSPIRED = 6 (enum Behaviour)",
+				"LASH_OUT": "const LASH_OUT = 4 (enum Behaviour)",
+				"LOW": "const LOW = &\"low\"",
+				"NONE": "const NONE = &\"\"",
+				"SULK": "const SULK = 1 (enum Behaviour)",
+				"TARGET": "const TARGET = &\"target\"",
+				"WANDER": "const WANDER = 2 (enum Behaviour)",
+				"WITHDRAW": "const WITHDRAW = 0 (enum Behaviour)"
+			},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"duration_minutes": "func duration_minutes() -> int",
+				"is_valid": "func is_valid() -> bool",
+				"make": "static func make(p_id: StringName, p_behaviour: int, p_kind: StringName, p_weights: Dictionary[StringName, float], p_hours: float, p_needs: StringName = &\"\") -> BustleMentalStateDef"
+			},
+			"path": "addons/bustle/modules/needs_mood/mental_state_def.gd",
+			"properties": {
+				"behaviour": "var behaviour: int",
+				"duration_hours": "var duration_hours: float",
+				"id": "var id: StringName",
+				"kind": "var kind: StringName",
+				"needs": "var needs: StringName",
+				"weights": "var weights: Dictionary[StringName, float]"
+			},
+			"purpose": "One mental state, as data: what it does (`behaviour`), whether it's a low or a high state, how personality weighs it, what circumstance it needs and how long it lasts.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleModifierSet": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"has": "func has(key: StringName) -> bool",
+				"is_valid_key": "static func is_valid_key(key: StringName) -> bool",
+				"remove_source": "func remove_source(source_id: StringName) -> void",
+				"set_source": "func set_source(source_id: StringName, key: StringName, add: float = 0.0, mult: float = 1.0) -> bool",
+				"value": "func value(key: StringName, base: float) -> float"
+			},
+			"path": "addons/bustle/core/modifier_set.gd",
+			"properties": {},
+			"purpose": "Numbers that sources (a trait, a mood, an injury) add to or multiply, by key, so modules read one value without knowing where its parts came from.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleMood": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_thought": "func add_thought(def: BustleThoughtDef, details: Dictionary = {}) -> bool",
+				"advance_to": "func advance_to(now: int, asleep: bool = false) -> void",
+				"baseline": "func baseline() -> float",
+				"count": "func count(id: StringName = &\"\") -> int",
+				"export_state": "func export_state() -> Dictionary",
+				"fill_inputs": "func fill_inputs(inputs: Dictionary[StringName, float]) -> void",
+				"import_state": "func import_state(saved: Variant, defs: BustleThoughtDef[]) -> bool",
+				"is_plain": "static func is_plain(value: Variant) -> bool",
+				"mood_range": "func mood_range() -> Vector2",
+				"reasons": "func reasons() -> Dictionary[]",
+				"remove_thought": "func remove_thought(id: StringName) -> void",
+				"set_held": "func set_held(def: BustleThoughtDef, held: bool, details: Dictionary = {}) -> bool",
+				"start": "func start(now: int) -> void",
+				"sync_need_thoughts": "func sync_need_thoughts(needs: BustleNeedSet, defs: BustleThoughtDef[]) -> void",
+				"target": "func target() -> float"
+			},
+			"path": "addons/bustle/modules/needs_mood/mood.gd",
+			"properties": {
+				"config": "var config: BustleMoodConfig",
+				"emotion": "var emotion: StringName",
+				"modifiers": "var modifiers: BustleModifierSet",
+				"mood": "var mood: float",
+				"now_minutes": "var now_minutes: int"
+			},
+			"purpose": "One agent's mood and thoughts.",
+			"save": {
+				"export_state": "The mood as plain data: mood, minute, emotion and each thought's id, start, end and reason.",
+				"import_state": "Restores `export_state()`, finding each thought's def by id in `defs`."
+			},
+			"signals": {}
+		},
+		"BustleMoodConfig": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/modules/needs_mood/mood_config.gd",
+			"properties": {
+				"baseline": "var baseline: float",
+				"fall_per_hour": "var fall_per_hour: float",
+				"max_mood": "var max_mood: float",
+				"min_mood": "var min_mood: float",
+				"rise_per_hour": "var rise_per_hour: float",
+				"volatility": "var volatility: float"
+			},
+			"purpose": "How mood moves, as data.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleNeedDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"rate_under": "func rate_under(conditions: StringName[], rate_mult: float = 1.0) -> float"
+			},
+			"path": "addons/bustle/core/needs/need_def.gd",
+			"properties": {
+				"condition_rates": "var condition_rates: Dictionary[StringName, float]",
+				"curve": "var curve: Curve",
+				"id": "var id: StringName",
+				"rate_per_hour": "var rate_per_hour: float",
+				"rises_when": "var rises_when: StringName[]",
+				"start": "var start: float"
+			},
+			"purpose": "One need, as data: how fast its pressure rises (0 = fine, 1 = urgent), under which conditions, how it changes while other conditions hold, and its response curve.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleNeedSet": {
+			"addon": "bustle",
+			"constants": {
+				"ALONE": "const ALONE = &\"alone\"",
+				"CROWDED": "const CROWDED = &\"crowded\"",
+				"CROWD_TOLERANCE_KEY": "const CROWD_TOLERANCE_KEY = &\"social.crowd_tolerance\"",
+				"DEFAULT_CROWD_TOLERANCE": "const DEFAULT_CROWD_TOLERANCE = 6.0",
+				"IN_COMPANY": "const IN_COMPANY = &\"in_company\""
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_need": "func add_need(def: BustleNeedDef) -> bool",
+				"advance": "func advance(minutes: float, conditions: StringName[], modifiers: BustleModifierSet = null) -> void",
+				"apply_curves": "func apply_curves(config: BustleScoringConfig) -> void",
+				"crowd_tolerance": "static func crowd_tolerance(modifiers: BustleModifierSet) -> float",
+				"export_state": "func export_state() -> Dictionary",
+				"fill_inputs": "func fill_inputs(inputs: Dictionary[StringName, float]) -> void",
+				"has_need": "func has_need(id: StringName) -> bool",
+				"ids": "func ids() -> StringName[]",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"pressure": "func pressure(id: StringName) -> float",
+				"raise": "func raise(id: StringName, amount: float) -> void",
+				"relieve": "func relieve(id: StringName, amount: float) -> void",
+				"remove_need": "func remove_need(id: StringName) -> void",
+				"set_pressure": "func set_pressure(id: StringName, value: float) -> bool",
+				"social_conditions": "static func social_conditions(people_near: int, crowd_tolerance: float) -> StringName[]"
+			},
+			"path": "addons/bustle/core/needs/need_set.gd",
+			"properties": {},
+			"purpose": "One agent's needs: each `BustleNeedDef` and its current pressure, from 0 (fine) to 1 (urgent).",
+			"save": {
+				"export_state": "The pressures as plain data: `{\"pressures\": {id: value}}`, ids sorted.",
+				"import_state": "Restores pressures from `export_state()`."
+			},
+			"signals": {}
+		},
+		"BustleNoiseEvent": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"reaches": "func reaches(listener: Vector3, hearing_scale: float = 1.0) -> bool"
+			},
+			"path": "addons/bustle/modules/perception/noise_event.gd",
+			"properties": {
+				"position": "var position: Vector3",
+				"radius": "var radius: float",
+				"source_id": "var source_id: StringName"
+			},
+			"purpose": "A one-off sound (a thrown object landing, a lock breaking) that the project broadcasts to observers.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleNoiseModel": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"compute": "func compute(base_radius: float, surface_factor: float = 1.0, gear_factor: float = 1.0, skill: float = 0.0) -> float",
+				"event_noise": "static func event_noise(radius: float, position: Vector3 = Vector3(0, 0, 0), source_id: StringName = &\"\") -> BustleNoiseEvent"
+			},
+			"path": "addons/bustle/modules/perception/noise_model.gd",
+			"properties": {
+				"rules": "var rules: BustleStealthRules"
+			},
+			"purpose": "How far a target's noise carries, in metres: the project's movement radius × a surface factor × a gear factor, times the stealth-skill multiplier.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleNpcState": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"attach_body": "func attach_body(node: Node3D) -> void",
+				"body": "func body() -> Node3D",
+				"detach_body": "func detach_body() -> void",
+				"sync_from_body": "func sync_from_body() -> void"
+			},
+			"path": "addons/bustle/society/npc_state.gd",
+			"properties": {
+				"archetype": "var archetype: StringName",
+				"area": "var area: StringName",
+				"brain": "var brain: BustleBrain",
+				"data": "var data: Dictionary",
+				"group": "var group: StringName",
+				"has_position": "var has_position: bool",
+				"id": "var id: StringName",
+				"last_update_minute": "var last_update_minute: int",
+				"position": "var position: Vector3",
+				"protection": "var protection: int",
+				"sim_ring": "var sim_ring: int"
+			},
+			"purpose": "One agent's state, independent of any scene: who it is, where it is, its brain and its modules' data.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleOrder": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/brain/order.gd",
+			"properties": {
+				"forced": "var forced: bool",
+				"held": "var held: bool",
+				"id": "var id: StringName",
+				"option_id": "var option_id: StringName",
+				"place": "var place: StringName",
+				"position": "var position: Variant",
+				"reach": "var reach: float",
+				"sequence": "var sequence: BustleActionSequence"
+			},
+			"purpose": "A task given to an agent from outside (a player or a quest): a sequence to run, optionally on a target.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleOrderQueue": {
+			"addon": "bustle",
+			"constants": {
+				"CANCELLED": "const CANCELLED = 2 (enum Outcome)",
+				"DONE": "const DONE = 0 (enum Outcome)",
+				"FAILED": "const FAILED = 1 (enum Outcome)",
+				"IMPOSSIBLE": "const IMPOSSIBLE = 3 (enum Outcome)"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"band_of": "static func band_of(order: BustleOrder) -> int",
+				"cancel": "func cancel(order_id: StringName, reason: StringName = &\"cancelled\") -> bool",
+				"clear": "func clear(reason: StringName = &\"cancelled\") -> void",
+				"front": "func front() -> BustleOrder",
+				"ids": "func ids() -> StringName[]",
+				"is_started": "func is_started() -> bool",
+				"pause": "func pause() -> void",
+				"peek": "func peek(index: int) -> BustleOrder",
+				"refuse": "func refuse(order: BustleOrder, reason: StringName) -> StringName",
+				"run": "func run(delta: float, now_minutes: int, agent_id: StringName) -> int",
+				"submit": "func submit(order: BustleOrder, first: bool = false) -> StringName",
+				"take_results": "func take_results() -> Dictionary[]"
+			},
+			"path": "addons/bustle/core/brain/order_queue.gd",
+			"properties": {
+				"runner": "var runner: BustleSequenceRunner"
+			},
+			"purpose": "One agent's orders, first in, first out, with the runner for the front one.",
+			"save": {},
+			"signals": {
+				"finished": {
+					"purpose": "Order `order_id` ended in `outcome`, for `reason` (empty when DONE).",
+					"signature": "signal finished(order_id: StringName, outcome: int, reason: StringName)"
+				}
+			}
+		},
+		"BustlePassionDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool",
+				"score": "func score(personality: BustlePersonality) -> float"
+			},
+			"path": "addons/bustle/modules/skills/passion_def.gd",
+			"properties": {
+				"learn_mult": "var learn_mult: float",
+				"skill": "var skill: StringName",
+				"sliders": "var sliders: Dictionary[StringName, float]",
+				"thought": "var thought: Resource"
+			},
+			"purpose": "A passion for one skill, as data: how much faster an agent with it learns, which personality sliders make an agent take it up when it has no passion assigned, and an optional thought held while it does that skill's work.",
+			"save": {},
+			"signals": {}
+		},
+		"BustlePerceivable": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Node3D",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/modules/perception/perceivable.gd",
+			"properties": {
+				"actor_id": "var actor_id: StringName",
+				"carries_light": "var carries_light: bool",
+				"group": "var group: StringName",
+				"noise_radius": "var noise_radius: float",
+				"system_path": "var system_path: NodePath",
+				"visibility": "var visibility: float"
+			},
+			"purpose": "Lets its actor be sensed.",
+			"save": {},
+			"signals": {}
+		},
+		"BustlePerceiver": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Node3D",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"awareness": "func awareness() -> BustleAwarenessEntry[]",
+				"system": "func system() -> BustlePerceptionSystem"
+			},
+			"path": "addons/bustle/modules/perception/perceiver.gd",
+			"properties": {
+				"actor_id": "var actor_id: StringName",
+				"group": "var group: StringName",
+				"profile": "var profile: BustlePerceptionProfile",
+				"system_path": "var system_path: NodePath"
+			},
+			"purpose": "Gives its actor senses.",
+			"save": {},
+			"signals": {}
+		},
+		"BustlePerceptionActor": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"as_target": "func as_target() -> BustleSenseTarget",
+				"perceives": "func perceives() -> bool",
+				"period": "func period() -> float"
+			},
+			"path": "addons/bustle/modules/perception/perception_actor.gd",
+			"properties": {
+				"awareness": "var awareness: BustleAwareness",
+				"carries_light": "var carries_light: bool",
+				"forward": "var forward: Vector3",
+				"group": "var group: StringName",
+				"id": "var id: StringName",
+				"noise_radius": "var noise_radius: float",
+				"perceivable": "var perceivable: bool",
+				"position": "var position: Vector3",
+				"profile": "var profile: BustlePerceptionProfile",
+				"visibility": "var visibility: float"
+			},
+			"purpose": "One actor in a `BustlePerceptionWorld`: what others can sense of it and, if it has a `profile`, how it senses them.",
+			"save": {},
+			"signals": {}
+		},
+		"BustlePerceptionProfile": {
+			"addon": "bustle",
+			"constants": {
+				"AMBIENT": "const AMBIENT = 0 (enum SightLight)",
+				"CARRIED_LIGHT_ONLY": "const CARRIED_LIGHT_ONLY = 1 (enum SightLight)"
+			},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/modules/perception/perception_profile.gd",
+			"properties": {
+				"alert_at": "var alert_at: float",
+				"decay_rate": "var decay_rate: float",
+				"fill_rate_hearing": "var fill_rate_hearing: float",
+				"fill_rate_sight": "var fill_rate_sight: float",
+				"hearing_scale": "var hearing_scale: float",
+				"hears": "var hears: bool",
+				"lose_track_time": "var lose_track_time: float",
+				"perception_hz": "var perception_hz: float",
+				"peripheral_angle_deg": "var peripheral_angle_deg: float",
+				"search_time": "var search_time: float",
+				"sees": "var sees: bool",
+				"sight_angle_deg": "var sight_angle_deg: float",
+				"sight_light": "var sight_light: int",
+				"sight_range": "var sight_range: float",
+				"suspicious_at": "var suspicious_at: float"
+			},
+			"purpose": "How one kind of observer notices a target: what it senses, how fast its `BustleDetectionMeter` fills and empties, and when it changes state.",
+			"save": {},
+			"signals": {}
+		},
+		"BustlePerceptionSystem": {
+			"addon": "bustle",
+			"constants": {
+				"GROUP": "const GROUP = &\"bustle_perception_system\""
+			},
+			"extends": "Node",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_perceivable": "func add_perceivable(node: BustlePerceivable) -> void",
+				"add_perceiver": "func add_perceiver(node: BustlePerceiver) -> void",
+				"find": "static func find(tree: SceneTree) -> BustlePerceptionSystem",
+				"remove_component": "func remove_component(node: Node, actor_id: StringName) -> void",
+				"step": "func step(delta: float) -> void"
+			},
+			"path": "addons/bustle/modules/perception/perception_system.gd",
+			"properties": {
+				"last_tick_usec": "var last_tick_usec: int",
+				"running": "var running: bool",
+				"sight_mask": "var sight_mask: int",
+				"world": "var world: BustlePerceptionWorld"
+			},
+			"purpose": "Runs a `BustlePerceptionWorld` for a scene: `BustlePerceiver` and `BustlePerceivable` nodes register with it, it copies their state into the world each physics frame, ticks the world and casts the sight rays with physics.",
+			"save": {},
+			"signals": {
+				"perception_changed": {
+					"purpose": "A perceiver's awareness of a target changed state (the world's signal, passed on).",
+					"signature": "signal perception_changed(perceiver_id: StringName, target_id: StringName, old_state: int, new_state: int)"
+				}
+			}
+		},
+		"BustlePerceptionWorld": {
+			"addon": "bustle",
+			"constants": {
+				"NOISE_ID": "const NOISE_ID = &\"noise\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"line_of_sight": {
+					"purpose": "`func(from: Vector3, to: Vector3, perceiver_id: StringName, target_id: StringName) -> bool`: true when nothing blocks the view.",
+					"signature": "var line_of_sight: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"actor": "func actor(id: StringName) -> BustlePerceptionActor",
+				"actor_ids": "func actor_ids() -> StringName[]",
+				"add_actor": "func add_actor(actor: BustlePerceptionActor) -> BustlePerceptionActor",
+				"awareness": "func awareness(perceiver_id: StringName) -> BustleAwarenessEntry[]",
+				"broadcast": "func broadcast(event: BustleNoiseEvent, source_id: StringName = &\"\") -> int",
+				"disposition_between": "func disposition_between(a_id: StringName, b_id: StringName) -> int",
+				"known_nearby": "func known_nearby(perceiver_id: StringName, radius: float) -> StringName[]",
+				"known_with": "func known_with(perceiver_id: StringName, wanted: int) -> StringName[]",
+				"last_known": "func last_known(perceiver_id: StringName, target_id: StringName) -> Variant",
+				"perceivers_of": "func perceivers_of(target_id: StringName) -> StringName[]",
+				"perceives": "func perceives(perceiver_id: StringName, target_id: StringName) -> bool",
+				"remove_actor": "func remove_actor(id: StringName) -> void",
+				"reschedule": "func reschedule(id: StringName) -> void",
+				"sense": "func sense(perceiver: BustlePerceptionActor, delta: float) -> void",
+				"tick": "func tick(delta: float) -> void"
+			},
+			"path": "addons/bustle/modules/perception/perception_world.gd",
+			"properties": {
+				"disposition": "var disposition: BustleDispositionPort",
+				"rays_last_tick": "var rays_last_tick: int",
+				"sensed_last_tick": "var sensed_last_tick: int"
+			},
+			"purpose": "Every actor's senses in one place, with the same rules for whoever looks and whoever is looked at.",
+			"save": {},
+			"signals": {
+				"perception_changed": {
+					"purpose": "A perceiver's awareness of a target changed state.",
+					"signature": "signal perception_changed(perceiver_id: StringName, target_id: StringName, old_state: int, new_state: int)"
+				}
+			}
+		},
+		"BustlePersonality": {
+			"addon": "bustle",
+			"constants": {
+				"ALREADY": "const ALREADY = &\"already\"",
+				"EXCLUDED": "const EXCLUDED = &\"excluded\"",
+				"FULL": "const FULL = &\"full\"",
+				"INVALID": "const INVALID = &\"invalid\"",
+				"MAX_TRAITS": "const MAX_TRAITS = 3",
+				"OK": "const OK = &\"\"",
+				"SLIDERS": "const SLIDERS = Array[StringName]([&\"sociability\", &\"boldness\", &\"diligence\", &\"greed\", &\"piety\", &\"temper\", &\"honesty\", &\"curiosity\"])"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_trait": "func add_trait(def: BustleTraitDef) -> StringName",
+				"apply": "func apply(modifiers: BustleModifierSet, needs: BustleNeedSet = null, library: BustleGoalLibrary = null, mood: Object = null) -> void",
+				"can_add": "func can_add(def: BustleTraitDef) -> StringName",
+				"export_state": "func export_state() -> Dictionary",
+				"fill_inputs": "func fill_inputs(inputs: Dictionary[StringName, float]) -> void",
+				"has_trait": "func has_trait(id: StringName) -> bool",
+				"import_state": "func import_state(saved: Variant, defs: BustleTraitDef[]) -> bool",
+				"remove_trait": "func remove_trait(id: StringName) -> void",
+				"set_slider": "func set_slider(name: StringName, value: float) -> bool",
+				"slider": "func slider(name: StringName) -> float",
+				"traits": "func traits() -> BustleTraitDef[]"
+			},
+			"path": "addons/bustle/core/personality/personality.gd",
+			"properties": {},
+			"purpose": "One agent's personality: 8 sliders every agent has, from 0 to 100 (50 is average), and up to `MAX_TRAITS` traits on top.",
+			"save": {
+				"export_state": "The sliders and trait ids as plain data.",
+				"import_state": "Restores `export_state()`, finding traits by id in `defs`."
+			},
+			"signals": {}
+		},
+		"BustlePointLightProbe": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleLightProbe",
+			"hooks": {
+				"occluded": {
+					"purpose": "Optional: `func(from: Vector3, to: Vector3) -> bool`, true when something blocks the light from a source at `from` to the sample point `to`.",
+					"signature": "var occluded: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"add_source": "func add_source(source: BustleLightSource) -> BustleLightSource",
+				"remove_source": "func remove_source(source: BustleLightSource) -> void",
+				"sample": "func sample(position: Vector3) -> BustleLightSample"
+			},
+			"path": "addons/bustle/modules/perception/point_light_probe.gd",
+			"properties": {
+				"ambient": "var ambient: float",
+				"sources": "var sources: BustleLightSource[]"
+			},
+			"purpose": "An ambient level plus point sources.",
+			"save": {},
+			"signals": {}
+		},
+		"BustlePorts": {
+			"addon": "bustle",
+			"constants": {
+				"NAMES": "const NAMES = PackedStringArray(\"social\", \"roles\", \"world\", \"clock\", \"combat\", \"trade\", \"disposition\", \"work\", \"skills\", \"life_stages\", \"health\", \"environment\", \"director\", \"property\")"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"missing": "func missing() -> PackedStringArray"
+			},
+			"path": "addons/bustle/ports/ports.gd",
+			"properties": {
+				"clock": "var clock: BustleClockPort",
+				"combat": "var combat: BustleCombatPort",
+				"director": "var director: BustleDirectorPort",
+				"disposition": "var disposition: BustleDispositionPort",
+				"environment": "var environment: BustleEnvironmentPort",
+				"health": "var health: BustleHealthPort",
+				"life_stages": "var life_stages: BustleLifeStagePort",
+				"property": "var property: BustlePropertyPort",
+				"roles": "var roles: BustleRolesPort",
+				"skills": "var skills: BustleSkillSet",
+				"social": "var social: BustleSocialPort",
+				"trade": "var trade: BustleTradePort",
+				"work": "var work: BustleWorkPort",
+				"world": "var world: BustleWorldPort"
+			},
+			"purpose": "One of each port, starting with every standalone default, so Bustle runs with no host.",
+			"save": {},
+			"signals": {}
+		},
+		"BustlePropertyPort": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"is_protected": "func is_protected(id: StringName) -> bool",
+				"item": "func item(id: StringName) -> Dictionary",
+				"items_at": "func items_at(place: StringName) -> Dictionary[]",
+				"items_of": "func items_of(owner_id: StringName) -> Dictionary[]",
+				"owner_of": "func owner_of(id: StringName) -> StringName",
+				"register": "func register(id: StringName, owner_id: StringName, place: StringName, relieves: Dictionary = {}, protected: bool = false) -> bool",
+				"remove": "func remove(id: StringName) -> bool",
+				"set_protected": "func set_protected(id: StringName, protected: bool) -> bool",
+				"transfer": "func transfer(id: StringName, from: StringName, to: StringName) -> bool"
+			},
+			"path": "addons/bustle/ports/property_port.gd",
+			"properties": {},
+			"purpose": "Who owns which things, and where they are.",
+			"save": {
+				"export_state": "The register as plain data, by id.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {}
+		},
+		"BustleRelationshipRules": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/society/relationship_rules.gd",
+			"properties": {
+				"friend_at": "var friend_at: float",
+				"friend_kind": "var friend_kind: StringName",
+				"friend_release": "var friend_release: float",
+				"min_deeds": "var min_deeds: int",
+				"rival_at": "var rival_at: float",
+				"rival_kind": "var rival_kind: StringName",
+				"rival_release": "var rival_release: float",
+				"window_days": "var window_days: float"
+			},
+			"purpose": "When repeated deeds make one agent count another a friend or a rival, as data.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleRoleSchedules": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/schedules/role_schedules.gd",
+			"properties": {
+				"employers": "var employers: Dictionary[StringName, StringName]",
+				"schedules": "var schedules: Dictionary[StringName, BustleScheduleDef]"
+			},
+			"purpose": "Jobs as roles, as data: the routine that comes with each role, and who pays its wages.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleRoleTable": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/ports/role_table.gd",
+			"properties": {
+				"holders": "var holders: Dictionary[StringName, StringName]"
+			},
+			"purpose": "Who holds each role at the start, for the default `BustleRolesPort`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleRolesPort": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"holder_of": "func holder_of(role: StringName) -> StringName",
+				"roles_of": "func roles_of(id: StringName) -> PackedStringArray",
+				"set_holder": "func set_holder(role: StringName, id: StringName) -> void"
+			},
+			"path": "addons/bustle/ports/roles_port.gd",
+			"properties": {},
+			"purpose": "Who holds which role (a job or an office).",
+			"save": {},
+			"signals": {
+				"holder_changed": {
+					"purpose": "`role` passed from `old` to `new` (either may be empty).",
+					"signature": "signal holder_changed(role: StringName, old: StringName, new: StringName)"
+				}
+			}
+		},
+		"BustleRomance": {
+			"addon": "bustle",
+			"constants": {
+				"COURTING": "const COURTING = &\"courting\"",
+				"ENGAGED": "const ENGAGED = &\"engaged\"",
+				"FAMILY": "const FAMILY = Dictionary[StringName, StringName]({&\"child\": &\"parent\", &\"in_law\": &\"in_law\", &\"parent\": &\"child\", &\"sibling\": &\"sibling\"})",
+				"LADDER": "const LADDER = Array[StringName]([&\"courting\", &\"partner\", &\"engaged\", &\"married\"])",
+				"MARRIED": "const MARRIED = &\"married\"",
+				"PARTNER": "const PARTNER = &\"partner\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"compatibility": {
+					"purpose": "`func(a, b) -> float`, their compatibility from -1 to 1.",
+					"signature": "var compatibility: Callable"
+				},
+				"confirm_hook": {
+					"purpose": "`func(a, b, status) -> bool`: the host approves engaged or married.",
+					"signature": "var confirm_hook: Callable"
+				},
+				"ratings_policy": {
+					"purpose": "`func(a, b, status) -> bool`: the host's own rules (age, rating, setting) for every step up the ladder, automatic or requested, asked before anything changes.",
+					"signature": "var ratings_policy: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"bonded_to": "func bonded_to(id: StringName, at_least: StringName = &\"partner\") -> StringName",
+				"compatibility_of": "func compatibility_of(a: StringName, b: StringName) -> float",
+				"end": "func end(a: StringName, b: StringName, now: int, mood_a: Object = null, mood_b: Object = null) -> bool",
+				"export_state": "func export_state() -> Dictionary",
+				"history_of": "func history_of(a: StringName, b: StringName) -> Dictionary[]",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"link_family": "func link_family(a: StringName, b: StringName, relation: StringName) -> bool",
+				"may_court": "func may_court(a: StringName, b: StringName) -> bool",
+				"notice": "func notice(actor: StringName, verb: StringName, target: StringName, mood_of: Callable = Callable()) -> bool",
+				"request": "func request(a: StringName, b: StringName, status: StringName, now: int) -> bool",
+				"since_of": "func since_of(a: StringName, b: StringName) -> int",
+				"status_of": "func status_of(a: StringName, b: StringName) -> StringName",
+				"unlink_family": "func unlink_family(a: StringName, b: StringName, relation: StringName) -> bool",
+				"update": "func update(a: StringName, b: StringName, now: int, mood_a: Object = null, mood_b: Object = null) -> StringName",
+				"update_all": "func update_all(ids: StringName[], now: int, mood_of: Callable = Callable()) -> void"
+			},
+			"path": "addons/bustle/modules/romance/romance.gd",
+			"properties": {
+				"rules": "var rules: BustleRomanceRules",
+				"social": "var social: BustleSocialPort",
+				"world_seed": "var world_seed: int"
+			},
+			"purpose": "The romance module: the courtship ladder of none, courting, partner, engaged and married.",
+			"save": {
+				"export_state": "Every pair's status, since, history and whether it is armed to court again (false after a breakup until its lower opinion has been below the courting release line), as plain data, keyed by pair; and the jealousy felt over opinions under `jealousy`.",
+				"import_state": "Restores `export_state()`, replacing every pair."
+			},
+			"signals": {
+				"jealous": {
+					"purpose": "`agent` got jealous because its `partner` took to `rival`; `cause` is `opinion` or the interaction's id.",
+					"signature": "signal jealous(agent: StringName, partner: StringName, rival: StringName, cause: StringName)"
+				},
+				"status_changed": {
+					"purpose": "A pair's status changed from `old` to `new` (empty: none).",
+					"signature": "signal status_changed(a: StringName, b: StringName, old: StringName, new: StringName, reason: StringName)"
+				}
+			}
+		},
+		"BustleRomanceRules": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool"
+			},
+			"path": "addons/bustle/modules/romance/romance_rules.gd",
+			"properties": {
+				"affairs_enabled": "var affairs_enabled: bool",
+				"blocked_kinds": "var blocked_kinds: StringName[]",
+				"breakup_thought": "var breakup_thought: Resource",
+				"courting_compat": "var courting_compat: float",
+				"courting_opinion": "var courting_opinion: int",
+				"courting_release": "var courting_release: int",
+				"history_limit": "var history_limit: int",
+				"jealousy_opinion": "var jealousy_opinion: int",
+				"jealousy_opinion_days": "var jealousy_opinion_days: float",
+				"jealousy_opinion_value": "var jealousy_opinion_value: float",
+				"jealousy_release": "var jealousy_release: int",
+				"jealousy_thought": "var jealousy_thought: Resource",
+				"jealousy_verbs": "var jealousy_verbs: StringName[]",
+				"partner_days": "var partner_days: float",
+				"partner_opinion": "var partner_opinion: int",
+				"partner_release": "var partner_release: int"
+			},
+			"purpose": "The lines of the courtship ladder, for `BustleRomance`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleRoomThought": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_high": "func is_high() -> bool",
+				"is_valid": "func is_valid() -> bool",
+				"matches": "func matches(value: float) -> bool"
+			},
+			"path": "addons/bustle/modules/environment/room_thought.gd",
+			"properties": {
+				"at_least": "var at_least: float",
+				"at_most": "var at_most: float",
+				"score": "var score: StringName",
+				"thought": "var thought: Resource"
+			},
+			"purpose": "One environment thought rule, as data: while an agent is in a room whose `score` is at least `at_least` (a high rule) or at most `at_most` (a low rule), it holds `thought`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleRoomThoughts": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_rule": "func add_rule(rule: BustleRoomThought) -> bool",
+				"chosen": "func chosen(room: StringName) -> BustleRoomThought[]",
+				"export_state": "func export_state() -> Dictionary",
+				"forget": "func forget(id: StringName, mood: Object = null) -> void",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"room_of": "func room_of(id: StringName) -> StringName",
+				"sync": "func sync(id: StringName, mood: Object = null) -> StringName[]",
+				"thoughts_of": "func thoughts_of(id: StringName) -> StringName[]"
+			},
+			"path": "addons/bustle/modules/environment/room_thoughts.gd",
+			"properties": {
+				"ports": "var ports: BustlePorts"
+			},
+			"purpose": "The environment module: thoughts from the room an agent is in.",
+			"save": {
+				"export_state": "What each agent was last synced to, as plain data: `{agent: {room, thoughts}}`, sorted.",
+				"import_state": "Restores `export_state()`, replacing what's kept."
+			},
+			"signals": {
+				"room_changed": {
+					"purpose": "`id` moved from `old_room` to `new_room` (empty: no room) as of the last sync.",
+					"signature": "signal room_changed(id: StringName, old_room: StringName, new_room: StringName)"
+				}
+			}
+		},
+		"BustleSchedule": {
+			"addon": "bustle",
+			"constants": {
+				"FREE_TIME": "const FREE_TIME = &\"schedule.free_time\"",
+				"KEEP_DAYS": "const KEEP_DAYS = 7",
+				"LATE": "const LATE = &\"late\"",
+				"ON_TIME": "const ON_TIME = &\"on_time\""
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"activities": "func activities() -> StringName[]",
+				"attend": "func attend(now: int, activity: StringName, season: StringName = &\"\") -> StringName",
+				"attended_now": "func attended_now(now: int, season: StringName = &\"\") -> bool",
+				"block_at": "func block_at(now: int, season: StringName = &\"\") -> Dictionary",
+				"export_state": "func export_state() -> Dictionary",
+				"fill_inputs": "func fill_inputs(inputs: Dictionary[StringName, float], now: int, season: StringName = &\"\") -> void",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"occurrences": "func occurrences(day_index: int, season: StringName = &\"\") -> Dictionary[]",
+				"report": "func report(day_index: int, now: int, season: StringName = &\"\", activity: StringName = &\"\") -> Dictionary",
+				"set_def": "func set_def(new_def: BustleScheduleDef) -> void",
+				"settle": "func settle(now: int, agent: StringName, trade: BustleTradePort, employer: StringName = &\"\") -> Dictionary[]"
+			},
+			"path": "addons/bustle/core/schedules/schedule.gd",
+			"properties": {
+				"def": "var def: BustleScheduleDef",
+				"employer": "var employer: StringName",
+				"wages": "var wages: Dictionary[StringName, int]"
+			},
+			"purpose": "One agent's routine in play: which block of its `BustleScheduleDef` is current, the scorer's `schedule.*` inputs, and attendance.",
+			"save": {
+				"export_state": "The attendance as plain data: `{\"attended\": {start: {activity, arrived, end, wage, payer, paid}}}`.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {}
+		},
+		"BustleScheduleBlock": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool",
+				"length": "func length() -> int"
+			},
+			"path": "addons/bustle/core/schedules/schedule_block.gd",
+			"properties": {
+				"activity": "var activity: StringName",
+				"end_minute": "var end_minute: int",
+				"late_minutes": "var late_minutes: int",
+				"payer": "var payer: StringName",
+				"place": "var place: StringName",
+				"start_minute": "var start_minute: int",
+				"wage": "var wage: int"
+			},
+			"purpose": "One block of a day's schedule: an activity from one minute of the day to another, at a place.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleScheduleDay": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/schedules/schedule_day.gd",
+			"properties": {
+				"blocks": "var blocks: BustleScheduleBlock[]"
+			},
+			"purpose": "One day's blocks, for a `BustleScheduleDef`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleScheduleDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool",
+				"plan_for": "func plan_for(day_index: int, season: StringName = &\"\") -> BustleScheduleDay",
+				"weekday": "func weekday(day_index: int) -> int"
+			},
+			"path": "addons/bustle/core/schedules/schedule_def.gd",
+			"properties": {
+				"day": "var day: BustleScheduleDay",
+				"id": "var id: StringName",
+				"late_minutes": "var late_minutes: int",
+				"seasons": "var seasons: Dictionary[StringName, BustleScheduleDay]",
+				"week_length": "var week_length: int",
+				"week_offset": "var week_offset: int",
+				"weekdays": "var weekdays: Dictionary[int, BustleScheduleDay]"
+			},
+			"purpose": "A routine, as data: a default day, with whole-day overrides by weekday (a rest day, a market day) and by season.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleScheduleRoster": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_agent": "func add_agent(id: StringName, own: BustleScheduleDef = null) -> void",
+				"export_state": "func export_state() -> Dictionary",
+				"ids": "func ids() -> StringName[]",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"job_of": "func job_of(id: StringName) -> StringName",
+				"refresh_all": "func refresh_all() -> void",
+				"remove_agent": "func remove_agent(id: StringName) -> void",
+				"schedule_of": "func schedule_of(id: StringName) -> BustleSchedule",
+				"set_own": "func set_own(id: StringName, own: BustleScheduleDef) -> void",
+				"settle": "func settle(now: int, trade: BustleTradePort) -> Dictionary[]"
+			},
+			"path": "addons/bustle/core/schedules/schedule_roster.gd",
+			"properties": {
+				"jobs": "var jobs: BustleRoleSchedules",
+				"roles": "var roles: BustleRolesPort"
+			},
+			"purpose": "Every agent's `BustleSchedule`, chosen by job.",
+			"save": {
+				"export_state": "Every agent's attendance as plain data, by id.",
+				"import_state": "Restores `export_state()` for the agents it has (others are skipped)."
+			},
+			"signals": {
+				"schedule_changed": {
+					"purpose": "`id`'s routine changed from `old_def` to `new_def` (either may be null).",
+					"signature": "signal schedule_changed(id: StringName, old_def: BustleScheduleDef, new_def: BustleScheduleDef)"
+				}
+			}
+		},
+		"BustleScoringConfig": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {
+				"expected_thought_gain": {
+					"purpose": "An optional preview of how an option would make the agent feel: `func(ad: BustleAdvertisement, context: BustleScoreContext) -> float`.",
+					"signature": "var expected_thought_gain: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/brain/scoring_config.gd",
+			"properties": {
+				"distance_curve": "var distance_curve: Curve",
+				"mood_curves": "var mood_curves: Dictionary[StringName, Curve]",
+				"need_curves": "var need_curves: Dictionary[StringName, Curve]",
+				"pick_window": "var pick_window: float"
+			},
+			"purpose": "The scorer's curves and settings.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleSenseTarget": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/modules/perception/sense_target.gd",
+			"properties": {
+				"carries_light": "var carries_light: bool",
+				"line_of_sight": "var line_of_sight: bool",
+				"noise_radius": "var noise_radius: float",
+				"position": "var position: Vector3",
+				"visibility": "var visibility: float"
+			},
+			"purpose": "What the project reports about one target to one observer each tick.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleSenses": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/brain/senses.gd",
+			"properties": {
+				"advertisements": "var advertisements: BustleAdvertisement[]",
+				"inputs": "var inputs: Dictionary[StringName, float]",
+				"now_minutes": "var now_minutes: int"
+			},
+			"purpose": "What a `BustleBrain` is told on one tick: the game time, the agent's input values (already normalised, see `BustleInputs`) and the options it knows of.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleSequenceRunner": {
+			"addon": "bustle",
+			"constants": {
+				"FAILED": "const FAILED = 3 (enum State)",
+				"IDLE": "const IDLE = 0 (enum State)",
+				"INTERRUPTED": "const INTERRUPTED = 4 (enum State)",
+				"RUNNING": "const RUNNING = 1 (enum State)",
+				"SUCCEEDED": "const SUCCEEDED = 2 (enum State)"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"cancel": "func cancel() -> void",
+				"export_state": "func export_state() -> Dictionary",
+				"has_handler": "func has_handler(action: StringName) -> bool",
+				"import_state": "func import_state(p_sequence: BustleActionSequence, saved: Dictionary) -> bool",
+				"interrupt": "func interrupt() -> void",
+				"register": "func register(action: StringName, handler: BustleActionHandler) -> void",
+				"resume": "func resume(now_minutes: int) -> void",
+				"share_handlers_with": "func share_handlers_with(source: BustleSequenceRunner) -> void",
+				"start": "func start(p_sequence: BustleActionSequence, agent_id: StringName, now_minutes: int, option_id: StringName = &\"\") -> void",
+				"tick": "func tick(delta: float, now_minutes: int) -> int"
+			},
+			"path": "addons/bustle/core/brain/actions/sequence_runner.gd",
+			"properties": {
+				"attempt": "var attempt: int",
+				"context": "var context: BustleActionContext",
+				"failure": "var failure: Dictionary",
+				"sequence": "var sequence: BustleActionSequence",
+				"state": "var state: int",
+				"step_index": "var step_index: int"
+			},
+			"purpose": "Runs one `BustleActionSequence` for one agent, a step at a time, with registered `BustleActionHandler`s.",
+			"save": {
+				"export_state": "The runner's state as plain data.",
+				"import_state": "Restores `export_state()`'s state for `p_sequence`, the same sequence it was saved with."
+			},
+			"signals": {}
+		},
+		"BustleSimRingConfig": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/rings/sim_ring_config.gd",
+			"properties": {
+				"catch_up_cap_game_days": "var catch_up_cap_game_days: int",
+				"full_brain_hz": "var full_brain_hz: float",
+				"full_radius": "var full_radius: float",
+				"full_whole_interior": "var full_whole_interior: bool",
+				"hysteresis": "var hysteresis: float",
+				"light_rate_hz": "var light_rate_hz: float",
+				"light_to_offscreen_delay_seconds": "var light_to_offscreen_delay_seconds: float",
+				"manage_bodies": "var manage_bodies: bool",
+				"max_full_bodies": "var max_full_bodies: int",
+				"max_full_bodies_interior": "var max_full_bodies_interior: int",
+				"min_dwell_seconds": "var min_dwell_seconds: float",
+				"no_pop_in_distance": "var no_pop_in_distance: float",
+				"offscreen_interval_game_minutes": "var offscreen_interval_game_minutes: int",
+				"resort_hz": "var resort_hz: float",
+				"resort_move": "var resort_move: float"
+			},
+			"purpose": "How agents are sorted into simulation rings (see `BustleSimRings`).",
+			"save": {},
+			"signals": {}
+		},
+		"BustleSimRings": {
+			"addon": "bustle",
+			"constants": {
+				"AWAY": "const AWAY = 2 (enum _Zone)",
+				"FULL": "const FULL = 0 (enum Ring)",
+				"HERE": "const HERE = 0 (enum _Zone)",
+				"LIGHT": "const LIGHT = 1 (enum Ring)",
+				"NEAR": "const NEAR = 1 (enum _Zone)",
+				"OFF_SCREEN": "const OFF_SCREEN = 2 (enum Ring)"
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"senses_provider": {
+					"purpose": "`func(id: StringName, ring: Ring, minute: int) -> BustleSenses`, what an agent senses when its brain thinks in `tick()` or `catch_up()`.",
+					"signature": "var senses_provider: Callable"
+				},
+				"summary_hook": {
+					"purpose": "`func(id: StringName, report: Dictionary) -> void`, called when catch-up skipped time beyond the cap, so modules can apply what the skipped time did in summary.",
+					"signature": "var summary_hook: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"catch_up": "func catch_up(id: StringName) -> Dictionary",
+				"counts": "func counts() -> Dictionary",
+				"entered_minutes": "func entered_minutes(id: StringName) -> int",
+				"request_sort": "func request_sort() -> void",
+				"ring_of": "func ring_of(id: StringName) -> int",
+				"tick": "func tick(delta: float) -> void",
+				"update": "func update(delta: float) -> void"
+			},
+			"path": "addons/bustle/core/rings/sim_rings.gd",
+			"properties": {
+				"config": "var config: BustleSimRingConfig",
+				"last_held_by_cap": "var last_held_by_cap: int",
+				"last_sorted": "var last_sorted: bool",
+				"last_timings": "var last_timings: Dictionary",
+				"society": "var society: BustleSociety"
+			},
+			"purpose": "Sorts a society's agents into simulation rings by where they are relative to the player, using the society's world and clock ports, and runs each ring.",
+			"save": {},
+			"signals": {
+				"body_freed": {
+					"purpose": "Agent `id`'s body was freed.",
+					"signature": "signal body_freed(id: StringName)"
+				},
+				"body_spawned": {
+					"purpose": "Agent `id` got a body at `position`; `moved` when that isn't its last position (it would have appeared in view).",
+					"signature": "signal body_spawned(id: StringName, position: Vector3, moved: bool)"
+				},
+				"caught_up": {
+					"purpose": "Agent `id` was caught up; see `catch_up()` for `report`.",
+					"signature": "signal caught_up(id: StringName, report: Dictionary)"
+				},
+				"ring_changed": {
+					"purpose": "Agent `id` moved from ring `old` to `new`.",
+					"signature": "signal ring_changed(id: StringName, old: int, new: int)"
+				}
+			}
+		},
+		"BustleSkillDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"cost_of": "func cost_of(band: int) -> float",
+				"is_valid": "func is_valid() -> bool",
+				"level_for": "func level_for(xp: float) -> float",
+				"max_xp": "func max_xp() -> float",
+				"xp_for": "func xp_for(level: float) -> float"
+			},
+			"path": "addons/bustle/modules/skills/skill_def.gd",
+			"properties": {
+				"decay_floor": "var decay_floor: float",
+				"decay_per_day": "var decay_per_day: float",
+				"id": "var id: StringName",
+				"max_level": "var max_level: int",
+				"quality_add": "var quality_add: float",
+				"speed_add": "var speed_add: float",
+				"xp_curve": "var xp_curve: float[]"
+			},
+			"purpose": "One skill, as data: its id, its top level, how much practice each level costs, how it fades and how much it speeds and improves work.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleSkillSet": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"level": "func level(_id: StringName, _skill: StringName) -> float"
+			},
+			"path": "addons/bustle/ports/skill_set.gd",
+			"properties": {},
+			"purpose": "Skill levels.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleSkills": {
+			"addon": "bustle",
+			"constants": {
+				"SOURCE": "const SOURCE = &\"skills\""
+			},
+			"extends": "BustleSkillSet",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_def": "func add_def(def: BustleSkillDef) -> bool",
+				"add_passion_def": "func add_passion_def(def: BustlePassionDef) -> bool",
+				"add_xp": "func add_xp(id: StringName, skill: StringName, amount: float, personality: BustlePersonality = null) -> bool",
+				"advance": "func advance(id: StringName, minutes: int) -> bool",
+				"agent_ids": "func agent_ids() -> StringName[]",
+				"apply": "func apply(id: StringName, modifiers: BustleModifierSet, using_skill: StringName = &\"\", personality: BustlePersonality = null, mood: Object = null) -> void",
+				"assign_passion": "func assign_passion(id: StringName, skill: StringName) -> bool",
+				"assigned_passions": "func assigned_passions(id: StringName) -> StringName[]",
+				"def_of": "func def_of(skill: StringName) -> BustleSkillDef",
+				"derived_passions": "func derived_passions(personality: BustlePersonality) -> StringName[]",
+				"export_state": "func export_state() -> Dictionary",
+				"forget": "func forget(id: StringName) -> void",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"level": "func level(id: StringName, skill: StringName) -> float",
+				"passion_def_of": "func passion_def_of(skill: StringName) -> BustlePassionDef",
+				"passion_of": "func passion_of(id: StringName, skill: StringName, personality: BustlePersonality = null) -> BustlePassionDef",
+				"passions_of": "func passions_of(id: StringName, personality: BustlePersonality = null) -> StringName[]",
+				"remove_passion": "func remove_passion(id: StringName, skill: StringName) -> void",
+				"set_level": "func set_level(id: StringName, skill: StringName, new_level: float) -> bool",
+				"skill_ids": "func skill_ids() -> StringName[]",
+				"xp_of": "func xp_of(id: StringName, skill: StringName) -> float"
+			},
+			"path": "addons/bustle/modules/skills/skills.gd",
+			"properties": {
+				"max_derived_passions": "var max_derived_passions: int",
+				"passion_min_score": "var passion_min_score: float"
+			},
+			"purpose": "The skills module: skill levels that grow with practice and fade without it.",
+			"save": {
+				"export_state": "Every agent's XP per skill and assigned passions, as plain data: `{\"xp\": {agent: {skill: xp}}, \"passions\": {agent: [skill, ...]}}`.",
+				"import_state": "Restores `export_state()`, replacing what's kept now."
+			},
+			"signals": {}
+		},
+		"BustleSocialInteractions": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {
+				"mood_of": {
+					"purpose": "(id) → that agent's mood (anything with a `mood` number and `add_thought`), or null.",
+					"signature": "var mood_of: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"can_greet": "func can_greet(initiator: StringName, recipient: StringName, now: int) -> bool",
+				"export_state": "func export_state() -> Dictionary",
+				"greet": "func greet(initiator: StringName, recipient: StringName, now: int, place: StringName = &\"\", witnesses: Dictionary[] = []) -> Dictionary",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"interact": "func interact(def: BustleInteractionDef, initiator: StringName, recipient: StringName, now: int, place: StringName = &\"\", witnesses: Dictionary[] = []) -> Dictionary",
+				"outcome": "static func outcome(def: BustleInteractionDef, initiator: StringName, recipient: StringName, now: int, world_seed: int, compatibility: float, initiator_mood: float = -1.0, recipient_mood: float = -1.0) -> Dictionary"
+			},
+			"path": "addons/bustle/society/social_interactions.gd",
+			"properties": {
+				"agent_cooldown_minutes": "var agent_cooldown_minutes: int",
+				"greeting": "var greeting: BustleInteractionDef",
+				"pair_cooldown_minutes": "var pair_cooldown_minutes: int",
+				"store": "var store: BustleSocialPort",
+				"world_seed": "var world_seed: int"
+			},
+			"purpose": "Greetings and interactions between agents, recorded through a social port: give it the society's (`society.ports.social`), so they land wherever that port keeps them.",
+			"save": {
+				"export_state": "The greeting cooldowns that are still running at the store's minute (with another port, at the latest minute an interaction was recorded at), as plain data.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {}
+		},
+		"BustleSocialPort": {
+			"addon": "bustle",
+			"constants": {
+				"NEUTRAL_OPINION": "const NEUTRAL_OPINION = 50"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"clear_kind": "func clear_kind(_a: StringName, _b: StringName, _kind: StringName) -> void",
+				"kinds_between": "func kinds_between(_a: StringName, _b: StringName) -> PackedStringArray",
+				"knows": "func knows(agent: StringName, key: StringName) -> bool",
+				"opinion": "func opinion(_a: StringName, _b: StringName) -> int",
+				"reasons": "func reasons(_a: StringName, _b: StringName, _max: int = 3) -> Dictionary[]",
+				"record_deed": "func record_deed(actor: StringName, verb: StringName, target: StringName, place: StringName, witnesses: Dictionary[], _magnitude: float = 1.0, _return_magnitude: float = 0.0) -> StringName",
+				"set_kind": "func set_kind(_a: StringName, _b: StringName, _kind: StringName) -> void",
+				"share_news": "func share_news(teller: StringName, listener: StringName, _place: StringName) -> int",
+				"supports_kinds": "func supports_kinds() -> bool"
+			},
+			"path": "addons/bustle/ports/social_port.gd",
+			"properties": {},
+			"purpose": "How agents feel about each other and what they know of each other's deeds.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleSocialStore": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleSocialPort",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_opinion": "func add_opinion(a: StringName, b: StringName, value: float, reason: Dictionary, days: float) -> bool",
+				"clear_kind": "func clear_kind(a: StringName, b: StringName, kind: StringName) -> void",
+				"deeds_of": "func deeds_of(agent: StringName, count: int = 5) -> Dictionary[]",
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"kinds_between": "func kinds_between(a: StringName, b: StringName) -> PackedStringArray",
+				"opinion": "func opinion(a: StringName, b: StringName) -> int",
+				"opinion_value": "func opinion_value(a: StringName, b: StringName) -> float",
+				"opinions_of": "func opinions_of(agent: StringName, count: int = 3) -> Dictionary[]",
+				"reasons": "func reasons(a: StringName, b: StringName, count: int = 3) -> Dictionary[]",
+				"set_kind": "func set_kind(a: StringName, b: StringName, kind: StringName) -> void",
+				"set_time": "func set_time(now: int) -> void",
+				"supports_kinds": "func supports_kinds() -> bool",
+				"update_kinds": "func update_kinds(a: StringName, b: StringName) -> void"
+			},
+			"path": "addons/bustle/society/social_store.gd",
+			"properties": {
+				"now_minutes": "var now_minutes: int",
+				"rules": "var rules: BustleRelationshipRules"
+			},
+			"purpose": "The built-in social store: a `BustleSocialPort` that keeps opinions with reasons and relationship kinds, for hosts without a social engine of their own.",
+			"save": {
+				"export_state": "Opinions, kinds and deeds as plain data.",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {
+				"kind_changed": {
+					"purpose": "`a`'s kind `kind` towards `b` formed (`formed` true) or lapsed.",
+					"signature": "signal kind_changed(a: StringName, b: StringName, kind: StringName, formed: bool)"
+				}
+			}
+		},
+		"BustleSociety": {
+			"addon": "bustle",
+			"constants": {
+				"SCHEMA": "const SCHEMA = 1"
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"add_agent": "func add_agent(id: StringName, archetype_id: StringName, group: StringName = &\"\") -> BustleNpcState",
+				"agent_ids": "func agent_ids() -> StringName[]",
+				"cancel_order": "func cancel_order(agent_id: StringName, order_id: StringName) -> bool",
+				"export_state": "func export_state() -> Dictionary",
+				"get_agent": "func get_agent(id: StringName) -> BustleNpcState",
+				"has_archetype": "func has_archetype(id: StringName) -> bool",
+				"import_state": "func import_state(saved: Variant) -> BustleImportReport",
+				"is_locked": "func is_locked(id: StringName) -> bool",
+				"is_protected": "func is_protected(id: StringName) -> bool",
+				"lock": "func lock(id: StringName, p_lock: BustleLock) -> bool",
+				"lock_ids": "func lock_ids(id: StringName) -> StringName[]",
+				"lock_order_id": "static func lock_order_id(id: StringName) -> StringName",
+				"order": "func order(agent_id: StringName, p_order: BustleOrder) -> StringName",
+				"register_archetype": "func register_archetype(id: StringName, library: BustleGoalLibrary, config: BustleScoringConfig = null) -> void",
+				"remove_agent": "func remove_agent(id: StringName) -> void",
+				"set_port": "func set_port(port_name: StringName, port: RefCounted) -> bool",
+				"set_protection": "func set_protection(id: StringName, level: int) -> bool",
+				"state_hash": "func state_hash() -> String",
+				"to_int64": "static func to_int64(value: Variant) -> Variant",
+				"unlock": "func unlock(id: StringName, lock_id: StringName) -> bool"
+			},
+			"path": "addons/bustle/society/society.gd",
+			"properties": {
+				"lock_reach": "var lock_reach: float",
+				"ports": "var ports: BustlePorts",
+				"roster_version": "var roster_version: int",
+				"world_seed": "var world_seed: int"
+			},
+			"purpose": "The registry of a population: every agent's `BustleNpcState`, independent of any scene, the ports the host plugs in, and saving and loading the whole population.",
+			"save": {
+				"export_state": "The population's state as plain data.",
+				"import_state": "Replaces the population with `saved`, all or nothing."
+			},
+			"signals": {}
+		},
+		"BustleStealAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/core/crime/steal_action.gd",
+			"properties": {
+				"crime": "var crime: BustleCrime"
+			},
+			"purpose": "`steal`: takes the agent's target through `BustleCrime.steal()` (which checks every guard again first).",
+			"save": {},
+			"signals": {}
+		},
+		"BustleStealthRules": {
+			"addon": "bustle",
+			"constants": {
+				"CROUCHED": "const CROUCHED = 1 (enum Posture)",
+				"RUNNING": "const RUNNING = 2 (enum Movement)",
+				"STANDING": "const STANDING = 0 (enum Posture)",
+				"STILL": "const STILL = 0 (enum Movement)",
+				"WALKING": "const WALKING = 1 (enum Movement)"
+			},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"light_factor": "func light_factor(level: float) -> float",
+				"linear_light_curve": "static func linear_light_curve(dark: float, bright: float) -> Curve",
+				"movement_factor": "func movement_factor(movement: int) -> float",
+				"posture_factor": "func posture_factor(posture: int) -> float",
+				"skill_noise_multiplier": "func skill_noise_multiplier(skill: float) -> float",
+				"skill_visibility_multiplier": "func skill_visibility_multiplier(skill: float) -> float"
+			},
+			"path": "addons/bustle/modules/perception/stealth_rules.gd",
+			"properties": {
+				"crouched": "var crouched: float",
+				"light_curve": "var light_curve: Curve",
+				"max_visibility": "var max_visibility: float",
+				"min_visibility": "var min_visibility: float",
+				"running": "var running: float",
+				"skill_noise_floor": "var skill_noise_floor: float",
+				"skill_noise_reduction_per_point": "var skill_noise_reduction_per_point: float",
+				"skill_visibility_floor": "var skill_visibility_floor: float",
+				"skill_visibility_reduction_per_point": "var skill_visibility_reduction_per_point: float",
+				"standing": "var standing: float",
+				"still": "var still: float",
+				"walking": "var walking: float"
+			},
+			"purpose": "The numbers behind `BustleVisibilityModel` and `BustleNoiseModel`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleTendAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/modules/health/tend_action.gd",
+			"properties": {
+				"job": "var job: BustleTendJob"
+			},
+			"purpose": "`tend`: asks the host to have the agent care for its patient (`BustleTendJob.patient_for()`), through `BustleTendJob.tend()`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleTendJob": {
+			"addon": "bustle",
+			"constants": {
+				"ACTION": "const ACTION = &\"tend\"",
+				"INPUT": "const INPUT = &\"fact.tend\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"nearby": {
+					"purpose": "`func(healer) -> Array`StringName``: who `healer` could tend now (for example the agents in its area).",
+					"signature": "var nearby: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"fill_inputs": "func fill_inputs(healer: StringName, inputs: Dictionary[StringName, float]) -> void",
+				"goal_def": "static func goal_def(minutes: int = 30) -> BustleGoalDef",
+				"patient_for": "func patient_for(healer: StringName) -> StringName",
+				"tend": "func tend(healer: StringName, patient: StringName) -> bool",
+				"urgency": "func urgency(patient: StringName) -> float"
+			},
+			"path": "addons/bustle/modules/health/tend_job.gd",
+			"properties": {
+				"health": "var health: BustleHealthBehaviour"
+			},
+			"purpose": "The tend job, opt-in: an able agent tends someone near it who needs care.",
+			"save": {},
+			"signals": {
+				"tended": {
+					"purpose": "`healer` asked the host to care for `patient`; `done` is the host's answer.",
+					"signature": "signal tended(healer: StringName, patient: StringName, done: bool)"
+				}
+			}
+		},
+		"BustleThoughtDef": {
+			"addon": "bustle",
+			"constants": {
+				"MAX_DURATION_HOURS": "const MAX_DURATION_HOURS = 10000000.0",
+				"REASON_KINDS": "const REASON_KINDS = Array[StringName]([&\"need\", &\"event\", &\"environment\", &\"trait\", &\"deed\", &\"health\"])"
+			},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"duration_minutes": "func duration_minutes() -> int",
+				"is_valid": "func is_valid() -> bool"
+			},
+			"path": "addons/bustle/modules/needs_mood/thought_def.gd",
+			"properties": {
+				"duration_hours": "var duration_hours: float",
+				"emotion": "var emotion: StringName",
+				"id": "var id: StringName",
+				"need": "var need: StringName",
+				"need_at_least": "var need_at_least: float",
+				"reason_kind": "var reason_kind: StringName",
+				"stack_limit": "var stack_limit: int",
+				"stack_mult": "var stack_mult: float",
+				"tags": "var tags: StringName[]",
+				"value": "var value: float"
+			},
+			"purpose": "One kind of thought, as data: what it does to mood, for how long, how repeats stack, the emotion it carries and the kind of reason behind it.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleTradePort": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"balance": "func balance(id: StringName) -> int",
+				"buy": "func buy(id: StringName, item: StringName, seller: StringName) -> bool",
+				"can_buy": "func can_buy(id: StringName, item: StringName, seller: StringName) -> bool",
+				"can_take": "func can_take(id: StringName, _item: StringName) -> bool",
+				"export_state": "func export_state() -> Dictionary",
+				"import_state": "func import_state(saved: Variant) -> bool",
+				"pay": "func pay(from: StringName, to: StringName, amount: int) -> bool",
+				"price_of": "func price_of(item: StringName, _seller: StringName) -> int",
+				"set_balance": "func set_balance(id: StringName, amount: int) -> bool",
+				"take": "func take(id: StringName, item: StringName) -> bool"
+			},
+			"path": "addons/bustle/ports/trade_port.gd",
+			"properties": {
+				"prices": "var prices: Dictionary[StringName, int]"
+			},
+			"purpose": "Money and buying, in one abstract unit (whole numbers): what the unit is, and any currencies behind it, is the host's business.",
+			"save": {
+				"export_state": "The default's balances as plain data (ids → amounts).",
+				"import_state": "Restores `export_state()`."
+			},
+			"signals": {}
+		},
+		"BustleTraitDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"clashes_with": "func clashes_with(other: BustleTraitDef) -> bool",
+				"is_valid": "func is_valid() -> bool"
+			},
+			"path": "addons/bustle/core/personality/trait_def.gd",
+			"properties": {
+				"adds": "var adds: Dictionary[StringName, float]",
+				"excludes": "var excludes: StringName[]",
+				"goals": "var goals: BustleGoalDef[]",
+				"id": "var id: StringName",
+				"mults": "var mults: Dictionary[StringName, float]",
+				"needs": "var needs: BustleNeedDef[]",
+				"slider_offsets": "var slider_offsets: Dictionary[StringName, float]",
+				"thoughts": "var thoughts: Resource[]"
+			},
+			"purpose": "A trait, as data only: a named bundle of modifiers (rates, weights, tag tastes, mood), slider shifts, needs and goals it adds, and permanent thoughts.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleVisibilityModel": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"compute": "func compute(light_level: float, posture: int, movement: int, wear_factor: float = 1.0, skill: float = 0.0) -> float"
+			},
+			"path": "addons/bustle/modules/perception/visibility_model.gd",
+			"properties": {
+				"rules": "var rules: BustleStealthRules"
+			},
+			"purpose": "How visible a target is: the light curve × posture × movement × a clothing factor, times the stealth-skill multiplier, clamped to `min_visibility..max_visibility`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWaitAction": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "BustleActionHandler",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"start": "func start(context: BustleActionContext) -> void",
+				"tick": "func tick(context: BustleActionContext, _delta: float) -> int"
+			},
+			"path": "addons/bustle/core/brain/actions/wait_action.gd",
+			"properties": {},
+			"purpose": "`wait`: does nothing until `params.minutes` game minutes have passed.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWantDef": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_done": "func is_done(inputs: Dictionary) -> bool",
+				"is_valid": "func is_valid() -> bool"
+			},
+			"path": "addons/bustle/modules/aspirations/want_def.gd",
+			"properties": {
+				"auto": "var auto: bool",
+				"boost_option": "var boost_option: StringName",
+				"boosts": "var boosts: Dictionary[StringName, float]",
+				"cooldown_hours": "var cooldown_hours: float",
+				"done_fact": "var done_fact: StringName",
+				"duration_hours": "var duration_hours: float",
+				"id": "var id: StringName",
+				"points": "var points: int",
+				"progress_input": "var progress_input: StringName",
+				"requires": "var requires: StringName[]",
+				"target": "var target: float",
+				"thought": "var thought: Resource",
+				"weights": "var weights: Dictionary[StringName, float]"
+			},
+			"purpose": "One short-lived want, as data: who it suits (personality and circumstances), when it's fulfilled, how long it lasts and the thought fulfilling it gives.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWitnessConfig": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {},
+			"path": "addons/bustle/core/crime/witness_config.gd",
+			"properties": {
+				"kind_weights": "var kind_weights: Dictionary[StringName, float]",
+				"threshold": "var threshold: float",
+				"weights": "var weights: Dictionary[StringName, Dictionary]"
+			},
+			"purpose": "The numbers behind `BustleWitnessJudge`: what someone who knows of a theft does about it.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWorkPort": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"can_do": "func can_do(id: StringName, job: StringName, tags: StringName[] = []) -> bool",
+				"claimed_of": "func claimed_of(id: StringName) -> StringName",
+				"job_of": "func job_of(id: StringName) -> StringName"
+			},
+			"path": "addons/bustle/ports/work_port.gd",
+			"properties": {
+				"board": "var board: BustleJobBoard",
+				"roster": "var roster: BustleScheduleRoster"
+			},
+			"purpose": "Jobs.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWorkType": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "Resource",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"is_valid": "func is_valid() -> bool",
+				"score": "func score(seeker: BustleJobSeeker) -> float"
+			},
+			"path": "addons/bustle/core/jobs/work_type.gd",
+			"properties": {
+				"id": "var id: StringName",
+				"min_skill": "var min_skill: float",
+				"minutes": "var minutes: int",
+				"need_weights": "var need_weights: Dictionary[StringName, float]",
+				"place": "var place: StringName",
+				"priority": "var priority: float",
+				"priority_weights": "var priority_weights: Dictionary[StringName, float]",
+				"required_role": "var required_role: StringName",
+				"required_tags": "var required_tags: StringName[]",
+				"skill": "var skill: StringName",
+				"wage": "var wage: int",
+				"xp_per_hour": "var xp_per_hour: float"
+			},
+			"purpose": "One kind of posted, one-off work, as data: who may take it (a role, a skill level, tags), how much a given agent wants it (personality and circumstances), and what it involves (place, minutes, wage).",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWorldPort": {
+			"addon": "bustle",
+			"constants": {
+				"DEFAULT_AREA": "const DEFAULT_AREA = &\"default\""
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"area_of": "func area_of(_id: StringName) -> StringName",
+				"free_body": "func free_body(_id: StringName) -> void",
+				"has_place": "func has_place(place: StringName) -> bool",
+				"is_in_view": "func is_in_view(_position: Vector3) -> bool",
+				"is_interior": "func is_interior(_area: StringName) -> bool",
+				"neighbour_areas": "func neighbour_areas(_area: StringName) -> StringName[]",
+				"path_between": "func path_between(a: StringName, b: StringName) -> StringName[]",
+				"place_position": "func place_position(place: StringName) -> Vector3",
+				"player_area": "func player_area() -> StringName",
+				"player_position": "func player_position() -> Vector3",
+				"request_spawn": "func request_spawn(_kind: StringName, _area: StringName, _count: int, _event: StringName) -> bool",
+				"set_place": "func set_place(place: StringName, position: Vector3) -> void",
+				"spawn_body": "func spawn_body(_id: StringName, _xf: Transform3D) -> Node3D",
+				"travel_minutes": "func travel_minutes(_a: StringName, _b: StringName) -> int"
+			},
+			"path": "addons/bustle/ports/world_port.gd",
+			"properties": {},
+			"purpose": "Where agents and places are, how areas connect, and how bodies are made.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWyrdBridge": {
+			"addon": "bustle_wyrd",
+			"constants": {
+				"WYRD_VERSION": "const WYRD_VERSION = \"1.0.1\"",
+				"WYRD_VERSION_FILE": "const WYRD_VERSION_FILE = \"res://addons/wyrd/VERSION\""
+			},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"install": "static func install(society: BustleSociety, wyrd: Object, mood_of: Callable = Callable()) -> BustleWyrdBridge",
+				"installed_wyrd_version": "static func installed_wyrd_version() -> String",
+				"is_supported": "static func is_supported() -> bool",
+				"supports": "static func supports(wyrd: Object) -> bool"
+			},
+			"path": "addons/bustle_wyrd/bustle_wyrd_bridge.gd",
+			"properties": {
+				"facts": "var facts: BustleWyrdFacts",
+				"registered": "var registered: PackedStringArray",
+				"roles": "var roles: BustleWyrdRolesPort",
+				"social": "var social: BustleWyrdSocialPort"
+			},
+			"purpose": "The optional bridge between Bustle and the Wyrd narrative engine.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWyrdFacts": {
+			"addon": "bustle_wyrd",
+			"constants": {
+				"HIGH": "const HIGH = &\"high\"",
+				"LOW": "const LOW = &\"low\"",
+				"NAMES": "const NAMES = PackedStringArray(\"npc_goal\", \"npc_goal_reason\", \"npc_need\", \"npc_top_need\", \"npc_mood_band\", \"npc_emotion\", \"npc_mood_reason\")",
+				"NORMAL": "const NORMAL = &\"normal\""
+			},
+			"extends": "RefCounted",
+			"hooks": {
+				"mood_of": {
+					"purpose": "(id) → that agent's mood: anything with a `mood` number, an `emotion` and `reasons()`, such as a `BustleMood`; or null.",
+					"signature": "var mood_of: Callable"
+				}
+			},
+			"kind": "class",
+			"methods": {
+				"emotion": "func emotion(id: StringName) -> StringName",
+				"goal": "func goal(id: StringName) -> StringName",
+				"goal_reason": "func goal_reason(id: StringName) -> StringName",
+				"mood_band": "func mood_band(id: StringName) -> StringName",
+				"mood_reason": "func mood_reason(id: StringName) -> StringName",
+				"need": "func need(id: StringName, need_id: StringName) -> float",
+				"register": "func register(wyrd: Object) -> PackedStringArray",
+				"top_need": "func top_need(id: StringName) -> StringName"
+			},
+			"path": "addons/bustle_wyrd/bustle_wyrd_facts.gd",
+			"properties": {
+				"mood_bands": "var mood_bands: BustleMentalConfig"
+			},
+			"purpose": "Dialogue facts: what an agent is doing and how it feels, registered in Wyrd as host functions with Wyrd's stable `register_function`, so content can ask, for example, `npc_goal(x)`.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWyrdRolesPort": {
+			"addon": "bustle_wyrd",
+			"constants": {
+				"VACATE_REASON": "const VACATE_REASON = &\"vacated\""
+			},
+			"extends": "BustleRolesPort",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"holder_of": "func holder_of(role: StringName) -> StringName",
+				"roles_of": "func roles_of(id: StringName) -> PackedStringArray",
+				"set_holder": "func set_holder(role: StringName, id: StringName) -> void"
+			},
+			"path": "addons/bustle_wyrd/bustle_wyrd_roles_port.gd",
+			"properties": {},
+			"purpose": "The roles port, answered by Wyrd's role bindings.",
+			"save": {},
+			"signals": {}
+		},
+		"BustleWyrdSocialPort": {
+			"addon": "bustle_wyrd",
+			"constants": {
+				"KEY_PREFIX": "const KEY_PREFIX = \"deed_\""
+			},
+			"extends": "BustleSocialPort",
+			"hooks": {},
+			"kind": "port",
+			"methods": {
+				"clear_kind": "func clear_kind(a: StringName, b: StringName, kind: StringName) -> void",
+				"id_of": "static func id_of(key: StringName) -> int",
+				"key_of": "static func key_of(deed_id: int) -> StringName",
+				"kinds_between": "func kinds_between(a: StringName, b: StringName) -> PackedStringArray",
+				"knows": "func knows(agent: StringName, key: StringName) -> bool",
+				"opinion": "func opinion(a: StringName, b: StringName) -> int",
+				"reasons": "func reasons(a: StringName, b: StringName, limit: int = 3) -> Dictionary[]",
+				"record_deed": "func record_deed(actor: StringName, verb: StringName, target: StringName, place: StringName, witnesses: Dictionary[], magnitude: float = 1.0, _return_magnitude: float = 0.0) -> StringName",
+				"set_kind": "func set_kind(a: StringName, b: StringName, kind: StringName) -> void",
+				"share_news": "func share_news(teller: StringName, listener: StringName, _place: StringName) -> int",
+				"supports_kinds": "func supports_kinds() -> bool"
+			},
+			"path": "addons/bustle_wyrd/bustle_wyrd_social_port.gd",
+			"properties": {},
+			"purpose": "The social port, answered by Wyrd.",
+			"save": {},
+			"signals": {}
+		}
+	},
+	"version": "0.9.0"
+}

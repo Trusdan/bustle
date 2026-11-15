@@ -1,0 +1,6 @@
+{
+	"format": 1,
+	"deprecations": [
+		{"symbol": "BustleExamplePort", "since": "1.2.0"}
+	]
+}

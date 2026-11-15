@@ -1,0 +1,8 @@
+{
+	"format": 1,
+	"deprecations": [
+		{"symbol": "old_name", "since": "soon"},
+		{"symbol": "BustleExample.weight", "since": "1.1.0"},
+		{"symbol": "BustleExample.weight", "since": "1.1.0"}
+	]
+}

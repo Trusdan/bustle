@@ -79,6 +79,14 @@ Reports go to a role (`authority_role`), never to a named agent: the host decide
 - [BustleDebugConsole](BustleDebugConsole.md): Text commands for inspecting and steering a [BustleSociety](BustleSociety.md) while developing. `run()` takes one line and returns the answer as text. It does nothing in release builds (see [BustleDebug](BustleDebug.md)).
 - [BustleDebugOverlay](BustleDebugOverlay.md): A world overlay for developing: a label above each agent's attached body with its ring, band, goal, step, top 3 scores and need inputs (from [BustleInspector](BustleInspector.md)). Toggle `enabled` at runtime. Off, it stops processing and frees its labels, so it costs nothing. It can't be enabled in a release build (see [BustleDebug](BustleDebug.md)).
 - [BustleDeliverAction](BustleDeliverAction.md): `deliver`: goes on with the agent's oldest errand through `BustleCrimeWatch.deliver()`. While it still has to get there, it asks the host to move the agent towards the target (`move_to`, `talk_to` and `gear` in the output, the gear being `BustleCrimeWatch.travel_gear`); Bustle names where, the host moves the body. Done once the word is delivered, forgotten, or there's nobody to reach yet.
+- [BustleDeprecation](BustleDeprecation.md): Warns when deprecated public API is used: once per symbol per run, with [method @GlobalScope.push_warning]. A deprecated method calls `warn()` first, then keeps working until the next major release removes it (see `docs/public-api/VERSIONING.md`). Nothing else changes: the warning is only a message.
+
+```gdscript
+## @deprecated: Use `new_name()` instead.
+func old_name() -> void:
+BustleDeprecation.warn("BustleExample.old_name", "BustleExample.new_name")
+new_name()
+```
 - [BustleDetectionMeter](BustleDetectionMeter.md): One observer's awareness of one target: a meter from 0 to 1 that sight and hearing fill and that decays when neither reaches the target, and four states driven by it.
 - [BustleDirector](BustleDirector.md): The storyteller: it paces host-authored events ([BustleEventDef](BustleEventDef.md)) by the story's tension and fires the one the story needs most. Nothing is random: there is no seed and no deck, and the same events, inputs, locks and clock give the same timeline.
 Each `update()`, an event is eligible when its preconditions hold on the host's inputs, its cooldown has passed, it isn't lock-sensitive while a quest lock is held, and the director port (`BustleDirectorPort.allows()`) agrees. Of those, the pick is the best by, in turn: 
