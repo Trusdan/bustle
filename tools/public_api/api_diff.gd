@@ -8,7 +8,7 @@ extends RefCounted
 ## an entry for it (or for its class). A covered removal (removed, renamed, or moved back to
 ## [code]@experimental[/code]) also has to come in a major release after the minor release that
 ## deprecated it: see [method removal_problem]. New symbols never fail. A raised save version
-## ([code]STATE_VERSION[/code]) is a save-format change and is reported, not failed: the policy
+## ([code]STATE_VERSION[/code], or the society's [code]SCHEMA[/code]) is a save-format change and is reported, not failed: the policy
 ## requires [code]import_state()[/code] to migrate the older shape.
 ##
 ## A Callable hook's call ([code]func(...) -> T[/code], from its doc comment) is part of its
@@ -18,6 +18,8 @@ extends RefCounted
 
 const ApiManifest := preload("res://tools/public_api/api_manifest.gd")
 const SAVE_VERSION: String = "STATE_VERSION"
+## The constants that hold a save version: a raise of either is a note, not a break.
+const SAVE_VERSIONS: Array[String] = [SAVE_VERSION, "SCHEMA"]
 
 
 ## The comparison: [code]breaking[/code] (fails the check), [code]deprecated[/code] (breaking
@@ -52,7 +54,7 @@ static func compare(baseline: Dictionary, current: Dictionary, deprecations: Var
 			if symbol == owner:
 				removed_classes[owner] = true
 		elif new[symbol] != old[symbol]:
-			if symbol.ends_with("." + SAVE_VERSION) and _version_of(new[symbol]) > _version_of(old[symbol]):
+			if SAVE_VERSIONS.has(symbol.get_slice(".", 1)) and _version_of(new[symbol]) > _version_of(old[symbol]):
 				(result["notes"] as Array).append("%s: save format raised (%s -> %s); import_state() must still read the older shape" % [
 					symbol, old[symbol], new[symbol]])
 				continue

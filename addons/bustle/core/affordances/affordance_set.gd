@@ -70,6 +70,8 @@ func export_state() -> Dictionary:
 ## Restores [method export_state] for the affordances it has (others are skipped). False, changing
 ## nothing, when any entry is malformed.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not (saved as Dictionary).get("affordances") is Dictionary:
 		return false
 	var entries: Dictionary = saved["affordances"]

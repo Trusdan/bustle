@@ -3428,6 +3428,22 @@
 				}
 			}
 		},
+		"BustleSaveFormat": {
+			"addon": "bustle",
+			"constants": {},
+			"extends": "RefCounted",
+			"hooks": {},
+			"kind": "class",
+			"methods": {
+				"check": "static func check(format: StringName, saved: Variant) -> BustleImportReport",
+				"current": "static func current(format: StringName) -> int"
+			},
+			"path": "addons/bustle/core/save_format.gd",
+			"properties": {},
+			"purpose": "Which save versions this version of Bustle reads, and why it refuses one.",
+			"save": {},
+			"signals": {}
+		},
 		"BustleSchedule": {
 			"addon": "bustle",
 			"constants": {

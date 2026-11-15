@@ -179,6 +179,8 @@ func export_state() -> Dictionary:
 ## before it starts), more of one id than its stack limit (one for a held thought), or a reason
 ## that isn't plain data. A timed thought that had already ended by the save's minute is dropped.
 func import_state(saved: Variant, defs: Array[BustleThoughtDef]) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary:
 		return false
 	var data: Dictionary = saved

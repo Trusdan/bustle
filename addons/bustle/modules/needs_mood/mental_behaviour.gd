@@ -229,6 +229,8 @@ func export_state() -> Dictionary:
 ## Restores [method export_state]. False (and nothing changes) when malformed. On success, the
 ## state modifiers set so far are taken off; the next [method update] sets the loaded states'.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not saved.get("states") is Dictionary or not saved.get("insulted") is Dictionary:
 		return false
 	var staged: Dictionary[StringName, BustleMentalState] = {}

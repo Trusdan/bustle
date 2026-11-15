@@ -15,7 +15,8 @@ extends RefCounted
 ##   on import they may be decimal strings or ints. [method import_state] checks everything first and then replaces the
 ##   population all at once; anything wrong (a malformed payload, another schema version, a repeated
 ##   id, an unknown archetype, a brain state that doesn't fit) returns a [BustleImportReport] and
-##   changes nothing. Only the current schema is accepted; older versions have no migration yet.
+##   changes nothing. An older schema is migrated one step at a time and a newer one is refused, with
+##   the reason in the report ([BustleSaveFormat]); schema 1 is the only one so far.
 ## - [method state_hash] is a SHA-256 of the canonical export, for checking round trips.
 ## - **Locks.** A host pins an agent with [method lock] (a [BustleLock]: a place, a goal or
 ##   sequence, or both) and releases it with [method unlock]. While any lock is held the agent is
@@ -222,6 +223,10 @@ func export_state() -> Dictionary:
 	return {"schema": SCHEMA, "world_seed": str(world_seed), "agents": agents, "locks": locks}
 
 
+static func _save_format() -> Dictionary:
+	return {"key": "schema", "current": SCHEMA, "steps": {}}
+
+
 ## Replaces the population with [param saved], all or nothing. Bodies attached to agents that are
 ## still there stay attached and move to the loaded positions. See the class description for what is refused.
 func import_state(saved: Variant) -> BustleImportReport:
@@ -229,17 +234,12 @@ func import_state(saved: Variant) -> BustleImportReport:
 	if not saved is Dictionary:
 		report.fail("the payload isn't a dictionary")
 		return report
-	var payload := saved as Dictionary
-	var schema: Variant = payload.get("schema")
-	if typeof(schema) == TYPE_FLOAT and is_finite(schema) and schema == floorf(schema) and absf(schema) < 1e9:
-		schema = int(schema) # JSON reads whole numbers back as floats
-	if typeof(schema) != TYPE_INT:
-		report.fail("no schema version")
+	var read := BustleSaveFormat._read(&"BustleSociety", saved, _save_format())
+	report.schema = read["version"]
+	if not read["ok"]:
+		report.fail(read["reason"])
 		return report
-	report.schema = schema
-	if report.schema != SCHEMA:
-		report.fail("schema %d isn't supported (this is %d)" % [report.schema, SCHEMA])
-		return report
+	var payload: Dictionary = read["data"]
 	var seed: Variant = to_int64(payload.get("world_seed"))
 	if seed == null or not payload.get("agents") is Array:
 		report.fail("world_seed or agents is missing or malformed")

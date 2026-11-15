@@ -167,6 +167,8 @@ func export_state() -> Dictionary:
 ## Restores [method export_state]'s data. Unknown or missing values fall back to unaware. Emits
 ## no signals.
 func import_state(data: Dictionary) -> void:
+	if not BustleSaveFormat._readable(data):
+		return
 	level = clampf(float(data.get("level", 0.0)), 0.0, 1.0)
 	var index := State.keys().find(str(data.get("state", "unaware")).to_upper())
 	state = State.UNAWARE if index < 0 else index as State

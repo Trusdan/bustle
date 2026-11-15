@@ -49,7 +49,7 @@ A death released something `id` held: `kind` is `career`, `job` or `role`, and `
 const STATE_VERSION = 2
 ```
 
-The saved-state layout version. Version 1 saves (ages and stages only) still load.
+The saved-state layout version. Version 1 saves (ages and stages only) still load, through a 1 -> 2 step ([BustleSaveFormat](BustleSaveFormat.md)).
 
 ## Properties
 

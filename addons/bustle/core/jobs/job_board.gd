@@ -350,6 +350,8 @@ func export_state() -> Dictionary:
 ## has times before the posting opened or negative progress, or has a [code]next[/code] that could
 ## repeat an id.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not _is_int(saved.get("next")) or not saved.get("postings") is Array:
 		return false
 	var next := int(saved["next"])

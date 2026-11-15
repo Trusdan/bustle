@@ -105,6 +105,8 @@ func export_state() -> Dictionary:
 ## Restores [method export_state], replacing the store. False (and nothing changes) for malformed
 ## data, an unknown score or a value outside 0 to 1.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not saved.get("rooms") is Dictionary or not saved.get("scores") is Dictionary:
 		return false
 	var probe := BustleEnvironmentPort.new()

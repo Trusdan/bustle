@@ -15,7 +15,8 @@ extends BustleLifeStagePort
 ## that aren't valid ([method error] says why), the module stays ageless: no ages, no stages, no
 ## gates.
 
-## The saved-state layout version. Version 1 saves (ages and stages only) still load.
+## The saved-state layout version. Version 1 saves (ages and stages only) still load, through a
+## 1 -> 2 step ([BustleSaveFormat]).
 const STATE_VERSION := 2
 
 ## [param id]'s stage changed from [param old_stage] to [param new_stage] (either may be empty: no
@@ -258,6 +259,23 @@ func export_state() -> Dictionary:
 	return {"version": STATE_VERSION, "now": _now, "ages": ages, "anchors": anchors, "stages": stages, "dead": dead}
 
 
+static func _save_format() -> Dictionary:
+	return {"key": "version", "current": STATE_VERSION, "steps": {1: _from_version_1}}
+
+
+## Version 1 had only ages and stages: each age is anchored at minute 0, now is 0, nobody has died.
+static func _from_version_1(saved: Dictionary) -> Dictionary:
+	saved["version"] = 2
+	saved["now"] = 0
+	saved["dead"] = {}
+	var anchors := {}
+	if saved.get("ages") is Dictionary:
+		for key: Variant in saved["ages"]:
+			anchors[key] = [saved["ages"][key], 0]
+	saved["anchors"] = anchors
+	return saved
+
+
 ## Restores [method export_state]'s state (or a version 1 save, with ages as of minute 0), without
 ## emitting anything. Minutes may be whole floats, as in a save read back from JSON. False, changing
 ## nothing, for another version, an age that is negative or not finite, a minute that isn't whole,
@@ -266,41 +284,35 @@ func export_state() -> Dictionary:
 ## aren't valid. A stage is restored as saved, even if the rules have changed since and it no longer
 ## matches the age; the next [method set_age] or [method advance_to] moves it on.
 func import_state(saved: Dictionary) -> bool:
-	var version := int(saved.get("version", -1))
-	if error() != "" or version < 1 or version > STATE_VERSION \
-			or not saved.get("ages") is Dictionary or not saved.get("stages") is Dictionary:
+	var read := BustleSaveFormat._read(&"BustleLifeStages", saved, _save_format())
+	if error() != "" or not read["ok"]:
 		return false
-	var now := 0
+	saved = read["data"]
+	if not saved.get("ages") is Dictionary or not saved.get("stages") is Dictionary:
+		return false
 	var ages: Dictionary[StringName, float] = {}
 	var anchors: Dictionary[StringName, int] = {}
 	var dead: Dictionary[StringName, Dictionary] = {}
-	if version == 1:
-		for key: Variant in saved["ages"]:
-			if not _age_ok(key, saved["ages"][key]):
-				return false
-			ages[StringName(str(key))] = float(saved["ages"][key])
-			anchors[StringName(str(key))] = 0
-	else:
-		if not _whole(saved.get("now")) or int(saved["now"]) < 0 or not saved.get("anchors") is Dictionary \
-				or not saved.get("dead") is Dictionary or (saved["anchors"] as Dictionary).size() != (saved["ages"] as Dictionary).size():
+	if not _whole(saved.get("now")) or int(saved["now"]) < 0 or not saved.get("anchors") is Dictionary \
+			or not saved.get("dead") is Dictionary or (saved["anchors"] as Dictionary).size() != (saved["ages"] as Dictionary).size():
+		return false
+	var now := int(saved["now"])
+	for key: Variant in saved["ages"]:
+		if not _age_ok(key, saved["ages"][key]):
 			return false
-		now = int(saved["now"])
-		for key: Variant in saved["ages"]:
-			if not _age_ok(key, saved["ages"][key]):
-				return false
-		for key: Variant in saved["anchors"]:
-			var anchor: Variant = saved["anchors"][key]
-			if not anchor is Array or anchor.size() != 2 or not _age_ok(key, anchor[0]) or not _whole(anchor[1]) \
-					or int(anchor[1]) > now or not (saved["ages"] as Dictionary).has(key):
-				return false
-			ages[StringName(str(key))] = float(anchor[0])
-			anchors[StringName(str(key))] = int(anchor[1])
-		for key: Variant in saved["dead"]:
-			var record: Variant = saved["dead"][key]
-			if str(key) == "" or not record is Dictionary or str(record.get("cause", "")) == "" \
-					or not _whole(record.get("at")) or int(record["at"]) < 0 or int(record["at"]) > now:
-				return false
-			dead[StringName(str(key))] = {"cause": str(record["cause"]), "at": int(record["at"])}
+	for key: Variant in saved["anchors"]:
+		var anchor: Variant = saved["anchors"][key]
+		if not anchor is Array or anchor.size() != 2 or not _age_ok(key, anchor[0]) or not _whole(anchor[1]) \
+				or int(anchor[1]) > now or not (saved["ages"] as Dictionary).has(key):
+			return false
+		ages[StringName(str(key))] = float(anchor[0])
+		anchors[StringName(str(key))] = int(anchor[1])
+	for key: Variant in saved["dead"]:
+		var record: Variant = saved["dead"][key]
+		if str(key) == "" or not record is Dictionary or str(record.get("cause", "")) == "" \
+				or not _whole(record.get("at")) or int(record["at"]) < 0 or int(record["at"]) > now:
+			return false
+		dead[StringName(str(key))] = {"cause": str(record["cause"]), "at": int(record["at"])}
 	var stages: Dictionary[StringName, StringName] = {}
 	for key: Variant in saved["stages"]:
 		var stage := StringName(str(saved["stages"][key]))

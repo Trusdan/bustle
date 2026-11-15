@@ -99,6 +99,8 @@ func export_state() -> Dictionary:
 
 ## Restores tolerances from [method export_state]. False (and nothing changes) when malformed.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not (saved as Dictionary).get("tolerance") is Dictionary:
 		return false
 	var staged: Dictionary[StringName, float] = {}

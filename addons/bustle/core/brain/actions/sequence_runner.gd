@@ -140,6 +140,8 @@ func export_state() -> Dictionary:
 ## Restores [method export_state]'s state for [param p_sequence], the same sequence it was saved
 ## with. False, leaving the runner IDLE, when the saved state doesn't fit that sequence.
 func import_state(p_sequence: BustleActionSequence, saved: Dictionary) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	_active = false
 	state = State.IDLE
 	sequence = p_sequence

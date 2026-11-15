@@ -24,7 +24,7 @@ For any frozen symbol:
 - **Changed signal arguments:** an argument added, removed, renamed, retyped or reordered.
 - **A changed hook signature:** the call a Callable hook makes (its arguments and what it must return), or the hook's type. The call is the `[code]func(<params>) -> <Return>[/code]` that opens the hook's doc comment, with every parameter named and typed. The manifest records it as the hook's `call`.
 - **A changed property type, base class, or constant or enum value.**
-- **A save-format change without migration:** a change to what an `export_state()` returns, unless `import_state()` still reads every format written since the last major release. A format change raises that class's `STATE_VERSION` (where it has one) and comes with the code that reads the older shape.
+- **A save-format change without migration:** a change to what an `export_state()` returns, unless `import_state()` still reads every format written since the last major release. A format change raises that class's `STATE_VERSION` (where it has one) and comes with the code that reads the older shape. [saves.md](../saves.md) says how to add that step.
 
 These are not breaking:
 
@@ -66,7 +66,7 @@ A signature change goes the same way: add the new form, deprecate the old one, a
 - It **fails a changed hook call**, like any other signature change: an argument added, removed, renamed or retyped, or a changed return type. It also fails a call that disappears from a hook's doc comment. A deprecations.json entry for the hook or its class covers a changed call, as it does any covered signature change.
 - It **notes** a call recorded for the first time on a hook whose baseline had none. That documents an existing contract; it doesn't change it.
 - It **passes** on new symbols, and notes that the manifest is behind the code.
-- It **notes** a raised `STATE_VERSION` as a save-format change, so a reviewer can confirm that `import_state()` still reads the older shape.
+- It **notes** a raised `STATE_VERSION` (or the society's `SCHEMA`) as a save-format change, so a reviewer can confirm that `import_state()` still reads the older shape.
 
 ```bash
 tools/public_api.sh --check                   # against the committed manifest

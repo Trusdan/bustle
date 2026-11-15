@@ -272,6 +272,8 @@ func export_state() -> Dictionary:
 ## is negative, not finite or past the skill's top level. A save with no [code]passions[/code] has
 ## no assigned passions.
 func import_state(saved: Variant) -> bool:
+	if not BustleSaveFormat._readable(saved):
+		return false
 	if not saved is Dictionary or not saved.get("xp") is Dictionary:
 		return false
 	var restored: Dictionary[StringName, Dictionary] = {}
