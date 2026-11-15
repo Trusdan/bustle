@@ -312,7 +312,7 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleAwareness.export_state()` | `addons/bustle/modules/perception/awareness.gd` | Every meter as plain data, for a save. |
 | `BustleAwareness.import_state()` | `addons/bustle/modules/perception/awareness.gd` | Restores `export_state()`'s data, making each meter with `profile`. |
 | `BustleBrain.export_state()` | `addons/bustle/core/brain/brain.gd` | The brain's whole state as plain data: the generator, the keeper, the runner and which goal the runner is running. |
-| `BustleBrain.import_state()` | `addons/bustle/core/brain/brain.gd` |  |
+| `BustleBrain.import_state()` | `addons/bustle/core/brain/brain.gd` | Restores `export_state()`'s state into a brain made for the same agent and library. |
 | `BustleCareers.export_state()` | `addons/bustle/modules/careers/careers.gd` | Every career as plain data: `{agent: {career, rank, since, closed, window, promoted}}`. |
 | `BustleCareers.import_state()` | `addons/bustle/modules/careers/careers.gd` | Restores `export_state()`, replacing every career. |
 | `BustleConflict.export_state()` | `addons/bustle/core/conflict/conflict.gd` | The conflicts in progress as plain data, by agent id in order. |
@@ -322,7 +322,7 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleDetectionMeter.export_state()` | `addons/bustle/modules/perception/detection_meter.gd` | The meter as plain data, for a save. |
 | `BustleDetectionMeter.import_state()` | `addons/bustle/modules/perception/detection_meter.gd` | Restores `export_state()`'s data. |
 | `BustleDirector.export_state()` | `addons/bustle/modules/director/director.gd` | Cooldowns and recent history as plain data. |
-| `BustleDirector.import_state()` | `addons/bustle/modules/director/director.gd` |  |
+| `BustleDirector.import_state()` | `addons/bustle/modules/director/director.gd` | Restores `export_state()`. |
 | `BustleEnvironmentPort.export_state()` | `addons/bustle/ports/environment_port.gd` | The built-in store as plain data: `{"rooms": {agent: room}, "scores": {room: {score: value}}}`, sorted. |
 | `BustleEnvironmentPort.import_state()` | `addons/bustle/ports/environment_port.gd` | Restores `export_state()`, replacing the store. |
 | `BustleJobBoard.export_state()` | `addons/bustle/core/jobs/job_board.gd` | Every posting, open and claimed, as plain data: `{"next": n, "postings": [...]}`. |
@@ -330,7 +330,7 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleLeisure.export_state()` | `addons/bustle/core/needs/leisure.gd` | The tolerances as plain data: `{"tolerance": {kind: value}}`. |
 | `BustleLeisure.import_state()` | `addons/bustle/core/needs/leisure.gd` | Restores tolerances from `export_state()`. |
 | `BustleLifeStages.export_state()` | `addons/bustle/modules/life_stages/life_stages.gd` | Every age, stage and death as plain data, in id order: `ages` (at `now()`), `stages`, `anchors` (each age as `[days, minute]`, so aging carries on exactly), `dead` (`{cause, at}`, including agents with no age) and `now`. |
-| `BustleLifeStages.import_state()` | `addons/bustle/modules/life_stages/life_stages.gd` |  |
+| `BustleLifeStages.import_state()` | `addons/bustle/modules/life_stages/life_stages.gd` | Restores `export_state()`'s state (or a version 1 save, with ages as of minute 0), without emitting anything. |
 | `BustleMemory.export_state()` | `addons/bustle/core/memory/memory.gd` | The entries as plain data, sorted by key. |
 | `BustleMemory.import_state()` | `addons/bustle/core/memory/memory.gd` | Restores `export_state()`. |
 | `BustleMentalBehaviour.export_state()` | `addons/bustle/modules/needs_mood/mental_behaviour.gd` | Every agent's state and this episode's insults, as plain data. |
@@ -362,7 +362,7 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleSocialStore.export_state()` | `addons/bustle/society/social_store.gd` | Opinions, kinds and deeds as plain data. |
 | `BustleSocialStore.import_state()` | `addons/bustle/society/social_store.gd` | Restores `export_state()`. |
 | `BustleSociety.export_state()` | `addons/bustle/society/society.gd` | The population's state as plain data. |
-| `BustleSociety.import_state()` | `addons/bustle/society/society.gd` |  |
+| `BustleSociety.import_state()` | `addons/bustle/society/society.gd` | Replaces the population with `saved`, all or nothing. |
 | `BustleTradePort.export_state()` | `addons/bustle/ports/trade_port.gd` | The default's balances as plain data (ids → amounts). |
 | `BustleTradePort.import_state()` | `addons/bustle/ports/trade_port.gd` | Restores `export_state()`. |
 

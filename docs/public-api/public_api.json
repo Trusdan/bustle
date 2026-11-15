@@ -654,7 +654,7 @@
 			"purpose": "One agent's brain, headless: `tick()` takes `BustleSenses` and returns a `BustleIntent`.",
 			"save": {
 				"export_state": "The brain's whole state as plain data: the generator, the keeper, the runner and which goal the runner is running.",
-				"import_state": ""
+				"import_state": "Restores `export_state()`'s state into a brain made for the same agent and library."
 			},
 			"signals": {
 				"player_control_changed": {
@@ -1384,7 +1384,7 @@
 			"purpose": "The storyteller: it paces host-authored events (`BustleEventDef`) by the story's tension and fires the one the story needs most.",
 			"save": {
 				"export_state": "Cooldowns and recent history as plain data.",
-				"import_state": ""
+				"import_state": "Restores `export_state()`."
 			},
 			"signals": {
 				"event_fired": {
@@ -2222,7 +2222,7 @@
 			"purpose": "The life-stages module: each agent's age in game days, the stage that age falls in, and the gates that stage puts on its goals and options.",
 			"save": {
 				"export_state": "Every age, stage and death as plain data, in id order: `ages` (at `now()`), `stages`, `anchors` (each age as `[days, minute]`, so aging carries on exactly), `dead` (`{cause, at}`, including agents with no age) and `now`.",
-				"import_state": ""
+				"import_state": "Restores `export_state()`'s state (or a version 1 save, with ages as of minute 0), without emitting anything."
 			},
 			"signals": {
 				"born": {
@@ -3995,7 +3995,7 @@
 			"purpose": "The registry of a population: every agent's `BustleNpcState`, independent of any scene, the ports the host plugs in, and saving and loading the whole population.",
 			"save": {
 				"export_state": "The population's state as plain data.",
-				"import_state": ""
+				"import_state": "Replaces the population with `saved`, all or nothing."
 			},
 			"signals": {}
 		},

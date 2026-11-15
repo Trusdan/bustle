@@ -223,12 +223,12 @@ func export_state() -> Dictionary:
 	return {"schema": SCHEMA, "world_seed": str(world_seed), "agents": agents, "locks": locks}
 
 
-## Replaces the population with [param saved], all or nothing. Bodies attached to agents that are
-## still there stay attached and move to the loaded positions. See the class description for what is refused.
 static func _save_format() -> Dictionary:
 	return {"key": "schema", "current": SCHEMA, "steps": {}}
 
 
+## Replaces the population with [param saved], all or nothing. Bodies attached to agents that are
+## still there stay attached and move to the loaded positions. See the class description for what is refused.
 func import_state(saved: Variant) -> BustleImportReport:
 	var report := BustleImportReport.new()
 	if not saved is Dictionary:

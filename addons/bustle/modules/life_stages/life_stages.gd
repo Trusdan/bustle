@@ -259,13 +259,6 @@ func export_state() -> Dictionary:
 	return {"version": STATE_VERSION, "now": _now, "ages": ages, "anchors": anchors, "stages": stages, "dead": dead}
 
 
-## Restores [method export_state]'s state (or a version 1 save, with ages as of minute 0), without
-## emitting anything. Minutes may be whole floats, as in a save read back from JSON. False, changing
-## nothing, for another version, an age that is negative or not finite, a minute that isn't whole,
-## a stage for an agent with no age, a stage id the rules don't have, a bad death record (an empty
-## id or cause, or a time before 0 or after [code]now[/code]; a death needs no age), or rules that
-## aren't valid. A stage is restored as saved, even if the rules have changed since and it no longer
-## matches the age; the next [method set_age] or [method advance_to] moves it on.
 static func _save_format() -> Dictionary:
 	return {"key": "version", "current": STATE_VERSION, "steps": {1: _from_version_1}}
 
@@ -283,6 +276,13 @@ static func _from_version_1(saved: Dictionary) -> Dictionary:
 	return saved
 
 
+## Restores [method export_state]'s state (or a version 1 save, with ages as of minute 0), without
+## emitting anything. Minutes may be whole floats, as in a save read back from JSON. False, changing
+## nothing, for another version, an age that is negative or not finite, a minute that isn't whole,
+## a stage for an agent with no age, a stage id the rules don't have, a bad death record (an empty
+## id or cause, or a time before 0 or after [code]now[/code]; a death needs no age), or rules that
+## aren't valid. A stage is restored as saved, even if the rules have changed since and it no longer
+## matches the age; the next [method set_age] or [method advance_to] moves it on.
 func import_state(saved: Dictionary) -> bool:
 	var read := BustleSaveFormat._read(&"BustleLifeStages", saved, _save_format())
 	if error() != "" or not read["ok"]:

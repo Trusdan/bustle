@@ -238,13 +238,14 @@ func export_state() -> Dictionary:
 	}
 
 
-## Restores [method export_state]'s state into a brain made for the same agent and library. False,
-## leaving the brain as freshly made, when the state doesn't fit (another version or agent, a
-## running goal the library lacks, or a runner state that doesn't fit its sequence).
 static func _save_format() -> Dictionary:
 	return {"key": "version", "current": STATE_VERSION, "steps": {}}
 
 
+## Restores [method export_state]'s state into a brain made for the same agent and library. False
+## when the state doesn't fit: another version changes nothing ([BustleSaveFormat] gives the
+## reason), and another agent, a running goal the library lacks, or a runner state that doesn't fit
+## its sequence leaves the brain as freshly made.
 func import_state(saved: Dictionary) -> bool:
 	if not BustleSaveFormat._read(&"BustleBrain", saved, _save_format())["ok"]:
 		return false

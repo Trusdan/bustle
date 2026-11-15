@@ -196,6 +196,8 @@ The population's state as plain data. Attached bodies' positions are copied in f
 func import_state(saved: Variant) -> BustleImportReport
 ```
 
+Replaces the population with `saved`, all or nothing. Bodies attached to agents that are still there stay attached and move to the loaded positions. See the class description for what is refused.
+
 ### `state_hash`
 
 ```gdscript
