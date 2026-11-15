@@ -126,9 +126,10 @@ func update(a: StringName, b: StringName, now: int, mood_a: Object = null, mood_
 
 
 func _update(a: StringName, b: StringName, now: int, moods: Callable) -> StringName:
-	if not rules.is_valid():
+	var valid := rules.is_valid()
+	if not valid:
 		_Warn.warn("BustleRomance.invalid_rules", "BustleRomance: the rules are invalid; no romance updates until they're fixed")
-	if a == &"" or b == &"" or a == b or not social.supports_kinds() or not rules.is_valid():
+	if a == &"" or b == &"" or a == b or not social.supports_kinds() or not valid:
 		return status_of(a, b)
 	var status := status_of(a, b)
 	var low := mini(social.opinion(a, b), social.opinion(b, a))

@@ -169,7 +169,19 @@ func test_run_time_ignores_warn_once_with_no_other_change() -> void:
 	var rules := BustleRomanceRules.new()
 	rules.courting_release = 1000
 	var romance := BustleRomance.new(store, rules)
+	var bad_health := BustleHealthConfig.new()
+	var effect := BustleHealthEffect.new()
+	effect.capacity = &"moving"
+	effect.key = &"work.speed"
+	bad_health.effects.append(effect)
+	bad_health.effects.append(null)
 	var cases: Array = [
+		["BustleHealthBehaviour.invalid_config", func() -> void:
+			var health := BustleHealthBehaviour.new(bad_health)
+			var modifiers := BustleModifierSet.new()
+			health.apply(&"baker", modifiers)
+			assert_true(health.chosen(&"baker").is_empty(), "nothing chosen")
+			assert_false(modifiers.has(&"work.speed") or modifiers.has(&"capacity.moving"), "no health source written")],
 		["BustleHealthBehaviour.no_port", func() -> void:
 			var inputs: Dictionary[StringName, float] = {}
 			BustleHealthBehaviour.new(BustleHealthConfig.new()).fill_inputs(&"baker", inputs)
