@@ -7,7 +7,6 @@ extends Resource
 ## [member BustleEventDef.tension], fading in a straight line over [member memory_minutes]. Above
 ## [member high], the story needs relief; below [member low], it needs a raise. Experimental
 ## defaults.
-## @experimental
 
 ## Input key → how much tension each unit of it adds (negative relieves).
 @export var tension_inputs: Dictionary[StringName, float] = {}
@@ -24,7 +23,6 @@ extends Resource
 
 ## Why these rules can't be used, or empty: a positive memory, 0 <= low < high <= 1, a gap from 0
 ## to the memory, and finite, non-empty tension inputs.
-## @experimental
 func validate() -> String:
 	if memory_minutes <= 0:
 		return "memory_minutes must be above 0"

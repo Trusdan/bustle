@@ -5,7 +5,7 @@ extends RefCounted
 ## One scored choice: a goal, and the option it would use (empty for a goal without
 ## advertisements). It keeps the raw score, the score used for selecting, whether it is eligible,
 ## and the reasons behind the numbers.
-## @experimental
+## @experimental: Internal to [BustleBrain] and [BustleInspector]: the scorer's working record. Hosts read choices through the brain.
 
 ## The goal.
 var goal_id: StringName = &""

@@ -7,7 +7,6 @@ extends Resource
 ## [member fall_per_hour] when above, both times [member volatility]. These are starting numbers,
 ## not tuning: a host sets its own. Per agent, the modifiers [code]mood.baseline[/code],
 ## [code]mood.volatility[/code], [code]mood.rise.mult[/code] and [code]mood.fall.mult[/code] adjust them.
-## @experimental
 
 ## Resting mood.
 @export var baseline: float = 50.0

@@ -6,7 +6,6 @@ extends Resource
 ## an insult): how much it moves each side's opinion of the other, for how long, how much the pair's
 ## compatibility and each side's mood bend that, and the thoughts it leaves. See
 ## [method BustleSocialInteractions.outcome].
-## @experimental
 
 ## Its id; also the verb of the deed it records.
 @export var id: StringName = &""
@@ -43,7 +42,6 @@ extends Resource
 
 ## True when it can be used: an id, finite numbers, a non-negative spread, scales and weight,
 ## known slider names, and a duration above 0 and at most the store's limit of a million days.
-## @experimental
 func is_valid() -> bool:
 	for value: float in [recipient_value, initiator_value, spread, compatibility_scale, mood_scale, days, weight]:
 		if not is_finite(value):

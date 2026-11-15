@@ -5,7 +5,6 @@ extends RefCounted
 ## One agent looking at the job board: its id and what the board's scores and gates read about it.
 ## The host fills it when the agent looks for work. Roles and skill levels come from the ports, not
 ## from here.
-## @experimental
 
 ## The agent's id.
 var id: StringName = &""

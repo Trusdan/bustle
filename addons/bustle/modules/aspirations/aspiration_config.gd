@@ -4,7 +4,6 @@ extends Resource
 
 ## The want and fear library and its numbers, for [BustleAspirations]. Bustle ships no wants or
 ## fears: the host supplies both. The numbers are experimental defaults.
-## @experimental
 
 ## The wants.
 @export var wants: Array[BustleWantDef] = []
@@ -22,7 +21,6 @@ extends Resource
 
 
 ## The want [param id], or null.
-## @experimental
 func find_want(id: StringName) -> BustleWantDef:
 	for def: BustleWantDef in wants:
 		if def != null and def.id == id:
@@ -31,7 +29,6 @@ func find_want(id: StringName) -> BustleWantDef:
 
 
 ## The fear [param id], or null.
-## @experimental
 func find_fear(id: StringName) -> BustleFearDef:
 	for def: BustleFearDef in fears:
 		if def != null and def.id == id:

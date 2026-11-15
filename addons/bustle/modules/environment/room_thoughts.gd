@@ -16,7 +16,6 @@ extends RefCounted
 ## [br][br]
 ## With no environment port, the default one (no rooms) or no mood, there are no environment
 ## thoughts and nothing errors.
-## @experimental
 
 ## [param id] moved from [param old_room] to [param new_room] (empty: no room) as of the last sync.
 signal room_changed(id: StringName, old_room: StringName, new_room: StringName)
@@ -39,7 +38,6 @@ func _init(rules: Array[BustleRoomThought] = [], p_ports: BustlePorts = null) ->
 
 
 ## Adds [param rule]. False (and no change) when it's null or invalid.
-## @experimental
 func add_rule(rule: BustleRoomThought) -> bool:
 	if rule == null or not rule.is_valid():
 		return false
@@ -48,7 +46,6 @@ func add_rule(rule: BustleRoomThought) -> bool:
 
 
 ## The room [param id] is in, from the environment port; empty with none.
-## @experimental
 func room_of(id: StringName) -> StringName:
 	var environment: BustleEnvironmentPort = ports.environment if ports != null else null
 	return environment.room_of(id) if environment != null else &""
@@ -57,7 +54,6 @@ func room_of(id: StringName) -> StringName:
 ## The rules [param room] meets now: per score, the most extreme high rule and the most extreme
 ## low rule it meets, in [constant BustleEnvironmentPort.SCORES] order. Ties go to the rule added
 ## first. Empty for no room.
-## @experimental
 func chosen(room: StringName) -> Array[BustleRoomThought]:
 	var out: Array[BustleRoomThought] = []
 	var environment: BustleEnvironmentPort = ports.environment if ports != null else null
@@ -85,7 +81,6 @@ func chosen(room: StringName) -> Array[BustleRoomThought]:
 ## with [code]set_held(def, held, details)[/code], such as a [code]BustleMood[/code]) it drops every
 ## rule thought not chosen, then holds the chosen ones with [code]room[/code], [code]score[/code]
 ## and [code]value[/code] in their reason. Returns the chosen thought ids, sorted.
-## @experimental
 func sync(id: StringName, mood: Object = null) -> Array[StringName]:
 	var room := room_of(id)
 	var rules := chosen(room)
@@ -119,7 +114,6 @@ func sync(id: StringName, mood: Object = null) -> Array[StringName]:
 
 
 ## The thought ids chosen for [param id] at its last sync, sorted.
-## @experimental
 func thoughts_of(id: StringName) -> Array[StringName]:
 	var out: Array[StringName] = []
 	out.assign(_state.get(id, {}).get("thoughts", []))
@@ -128,7 +122,6 @@ func thoughts_of(id: StringName) -> Array[StringName]:
 
 ## Drops [param id]'s environment thoughts from [param mood] and forgets it (for an agent that
 ## leaves the society).
-## @experimental
 func forget(id: StringName, mood: Object = null) -> void:
 	if mood != null and mood.has_method(&"set_held"):
 		for rule: BustleRoomThought in _rules:
@@ -138,7 +131,6 @@ func forget(id: StringName, mood: Object = null) -> void:
 
 ## What each agent was last synced to, as plain data: [code]{agent: {room, thoughts}}[/code],
 ## sorted. The thoughts themselves are saved with the mood.
-## @experimental
 func export_state() -> Dictionary:
 	var out := {}
 	for id: StringName in _sorted(_state.keys()):
@@ -152,7 +144,6 @@ func export_state() -> Dictionary:
 ## Restores [method export_state], replacing what's kept. False (and nothing changes) for malformed
 ## data or a thought id no rule has. The next [method sync] brings the mood in line; holding a
 ## thought that is already held adds no second one.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary:
 		return false

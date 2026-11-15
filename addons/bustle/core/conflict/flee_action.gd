@@ -7,7 +7,6 @@ extends BustleActionHandler
 ## stops a little short still gets there) until it is
 ## [member BustleConflictConfig.flee_distance] away, then clears the conflict.
 ## Without positions it gets away at once. Done when the conflict is over.
-## @experimental
 
 ## The conflicts it serves.
 var conflict: BustleConflict

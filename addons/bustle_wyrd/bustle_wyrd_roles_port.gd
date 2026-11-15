@@ -5,7 +5,6 @@ extends BustleRolesPort
 ## The roles port, answered by Wyrd's role bindings. Installed by [method BustleWyrdBridge.install],
 ## so Wyrd is the one source of who holds which role.
 ##
-## @experimental
 ## Changes go through Wyrd's stable [code]roles.assign[/code] and [code]roles.vacate[/code].
 ## [signal BustleRolesPort.holder_changed] repeats Wyrd's role signals, whoever made the change:
 ## stable [code]role_holder_changed[/code] (a new holder, or a successor Wyrd picked),
@@ -37,7 +36,6 @@ func _init(wyrd: Object = null) -> void:
 
 
 ## Who holds [param role] in Wyrd, or empty.
-## @experimental
 func holder_of(role: StringName) -> StringName:
 	var roles := _roles()
 	if roles == null or role == &"":
@@ -46,7 +44,6 @@ func holder_of(role: StringName) -> StringName:
 
 
 ## The roles [param id] holds in Wyrd, sorted. Empty for an empty id.
-## @experimental
 func roles_of(id: StringName) -> PackedStringArray:
 	var roles := _roles()
 	if roles == null or id == &"":
@@ -58,7 +55,6 @@ func roles_of(id: StringName) -> PackedStringArray:
 ## vacates it with [code]roles.vacate[/code], which runs the role's succession, so the role may
 ## pass to a successor rather than stay empty. [signal BustleRolesPort.holder_changed] fires from
 ## Wyrd's signal, once per change.
-## @experimental
 func set_holder(role: StringName, id: StringName) -> void:
 	var roles := _roles()
 	if roles == null or role == &"":

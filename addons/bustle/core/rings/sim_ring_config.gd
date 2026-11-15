@@ -4,7 +4,6 @@ extends Resource
 
 ## How agents are sorted into simulation rings (see [BustleSimRings]). Every default here is a
 ## proposed tunable; projects set their own.
-## @experimental
 
 ## Outdoors, in the player's area and within this distance of the player (metres): the FULL ring.
 @export var full_radius: float = 60.0

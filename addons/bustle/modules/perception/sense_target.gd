@@ -4,7 +4,6 @@ extends RefCounted
 
 ## What the project reports about one target to one observer each tick. The project casts the
 ## sight ray and fills in [member line_of_sight]; the core never touches physics.
-## @experimental
 
 ## Where the target is.
 var position := Vector3.ZERO

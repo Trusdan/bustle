@@ -6,7 +6,7 @@ extends Node3D
 ## goal, step, top 3 scores and need inputs (from [BustleInspector]). Toggle [member enabled] at
 ## runtime. Off, it stops processing and frees its labels, so it costs nothing. It can't be enabled
 ## in a release build (see [BustleDebug]).
-## @experimental
+## @experimental: Development tool. What it draws may change in any minor release.
 
 ## How high above a body its label floats, in metres.
 @export var label_height: float = 2.2

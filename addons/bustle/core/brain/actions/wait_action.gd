@@ -4,7 +4,6 @@ extends BustleActionHandler
 
 ## [code]wait[/code]: does nothing until [code]params.minutes[/code] game minutes have passed.
 ## A missing, negative or non-finite number of minutes fails the step ([code]bad_params[/code]).
-## @experimental
 
 
 func start(context: BustleActionContext) -> void:

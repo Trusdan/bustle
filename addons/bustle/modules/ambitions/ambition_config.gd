@@ -4,7 +4,6 @@ extends Resource
 
 ## The ambition library and its numbers, for [BustleAmbitions]. A starting point, not tuning: a host
 ## sets its own, and turns templates off with [member BustleAmbitionDef.enabled].
-## @experimental
 
 ## The project setting a developer or a test turns ambitions off with (default on). It isn't a
 ## game option.
@@ -41,7 +40,6 @@ const SETTING := "bustle/simulation/ambitions"
 ## courting ×2 to [code]visit[/code], [code]converse[/code] and [code]gift[/code] toward the one
 ## courted ([code]court_target[/code]); settling ×2 to [code]help[/code], [code]gift[/code] and
 ## [code]converse[/code] toward the rival ([code]rival[/code]); leaving ×1.5 to [code]explore[/code].
-## @experimental
 static func default_templates() -> Array[BustleAmbitionDef]:
 	var save := BustleAmbitionDef.make(&"save_money", {&"greed": 1.0, &"diligence": 0.4}, [], &"wallet", 2000.0)
 	save.min_sliders = {&"greed": 50.0}
@@ -71,13 +69,11 @@ static func default_templates() -> Array[BustleAmbitionDef]:
 
 
 ## True unless a developer or a test turned [constant SETTING] off.
-## @experimental
 static func allowed() -> bool:
 	return bool(ProjectSettings.get_setting(SETTING, true))
 
 
 ## The template with [param id], or null.
-## @experimental
 func find(id: StringName) -> BustleAmbitionDef:
 	for def: BustleAmbitionDef in templates:
 		if def.id == id:

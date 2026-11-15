@@ -26,7 +26,6 @@ extends RefCounted
 ## once mood drops below its exit line). When a low state ends, the agent gets the catharsis
 ## thought, an aftermath only: it can start another state as soon as its mood is below the line
 ## again. This part only decides and records states; what an agent does in one comes later.
-## @experimental
 
 ## [param agent] entered state [param id]. [param info]: see [method active].
 signal state_entered(agent: StringName, id: StringName, info: Dictionary)
@@ -51,13 +50,11 @@ func _init(p_agent: StringName = &"", p_config: BustleMentalConfig = null) -> vo
 
 ## The active state as [code]{id, kind, tier, since, until}[/code] (a copy), or empty.
 ## [code]tier[/code] is minor, major or extreme for a low state, and empty for a high one.
-## @experimental
 func active() -> Dictionary:
 	return _active.duplicate()
 
 
 ## True while in a state.
-## @experimental
 func is_active() -> bool:
 	return not _active.is_empty()
 
@@ -70,7 +67,6 @@ func is_active() -> bool:
 ## state that's over (adding catharsis to [param mood] after a low one); otherwise starts one if
 ## it can. A state that ended this update doesn't start another until the next. Returns the
 ## active state.
-## @experimental
 func update(now: int, mood: BustleMood, personality: BustlePersonality = null, circumstances: Dictionary = {}) -> Dictionary:
 	var on := enabled and BustleMentalConfig.allowed()
 	var locked := bool(circumstances.get("locked", false))
@@ -96,7 +92,6 @@ func update(now: int, mood: BustleMood, personality: BustlePersonality = null, c
 
 ## Which state [param mood], [param personality] and [param circumstances] would start now (see
 ## [method update]), or null. Doesn't change anything.
-## @experimental
 func choose(mood: BustleMood, personality: BustlePersonality = null, circumstances: Dictionary = {}) -> BustleMentalStateDef:
 	var value := mood.mood
 	if value < break_threshold(mood):
@@ -120,7 +115,6 @@ func choose(mood: BustleMood, personality: BustlePersonality = null, circumstanc
 
 ## [param def]'s score: [code]Σ weight × (slider − 50) / 100[/code], plus, for a state that needs a
 ## target, [code]dislike_weight × (50 − target_opinion) / 100[/code].
-## @experimental
 func score_of(def: BustleMentalStateDef, personality: BustlePersonality, circumstances: Dictionary = {}) -> float:
 	var score := 0.0
 	for slider: StringName in def.weights:
@@ -132,7 +126,6 @@ func score_of(def: BustleMentalStateDef, personality: BustlePersonality, circums
 
 
 ## The agent's break threshold: the config's plus the [code]mental.break_threshold[/code] modifier.
-## @experimental
 func break_threshold(mood: BustleMood) -> float:
 	var base := config.break_threshold
 	var out := mood.modifiers.value(&"mental.break_threshold", base) if mood.modifiers != null else base
@@ -140,14 +133,12 @@ func break_threshold(mood: BustleMood) -> float:
 
 
 ## The state as plain data.
-## @experimental
 func export_state() -> Dictionary:
 	return {"active": active()}
 
 
 ## Restores [method export_state]. False (and nothing changes) when malformed or naming a state
 ## the config doesn't have.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not saved.get("active") is Dictionary:
 		return false

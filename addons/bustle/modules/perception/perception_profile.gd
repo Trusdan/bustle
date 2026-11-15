@@ -5,7 +5,6 @@ extends Resource
 ## How one kind of observer notices a target: what it senses, how fast its [BustleDetectionMeter] fills
 ## and empties, and when it changes state. A project supplies one [code].tres[/code] per kind of
 ## observer; the defaults here are PROPOSED tuning, not final values.
-## @experimental
 
 ## What light sight needs.
 enum SightLight {

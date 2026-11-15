@@ -5,7 +5,6 @@ extends Resource
 ## The lines of the courtship ladder, for [BustleRomance]. Opinions are 0 to 100 and compatibility
 ## -1 to 1 (see [BustleCompatibility]). Each release line sits below its forming line, so a status
 ## doesn't flicker. The numbers are experimental defaults.
-## @experimental
 
 ## Both opinions at least this, with [member courting_compat], start courting.
 @export var courting_opinion: int = 70
@@ -53,7 +52,6 @@ extends Resource
 ## line (jealousy's too), a finite compatibility line, a non-negative finite courting time, a history of at least
 ## one entry, and a finite jealousy opinion entry lasting a positive number of days (or 0 days when
 ## the entry is off, with a value of 0).
-## @experimental
 func is_valid() -> bool:
 	for line: int in [courting_opinion, courting_release, partner_opinion, partner_release, jealousy_opinion,
 			jealousy_release]:

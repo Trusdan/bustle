@@ -6,7 +6,6 @@ extends RefCounted
 ## names ([BustleEventEffect]). The host supplies who exists and how to reach them through the
 ## callables below; spawns go only through [method BustleWorldPort.request_spawn]. It keeps nothing.
 ## Set it as [member BustleDirector.effects].
-## @experimental
 
 ## One effect was applied: [param target] is the agent (or, for a spawn, the area), [param what]
 ## the thought, order or spawn kind, and [param done] whether it took (a mood that took the
@@ -31,7 +30,6 @@ func _init(p_ports: BustlePorts = null) -> void:
 
 ## The agents [param effect] targets, in id order: those named, those tagged, those in the area.
 ## Named agents count only when [member agents] lists them (or [member agents] is unset).
-## @experimental
 func targets(effect: BustleEventEffect) -> Array[StringName]:
 	var known: Array[StringName] = []
 	if agents.is_valid():
@@ -57,7 +55,6 @@ func targets(effect: BustleEventEffect) -> Array[StringName]:
 ## [code]<event>.<minute>[/code] for the event's first order effect, and
 ## [code]<event>.<minute>.<index>[/code] (the effect's index in [member BustleEventDef.effects]) for
 ## each later one, so several order effects in one event can all reach the same agent.
-## @experimental
 func apply(def: BustleEventDef, now: int) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var first_order := -1

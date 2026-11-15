@@ -23,7 +23,6 @@ extends RefCounted
 ## its duration, or when its clearing fact is true.
 ## [br][br]
 ## Nothing is random: wants and fears come only from causes and state.
-## @experimental
 
 ## A want was taken; [param info] is its row ([method wants]).
 signal want_added(agent: StringName, id: StringName, info: Dictionary)
@@ -69,7 +68,6 @@ func _init(p_agent: StringName = &"", p_config: BustleAspirationConfig = null) -
 ## anything with [code]add_thought(def, details)[/code]), expires wants that have run out, ends fears
 ## that have run out or are cleared, forms fears from [param events], and fills the automatic want
 ## slot from [param personality] and [param inputs].
-## @experimental
 func update(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}, events: Array[StringName] = [],
 		mood: Object = null) -> void:
 	for id: StringName in _sorted(_wants.keys()):
@@ -102,7 +100,6 @@ func update(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 ## The eligible want with the highest score (ties to the lower id), or null. Eligible: valid,
 ## automatic, every [member BustleWantDef.requires] true, not already fulfilled by [param inputs],
 ## not active, and past its cooldown. Changes nothing.
-## @experimental
 func choose(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> BustleWantDef:
 	var best: BustleWantDef = null
 	var best_score := -INF
@@ -121,7 +118,6 @@ func choose(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 
 
 ## [param def]'s score for [param personality]: [code]Σ weight × (slider − 50) / 100[/code].
-## @experimental
 func score_of(def: BustleWantDef, personality: BustlePersonality = null) -> float:
 	var total := 0.0
 	for slider: StringName in def.weights:
@@ -132,7 +128,6 @@ func score_of(def: BustleWantDef, personality: BustlePersonality = null) -> floa
 
 ## Gives the agent want [param id] at game minute [param now], posted by the host. False (and no
 ## change) for an unknown or invalid want, one already active, or a full cap.
-## @experimental
 func post_want(id: StringName, now: int) -> bool:
 	var def := config.find_want(id)
 	if def == null or not def.is_valid() or _wants.has(id) or _wants.size() >= config.want_cap:
@@ -143,7 +138,6 @@ func post_want(id: StringName, now: int) -> bool:
 
 ## Fulfils active want [param id] at game minute [param now] (the host saying so, or
 ## [method update] finding it done): its thought goes to [param mood]. False when it isn't active.
-## @experimental
 func fulfill(id: StringName, now: int, mood: Object = null) -> bool:
 	if not _wants.has(id):
 		return false
@@ -159,14 +153,12 @@ func fulfill(id: StringName, now: int, mood: Object = null) -> bool:
 
 
 ## The agent's aspiration points.
-## @experimental
 func points() -> int:
 	return _points
 
 
 ## Adds [param amount] points for [param reason], then calls [member on_points]. False (and no
 ## change) unless [param amount] is positive.
-## @experimental
 func add_points(amount: int, reason: StringName) -> bool:
 	if amount <= 0:
 		return false
@@ -179,7 +171,6 @@ func add_points(amount: int, reason: StringName) -> bool:
 
 ## Spends [param amount] points for [param reason] (the host's reward). False (and no change) unless
 ## [param amount] is positive and no more than the points held.
-## @experimental
 func spend_points(amount: int, reason: StringName) -> bool:
 	if amount <= 0 or amount > _points:
 		return false
@@ -192,7 +183,6 @@ func spend_points(amount: int, reason: StringName) -> bool:
 ## the largest boost any active want gives it (wants don't stack), capped by
 ## [member BustleAspirationConfig.max_want_boost]. 1 for a [code]never_boost[/code] goal, a goal no
 ## want names, or an option other than a want's [member BustleWantDef.boost_option]. Never below 1.
-## @experimental
 func boost(goal_id: StringName, option_id: StringName = &"") -> float:
 	if config.never_boost.has(goal_id):
 		return 1.0
@@ -207,14 +197,12 @@ func boost(goal_id: StringName, option_id: StringName = &"") -> float:
 
 ## The aspirations' whole effect on a score, for [member BustleBrain.score_boost]:
 ## [method boost] × [method avoidance]. Multiply it with other boosts, such as an ambition's.
-## @experimental
 func score(goal_id: StringName, option_id: StringName = &"") -> float:
 	return boost(goal_id, option_id) * avoidance(goal_id, option_id)
 
 
 ## The active wants as rows [code]{id, since, expires, source}[/code] (source
 ## [code]auto[/code] or [code]posted[/code]), sorted by id.
-## @experimental
 func wants() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: StringName in _sorted(_wants.keys()):
@@ -224,7 +212,6 @@ func wants() -> Array[Dictionary]:
 
 ## The formed fears as rows [code]{id, since, until, target}[/code] ([code]until[/code] −1: until
 ## cleared), sorted by id.
-## @experimental
 func fears() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: StringName in _sorted(_fears.keys()):
@@ -233,13 +220,11 @@ func fears() -> Array[Dictionary]:
 
 
 ## True while want [param id] is active.
-## @experimental
 func has_want(id: StringName) -> bool:
 	return _wants.has(id)
 
 
 ## True while fear [param id] is formed.
-## @experimental
 func has_fear(id: StringName) -> bool:
 	return _fears.has(id)
 
@@ -248,7 +233,6 @@ func has_fear(id: StringName) -> bool:
 ## (for [member BustleBrain.score_boost]): the product of [member BustleFearDef.avoid_mult] over
 ## every fear that avoids the goal, the option, or the option named when it formed. 1 with none.
 ## Never above 1. Combine it with other boosts by multiplying.
-## @experimental
 func avoidance(goal_id: StringName, option_id: StringName = &"") -> float:
 	var mult := 1.0
 	for id: StringName in _fears:
@@ -264,7 +248,6 @@ func avoidance(goal_id: StringName, option_id: StringName = &"") -> float:
 
 ## Active wants, formed fears, when each want last ended and the points, as plain data, with absolute game
 ## minutes, so expiry carries over a save.
-## @experimental
 func export_state() -> Dictionary:
 	var ended := {}
 	for id: StringName in _sorted(_ended.keys()):
@@ -274,7 +257,6 @@ func export_state() -> Dictionary:
 
 ## Restores [method export_state], replacing everything. False (and nothing changes) when malformed
 ## or naming a want or fear the config doesn't have. A save without [code]points[/code] has none.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not saved.get("wants") is Array or not saved.get("fears") is Array \
 			or not saved.get("ended") is Dictionary:

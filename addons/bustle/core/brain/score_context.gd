@@ -4,7 +4,7 @@ extends RefCounted
 
 ## What the scorer knows about one agent at one moment: its input values, the options it knows of,
 ## its need weights and tag multipliers, and how to check preconditions it doesn't know itself.
-## @experimental
+## @experimental: Internal to [BustleBrain]: the scorer's per-tick view. The brain's own hooks are the frozen way in.
 
 ## Input key → its normalised value (see [BustleInputs]).
 var inputs: Dictionary[StringName, float] = {}

@@ -6,7 +6,6 @@ extends Resource
 ## day) and by season. A weekday override wins over a season override, which wins over the
 ## default. The weekday of a game day is [code](day + week_offset) mod week_length[/code], counting
 ## days from minute 0.
-## @experimental
 
 ## Its id.
 @export var id: StringName = &""
@@ -25,13 +24,11 @@ extends Resource
 
 
 ## True when its week has at least one day.
-## @experimental
 func is_valid() -> bool:
 	return week_length >= 1
 
 
 ## The weekday of game day [param day_index]. A week shorter than one day counts as one day.
-## @experimental
 func weekday(day_index: int) -> int:
 	var length := maxi(week_length, 1)
 	return posmod(day_index + week_offset, length)
@@ -39,7 +36,6 @@ func weekday(day_index: int) -> int:
 
 ## The plan for game day [param day_index] in [param season]: the weekday override, else the
 ## season override, else the usual day. Null when there is none.
-## @experimental
 func plan_for(day_index: int, season: StringName = &"") -> BustleScheduleDay:
 	var key := weekday(day_index)
 	if weekdays.has(key) and weekdays[key] != null:

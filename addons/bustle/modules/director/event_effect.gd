@@ -9,7 +9,6 @@ extends Resource
 ## [member spawn_area]. The host makes them, or not; Bustle creates nothing.
 ## [br]Targets are the agents in [member target_ids], plus those with [member target_tag], plus
 ## everyone in [member target_area]. Nobody else is touched.
-## @experimental
 
 ## Gives a thought.
 const THOUGHT := &"thought"
@@ -41,14 +40,12 @@ const SPAWN := &"spawn"
 
 
 ## True when it names at least one target.
-## @experimental
 func has_targets() -> bool:
 	return not target_ids.is_empty() or target_tag != &"" or target_area != &""
 
 
 ## Why it can't be used, or empty: a known kind; a thought or order with targets and a valid timed
 ## thought or a sequence; a spawn with a kind and a count of at least 1.
-## @experimental
 func validate() -> String:
 	match kind:
 		THOUGHT:

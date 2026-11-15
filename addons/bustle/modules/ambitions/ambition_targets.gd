@@ -18,7 +18,6 @@ extends RefCounted
 ## ties by id. [code]rival_cleared[/code] once the current rival no longer has the rival kind (never
 ## once they're gone for good, so a feud with someone dead ends moot, not settled), and
 ## [code]rival_gone[/code] once they're gone for good.
-## @experimental
 
 ## The agents and the social port.
 var society: BustleSociety
@@ -38,7 +37,6 @@ func _init(p_society: BustleSociety = null, p_config: BustleAmbitionConfig = nul
 
 ## Adds the courting and feud inputs for [param agent] to [param inputs], given its current
 ## ambition [param active] (from [method BustleAmbitions.active], or empty).
-## @experimental
 func fill(agent: StringName, active: Dictionary, inputs: Dictionary) -> void:
 	var social := society.ports.social
 	var current := StringName(str(active.get("target", "")))
@@ -63,7 +61,6 @@ func fill(agent: StringName, active: Dictionary, inputs: Dictionary) -> void:
 
 
 ## The person [param agent] would court now, or empty (see the class notes).
-## @experimental
 func court_target(agent: StringName) -> StringName:
 	var best := &""
 	var best_opinion := 0.0
@@ -79,7 +76,6 @@ func court_target(agent: StringName) -> StringName:
 
 ## [param agent]'s rival to settle with now, or empty: the lowest opinion among its rivals still
 ## here, ties by id.
-## @experimental
 func rival_of(agent: StringName) -> StringName:
 	var social := society.ports.social
 	var best := &""

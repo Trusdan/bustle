@@ -19,7 +19,6 @@ extends RefCounted
 ## - **Saving:** [method export_state] holds the status, step, attempt, failure and the step's
 ##   [member BustleActionContext.data]; [method import_state] (with the same sequence) restores
 ##   them, so a running step carries on exactly where it was.
-## @experimental
 
 ## Where the sequence is.
 enum State { IDLE, RUNNING, SUCCEEDED, FAILED, INTERRUPTED }
@@ -49,27 +48,23 @@ func _init() -> void:
 
 
 ## Registers [param handler] for [param action], replacing any earlier one.
-## @experimental
 func register(action: StringName, handler: BustleActionHandler) -> void:
 	_handlers[action] = handler
 
 
 ## True when an action handler is registered for [param action].
-## @experimental
 func has_handler(action: StringName) -> bool:
 	return _handlers.has(action)
 
 
 ## Uses [param source]'s handlers (the same registrations, shared from now on) instead of this
 ## runner's own.
-## @experimental
 func share_handlers_with(source: BustleSequenceRunner) -> void:
 	_handlers = source._handlers
 
 
 ## Starts [param p_sequence] for [param agent_id] (using [param option_id], if the goal chose one),
 ## cleaning up anything still running first. An empty sequence succeeds at once.
-## @experimental
 func start(p_sequence: BustleActionSequence, agent_id: StringName, now_minutes: int, option_id: StringName = &"") -> void:
 	cancel()
 	sequence = p_sequence
@@ -87,7 +82,6 @@ func start(p_sequence: BustleActionSequence, agent_id: StringName, now_minutes: 
 
 
 ## Works on the sequence at [param now_minutes] for [param delta] seconds. Returns the state.
-## @experimental
 func tick(delta: float, now_minutes: int) -> State:
 	if state != State.RUNNING:
 		return state
@@ -112,7 +106,6 @@ func tick(delta: float, now_minutes: int) -> State:
 
 
 ## Stops the running step (cleaning it up) and keeps its place for [method resume].
-## @experimental
 func interrupt() -> void:
 	if state != State.RUNNING:
 		return
@@ -121,7 +114,6 @@ func interrupt() -> void:
 
 
 ## Starts the interrupted step again from its beginning.
-## @experimental
 func resume(now_minutes: int) -> void:
 	if state != State.INTERRUPTED:
 		return
@@ -131,14 +123,12 @@ func resume(now_minutes: int) -> void:
 
 
 ## Stops whatever is running (cleaning it up) and returns to IDLE.
-## @experimental
 func cancel() -> void:
 	_cleanup()
 	state = State.IDLE
 
 
 ## The runner's state as plain data.
-## @experimental
 func export_state() -> Dictionary:
 	return {
 		"state": int(state), "step": step_index, "attempt": attempt, "active": _active,
@@ -149,7 +139,6 @@ func export_state() -> Dictionary:
 
 ## Restores [method export_state]'s state for [param p_sequence], the same sequence it was saved
 ## with. False, leaving the runner IDLE, when the saved state doesn't fit that sequence.
-## @experimental
 func import_state(p_sequence: BustleActionSequence, saved: Dictionary) -> bool:
 	_active = false
 	state = State.IDLE

@@ -7,7 +7,6 @@ extends RefCounted
 ## opinions or relationship kinds, and keeps a small in-memory list of deeds: the actor and the
 ## named witnesses know a deed first-hand, and [method share_news] passes only first-hand deeds,
 ## one hop, so nothing spreads further on its own.
-## @experimental
 
 ## The opinion everyone has of everyone in the default (0 to 100).
 const NEUTRAL_OPINION := 50
@@ -18,39 +17,33 @@ var _next_deed: int = 1
 
 
 ## How [param a] regards [param b], from 0 to 100. Default: [constant NEUTRAL_OPINION].
-## @experimental
 func opinion(_a: StringName, _b: StringName) -> int:
 	return NEUTRAL_OPINION
 
 
 ## The kinds of relationship between [param a] and [param b] (for example friend). Default: none.
-## @experimental
 func kinds_between(_a: StringName, _b: StringName) -> PackedStringArray:
 	return PackedStringArray()
 
 
 ## True when this port keeps relationship kinds written with [method set_kind]. Default: false.
-## @experimental
 func supports_kinds() -> bool:
 	return false
 
 
 ## Gives [param a] the kind [param kind] towards [param b] (one way). Default: nothing, since the
 ## default keeps no kinds.
-## @experimental
 func set_kind(_a: StringName, _b: StringName, _kind: StringName) -> void:
 	pass
 
 
 ## Takes the kind [param kind] away from [param a] towards [param b]. Default: nothing.
-## @experimental
 func clear_kind(_a: StringName, _b: StringName, _kind: StringName) -> void:
 	pass
 
 
 ## Up to [param max] reasons behind [param a]'s opinion of [param b], each a dictionary. Default:
 ## none.
-## @experimental
 func reasons(_a: StringName, _b: StringName, _max: int = 3) -> Array[Dictionary]:
 	return []
 
@@ -61,7 +54,6 @@ func reasons(_a: StringName, _b: StringName, _max: int = 3) -> Array[Dictionary]
 ## the recipient), and [param return_magnitude] how much it moved the actor (the outcome for the
 ## initiator). A port that weighs deeds itself can use them; the default and the built-in store
 ## keep neither. Returns the deed's key, or empty when the actor or verb is empty.
-## @experimental
 func record_deed(actor: StringName, verb: StringName, target: StringName, place: StringName,
 		witnesses: Array[Dictionary], _magnitude: float = 1.0, _return_magnitude: float = 0.0) -> StringName:
 	if actor == &"" or verb == &"":
@@ -81,7 +73,6 @@ func record_deed(actor: StringName, verb: StringName, target: StringName, place:
 
 
 ## True when [param agent] knows the deed [param key]. Unknown keys: false.
-## @experimental
 func knows(agent: StringName, key: StringName) -> bool:
 	return _deeds.has(key) and (_deeds[key]["knowers"] as Dictionary).has(agent)
 
@@ -89,7 +80,6 @@ func knows(agent: StringName, key: StringName) -> bool:
 ## [param teller] tells [param listener] the deeds the teller knows first-hand and the listener
 ## doesn't know yet. Returns how many. The listener knows them second-hand, so can't pass them on.
 ## The default ignores [param _place].
-## @experimental
 func share_news(teller: StringName, listener: StringName, _place: StringName) -> int:
 	if teller == &"" or listener == &"" or teller == listener:
 		return 0

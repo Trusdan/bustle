@@ -9,7 +9,6 @@ extends RefCounted
 ## [code]value(key, base) = (base + Σ add) × Π mult[/code], with every source applied in sorted
 ## source-id order, so the result never depends on the order sources were set. A source has at most
 ## one entry per key; setting it again replaces it.
-## @experimental
 
 # key → source id → [add, mult]
 var _entries: Dictionary = {}
@@ -17,7 +16,6 @@ var _entries: Dictionary = {}
 
 ## Sets [param source_id]'s contribution to [param key], replacing any earlier one. False (with an
 ## error) when the key is malformed or a number isn't finite.
-## @experimental
 func set_source(source_id: StringName, key: StringName, add: float = 0.0, mult: float = 1.0) -> bool:
 	if not is_valid_key(key) or source_id == &"" or not is_finite(add) or not is_finite(mult):
 		push_error("BustleModifierSet: refused %s from %s" % [key, source_id])
@@ -29,7 +27,6 @@ func set_source(source_id: StringName, key: StringName, add: float = 0.0, mult: 
 
 
 ## Removes every contribution from [param source_id].
-## @experimental
 func remove_source(source_id: StringName) -> void:
 	for key: StringName in _entries.keys():
 		var sources: Dictionary = _entries[key]
@@ -39,13 +36,11 @@ func remove_source(source_id: StringName) -> void:
 
 
 ## True when some source contributes to [param key].
-## @experimental
 func has(key: StringName) -> bool:
 	return _entries.has(key)
 
 
 ## [param base] with every source's contribution to [param key] applied.
-## @experimental
 func value(key: StringName, base: float) -> float:
 	if not _entries.has(key):
 		return base
@@ -62,7 +57,7 @@ func value(key: StringName, base: float) -> float:
 
 ## Fills [param context]'s need weights ([code]need.<n>.weight[/code], base 1) for [param needs]
 ## and tag multipliers ([code]tag.<t>.mult[/code], base 1) for [param tags].
-## @experimental
+## @experimental: Its type, [BustleScoreContext], is internal and may change in any minor release.
 func fill_context(context: BustleScoreContext, needs: Array[StringName], tags: Array[StringName]) -> void:
 	for need: StringName in needs:
 		context.need_weights[need] = value(StringName("need.%s.weight" % need), 1.0)
@@ -72,7 +67,6 @@ func fill_context(context: BustleScoreContext, needs: Array[StringName], tags: A
 
 ## True when [param key] is two or more dot-separated names of lower-case letters, digits and
 ## underscores.
-## @experimental
 static func is_valid_key(key: StringName) -> bool:
 	var parts := String(key).split(".")
 	if parts.size() < 2:

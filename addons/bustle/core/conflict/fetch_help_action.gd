@@ -8,7 +8,6 @@ extends BustleActionHandler
 ## [method BustleConflict.call_help]. When there's no ally or the ally can't come (it has a
 ## conflict of its own), it switches to fleeing ([method BustleConflict.switch_to_flee]) and the
 ## [code]flee[/code] goal takes over. Done either way.
-## @experimental
 
 ## How close, in metres, the agent must get to its ally.
 const REACH := 2.0

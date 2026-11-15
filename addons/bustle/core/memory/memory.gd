@@ -11,7 +11,6 @@ extends RefCounted
 ## A new note about a subject replaces the old one when it is at least as strong as what is left
 ## of the old one, so a fresh sighting beats an old rumour but a rumour doesn't overwrite a fresh
 ## sighting. Time is whole game minutes.
-## @experimental
 
 ## A person's whereabouts.
 const PERSON := &"person"
@@ -43,7 +42,6 @@ func _init(p_config: BustleMemoryConfig = null) -> void:
 ## [param position] (null when unknown), from [param source]. Returns true when it was kept (see
 ## the class description); false for an empty subject, an unknown source, a weaker note, or a
 ## note so weak that a full memory dropped it straight away.
-## @experimental
 func note(kind: StringName, subject: StringName, area: StringName, position: Variant, source: StringName, now: int) -> bool:
 	var strength := config.strength_of(source)
 	if subject == &"" or kind == &"" or strength <= 0.0 or not (position == null or position is Vector3):
@@ -62,7 +60,6 @@ func note(kind: StringName, subject: StringName, area: StringName, position: Var
 ## What is remembered about [param subject] at minute [param now], with its current strength:
 ## [code]{kind, subject, area, position, source, strength, at}[/code]; empty when nothing is (or it
 ## has faded below the threshold, in which case it is forgotten).
-## @experimental
 func recall(kind: StringName, subject: StringName, now: int) -> Dictionary:
 	var key := _key(kind, subject)
 	if not _entries.has(key):
@@ -77,13 +74,11 @@ func recall(kind: StringName, subject: StringName, now: int) -> Dictionary:
 
 
 ## How sure the agent is of [param subject]'s whereabouts at minute [param now], from 0 to 1.
-## @experimental
 func confidence(kind: StringName, subject: StringName, now: int) -> float:
 	return float(recall(kind, subject, now).get("strength", 0.0))
 
 
 ## Drops every entry that has faded below the threshold by minute [param now].
-## @experimental
 func forget(now: int) -> void:
 	for key: String in _entries.keys():
 		if _strength(_entries[key], now) < config.forget_below:
@@ -91,13 +86,11 @@ func forget(now: int) -> void:
 
 
 ## The number of entries held (some may have faded since; see [method forget]).
-## @experimental
 func size() -> int:
 	return _entries.size()
 
 
 ## The entries as plain data, sorted by key.
-## @experimental
 func export_state() -> Dictionary:
 	var keys: Array[String] = _entries.keys()
 	keys.sort()
@@ -113,7 +106,6 @@ func export_state() -> Dictionary:
 
 ## Restores [method export_state]. False (and nothing changes) when malformed, or for an empty
 ## kind or subject or an unknown source, which [method note] would refuse too.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("entries") is Array:
 		return false

@@ -20,7 +20,6 @@ extends RefCounted
 ## the highest score, ties going to the lower agent id. [method work] then adds the work done, with
 ## practice through the skill port, and completes the posting once its type's minutes are done,
 ## paying the wage through the trade port.
-## @experimental
 
 ## Every board change: [param job] was posted, claimed, released, completed, cancelled or expired,
 ## or its wage was paid or couldn't be ([param what]); [param agent] is the claimant, if any.
@@ -57,7 +56,6 @@ func _init(types: Array[BustleWorkType] = [], p_ports: BustlePorts = null) -> vo
 
 
 ## Adds [param def]. False (and no change) when it's null, invalid or its id is taken.
-## @experimental
 func add_type(def: BustleWorkType) -> bool:
 	if def == null or not def.is_valid() or _types.has(def.id):
 		return false
@@ -66,7 +64,6 @@ func add_type(def: BustleWorkType) -> bool:
 
 
 ## The work type [param id], or null.
-## @experimental
 func type_of(id: StringName) -> BustleWorkType:
 	return _types.get(id)
 
@@ -74,7 +71,6 @@ func type_of(id: StringName) -> BustleWorkType:
 ## Posts work of type [param type] for [param employer] at game minute [param now], due at
 ## [param due] (-1: never), at [param place] (empty: the type's place). Returns the new posting's
 ## id, or empty (and no change) for an unknown type or a due time before [param now].
-## @experimental
 func post(type: StringName, employer: StringName, now: int, due: int = -1, place: StringName = &"") -> StringName:
 	var def: BustleWorkType = _types.get(type)
 	if def == null or (due >= 0 and due < now):
@@ -93,13 +89,11 @@ func post(type: StringName, employer: StringName, now: int, due: int = -1, place
 
 
 ## The posting [param job], or null.
-## @experimental
 func posting(job: StringName) -> BustleJobPosting:
 	return _postings.get(job)
 
 
 ## Every posting's id, in natural order ([code]job_2[/code] before [code]job_10[/code]). With [param open_only], only those nobody has claimed.
-## @experimental
 func job_ids(open_only: bool = false) -> Array[StringName]:
 	var out: Array[StringName] = []
 	for job: StringName in _postings:
@@ -109,7 +103,6 @@ func job_ids(open_only: bool = false) -> Array[StringName]:
 
 
 ## The posting [param agent] has claimed, or empty.
-## @experimental
 func claimed_of(agent: StringName) -> StringName:
 	return _claims.get(agent, &"")
 
@@ -117,7 +110,6 @@ func claimed_of(agent: StringName) -> StringName:
 ## True when [param seeker] passes [param job]'s gates: it holds the required role, has at least
 ## the minimum skill level, and has every required tag. Says nothing about whether the posting is
 ## open.
-## @experimental
 func can_do(seeker: BustleJobSeeker, job: StringName) -> bool:
 	var posting: BustleJobPosting = _postings.get(job)
 	if posting == null or seeker == null or seeker.id == &"":
@@ -137,7 +129,6 @@ func can_do(seeker: BustleJobSeeker, job: StringName) -> bool:
 
 ## True when [param seeker] could claim [param job] now: the posting is open, the seeker holds no
 ## other claim, and it passes the gates.
-## @experimental
 func eligible(seeker: BustleJobSeeker, job: StringName) -> bool:
 	var posting: BustleJobPosting = _postings.get(job)
 	return posting != null and posting.is_open() and seeker != null and claimed_of(seeker.id) == &"" \
@@ -145,7 +136,6 @@ func eligible(seeker: BustleJobSeeker, job: StringName) -> bool:
 
 
 ## How much [param seeker] wants [param job] ([method BustleWorkType.score]); 0 for an unknown job.
-## @experimental
 func score(seeker: BustleJobSeeker, job: StringName) -> float:
 	var posting: BustleJobPosting = _postings.get(job)
 	return _types[posting.type].score(seeker) if posting != null and seeker != null else 0.0
@@ -153,7 +143,6 @@ func score(seeker: BustleJobSeeker, job: StringName) -> float:
 
 ## The open posting [param seeker] is eligible for and wants most, ties going to the earlier
 ## posting id in [method job_ids] order. Empty when there is none, or it already holds a claim.
-## @experimental
 func best_for(seeker: BustleJobSeeker) -> StringName:
 	var best := &""
 	var best_score := -INF
@@ -168,7 +157,6 @@ func best_for(seeker: BustleJobSeeker) -> StringName:
 
 ## Gives [param job] to [param seeker] at game minute [param now]. Atomic: false (and no change)
 ## when the posting is already claimed, the seeker already holds a claim, or it fails the gates.
-## @experimental
 func claim(seeker: BustleJobSeeker, job: StringName, now: int) -> bool:
 	if not eligible(seeker, job):
 		return false
@@ -183,7 +171,6 @@ func claim(seeker: BustleJobSeeker, job: StringName, now: int) -> bool:
 ## pick work in the same tick. In rounds, each seeker without a claim picks [method best_for]; a
 ## posting picked by several goes to the highest score, ties going to the lower agent id; the
 ## others pick again from what's left next round. Returns agent id → the posting it claimed.
-## @experimental
 func assign(seekers: Array[BustleJobSeeker], now: int) -> Dictionary[StringName, StringName]:
 	var out: Dictionary[StringName, StringName] = {}
 	var waiting: Array[BustleJobSeeker] = []
@@ -214,7 +201,6 @@ func assign(seekers: Array[BustleJobSeeker], now: int) -> Dictionary[StringName,
 
 
 ## Lets go of the claim on [param job], so it's open again. False when it isn't claimed.
-## @experimental
 func release(job: StringName) -> bool:
 	var posting: BustleJobPosting = _postings.get(job)
 	if posting == null or posting.is_open():
@@ -231,7 +217,6 @@ func release(job: StringName) -> bool:
 ## employer to the claimant through the trade port, once. A wage the employer can't pay (or with no
 ## trade port) is not paid, and [signal changed] says [code]unpaid[/code]. False (and no change) when
 ## it isn't claimed.
-## @experimental
 func complete(job: StringName) -> bool:
 	var posting: BustleJobPosting = _postings.get(job)
 	if posting == null or posting.is_open():
@@ -252,7 +237,6 @@ func complete(job: StringName) -> bool:
 ## needs count, never fewer than none (a save may hold more progress than a type now needs). Once
 ## the work done reaches the type's minutes, the posting is completed ([method complete]). False
 ## (and no change) when the seeker holds no claim or [param minutes] isn't positive.
-## @experimental
 func work(seeker: BustleJobSeeker, minutes: int) -> bool:
 	var job := claimed_of(seeker.id) if seeker != null else &""
 	if job == &"" or minutes <= 0:
@@ -272,7 +256,6 @@ func work(seeker: BustleJobSeeker, minutes: int) -> bool:
 ## How appealing [param job] is to [param seeker], from 0 to 1: [member appeal_base] plus its
 ## [method score], clamped. It is never left out: a posting the seeker dislikes appeals 0, so its
 ## brain picks something else.
-## @experimental
 func appeal(seeker: BustleJobSeeker, job: StringName) -> float:
 	return clampf(appeal_base + score(seeker, job), 0.0, 1.0)
 
@@ -282,7 +265,6 @@ func appeal(seeker: BustleJobSeeker, job: StringName) -> float:
 ## [constant TAG], and has the posting id as its option; the input [code]need.job[/code] is set to
 ## 1. A host gives these options to its job goal only (as with other agents for people goals).
 ## Returns how many it added.
-## @experimental
 func advertise(seeker: BustleJobSeeker, senses: BustleSenses) -> int:
 	if seeker == null or senses == null:
 		return 0
@@ -304,7 +286,6 @@ func advertise(seeker: BustleJobSeeker, senses: BustleSenses) -> int:
 
 ## Asks for [param job] on behalf of [param seeker], whose brain picked it this tick. The claim is
 ## decided by [method settle]. A later request from the same seeker in the tick replaces it.
-## @experimental
 func request(seeker: BustleJobSeeker, job: StringName) -> void:
 	if seeker != null and seeker.id != &"" and _postings.has(job):
 		_requests[seeker.id] = [seeker, job]
@@ -314,7 +295,6 @@ func request(seeker: BustleJobSeeker, job: StringName) -> void:
 ## the requester with the highest score, ties going to the lower agent id, if it can still claim
 ## it. The others keep no claim and choose again next tick. Returns agent id → the posting it
 ## claimed.
-## @experimental
 func settle(now: int) -> Dictionary[StringName, StringName]:
 	var winners: Dictionary[StringName, BustleJobSeeker] = {}
 	for id: StringName in _sorted(_requests.keys()):
@@ -335,7 +315,6 @@ func settle(now: int) -> Dictionary[StringName, StringName]:
 
 
 ## Takes [param job] off the board unfinished (its employer withdrew it). False for an unknown job.
-## @experimental
 func cancel(job: StringName) -> bool:
 	var posting: BustleJobPosting = _postings.get(job)
 	if posting == null:
@@ -347,7 +326,6 @@ func cancel(job: StringName) -> bool:
 
 ## Takes every posting due at or before [param now] off the board, claimed or not, and returns
 ## their ids, in [method job_ids] order.
-## @experimental
 func expire(now: int) -> Array[StringName]:
 	var out: Array[StringName] = []
 	for job: StringName in job_ids():
@@ -360,7 +338,6 @@ func expire(now: int) -> Array[StringName]:
 
 
 ## Every posting, open and claimed, as plain data: [code]{"next": n, "postings": [...]}[/code].
-## @experimental
 func export_state() -> Dictionary:
 	var rows: Array = []
 	for job: StringName in job_ids():
@@ -372,7 +349,6 @@ func export_state() -> Dictionary:
 ## data is malformed, names an unknown work type, repeats a posting id, gives one agent two claims,
 ## has times before the posting opened or negative progress, or has a [code]next[/code] that could
 ## repeat an id.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not _is_int(saved.get("next")) or not saved.get("postings") is Array:
 		return false

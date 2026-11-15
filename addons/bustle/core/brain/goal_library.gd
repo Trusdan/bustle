@@ -3,14 +3,12 @@ class_name BustleGoalLibrary
 extends Resource
 
 ## The goals an agent chooses from.
-## @experimental
 
 ## The goals. Ids must be unique; a repeated id is reported by [method problems] and skipped.
 @export var goals: Array[BustleGoalDef] = []
 
 
 ## What is wrong with the library: empty or repeated ids, and missing curves. Empty when it is fine.
-## @experimental
 func problems() -> PackedStringArray:
 	var out := PackedStringArray()
 	var seen := {}
@@ -28,7 +26,6 @@ func problems() -> PackedStringArray:
 
 
 ## The first goal with [param id], or null.
-## @experimental
 func find(id: StringName) -> BustleGoalDef:
 	for goal: BustleGoalDef in goals:
 		if goal != null and goal.id == id:

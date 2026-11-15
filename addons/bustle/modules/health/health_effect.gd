@@ -5,7 +5,6 @@ extends Resource
 ## How one host capacity scales one modifier key: at full capacity the key is untouched, and below
 ## it the key is multiplied by [code]at_zero + (1 - at_zero) × capacity^power[/code]. Several effects
 ## on one key multiply together. Experimental defaults are in [method BustleHealthConfig.defaults].
-## @experimental
 
 ## The capacity it reads ([method BustleHealthPort.capacity]).
 @export var capacity: StringName = &""
@@ -19,13 +18,11 @@ extends Resource
 
 
 ## True when it names a capacity and a valid modifier key, and its numbers are usable.
-## @experimental
 func is_valid() -> bool:
 	return capacity != &"" and BustleModifierSet.is_valid_key(key) and is_finite(at_zero) and at_zero >= 0.0 \
 			and is_finite(power) and power > 0.0
 
 
 ## The multiplier for [param amount] of the capacity, clamped to 0..1 first.
-## @experimental
 func mult(amount: float) -> float:
 	return at_zero + (1.0 - at_zero) * pow(clampf(amount, 0.0, 1.0), power)

@@ -12,7 +12,6 @@ extends RefCounted
 ## [BustleModifierSet], which the brain reads for every advertised need: a trait raises or lowers
 ## it with [member BustleTraitDef.mults]. Nothing here depends on the mood module: a mood is
 ## anything with a [code]mood[/code] number.
-## @experimental
 
 ## Below this mood (0 to 100), a friend needs comforting.
 var low_mood: float = 30.0
@@ -32,7 +31,6 @@ var low_state_urgency: float = 0.5
 
 ## How much comfort an agent in [param mood] needs: 0 at or above [member low_mood], up to 1 at
 ## mood 0 (and 0 for no mood).
-## @experimental
 func urgency(mood: float) -> float:
 	if not is_finite(mood) or mood < 0.0 or low_mood <= 0.0:
 		return 0.0
@@ -43,7 +41,6 @@ func urgency(mood: float) -> float:
 ## [param agent_id] counts as a friend in [param social] and whose mood ([param mood_of], (id) →
 ## anything with a [code]mood[/code], or null) is low, or who is in a low state
 ## ([member low_state_of]). Returns how many it added.
-## @experimental
 func advertise(agent_id: StringName, noticed: Array[StringName], social: BustleSocialPort, mood_of: Callable,
 		senses: BustleSenses) -> int:
 	if social == null or senses == null or not mood_of.is_valid():

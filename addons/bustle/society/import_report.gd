@@ -4,7 +4,6 @@ extends RefCounted
 
 ## What happened when a saved society was imported. When [member ok] is false nothing was changed:
 ## an import is all or nothing.
-## @experimental
 
 ## True when the state was imported.
 var ok: bool = false
@@ -15,7 +14,6 @@ var errors: PackedStringArray = PackedStringArray()
 
 
 ## Adds a reason it was refused.
-## @experimental
 func fail(reason: String) -> void:
 	errors.append(reason)
 	ok = false

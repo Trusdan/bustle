@@ -4,7 +4,6 @@ extends RefCounted
 
 ## Answers how much light reaches a point. Abstract: a project extends it (or uses
 ## [BustlePointLightProbe]) and overrides [method sample]. The base is always dark.
-## @experimental
 
 
 ## The light at [param position].

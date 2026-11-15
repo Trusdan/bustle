@@ -3,7 +3,6 @@ class_name BustleActionStep
 extends Resource
 
 ## One step of a [BustleActionSequence]: an action id, its parameters, and what to do when it fails.
-## @experimental
 
 ## What to do when the step fails.
 enum OnFail {

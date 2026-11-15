@@ -22,7 +22,6 @@ extends RefCounted
 ## insulted at most [member BustleMentalConfig.insults_per_victim] times an episode. The insult is
 ## emitted as [signal insulted]; with a [member conflict], the insulted agent then quarrels through
 ## the usual fight rules, which never mean to kill. Nothing here sets any intent.
-## @experimental
 
 ## [param agent], in a state, insulted [param target] (words only). [param provocation] is how hard,
 ## 0 to 1, from the state's tier.
@@ -68,7 +67,6 @@ func _init(p_society: BustleSociety = null, p_config: BustleMentalConfig = null)
 
 
 ## [param agent]'s state, made on first use.
-## @experimental
 func state_of(agent: StringName) -> BustleMentalState:
 	if not _states.has(agent):
 		var state := BustleMentalState.new(agent, config)
@@ -78,14 +76,12 @@ func state_of(agent: StringName) -> BustleMentalState:
 
 
 ## True while [param agent] is in a low state (for the comfort hook).
-## @experimental
 func in_low_state(agent: StringName) -> bool:
 	return _states.has(agent) and _states[agent].active().get("kind", "") == String(BustleMentalStateDef.LOW)
 
 
 ## Updates [param agent] at minute [param now] (after its [param mood] has advanced): its state,
 ## from [method circumstances_of], and its modifiers. Returns the active state.
-## @experimental
 func update(agent: StringName, now: int, mood: BustleMood, personality: BustlePersonality = null) -> Dictionary:
 	var circumstances := circumstances_of(agent, personality)
 	var active := state_of(agent).update(now, mood, personality, circumstances)
@@ -103,7 +99,6 @@ func update(agent: StringName, now: int, mood: BustleMood, personality: BustlePe
 
 
 ## The state whose modifiers are on [param agent]'s modifier set now, or empty.
-## @experimental
 func applied_state(agent: StringName) -> StringName:
 	return _applied[agent]["id"] if _applied.has(agent) else &""
 
@@ -112,7 +107,6 @@ func applied_state(agent: StringName) -> StringName:
 ## withdrawn (and not locked), unless [param opener] is one of
 ## [member BustleMentalConfig.welcome_openers] (comfort, by default). For
 ## [member BustleConversation.accepts]; a host's own visits ask it too.
-## @experimental
 func accepts(agent: StringName, _visitor: StringName, opener: StringName = &"") -> bool:
 	if not _states.has(agent) or StringName(_states[agent].active().get("id", "")) != &"withdraw":
 		return true
@@ -121,7 +115,6 @@ func accepts(agent: StringName, _visitor: StringName, opener: StringName = &"") 
 
 ## What [param agent]'s state decides from now: [code]{locked, indulgence, target, target_opinion,
 ## target_rival}[/code].
-## @experimental
 func circumstances_of(agent: StringName, _personality: BustlePersonality = null) -> Dictionary:
 	var target := lash_target(agent)
 	var social := society.ports.social
@@ -134,7 +127,6 @@ func circumstances_of(agent: StringName, _personality: BustlePersonality = null)
 ## The most disliked person [param agent] could lash out at now, or empty: someone else in its
 ## area within [member BustleMentalConfig.lash_radius], disliked or a rival, and not insulted
 ## to the limit this episode. Rivals first, then the lowest opinion, then by id.
-## @experimental
 func lash_target(agent: StringName) -> StringName:
 	var me := society.get_agent(agent)
 	if me == null:
@@ -170,7 +162,6 @@ static func _before(a: Array, b: Array) -> bool:
 
 ## Sets each state goal's input in [param inputs]: 1 while [param agent] is in that state, isn't
 ## locked, and (for binge and lash out) has something to indulge in or someone to lash out at.
-## @experimental
 func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> void:
 	for id: StringName in GOAL_STATES:
 		inputs.erase(StringName(INPUT_PREFIX + String(id)))
@@ -186,7 +177,6 @@ func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> vo
 ## in a state, and [param target] must be its [method lash_target]. Emits [signal insulted]; with a
 ## [member conflict], [param target] then quarrels with [param agent] through the fight rules.
 ## True when it insulted.
-## @experimental
 func insult(agent: StringName, target: StringName, now: int) -> bool:
 	if not _states.has(agent) or not _states[agent].is_active() or target == &"" or lash_target(agent) != target:
 		return false
@@ -200,13 +190,11 @@ func insult(agent: StringName, target: StringName, now: int) -> bool:
 
 
 ## Where [param id] is, for moving towards it: [member position_of], else its area's position.
-## @experimental
 func position(id: StringName) -> Variant:
 	return _where(id)
 
 
 ## Where [param agent] should be heading in its state at minute [param now] (a [Vector3]), or null.
-## @experimental
 func destination(agent: StringName, now: int) -> Variant:
 	match StringName(state_of(agent).active().get("id", "")):
 		&"withdraw":
@@ -223,13 +211,11 @@ func destination(agent: StringName, now: int) -> Variant:
 
 
 ## The affordance [param agent] would indulge in, or empty.
-## @experimental
 func indulgence(agent: StringName) -> StringName:
 	return _indulgence(agent)
 
 
 ## Every agent's state and this episode's insults, as plain data.
-## @experimental
 func export_state() -> Dictionary:
 	var states := {}
 	for id: StringName in _states:
@@ -242,7 +228,6 @@ func export_state() -> Dictionary:
 
 ## Restores [method export_state]. False (and nothing changes) when malformed. On success, the
 ## state modifiers set so far are taken off; the next [method update] sets the loaded states'.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not saved.get("states") is Dictionary or not saved.get("insulted") is Dictionary:
 		return false
@@ -270,7 +255,6 @@ func import_state(saved: Variant) -> bool:
 ## The goals that act out withdraw, wander, binge and lash out: one per state, in
 ## [constant BustleBands.GUARDED], eligible while [code]fact.mental.<id>[/code] is 1, each running
 ## the [code]mental[/code] action.
-## @experimental
 static func goal_defs() -> Array[BustleGoalDef]:
 	var out: Array[BustleGoalDef] = []
 	for id: StringName in GOAL_STATES:

@@ -16,7 +16,6 @@ extends RefCounted
 ##    └──────── search_time, nothing new ── SEARCHING ◀─────────────────┘
 ##                                          │ level ≥ alert_at ──▶ ALERT
 ## [/codeblock]
-## @experimental
 
 ## The state changed from [param old] to [param new].
 signal state_changed(old: State, new: State)

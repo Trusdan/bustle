@@ -5,7 +5,6 @@ extends BustleActionHandler
 ## [code]steal[/code]: takes the agent's target through [method BustleCrime.steal] (which checks
 ## every guard again first). Done when the item moved; fails with the reason otherwise
 ## ([code]no_target[/code], [code]guards_failed[/code] or [code]not_moved[/code]).
-## @experimental
 
 ## The crime rules it serves.
 var crime: BustleCrime

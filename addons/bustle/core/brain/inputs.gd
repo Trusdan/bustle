@@ -6,7 +6,6 @@ extends RefCounted
 ## [code]need.food[/code] or [code]trait.sociability[/code]; the families are fixed here, and the
 ## names within them are data. Adding a family is a reviewed code change; using one is data.
 ## Input values reach the scorer already normalised by whoever supplies them.
-## @experimental
 
 ## Every family, by its prefix. [code]health[/code] stands alone or takes one of
 ## [constant HEALTH_NAMES]; the others take a name.
@@ -23,7 +22,6 @@ const MOOD := &"mood"
 ## True when [param key] is a well-formed input: [code]health[/code] (alone or with one of
 ## [constant HEALTH_NAMES]), [code]mood[/code], or a family followed by one or more dot-separated
 ## names of lower-case letters, digits and underscores.
-## @experimental
 static func is_valid_input(key: StringName) -> bool:
 	var text := String(key)
 	if text == "health" or key == MOOD:

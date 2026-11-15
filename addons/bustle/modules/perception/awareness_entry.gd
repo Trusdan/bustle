@@ -4,7 +4,6 @@ extends RefCounted
 
 ## One line of a perceiver's awareness list: what it knows about one target right now. A snapshot;
 ## it doesn't change after it is made.
-## @experimental
 
 ## The target's id.
 var target_id: StringName = &""
@@ -25,7 +24,6 @@ var freshness: float = INF
 
 
 ## A snapshot of [param meter] for [param p_target_id].
-## @experimental
 static func from_meter(p_target_id: StringName, meter: BustleDetectionMeter) -> BustleAwarenessEntry:
 	var entry := BustleAwarenessEntry.new()
 	entry.target_id = p_target_id
@@ -40,6 +38,5 @@ static func from_meter(p_target_id: StringName, meter: BustleDetectionMeter) -> 
 
 
 ## True when the target is sensed right now.
-## @experimental
 func perceived_now() -> bool:
 	return seen_now or heard_now

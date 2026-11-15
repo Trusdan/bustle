@@ -26,7 +26,6 @@ extends RefCounted
 ## the agent is locked ([code]locked[/code] in the inputs: an order or quest is followed), while
 ## the template is disabled (even when it was assigned earlier), and for
 ## [member BustleAmbitionConfig.never_boost] goals; the ambition stays assigned all the while.
-## @experimental
 
 ## [param agent] took on ambition [param id]. [param info]: see [method active].
 signal ambition_started(agent: StringName, id: StringName, info: Dictionary)
@@ -71,7 +70,6 @@ func _init(p_agent: StringName = &"", p_config: BustleAmbitionConfig = null, p_s
 ## empty. [code]progress[/code] is the last value of its progress input seen; [code]target[/code] is
 ## who it's about right now, for a template with a [member BustleAmbitionDef.target_input] (empty
 ## while nobody qualifies), and [code]last_target[/code] the last one it had.
-## @experimental
 func active() -> Dictionary:
 	return _active.duplicate()
 
@@ -81,7 +79,6 @@ func active() -> Dictionary:
 ## and [code]locked[/code].
 ## Completes or ends the current ambition when it's done or moot, then assigns one if there's
 ## none. Returns the active ambition.
-## @experimental
 func update(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> Dictionary:
 	_locked = bool(inputs.get("locked", false))
 	if not enabled or not BustleAmbitionConfig.allowed():
@@ -126,7 +123,6 @@ func update(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 
 ## The eligible template with the highest score (ties to the lower id), or null. Ignores
 ## [member pin]. Changes nothing.
-## @experimental
 func choose(now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> BustleAmbitionDef:
 	var best: BustleAmbitionDef = null
 	var best_score := 0.0
@@ -142,7 +138,6 @@ func choose(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 
 ## True when [param def] could be assigned now: valid and enabled, every requirement true, every
 ## minimum slider met, not already done or moot, and not completed within the cooldown.
-## @experimental
 func is_eligible(def: BustleAmbitionDef, now: int, personality: BustlePersonality = null, inputs: Dictionary = {}) -> bool:
 	if def == null or not def.enabled or not def.is_valid() or def.is_done(inputs) or def.is_moot(inputs):
 		return false
@@ -163,7 +158,6 @@ func is_eligible(def: BustleAmbitionDef, now: int, personality: BustlePersonalit
 ## [member is_locked] now) or turned off, when the template is disabled, for a
 ## [member BustleAmbitionConfig.never_boost] goal, or, for a template with a target, when it has no
 ## target right now or the option isn't that target.
-## @experimental
 func boost(goal_id: StringName, option_id: StringName = &"") -> float:
 	if _active.is_empty() or _locked or (is_locked.is_valid() and bool(is_locked.call(agent_id))) or not enabled or not BustleAmbitionConfig.allowed() or config.never_boost.has(goal_id):
 		return 1.0
@@ -178,7 +172,6 @@ func boost(goal_id: StringName, option_id: StringName = &"") -> float:
 
 
 ## [param def]'s score for [param personality]: [code]Σ weight × (slider − 50) / 100[/code].
-## @experimental
 func score_of(def: BustleAmbitionDef, personality: BustlePersonality = null) -> float:
 	var score := 0.0
 	for slider: StringName in def.weights:
@@ -187,7 +180,6 @@ func score_of(def: BustleAmbitionDef, personality: BustlePersonality = null) -> 
 
 
 ## The ambition and when each template was last completed, as plain data.
-## @experimental
 func export_state() -> Dictionary:
 	var completed := {}
 	for id: StringName in _completed:
@@ -197,7 +189,6 @@ func export_state() -> Dictionary:
 
 ## Restores [method export_state]. False (and nothing changes) when malformed or naming a template
 ## the config doesn't have.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not saved.get("active") is Dictionary or not saved.get("completed") is Dictionary:
 		return false

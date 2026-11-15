@@ -5,7 +5,6 @@ extends RefCounted
 ## One agent's state, independent of any scene: who it is, where it is, its brain and its modules'
 ## data. A body (a scene node the host makes) can be attached and freed at any time; the state
 ## stays in the [BustleSociety].
-## @experimental
 
 ## The agent's id, unique in its society.
 var id: StringName = &""
@@ -37,7 +36,6 @@ var _body: WeakRef = null
 
 
 ## The attached body, or null when there is none or it has been freed.
-## @experimental
 func body() -> Node3D:
 	if _body == null:
 		return null
@@ -46,7 +44,6 @@ func body() -> Node3D:
 
 
 ## Attaches [param node] as the body. When a position is known, the body is moved there.
-## @experimental
 func attach_body(node: Node3D) -> void:
 	_body = weakref(node) if node != null else null
 	if node != null and has_position and node.is_inside_tree():
@@ -54,14 +51,12 @@ func attach_body(node: Node3D) -> void:
 
 
 ## Copies the body's position into the state (when it has one) and detaches it.
-## @experimental
 func detach_body() -> void:
 	sync_from_body()
 	_body = null
 
 
 ## Copies the attached body's position into the state. Nothing happens without a body.
-## @experimental
 func sync_from_body() -> void:
 	var node := body()
 	if node != null and node.is_inside_tree() and node.global_position.is_finite():

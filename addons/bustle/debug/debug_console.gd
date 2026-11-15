@@ -12,7 +12,7 @@ extends RefCounted
 ##   yet, so needs can't be set here.
 ## - [code]order <agent>[/code] lists the queue; [code]order <agent> <sequence> [forced][/code]
 ##   queues one of [member sequences]; [code]order <agent> cancel <order_id>[/code] cancels one.
-## @experimental
+## @experimental: Development tool. Its commands and their output may change in any minor release.
 
 ## The answer in a release build.
 const NOT_AVAILABLE := "debug tools are not available in this build"

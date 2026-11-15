@@ -6,7 +6,6 @@ extends Resource
 ## modifiers [code]mental.break_threshold[/code] (added to [member break_threshold], so traits
 ## can move it) and [code]mental.inspired[/code] (above 0: a trait that opts in to inspiration)
 ## adjust them per agent.
-## @experimental
 
 ## The project setting a developer or a test turns mental states off with (default on). It isn't
 ## a game option.
@@ -69,7 +68,6 @@ const SETTING := "bustle/simulation/mental_states"
 
 
 ## The seven states with their default weights and durations.
-## @experimental
 static func default_states() -> Array[BustleMentalStateDef]:
 	var b := BustleMentalStateDef.Behaviour
 	var low := BustleMentalStateDef.LOW
@@ -86,14 +84,12 @@ static func default_states() -> Array[BustleMentalStateDef]:
 
 
 ## True unless a developer or a test turned [constant SETTING] off.
-## @experimental
 static func allowed() -> bool:
 	return bool(ProjectSettings.get_setting(SETTING, true))
 
 
 ## The catharsis thought, for [BustleMood]: a host passes it with its other thought defs when it
 ## loads a mood.
-## @experimental
 func catharsis_def() -> BustleThoughtDef:
 	var def := BustleThoughtDef.new()
 	def.id = &"catharsis"

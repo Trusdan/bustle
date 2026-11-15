@@ -12,7 +12,6 @@ extends RefCounted
 ## perceiver last became alert to it, never where the target is now. With no such observation, or
 ## no last-known position, nothing is written. The note is stamped with the minute track was lost.
 ## Suspicion alone writes nothing.
-## @experimental
 
 ## (id) → that agent's [BustleMemory], or null for agents without one.
 var memory_of: Callable = Callable()
@@ -34,7 +33,6 @@ func _init(world: BustlePerceptionWorld, p_memory_of: Callable = Callable(), p_c
 
 
 ## Stops listening.
-## @experimental
 func disconnect_world() -> void:
 	if _world.perception_changed.is_connected(_on_perception_changed):
 		_world.perception_changed.disconnect(_on_perception_changed)

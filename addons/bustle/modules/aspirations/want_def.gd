@@ -5,7 +5,6 @@ extends Resource
 ## One short-lived want, as data: who it suits (personality and circumstances), when it's fulfilled,
 ## how long it lasts and the thought fulfilling it gives. [BustleAspirations] reads it. Every
 ## circumstance, progress input and fact is a name the host fills each update. Bustle ships none.
-## @experimental
 
 ## Its id. Ties between equal scores break by id.
 @export var id: StringName = &""
@@ -42,7 +41,6 @@ extends Resource
 ## True when it can be used: an id, known sliders with finite weights, a finite target, a positive
 ## finite duration, a non-negative finite cooldown, points of at least 0, and boosts that are finite
 ## and at least 1.
-## @experimental
 func is_valid() -> bool:
 	if id == &"" or not is_finite(target) or not is_finite(duration_hours) or duration_hours <= 0.0:
 		return false
@@ -59,7 +57,6 @@ func is_valid() -> bool:
 
 ## True when [param inputs] say it's fulfilled: [member done_fact] is true, or
 ## [member progress_input] has reached [member target].
-## @experimental
 func is_done(inputs: Dictionary) -> bool:
 	if done_fact != &"" and bool(inputs.get(done_fact, false)):
 		return true

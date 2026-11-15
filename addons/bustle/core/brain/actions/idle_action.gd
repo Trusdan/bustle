@@ -5,7 +5,6 @@ extends BustleActionHandler
 ## [code]idle[/code]: idles in [code]params.style[/code] (put in the output as
 ## [code]animation[/code]) for [code]params.minutes[/code] game minutes, default 0 (one tick).
 ## A negative or non-finite number of minutes fails the step ([code]bad_params[/code]).
-## @experimental
 
 
 func start(context: BustleActionContext) -> void:

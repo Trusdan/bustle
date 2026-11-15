@@ -11,7 +11,6 @@ extends BustleActionHandler
 ## [br]- lash out: goes to its target ([code]talk_to[/code]) and, once there, insults it
 ## ([code]insulted[/code]), then is done.
 ## [br]It runs while the state lasts; the goal stops being eligible when the state ends.
-## @experimental
 
 ## The behaviour it acts out.
 var behaviour: BustleMentalBehaviour

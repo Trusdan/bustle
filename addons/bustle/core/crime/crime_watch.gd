@@ -24,7 +24,6 @@ extends RefCounted
 ## the theft and decides in turn. [member instant] delivers at once instead, for developers and
 ## tests only. A confrontation is words, never a fight or an intent to harm. Nothing here
 ## punishes, fines or harms anyone.
-## @experimental
 
 ## [param witness] perceived [param thief] taking [param item]. [param record]: see [method record].
 signal witnessed(witness: StringName, thief: StringName, item: StringName, record: Dictionary)
@@ -77,6 +76,7 @@ var perceives: Callable = Callable()
 ## owner who finds a deed notes the item where it was taken.
 var memory_of: Callable = Callable()
 ## The default decision.
+## @experimental: Its type, [BustleWitnessJudge], is internal and may change in any minor release.
 var judge: BustleWitnessJudge
 ## (agent, case) → one of [constant BustleWitnessJudge.OUTCOMES]. Empty: [member judge]. The case
 ## is [code]{record, thief, owner_id, place, can_confront, gossip_to}[/code]; a thief the agent
@@ -115,13 +115,11 @@ func _init(p_crime: BustleCrime = null) -> void:
 ## decisions, reporters, deed, found_at}[/code]. [code]deed[/code] is true when nobody witnessed
 ## it; [code]decisions[/code] is agent → outcome; [code]found_at[/code] is the minute its owner
 ## found it, or -1. Empty when unknown.
-## @experimental
 func record(id: int) -> Dictionary:
 	return _records[id].duplicate(true) if _records.has(id) else {}
 
 
 ## Every record, by id.
-## @experimental
 func records() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: int in _sorted_ids():
@@ -130,7 +128,6 @@ func records() -> Array[Dictionary]:
 
 
 ## The deeds nobody has found yet, by id: the traces the host's law can follow.
-## @experimental
 func open_deeds() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: int in _sorted_ids():
@@ -140,7 +137,6 @@ func open_deeds() -> Array[Dictionary]:
 
 
 ## The ids of the records [param agent] knows about (witnessed, or found its own loss), by id.
-## @experimental
 func known_by(agent: StringName) -> Array[int]:
 	var out: Array[int] = []
 	for id: int in _sorted_ids():
@@ -153,7 +149,6 @@ func known_by(agent: StringName) -> Array[int]:
 ## [code]{id, item, owner_id, place, at, thief, outcome}[/code]. The thief is named only when the
 ## agent witnessed it and still remembers the thief ([member memory_of]; without a memory, it
 ## does). Silent witnesses can be questioned too.
-## @experimental
 func question(agent: StringName, now: int) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var found: Variant = memory_of.call(agent) if memory_of.is_valid() else null
@@ -169,7 +164,6 @@ func question(agent: StringName, now: int) -> Array[Dictionary]:
 
 
 ## The stolen goods [param agent] still owns, as records by id: evidence the host can find on it.
-## @experimental
 func stolen_goods_of(agent: StringName) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: int in _sorted_ids():
@@ -183,7 +177,6 @@ func stolen_goods_of(agent: StringName) -> Array[Dictionary]:
 ## and nobody saw go: each such deed is found, the owner knows of it and remembers the item there,
 ## [signal deed_found] is emitted, and the owner decides what to do (not knowing the thief).
 ## Returns the record ids found.
-## @experimental
 func notice_losses(owner_id: StringName, place: StringName, now: int) -> Array[int]:
 	var found: Array[int] = []
 	for id: int in _sorted_ids():
@@ -203,7 +196,6 @@ func notice_losses(owner_id: StringName, place: StringName, now: int) -> Array[i
 ## [param agent]'s errands, oldest first: [code]{agent, kind, record, to, source, knows_thief,
 ## since, target}[/code]. [code]kind[/code] is report, tell_victim or gossip; [code]target[/code] is
 ## who it must reach now (for a report, the role's holder, empty while nobody holds it).
-## @experimental
 func errands_of(agent: StringName) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for errand: Dictionary in _errands:
@@ -216,7 +208,6 @@ func errands_of(agent: StringName) -> Array[Dictionary]:
 
 ## Sets [constant INPUT] to 1 while [param agent] has an errand with someone to reach and can go
 ## on it at minute [param now]; erases it otherwise.
-## @experimental
 func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float], now: int) -> void:
 	inputs.erase(INPUT)
 	if can_travel.is_valid() and not bool(can_travel.call(agent, now)):
@@ -234,7 +225,6 @@ func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float], now: 
 ## to face (the event is emitted then), [code]travelling[/code] when it still has to get there,
 ## [code]forgot[/code] when it dropped a faded errand (nothing emitted), [code]waiting[/code] when
 ## every errand left is waiting, or [code]none[/code].
-## @experimental
 func deliver(agent: StringName, now: int) -> Dictionary:
 	var memory: Variant = memory_of.call(agent) if memory_of.is_valid() else null
 	var waiting := false
@@ -259,7 +249,6 @@ func deliver(agent: StringName, now: int) -> Dictionary:
 
 
 ## Where [param id] is now, for moving towards it ([member where]), or null.
-## @experimental
 func position_of(id: StringName) -> Variant:
 	if where.is_valid():
 		return where.call(id)
@@ -270,7 +259,6 @@ func position_of(id: StringName) -> Variant:
 ## [param thief] faces down [param witness] at minute [param now]: the witness drops its errands
 ## about that thief's thefts. It still remembers, and can decide again later
 ## ([method reconsider]). Nothing here harms anyone. Returns how many errands were dropped.
-## @experimental
 func intimidate(thief: StringName, witness: StringName, _now: int) -> int:
 	var dropped := 0
 	for errand: Dictionary in _errands.duplicate():
@@ -285,7 +273,6 @@ func intimidate(thief: StringName, witness: StringName, _now: int) -> int:
 ## [param agent] decides again about record [param id] at minute [param now], with the same
 ## judge and today's inputs (fear, opinions). Only for a record it knows of and has no errand
 ## about. Returns the outcome, or empty when it can't.
-## @experimental
 func reconsider(agent: StringName, id: int, now: int) -> StringName:
 	if not _records.has(id) or not (_records[id]["known_by"] as Array).has(String(agent)) \
 			or _errands.any(func(e: Dictionary) -> bool: return StringName(e["agent"]) == agent and int(e["record"]) == id):
@@ -297,13 +284,11 @@ func reconsider(agent: StringName, id: int, now: int) -> StringName:
 
 
 ## The records as plain data, by id.
-## @experimental
 func export_state() -> Dictionary:
 	return {"next_id": _next_id, "records": records(), "errands": _errands.duplicate(true)}
 
 
 ## Restores [method export_state]. False (and nothing changes) when malformed.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not saved.get("next_id") is int or not saved.get("records") is Array:
 		return false
@@ -324,7 +309,6 @@ func import_state(saved: Variant) -> bool:
 ## The goal that runs errands: [code]deliver[/code] in [constant BustleBands.GUARDED], eligible
 ## while [constant INPUT] is 1, running the [code]deliver[/code] action ([BustleDeliverAction]).
 ## Urgent self-care outranks it; orders and duty don't.
-## @experimental
 static func goal_defs() -> Array[BustleGoalDef]:
 	var goal: BustleGoalDef = BustleCrime.goal_defs()[0]
 	goal.id = &"deliver"

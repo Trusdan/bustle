@@ -5,7 +5,6 @@ extends RefCounted
 ## What a [BustleBrain] wants its agent to do after one tick. A body (in the host) applies it.
 ## The goal fields say what was chosen and why; the action fields come from the running step's
 ## [member BustleActionContext.output], copied only when they have the right type.
-## @experimental
 
 ## The chosen goal ([code]idle[/code] for the fallback).
 var goal_id: StringName = &""
@@ -54,7 +53,6 @@ var reasons: Array[Dictionary] = []
 
 
 ## The intent as plain data (for comparing, logging and inspection).
-## @experimental
 func to_dictionary() -> Dictionary:
 	return {
 		"goal": goal_id, "order": order_id, "player_controlled": player_controlled,
@@ -67,7 +65,6 @@ func to_dictionary() -> Dictionary:
 
 
 ## Copies the fields of a step's [param output] that have the right type.
-## @experimental
 func read_output(output: Dictionary) -> void:
 	if output.get("move_to") is Vector3 and (output["move_to"] as Vector3).is_finite():
 		move_to = output["move_to"]

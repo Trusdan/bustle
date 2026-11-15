@@ -12,7 +12,6 @@ extends RefCounted
 ## OFF_SCREEN agent's day costs one step per expiry. Every thought keeps its reason
 ## ([method reasons]). The dominant emotion is the emotion with the largest total of absolute
 ## thought values; on a tie the current one stays.
-## @experimental
 
 ## How mood moves.
 var config: BustleMoodConfig
@@ -36,7 +35,6 @@ func _init(p_config: BustleMoodConfig = null, p_modifiers: BustleModifierSet = n
 
 
 ## Starts at game minute [param now] with mood at the baseline and no thoughts.
-## @experimental
 func start(now: int) -> void:
 	now_minutes = now
 	_thoughts.clear()
@@ -47,7 +45,6 @@ func start(now: int) -> void:
 ## The agent's resting mood: the config's, through the [code]mood.baseline[/code] modifier, kept
 ## finite and inside [method mood_range]. A baseline that isn't finite counts as the middle of the
 ## range.
-## @experimental
 func baseline() -> float:
 	var span := mood_range()
 	var base := config.baseline if is_finite(config.baseline) else (span.x + span.y) / 2.0
@@ -56,7 +53,6 @@ func baseline() -> float:
 
 ## The mood range as [code](lowest, highest)[/code]: the config's, with bounds that aren't finite
 ## replaced by 0 and 100 and reversed bounds swapped.
-## @experimental
 func mood_range() -> Vector2:
 	var low := config.min_mood if is_finite(config.min_mood) else 0.0
 	var high := config.max_mood if is_finite(config.max_mood) else 100.0
@@ -65,7 +61,6 @@ func mood_range() -> Vector2:
 
 ## Adds a timed thought from [param def] now, with [param details] added to its reason. Past its
 ## stack limit the oldest of the same id goes. False for an invalid def or a held one (duration 0).
-## @experimental
 func add_thought(def: BustleThoughtDef, details: Dictionary = {}) -> bool:
 	if def == null or not def.is_valid() or def.duration_hours <= 0.0 or not is_plain(details):
 		return false
@@ -78,7 +73,6 @@ func add_thought(def: BustleThoughtDef, details: Dictionary = {}) -> bool:
 
 ## Holds or drops a thought that lasts while its condition holds (duration 0). Holding one that is
 ## already held only updates its reason. False for an invalid def or a timed one.
-## @experimental
 func set_held(def: BustleThoughtDef, held: bool, details: Dictionary = {}) -> bool:
 	if def == null or not def.is_valid() or def.duration_hours != 0.0 or not is_plain(details):
 		return false
@@ -96,7 +90,6 @@ func set_held(def: BustleThoughtDef, held: bool, details: Dictionary = {}) -> bo
 
 ## Holds each need thought in [param defs] while its need's pressure in [param needs] is at least
 ## its threshold, and drops it otherwise. Its reason names the need and the pressure.
-## @experimental
 func sync_need_thoughts(needs: BustleNeedSet, defs: Array[BustleThoughtDef]) -> void:
 	for def: BustleThoughtDef in defs:
 		if def == null or def.need == &"":
@@ -107,7 +100,6 @@ func sync_need_thoughts(needs: BustleNeedSet, defs: Array[BustleThoughtDef]) -> 
 
 
 ## Drops every thought with id [param id].
-## @experimental
 func remove_thought(id: StringName) -> void:
 	for entry: Dictionary in _of(id):
 		_thoughts.erase(entry)
@@ -115,13 +107,11 @@ func remove_thought(id: StringName) -> void:
 
 
 ## The number of active thoughts with id [param id] (all of them when empty).
-## @experimental
 func count(id: StringName = &"") -> int:
 	return _thoughts.size() if id == &"" else _of(id).size()
 
 
 ## The mood target now: the baseline plus every active thought, clamped.
-## @experimental
 func target() -> float:
 	var total := baseline()
 	for entry: Dictionary in _thoughts:
@@ -133,7 +123,6 @@ func target() -> float:
 ## Moves to game minute [param now]: thoughts that expire on the way go at their minute, and mood
 ## heads for the target between expiries, unless [param asleep] (then only thoughts expire).
 ## Earlier minutes do nothing.
-## @experimental
 func advance_to(now: int, asleep: bool = false) -> void:
 	_expire()
 	while now_minutes < now:
@@ -153,7 +142,6 @@ func advance_to(now: int, asleep: bool = false) -> void:
 
 ## Every active thought with its reason, strongest first:
 ## [code]{thought, value, emotion, reason, expires}[/code] (expires is -1 for a held thought).
-## @experimental
 func reasons() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for entry: Dictionary in _thoughts:
@@ -172,13 +160,11 @@ func reasons() -> Array[Dictionary]:
 
 
 ## Writes the mood into [param inputs] as [constant BustleInputs.MOOD], for the scorer's mood curves.
-## @experimental
 func fill_inputs(inputs: Dictionary[StringName, float]) -> void:
 	inputs[BustleInputs.MOOD] = mood
 
 
 ## The mood as plain data: mood, minute, emotion and each thought's id, start, end and reason.
-## @experimental
 func export_state() -> Dictionary:
 	var thoughts: Array = []
 	for entry: Dictionary in _thoughts:
@@ -192,7 +178,6 @@ func export_state() -> Dictionary:
 ## a start after the save's minute, a held thought with an end, a timed one without one (or ending
 ## before it starts), more of one id than its stack limit (one for a held thought), or a reason
 ## that isn't plain data. A timed thought that had already ended by the save's minute is dropped.
-## @experimental
 func import_state(saved: Variant, defs: Array[BustleThoughtDef]) -> bool:
 	if not saved is Dictionary:
 		return false
@@ -331,7 +316,6 @@ static func _rate(value: float) -> float:
 
 ## True when [param value] is plain data that saves as JSON: null, a bool, an int, a finite float,
 ## a string, or arrays and string-keyed dictionaries of those.
-## @experimental
 static func is_plain(value: Variant) -> bool:
 	match typeof(value):
 		TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_STRING, TYPE_STRING_NAME:

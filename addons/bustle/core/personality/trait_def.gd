@@ -5,7 +5,6 @@ extends Resource
 ## A trait, as data only: a named bundle of modifiers (rates, weights, tag tastes, mood), slider
 ## shifts, needs and goals it adds, and permanent thoughts. No trait has code; a host or a module
 ## reads the modifiers by key. A trait may exclude others: an agent can't have both.
-## @experimental
 
 ## Its id.
 @export var id: StringName = &""
@@ -30,7 +29,6 @@ extends Resource
 ## True when it can be used: an id; no exclusion of itself; well-formed modifier keys with finite
 ## numbers; known sliders with finite shifts; needs and goals with ids; and valid permanent
 ## thoughts (no duration).
-## @experimental
 func is_valid() -> bool:
 	if id == &"" or excludes.has(id):
 		return false
@@ -57,6 +55,5 @@ func is_valid() -> bool:
 
 
 ## True when it and [param other] can't be on the same agent.
-## @experimental
 func clashes_with(other: BustleTraitDef) -> bool:
 	return other != null and (excludes.has(other.id) or other.excludes.has(id))

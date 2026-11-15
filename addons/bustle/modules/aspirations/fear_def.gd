@@ -4,7 +4,6 @@ extends Resource
 
 ## One fear, as data: the event that forms it, what it makes the agent avoid and for how long.
 ## [BustleAspirations] reads it. Bustle ships none; events, goals and inputs are the host's names.
-## @experimental
 
 ## Its id.
 @export var id: StringName = &""
@@ -29,7 +28,6 @@ extends Resource
 
 ## True when it can be used: an id, a trigger, something to avoid, a multiplier from 0 to 1, a
 ## finite non-negative duration, and a way to end (a duration or a clearing fact).
-## @experimental
 func is_valid() -> bool:
 	if id == &"" or trigger == &"" or (avoid_goals.is_empty() and avoid_options.is_empty() and avoid_input == &""):
 		return false

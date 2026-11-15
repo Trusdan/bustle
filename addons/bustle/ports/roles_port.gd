@@ -6,7 +6,6 @@ extends RefCounted
 ## and [method roles_of], and emits [signal holder_changed] when a holder changes. The standalone
 ## default is a static table, read from a [BustleRoleTable] if one is given, changed with
 ## [method set_holder]. What a role means is the host's business.
-## @experimental
 
 ## [param role] passed from [param old] to [param new] (either may be empty).
 signal holder_changed(role: StringName, old: StringName, new: StringName)
@@ -22,13 +21,11 @@ func _init(table: BustleRoleTable = null) -> void:
 
 
 ## Who holds [param role], or empty.
-## @experimental
 func holder_of(role: StringName) -> StringName:
 	return _holders.get(role, &"")
 
 
 ## The roles [param id] holds, sorted. Empty for an unknown or empty id.
-## @experimental
 func roles_of(id: StringName) -> PackedStringArray:
 	var out := PackedStringArray()
 	if id == &"":
@@ -42,7 +39,6 @@ func roles_of(id: StringName) -> PackedStringArray:
 
 ## Gives [param role] to [param id] (empty vacates it), emitting [signal holder_changed] when that
 ## changes anything. Empty roles are ignored.
-## @experimental
 func set_holder(role: StringName, id: StringName) -> void:
 	var old := holder_of(role)
 	if role == &"" or old == id:

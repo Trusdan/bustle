@@ -26,7 +26,6 @@ extends RefCounted
 ## [br][br]
 ## A theft by someone who isn't an agent of the society (the player's character, for example) goes
 ## through [method record_theft] instead: it emits the same [signal theft] and moves nothing.
-## @experimental
 
 ## [param thief] took [param item] from [param owner_id]. [param circumstances]:
 ## [code]{place, need, pressure, score, at}[/code] from [method steal], what drove it; from
@@ -69,7 +68,6 @@ func _init(p_society: BustleSociety = null, p_config: BustleCrimeConfig = null) 
 ## Runs the guards for [param agent] at minute [param now] (see the class description). Returns
 ## what it would steal, [code]{item, owner_id, place, need, pressure, score}[/code], and remembers
 ## it as the agent's target; empty (and no target) when any guard fails.
-## @experimental
 func consider(agent: StringName, now: int) -> Dictionary:
 	_targets.erase(agent)
 	if not BustleCrimeConfig.crime_allowed() or not enabled or exempt.has(agent):
@@ -93,13 +91,11 @@ func consider(agent: StringName, now: int) -> Dictionary:
 
 
 ## [param agent]'s current target (a copy), or empty.
-## @experimental
 func target_of(agent: StringName) -> Dictionary:
 	return _targets[agent].duplicate() if _targets.has(agent) else {}
 
 
 ## Writes [constant INPUT] into [param inputs]: 1 while [param agent] has a target, else erased.
-## @experimental
 func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> void:
 	if _targets.has(agent):
 		inputs[INPUT] = 1.0
@@ -110,7 +106,6 @@ func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> vo
 ## [param agent] takes its target at minute [param now], if every guard still passes for that same
 ## item: the property port moves it to the agent and [signal theft] is emitted. The target is
 ## cleared either way. Returns [code]{ok: true, item}[/code] or [code]{ok: false, reason}[/code].
-## @experimental
 func steal(agent: StringName, now: int) -> Dictionary:
 	var wanted := target_of(agent)
 	_targets.erase(agent)
@@ -138,7 +133,6 @@ func steal(agent: StringName, now: int) -> Dictionary:
 ## developer setting and [member enabled] are about agents stealing. Returns false, emitting
 ## nothing, when the thief, owner or item is empty, the thief is the owner, or the place or a
 ## whole-number minute is missing.
-## @experimental
 func record_theft(thief: StringName, owner_id: StringName, item: StringName, circumstances: Dictionary) -> bool:
 	if thief == &"" or owner_id == &"" or item == &"" or thief == owner_id:
 		return false
@@ -156,14 +150,12 @@ func record_theft(thief: StringName, owner_id: StringName, item: StringName, cir
 
 
 ## Forgets [param agent]'s target.
-## @experimental
 func clear(agent: StringName) -> void:
 	_targets.erase(agent)
 
 
 ## The one GUARDED goal: [code]steal[/code], eligible only while [constant INPUT] is 1, running the
 ## [code]steal[/code] action.
-## @experimental
 static func goal_defs() -> Array[BustleGoalDef]:
 	var curve := Curve.new()
 	curve.add_point(Vector2(0, 0), 0, 1, Curve.TANGENT_LINEAR, Curve.TANGENT_LINEAR)

@@ -9,7 +9,6 @@ extends Node
 ## Put one in a scene (or as an autoload). Components find it through the group [constant GROUP]
 ## unless their [code]system_path[/code] points at one. A ray is blocked by any body on
 ## [member sight_mask] except the perceiver's and the target's own bodies.
-## @experimental
 
 ## A perceiver's awareness of a target changed state (the world's signal, passed on).
 signal perception_changed(perceiver_id: StringName, target_id: StringName, old_state: BustleDetectionMeter.State, new_state: BustleDetectionMeter.State)
@@ -48,7 +47,6 @@ func _physics_process(delta: float) -> void:
 
 ## Copies the components' state into the world and ticks it by [param delta]. The physics frame
 ## calls it; tests can too.
-## @experimental
 func step(delta: float) -> void:
 	var start := Time.get_ticks_usec()
 	_sync()
@@ -57,7 +55,6 @@ func step(delta: float) -> void:
 
 
 ## Registers a perceiver component.
-## @experimental
 func add_perceiver(node: BustlePerceiver) -> void:
 	_perceivers[node.actor_id] = node
 	_actor_for(node.actor_id).profile = node.profile
@@ -65,14 +62,12 @@ func add_perceiver(node: BustlePerceiver) -> void:
 
 
 ## Registers a perceivable component.
-## @experimental
 func add_perceivable(node: BustlePerceivable) -> void:
 	_perceivables[node.actor_id] = node
 	_actor_for(node.actor_id).perceivable = true
 
 
 ## Unregisters a component. The actor leaves the world once neither of its components is left.
-## @experimental
 func remove_component(node: Node, actor_id: StringName) -> void:
 	if _perceivers.get(actor_id) == node:
 		_perceivers.erase(actor_id)
@@ -89,7 +84,6 @@ func remove_component(node: Node, actor_id: StringName) -> void:
 
 
 ## The first system in [param tree], or null.
-## @experimental
 static func find(tree: SceneTree) -> BustlePerceptionSystem:
 	return tree.get_first_node_in_group(GROUP) as BustlePerceptionSystem
 

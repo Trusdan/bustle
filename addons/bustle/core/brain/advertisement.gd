@@ -4,7 +4,6 @@ extends RefCounted
 
 ## What one option (an object, a place, someone to talk to) offers an agent: how much it relieves
 ## each need, what it adds to each need as a side effect, its tags and how far away it is.
-## @experimental
 
 ## The option's id, unique among one agent's options.
 var option_id: StringName = &""

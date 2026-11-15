@@ -11,7 +11,6 @@ extends RefCounted
 ## any other port weighs the deed itself (a bridge to a social engine can use its magnitude). A greeting is an interaction with cooldowns: one per pair (either way
 ## round) and one per initiator, so agents don't greet the same person over and over, or everyone
 ## at once.
-## @experimental
 
 ## The social port everything is recorded through. A new [BustleSocialStore] by default.
 var store: BustleSocialPort
@@ -50,7 +49,6 @@ func _init(p_store: BustleSocialPort = null, p_world_seed: int = 0) -> void:
 ## never below 0); an incompatible pair, or a low mood, does the reverse. The compatibility lift is
 ## [code]compatibility × compatibility_scale[/code]; the mood lift is
 ## [code]mood_scale × (mood − 50) / 50[/code].
-## @experimental
 static func outcome(def: BustleInteractionDef, initiator: StringName, recipient: StringName, now: int,
 		world_seed: int, compatibility: float, initiator_mood: float = -1.0, recipient_mood: float = -1.0) -> Dictionary:
 	var bytes := PackedByteArray()
@@ -78,7 +76,6 @@ static func outcome(def: BustleInteractionDef, initiator: StringName, recipient:
 ## its return magnitude, adds the opinion entries that name it when the port is a
 ## [BustleSocialStore], and gives each side its thought. Returns the outcome with [code]ok[/code]
 ## and the [code]deed[/code] key, or [code]{ok: false, reason}[/code].
-## @experimental
 func interact(def: BustleInteractionDef, initiator: StringName, recipient: StringName, now: int,
 		place: StringName = &"", witnesses: Array[Dictionary] = []) -> Dictionary:
 	if def == null or not def.is_valid():
@@ -112,14 +109,12 @@ func interact(def: BustleInteractionDef, initiator: StringName, recipient: Strin
 
 
 ## True when [param initiator] may greet [param recipient] at minute [param now].
-## @experimental
 func can_greet(initiator: StringName, recipient: StringName, now: int) -> bool:
 	return _pair_ready.get(_pair(initiator, recipient), -1) <= now and _agent_ready.get(initiator, -1) <= now
 
 
 ## [param initiator] greets [param recipient] (see [member greeting]), unless a cooldown is
 ## running ([code]{ok: false, reason: cooling_down}[/code]). Starts both cooldowns.
-## @experimental
 func greet(initiator: StringName, recipient: StringName, now: int, place: StringName = &"",
 		witnesses: Array[Dictionary] = []) -> Dictionary:
 	if not can_greet(initiator, recipient, now):
@@ -135,7 +130,6 @@ func greet(initiator: StringName, recipient: StringName, now: int, place: String
 ## The greeting cooldowns that are still running at the store's minute (with another port, at the
 ## latest minute an interaction was recorded at), as plain data. They are not part of the port's
 ## or the society's export: a host saves them alongside.
-## @experimental
 func export_state() -> Dictionary:
 	var own := store as BustleSocialStore
 	_prune(own.now_minutes if own != null else _now)
@@ -149,7 +143,6 @@ func export_state() -> Dictionary:
 
 
 ## Restores [method export_state]. False (and nothing changes) when malformed.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not saved.get("pairs") is Dictionary or not saved.get("agents") is Dictionary:
 		return false

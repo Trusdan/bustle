@@ -4,7 +4,6 @@ extends Resource
 
 ## One story event, as host data: when it may fire, how it moves tension, how often, and whether
 ## a quest lock holds it back. The host decides what the event does when [BustleDirector] fires it.
-## @experimental
 
 ## Its id, unique among a director's events.
 @export var id: StringName = &""
@@ -30,14 +29,12 @@ extends Resource
 
 
 ## The kind to ask the port about.
-## @experimental
 func event_kind() -> StringName:
 	return kind if kind != &"" else id
 
 
 ## Why it can't be used, or empty: an id, finite numbers, a cooldown not below 0, and well-formed
 ## preconditions (each an input key with finite bounds, and no other keys).
-## @experimental
 func validate() -> String:
 	if id == &"":
 		return "an event needs an id"
@@ -64,7 +61,6 @@ func validate() -> String:
 
 
 ## True when every precondition holds on [param inputs].
-## @experimental
 func preconditions_hold(inputs: Dictionary) -> bool:
 	for rule: Dictionary in requires:
 		var key := StringName(str(rule["input"]))
@@ -83,7 +79,6 @@ func preconditions_hold(inputs: Dictionary) -> bool:
 
 
 ## Its score on [param inputs]: [member weight] plus each score input's points.
-## @experimental
 func score(inputs: Dictionary) -> float:
 	var out := weight
 	for key: StringName in score_inputs:

@@ -5,7 +5,6 @@ extends Resource
 ## A kind of smart object, as data: what using it does to needs, its tags, how many can use it at
 ## once, how long a reservation holds and its price. A bed, a bench and a stall are each one def,
 ## placed many times as [BustleAffordance]s.
-## @experimental
 
 ## Its id.
 @export var id: StringName = &""
@@ -32,7 +31,6 @@ extends Resource
 
 ## True when it can be used: an id, finite non-negative effects, a capacity and hold of at least
 ## 1, a price of at least 0 and [member others_mult] within 0..1.
-## @experimental
 func is_valid() -> bool:
 	if id == &"" or capacity < 1 or hold_minutes < 1 or price < 0 or not is_finite(others_mult) \
 			or others_mult < 0.0 or others_mult > 1.0:

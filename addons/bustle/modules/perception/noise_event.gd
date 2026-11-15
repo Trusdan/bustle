@@ -4,7 +4,6 @@ extends RefCounted
 
 ## A one-off sound (a thrown object landing, a lock breaking) that the project broadcasts to
 ## observers. Anyone within [member radius] of [member position] can hear it.
-## @experimental
 
 ## Where the sound happened.
 var position := Vector3.ZERO

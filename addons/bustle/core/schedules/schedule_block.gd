@@ -4,7 +4,6 @@ extends Resource
 
 ## One block of a day's schedule: an activity from one minute of the day to another, at a place.
 ## An end at or before the start runs past midnight; the block belongs to the day it starts.
-## @experimental
 
 ## What the agent should be doing: the scorer sees it as the input
 ## [code]schedule.<activity>[/code] (lower-case letters, digits and underscores).
@@ -24,7 +23,6 @@ extends Resource
 
 
 ## Its length in minutes (1 to 1440).
-## @experimental
 func length() -> int:
 	var out := end_minute - start_minute
 	return out if out > 0 else out + 1440
@@ -33,7 +31,6 @@ func length() -> int:
 ## True when it can be used: an activity name that is a valid input name (and not
 ## [code]free_time[/code], which means no block), minutes in range, a lateness of -1 or more and a
 ## wage of at least 0.
-## @experimental
 func is_valid() -> bool:
 	return BustleInputs.is_valid_input(StringName("schedule.%s" % activity)) and activity != &"" \
 			and activity != &"free_time" and wage >= 0 \

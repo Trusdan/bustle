@@ -18,7 +18,6 @@ extends RefCounted
 ## A downed agent ([method BustleHealthPort.is_incapacitated]) chooses no work and doesn't travel:
 ## set [member BustleBrain.gate] to [method allows]. With the default port everyone is healthy and a
 ## tick does nothing. Nothing is random: the same readings give the same results.
-## @experimental
 
 ## The modifier source its effects are set under.
 const SOURCE := &"health"
@@ -46,21 +45,18 @@ func _init(p_config: BustleHealthConfig = null, p_ports: BustlePorts = null) -> 
 
 ## [param id]'s amount of capacity [param name], clamped to 0..1 (1 with no port or an unusable
 ## reading).
-## @experimental
 func capacity(id: StringName, name: StringName) -> float:
 	var port := _port()
 	return _unit(port.capacity(id, name), 1.0) if port != null else 1.0
 
 
 ## [param id]'s pain, clamped to 0..1.
-## @experimental
 func pain(id: StringName) -> float:
 	var port := _port()
 	return _unit(port.pain(id), 0.0) if port != null else 0.0
 
 
 ## True while [param id] is downed.
-## @experimental
 func is_downed(id: StringName) -> bool:
 	var port := _port()
 	return port != null and port.is_incapacitated(id)
@@ -69,7 +65,6 @@ func is_downed(id: StringName) -> bool:
 ## Applies [param id]'s capacities to [param modifiers]: it removes what [constant SOURCE] wrote
 ## before, then writes [code]capacity.<name>[/code] and each effect's key for capacities below
 ## full (effects on one key multiply). Nothing is written at full health.
-## @experimental
 func apply(id: StringName, modifiers: BustleModifierSet) -> void:
 	if modifiers == null:
 		return
@@ -94,7 +89,6 @@ func apply(id: StringName, modifiers: BustleModifierSet) -> void:
 
 ## The thought rules [param id] meets now: the pain rule with the highest line its pain reaches,
 ## then each tag rule whose tag it shows, in rule order.
-## @experimental
 func chosen(id: StringName) -> Array[BustleHealthThought]:
 	var out: Array[BustleHealthThought] = []
 	if config.validate() != "":
@@ -119,7 +113,6 @@ func chosen(id: StringName) -> Array[BustleHealthThought]:
 ## [code]set_held(def, held, details)[/code], such as a [code]BustleMood[/code]; optional): it
 ## drops every rule thought not chosen, then holds the chosen ones with [code]pain[/code] or
 ## [code]tag[/code] in their reason. Returns the chosen thought ids, in rule order.
-## @experimental
 func sync(id: StringName, mood: Object = null) -> Array[StringName]:
 	var rules := chosen(id)
 	var ids: Array[StringName] = []
@@ -140,7 +133,6 @@ func sync(id: StringName, mood: Object = null) -> Array[StringName]:
 ## Sets [param id]'s health inputs in [param inputs], each only while non-zero, and erases them
 ## otherwise: [constant INPUT_PAIN], [constant INPUT_CARE], [constant INPUT_DOWNED] and
 ## [constant INPUT_CONTAGIOUS].
-## @experimental
 func fill_inputs(id: StringName, inputs: Dictionary[StringName, float]) -> void:
 	for key: StringName in [INPUT_PAIN, INPUT_CARE, INPUT_DOWNED, INPUT_CONTAGIOUS]:
 		inputs.erase(key)
@@ -156,7 +148,6 @@ func fill_inputs(id: StringName, inputs: Dictionary[StringName, float]) -> void:
 
 ## One tick for [param id]: [method apply] on [param modifiers], [method sync] on [param mood] and
 ## [method fill_inputs] on [param inputs] (each skipped when null).
-## @experimental
 func tick(id: StringName, modifiers: BustleModifierSet, mood: Object = null, inputs: Variant = null) -> void:
 	apply(id, modifiers)
 	sync(id, mood)
@@ -168,7 +159,6 @@ func tick(id: StringName, modifiers: BustleModifierSet, mood: Object = null, inp
 ## tag's thoughts on [param mood] at once, without waiting for the next [method sync]. True when a
 ## rule has the tag. The next [method sync] follows the port's [method BustleHealthPort.visible_tags]
 ## again, so the port stays the truth.
-## @experimental
 func illness_began(id: StringName, tag: StringName, mood: Object) -> bool:
 	if config.validate() != "" or tag == &"" or id == &"":
 		return false
@@ -184,7 +174,6 @@ func illness_began(id: StringName, tag: StringName, mood: Object) -> bool:
 ## A host event: [param id] recovered. Drops from [param mood], at once, every tag thought whose tag
 ## the port no longer shows ([method BustleHealthPort.visible_tags]); a tag still shown keeps its
 ## thought. The next [method sync] stays the source of truth.
-## @experimental
 func recovered(id: StringName, mood: Object) -> void:
 	if id == &"" or mood == null or not mood.has_method(&"set_held") or config.validate() != "":
 		return
@@ -198,7 +187,6 @@ func recovered(id: StringName, mood: Object) -> void:
 ## The gate for [member BustleBrain.gate]: false while [param id] is downed and the goal
 ## ([param goal_tags]: its id and tags) or option ([param option_tags]) carries any of
 ## [member BustleHealthConfig.downed_blocks]. True otherwise.
-## @experimental
 func allows(id: StringName, goal_tags: Array[StringName], option_tags: Array[StringName]) -> bool:
 	if not is_downed(id):
 		return true

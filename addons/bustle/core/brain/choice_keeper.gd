@@ -15,7 +15,7 @@ extends RefCounted
 ## 5. After that, it is kept while it is inside the pick window (no draw); if it falls out, the
 ##    scorer picks from the window as usual.
 ## A current choice that is no longer eligible is dropped at once.
-## @experimental
+## @experimental: Internal to [BustleBrain]: its hysteresis bookkeeping may change. Its save data is part of the brain's.
 
 ## The bonus the current choice's selection score gets.
 var momentum: float = 1.15

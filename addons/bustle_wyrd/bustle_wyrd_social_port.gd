@@ -6,7 +6,6 @@ extends BustleSocialPort
 ## the default port and the built-in [BustleSocialStore] (and with it [BustleRelationshipRules]), so
 ## Wyrd is the one source of opinions, relationship kinds, deeds and what each agent knows of them.
 ##
-## @experimental
 ## Every call goes to Wyrd by name, so this script compiles with no Wyrd in the project.
 ## [method record_deed] uses Wyrd's stable [code]deeds.record[/code]. The reads use Wyrd's
 ## experimental surface, which [method BustleWyrdBridge.is_supported] pins to one exact release:
@@ -29,7 +28,6 @@ func _init(wyrd: Object = null) -> void:
 
 ## How [param a] regards [param b], from 0 to 100: Wyrd's disposition of [param a] toward
 ## [param b]. [constant BustleSocialPort.NEUTRAL_OPINION] when either id is empty.
-## @experimental
 func opinion(a: StringName, b: StringName) -> int:
 	var social := _member(&"social")
 	if social == null or a == &"" or b == &"":
@@ -38,7 +36,6 @@ func opinion(a: StringName, b: StringName) -> int:
 
 
 ## The kinds of relationship [param a] holds toward [param b] in Wyrd, sorted.
-## @experimental
 func kinds_between(a: StringName, b: StringName) -> PackedStringArray:
 	var out := PackedStringArray()
 	var social := _member(&"social")
@@ -53,13 +50,11 @@ func kinds_between(a: StringName, b: StringName) -> PackedStringArray:
 
 
 ## True: kinds are kept in Wyrd's social state.
-## @experimental
 func supports_kinds() -> bool:
 	return true
 
 
 ## Gives [param a] the kind [param kind] towards [param b] in Wyrd's social state.
-## @experimental
 func set_kind(a: StringName, b: StringName, kind: StringName) -> void:
 	var social := _member(&"social")
 	if social != null and a != &"" and b != &"" and a != b and kind != &"":
@@ -67,7 +62,6 @@ func set_kind(a: StringName, b: StringName, kind: StringName) -> void:
 
 
 ## Takes the kind [param kind] away from [param a] towards [param b] in Wyrd's social state.
-## @experimental
 func clear_kind(a: StringName, b: StringName, kind: StringName) -> void:
 	var social := _member(&"social")
 	if social != null and a != &"" and b != &"" and kind != &"":
@@ -78,7 +72,6 @@ func clear_kind(a: StringName, b: StringName, kind: StringName) -> void:
 ## [param b] did that [param a] was the target or a witness of, which are the deeds Wyrd's
 ## disposition counts. Each is [code]{deed, verb, minute, as}[/code], where [code]as[/code] is
 ## [code]target[/code] or [code]witness[/code].
-## @experimental
 func reasons(a: StringName, b: StringName, limit: int = 3) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var deeds := _member(&"deeds")
@@ -104,7 +97,6 @@ func reasons(a: StringName, b: StringName, limit: int = 3) -> Array[Dictionary]:
 ## recipient weighs in Wyrd's opinions. Wyrd keeps one magnitude per deed, so
 ## [param _return_magnitude] isn't used. Returns the key, or empty when the actor or verb is empty
 ## or Wyrd refuses it.
-## @experimental
 func record_deed(actor: StringName, verb: StringName, target: StringName, place: StringName,
 		witnesses: Array[Dictionary], magnitude: float = 1.0, _return_magnitude: float = 0.0) -> StringName:
 	var deeds := _member(&"deeds")
@@ -122,7 +114,6 @@ func record_deed(actor: StringName, verb: StringName, target: StringName, place:
 ## True when [param agent] knows the deed [param key]: it did the deed, witnessed it, or believes it
 ## (from [method share_news] or one of Wyrd's rumours). False for an unknown key, or one Wyrd has
 ## since merged away by compacting its log.
-## @experimental
 func knows(agent: StringName, key: StringName) -> bool:
 	var deeds := _member(&"deeds")
 	var deed_id := id_of(key)
@@ -140,7 +131,6 @@ func knows(agent: StringName, key: StringName) -> bool:
 ## and the listener doesn't know yet, oldest first. Each is noted in Wyrd as believed by the
 ## listener at Wyrd's current minute, so the listener knows it second-hand and can't pass it on.
 ## Returns how many. [param _place] is not used.
-## @experimental
 func share_news(teller: StringName, listener: StringName, _place: StringName) -> int:
 	var deeds := _member(&"deeds")
 	if deeds == null or teller == &"" or listener == &"" or teller == listener:
@@ -164,13 +154,11 @@ func share_news(teller: StringName, listener: StringName, _place: StringName) ->
 
 
 ## The key of Wyrd deed [param deed_id].
-## @experimental
 static func key_of(deed_id: int) -> StringName:
 	return StringName(KEY_PREFIX + str(deed_id))
 
 
 ## The Wyrd deed id in [param key], or 0 when it isn't one of this port's keys.
-## @experimental
 static func id_of(key: StringName) -> int:
 	var text := String(key)
 	if not text.begins_with(KEY_PREFIX) or not text.substr(KEY_PREFIX.length()).is_valid_int():

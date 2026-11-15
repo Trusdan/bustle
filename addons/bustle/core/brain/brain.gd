@@ -33,7 +33,6 @@ extends RefCounted
 ## **Seeding.** The generator is seeded once, from [method seed_for] (a fixed FNV-1a hash of the
 ## world seed and the agent id, the same on every platform), and its state is saved with the brain,
 ## so a run repeats exactly from the same seed and inputs.
-## @experimental
 
 ## The saved-state layout version.
 const STATE_VERSION := 1
@@ -62,6 +61,7 @@ var config: BustleScoringConfig
 ## Numbers sources add to or multiply (weights and multipliers among them).
 var modifiers := BustleModifierSet.new()
 ## Hysteresis and failure cooldowns.
+## @experimental: Its type, [BustleChoiceKeeper], is internal and may change in any minor release.
 var keeper := BustleChoiceKeeper.new()
 ## Runs the chosen goal's sequence. Register action handlers on it.
 var runner := BustleSequenceRunner.new()
@@ -77,6 +77,7 @@ var player_controlled: bool = false
 var last_senses: BustleSenses
 ## The scorer's candidates from the last tick, as scored (empty under player control). Kept by
 ## reference for inspection; not saved.
+## @experimental: Its type, [BustleCandidate], is internal and may change in any minor release.
 var last_candidates: Array[BustleCandidate] = []
 ## The intent of the last tick, or null. Not saved.
 var last_intent: BustleIntent
@@ -116,7 +117,6 @@ func _init(p_agent_id: StringName = &"", p_library: BustleGoalLibrary = null,
 
 ## Queues [param order]. Returns an empty reason when queued, otherwise why it is impossible (also
 ## reported through the queue).
-## @experimental
 func order(p_order: BustleOrder) -> StringName:
 	if player_controlled:
 		return orders.refuse(p_order, &"player_controlled")
@@ -125,7 +125,6 @@ func order(p_order: BustleOrder) -> StringName:
 
 ## Turns direct player control on or off. Turning it on cancels the running goal and every order.
 ## Emits [signal player_control_changed] when it changes.
-## @experimental
 func set_player_controlled(on: bool) -> void:
 	if on and not player_controlled:
 		_stop()
@@ -138,7 +137,6 @@ func set_player_controlled(on: bool) -> void:
 
 ## The generator seed for [param p_agent_id] in a world seeded [param p_world_seed]: 64-bit FNV-1a
 ## over the world seed's 8 bytes (little-endian) and the id's UTF-8 bytes.
-## @experimental
 static func seed_for(p_world_seed: int, p_agent_id: StringName) -> int:
 	var h := -3750763034362895579 # 0xcbf29ce484222325 as a signed 64-bit int
 	var bytes := PackedByteArray()
@@ -151,7 +149,6 @@ static func seed_for(p_world_seed: int, p_agent_id: StringName) -> int:
 
 
 ## Thinks for one tick of [param delta] seconds and returns what the agent should do.
-## @experimental
 func tick(delta: float, senses: BustleSenses) -> BustleIntent:
 	last_senses = senses
 	last_candidates = []
@@ -232,7 +229,6 @@ func _think(delta: float, senses: BustleSenses) -> BustleIntent:
 
 ## The brain's whole state as plain data: the generator, the keeper, the runner and which goal the
 ## runner is running. The generator state is a 64-bit int.
-## @experimental
 func export_state() -> Dictionary:
 	return {
 		"version": STATE_VERSION, "agent": String(agent_id), "world_seed": world_seed,
@@ -245,7 +241,6 @@ func export_state() -> Dictionary:
 ## Restores [method export_state]'s state into a brain made for the same agent and library. False,
 ## leaving the brain as freshly made, when the state doesn't fit (another version or agent, a
 ## running goal the library lacks, or a runner state that doesn't fit its sequence).
-## @experimental
 func import_state(saved: Dictionary) -> bool:
 	_reset()
 	if int(saved.get("version", -1)) != STATE_VERSION or StringName(str(saved.get("agent", ""))) != agent_id \

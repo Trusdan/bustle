@@ -14,7 +14,7 @@ extends RefCounted
 ## [br][br]
 ## Eligibility: a report always; telling the victim when the victim is someone else; confronting
 ## when the thief is known and within reach; gossiping when there's someone to tell.
-## @experimental
+## @experimental: The default witness decision; its scoring terms may change. Hosts replace it with [member BustleCrimeWatch.should_report].
 
 ## Tell the authority role.
 const REPORT := &"report"

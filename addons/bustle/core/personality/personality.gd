@@ -11,7 +11,6 @@ extends RefCounted
 ## [code]count(id)[/code]). Applying again after a change adds what is new and takes away what a
 ## removed trait brought, and nothing else: a need, goal or thought the agent already had before a
 ## trait wanted it is never added again, never owned by the personality and never removed by it.
-## @experimental
 
 ## The sliders.
 const SLIDERS: Array[StringName] = [&"sociability", &"boldness", &"diligence", &"greed",
@@ -35,7 +34,6 @@ var _owned_thoughts: Array[Resource] = []
 
 
 ## Slider [param name]'s value with every trait's shift, clamped to 0..100. 50 for unset.
-## @experimental
 func slider(name: StringName) -> float:
 	var value: float = _sliders.get(name, 50.0)
 	for def: BustleTraitDef in _traits:
@@ -45,7 +43,6 @@ func slider(name: StringName) -> float:
 
 ## Sets slider [param name] (clamped to 0..100). False for an unknown slider or a value that
 ## isn't finite.
-## @experimental
 func set_slider(name: StringName, value: float) -> bool:
 	if not SLIDERS.has(name) or not is_finite(value):
 		return false
@@ -54,20 +51,17 @@ func set_slider(name: StringName, value: float) -> bool:
 
 
 ## The traits, in the order they were added.
-## @experimental
 func traits() -> Array[BustleTraitDef]:
 	return _traits.duplicate()
 
 
 ## True when the agent has trait [param id].
-## @experimental
 func has_trait(id: StringName) -> bool:
 	return _find(id) != null
 
 
 ## Whether [param def] could be added: [constant OK], or why not ([constant INVALID],
 ## [constant ALREADY], [constant EXCLUDED] by a trait the agent has, or [constant FULL]).
-## @experimental
 func can_add(def: BustleTraitDef) -> StringName:
 	if def == null or not def.is_valid():
 		return INVALID
@@ -82,7 +76,6 @@ func can_add(def: BustleTraitDef) -> StringName:
 
 
 ## Adds [param def] when [method can_add] allows it. Call [method apply] to put it into effect.
-## @experimental
 func add_trait(def: BustleTraitDef) -> StringName:
 	var verdict := can_add(def)
 	if verdict == OK:
@@ -91,7 +84,6 @@ func add_trait(def: BustleTraitDef) -> StringName:
 
 
 ## Removes trait [param id]. Call [method apply] to take its effects away.
-## @experimental
 func remove_trait(id: StringName) -> void:
 	var def := _find(id)
 	if def != null:
@@ -99,14 +91,12 @@ func remove_trait(id: StringName) -> void:
 
 
 ## Writes every slider into [param inputs] as [code]trait.<slider>[/code], from 0 to 1.
-## @experimental
 func fill_inputs(inputs: Dictionary[StringName, float]) -> void:
 	for name: StringName in SLIDERS:
 		inputs[StringName("trait.%s" % name)] = slider(name) / 100.0
 
 
 ## Puts the traits into effect (see the class description). Any argument may be null to skip it.
-## @experimental
 func apply(modifiers: BustleModifierSet, needs: BustleNeedSet = null, library: BustleGoalLibrary = null, mood: Object = null) -> void:
 	if modifiers != null:
 		for source: StringName in _applied_sources:
@@ -167,7 +157,6 @@ func apply(modifiers: BustleModifierSet, needs: BustleNeedSet = null, library: B
 
 
 ## The sliders and trait ids as plain data.
-## @experimental
 func export_state() -> Dictionary:
 	var sliders := {}
 	for name: StringName in SLIDERS:
@@ -182,7 +171,6 @@ func export_state() -> Dictionary:
 ## Restores [method export_state], finding traits by id in [param defs]. False (and nothing
 ## changes) when malformed, a trait is unknown, or the traits couldn't be combined. Call
 ## [method apply] afterwards.
-## @experimental
 func import_state(saved: Variant, defs: Array[BustleTraitDef]) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("sliders") is Dictionary \
 			or not (saved as Dictionary).get("traits") is Array:

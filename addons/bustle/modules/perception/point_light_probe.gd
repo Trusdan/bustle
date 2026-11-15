@@ -5,7 +5,6 @@ extends BustleLightProbe
 ## An ambient level plus point sources. Each enabled source adds
 ## [code]energy × (1 − distance / range)²[/code] inside its range; the total is clamped to 1.
 ## An optional [member occluded] check lets a project drop a source that something blocks.
-## @experimental
 
 ## Light everywhere, 0..1.
 var ambient: float = 0.0

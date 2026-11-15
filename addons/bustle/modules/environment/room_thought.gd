@@ -5,7 +5,6 @@ extends Resource
 ## One environment thought rule, as data: while an agent is in a room whose [member score] is at
 ## least [member at_least] (a high rule) or at most [member at_most] (a low rule), it holds
 ## [member thought]. [BustleRoomThoughts] reads it. Bustle ships none; the thresholds are the host's.
-## @experimental
 
 ## The room score it reads, one of [constant BustleEnvironmentPort.SCORES].
 @export var score: StringName = &""
@@ -21,7 +20,6 @@ extends Resource
 ## True when it can be used: a known score; exactly one of [member at_least] and [member at_most],
 ## from 0 to 1; and a held thought (a duration of 0) with an id and reason kind
 ## [code]environment[/code].
-## @experimental
 func is_valid() -> bool:
 	if not BustleEnvironmentPort.SCORES.has(score) or thought == null or thought.get(&"id") == &"":
 		return false
@@ -36,13 +34,11 @@ func is_valid() -> bool:
 
 
 ## True for a high rule ([member at_least] set).
-## @experimental
 func is_high() -> bool:
 	return not is_nan(at_least)
 
 
 ## True when [param value] meets it. An unset score (NAN) never does.
-## @experimental
 func matches(value: float) -> bool:
 	if is_nan(value):
 		return false

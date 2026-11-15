@@ -15,7 +15,6 @@ extends RefCounted
 ## people). [method social_conditions] names which holds from how many people are near and the
 ## agent's crowd tolerance (the [code]social.crowd_tolerance[/code] modifier, base
 ## [constant DEFAULT_CROWD_TOLERANCE]).
-## @experimental
 
 ## No one else near.
 const ALONE := &"alone"
@@ -36,7 +35,6 @@ var _removed: Array[StringName] = []
 
 ## Adds [param def] at its [member BustleNeedDef.start] pressure (a trait adding a need, for
 ## example). False when its id is empty or already there.
-## @experimental
 func add_need(def: BustleNeedDef) -> bool:
 	if def == null or def.id == &"" or _defs.has(def.id):
 		return false
@@ -47,7 +45,6 @@ func add_need(def: BustleNeedDef) -> bool:
 
 
 ## Removes need [param id].
-## @experimental
 func remove_need(id: StringName) -> void:
 	if _defs.erase(id) and not _removed.has(id):
 		_removed.append(id)
@@ -55,13 +52,11 @@ func remove_need(id: StringName) -> void:
 
 
 ## True when the agent has need [param id].
-## @experimental
 func has_need(id: StringName) -> bool:
 	return _defs.has(id)
 
 
 ## The need ids, sorted.
-## @experimental
 func ids() -> Array[StringName]:
 	var out: Array[StringName] = _defs.keys()
 	out.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
@@ -69,13 +64,11 @@ func ids() -> Array[StringName]:
 
 
 ## Need [param id]'s pressure, or 0 when the agent doesn't have it.
-## @experimental
 func pressure(id: StringName) -> float:
 	return _pressures.get(id, 0.0)
 
 
 ## Sets need [param id]'s pressure, clamped to 0..1. False for an unknown need or a non-finite value.
-## @experimental
 func set_pressure(id: StringName, value: float) -> bool:
 	if not _defs.has(id) or not is_finite(value):
 		return false
@@ -86,7 +79,6 @@ func set_pressure(id: StringName, value: float) -> bool:
 ## Moves every need on by [param minutes] of game time under [param conditions]. Each need's rise
 ## is scaled by the [code]need.<id>.rate[/code] modifier in [param modifiers] (base 1). Negative or
 ## non-finite minutes do nothing.
-## @experimental
 func advance(minutes: float, conditions: Array[StringName], modifiers: BustleModifierSet = null) -> void:
 	if not is_finite(minutes) or minutes <= 0.0:
 		return
@@ -100,14 +92,12 @@ func advance(minutes: float, conditions: Array[StringName], modifiers: BustleMod
 
 ## Lowers need [param id] by [param amount] (using something that meets it). Ignored for an unknown
 ## need or a negative or non-finite amount.
-## @experimental
 func relieve(id: StringName, amount: float) -> void:
 	if _defs.has(id) and is_finite(amount) and amount > 0.0:
 		_pressures[id] = clampf(_pressures[id] - amount, 0.0, 1.0)
 
 
 ## Raises need [param id] by [param amount] (a side effect). Ignored as for [method relieve].
-## @experimental
 func raise(id: StringName, amount: float) -> void:
 	if _defs.has(id) and is_finite(amount) and amount > 0.0:
 		_pressures[id] = clampf(_pressures[id] + amount, 0.0, 1.0)
@@ -116,7 +106,6 @@ func raise(id: StringName, amount: float) -> void:
 ## Writes each pressure into [param inputs] as [code]need.<id>[/code] (for [member BustleSenses.inputs]),
 ## and erases the inputs of needs this set has removed, so a reused dictionary never keeps scoring
 ## a need the agent no longer has. Other inputs are left alone.
-## @experimental
 func fill_inputs(inputs: Dictionary[StringName, float]) -> void:
 	for id: StringName in _removed:
 		inputs.erase(StringName("need.%s" % id))
@@ -126,7 +115,6 @@ func fill_inputs(inputs: Dictionary[StringName, float]) -> void:
 
 ## Copies each need's curve into [param config]'s [member BustleScoringConfig.need_curves]. Needs
 ## without a curve are left as they are.
-## @experimental
 func apply_curves(config: BustleScoringConfig) -> void:
 	for id: StringName in ids():
 		if _defs[id].curve != null:
@@ -135,7 +123,6 @@ func apply_curves(config: BustleScoringConfig) -> void:
 
 ## [constant ALONE] when no one is near, [constant CROWDED] when more than [param crowd_tolerance]
 ## people are, else [constant IN_COMPANY]. Use [method crowd_tolerance] for the agent's tolerance.
-## @experimental
 static func social_conditions(people_near: int, crowd_tolerance: float) -> Array[StringName]:
 	if people_near <= 0:
 		return [ALONE]
@@ -145,7 +132,6 @@ static func social_conditions(people_near: int, crowd_tolerance: float) -> Array
 
 
 ## The agent's crowd tolerance from [param modifiers] (base [constant DEFAULT_CROWD_TOLERANCE]).
-## @experimental
 static func crowd_tolerance(modifiers: BustleModifierSet) -> float:
 	if modifiers == null:
 		return DEFAULT_CROWD_TOLERANCE
@@ -153,7 +139,6 @@ static func crowd_tolerance(modifiers: BustleModifierSet) -> float:
 
 
 ## The pressures as plain data: [code]{"pressures": {id: value}}[/code], ids sorted.
-## @experimental
 func export_state() -> Dictionary:
 	var pressures := {}
 	for id: StringName in ids():
@@ -164,7 +149,6 @@ func export_state() -> Dictionary:
 ## Restores pressures from [method export_state]. Needs the set doesn't have are skipped, and needs
 ## missing from [param saved] keep their pressure. False (and nothing changes) when the data is
 ## malformed: not a dictionary, a key that isn't a string, or a pressure that isn't a finite number.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("pressures") is Dictionary:
 		return false

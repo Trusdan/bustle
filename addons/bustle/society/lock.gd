@@ -5,7 +5,6 @@ extends RefCounted
 ## A host's pin on one agent: a place to stay at, a goal (or sequence) to run, or both, under a
 ## [member lock_id]. [method BustleSociety.lock] holds it; while any lock is held the agent is
 ## locked ([method BustleSociety.is_locked]). A lock is just a lock: what it's for is the host's.
-## @experimental
 
 ## How an agent is protected from being killed: [method BustleSociety.is_protected] reports it, and
 ## the host's combat or health honours it. Bustle never harms or heals anyone itself.
@@ -26,7 +25,6 @@ var sequence: BustleActionSequence
 
 
 ## A lock with these pins.
-## @experimental
 static func make(p_id: StringName, p_place: StringName = &"", p_goal: StringName = &"",
 		p_sequence: BustleActionSequence = null) -> BustleLock:
 	var lock := BustleLock.new()
@@ -38,14 +36,12 @@ static func make(p_id: StringName, p_place: StringName = &"", p_goal: StringName
 
 
 ## True when it has an id and pins something.
-## @experimental
 func is_valid() -> bool:
 	return lock_id != &"" and (place != &"" or goal != &"" or sequence != null)
 
 
 ## The lock as plain data: [code]{lock_id, place, goal, steps}[/code], [code]steps[/code] being
 ## the sequence's [code]{action, params}[/code] or null.
-## @experimental
 func to_dict() -> Dictionary:
 	var steps: Variant = null
 	if sequence != null:
@@ -56,7 +52,6 @@ func to_dict() -> Dictionary:
 
 
 ## A lock from [method to_dict]'s data, or null when it's malformed.
-## @experimental
 static func from_dict(saved: Variant) -> BustleLock:
 	if not saved is Dictionary:
 		return null

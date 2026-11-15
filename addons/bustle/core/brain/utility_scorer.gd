@@ -27,7 +27,7 @@ extends RefCounted
 ##   candidate whose selection score is within [member BustleScoringConfig.pick_window] of the best
 ##   is in the window, and one is picked uniformly with the given random generator (no draw when
 ##   only one is). With nothing eligible, the IDLE fallback is returned.
-## @experimental
+## @experimental: Internal to [BustleBrain]: hosts shape scores through goals, considerations and the brain's hooks.
 
 ## How far below the window's edge still counts as inside it.
 const EPSILON := 1e-9
