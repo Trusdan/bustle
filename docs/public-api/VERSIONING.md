@@ -48,7 +48,7 @@ A frozen symbol is retired in two steps.
    ```
 
    A symbol is a class (`BustleExample`, which covers all its members) or a member (`BustleExample.old_name`). `since` is the release that deprecated it. `replacement` and `note` are optional.
-2. **Remove it, only in a major release.** The deprecations.json entry stays: it's what lets the check accept the removal. The CHANGELOG lists the removal under `### Removed` and "Breaking changes".
+2. **Remove it, only in a major release.** A deprecated symbol must ship, with its deprecation warning, in at least one minor release before the major release that removes it. For example, a symbol deprecated in `1.3.0` can be removed in `2.0.0` at the earliest. The deprecations.json entry stays: it's what lets the check accept the removal. The CHANGELOG lists the removal under `### Removed` and "Breaking changes".
 
 A signature change goes the same way: add the new form, deprecate the old one, and remove it in the next major release. The removal needs its deprecations.json entry too.
 
