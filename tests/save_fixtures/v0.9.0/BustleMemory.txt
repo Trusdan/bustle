@@ -1,0 +1,19 @@
+{
+"entries": [{
+"area": "mill",
+"at": 610,
+"kind": "person",
+"position": null,
+"source": "heard",
+"strength": 0.6,
+"subject": "miller"
+}, {
+"area": "square",
+"at": 600,
+"kind": "person",
+"position": [1.0, 0.0, 2.0],
+"source": "saw",
+"strength": 1.0,
+"subject": "smith"
+}]
+}

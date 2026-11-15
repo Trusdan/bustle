@@ -1,0 +1,25 @@
+{
+"ages": {
+"baker": 1203.0,
+"miller": 4203.0,
+"smith": 303.0
+},
+"anchors": {
+"baker": [1200.0, 0],
+"miller": [4203.0, 4320],
+"smith": [300.0, 0]
+},
+"dead": {
+"miller": {
+"at": 4320,
+"cause": "old_age"
+}
+},
+"now": 4320,
+"stages": {
+"baker": "adult",
+"miller": "elder",
+"smith": "child"
+},
+"version": 2
+}

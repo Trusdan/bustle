@@ -1,0 +1,29 @@
+{
+	"commit": "6fe82ce4ffc03f276324e98650ef34983dfb611d",
+	"files": [
+		"BustleAffordance.txt",
+		"BustleAffordanceSet.txt",
+		"BustleAmbitions.txt",
+		"BustleAwareness.txt",
+		"BustleConflict.txt",
+		"BustleCrimeWatch.txt",
+		"BustleDetectionMeter.txt",
+		"BustleLeisure.txt",
+		"BustleMemory.txt",
+		"BustleMentalBehaviour.txt",
+		"BustleMentalState.txt",
+		"BustleMood.txt",
+		"BustleNeedSet.txt",
+		"BustlePersonality.txt",
+		"BustlePropertyPort.txt",
+		"BustleSchedule.txt",
+		"BustleScheduleRoster.txt",
+		"BustleSequenceRunner.txt",
+		"BustleSocialInteractions.txt",
+		"BustleSocialStore.txt",
+		"BustleSociety.txt",
+		"BustleTradePort.txt"
+	],
+	"godot": "4.7.2-stable",
+	"tag": "v0.8.0"
+}

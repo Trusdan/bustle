@@ -66,6 +66,7 @@ A signature change goes the same way: add the new form, deprecate the old one, a
 - It **fails a changed hook call**, like any other signature change: an argument added, removed, renamed or retyped, or a changed return type. It also fails a call that disappears from a hook's doc comment. A deprecations.json entry for the hook or its class covers a changed call, as it does any covered signature change.
 - It **notes** a call recorded for the first time on a hook whose baseline had none. That documents an existing contract; it doesn't change it.
 - It **passes** on new symbols, and notes that the manifest is behind the code.
+- CI also runs `tools/save_fixtures.sh --check`: the golden save fixtures of each release must be exactly what that tag writes, and `tests/save/test_save_fixtures.gd` loads every one into the current code ([saves.md](../saves.md)).
 - It **notes** a raised `STATE_VERSION` (or the society's `SCHEMA`) as a save-format change, so a reviewer can confirm that `import_state()` still reads the older shape.
 
 ```bash
