@@ -19,7 +19,6 @@ extends RefCounted
 ## Agents with no career keep their job, routine and wages exactly as before. An agent whose job is
 ## no longer the track's role leaves the track. Nothing is random: the same mood, skill and
 ## attendance give the same reviews.
-## @experimental
 
 ## [param id]'s career changed: [param career] at [param old_rank] became [param new_rank]. An
 ## empty [param old_rank] is a start; an empty [param new_rank] is the end of the career.
@@ -89,7 +88,6 @@ func _init(defs: Array[BustleCareerDef] = [], p_roster: BustleScheduleRoster = n
 
 
 ## Adds [param def]. False (and no change) when it's null, invalid or its id is taken.
-## @experimental
 func add_def(def: BustleCareerDef) -> bool:
 	if def == null or not def.is_valid() or _defs.has(def.id):
 		return false
@@ -98,14 +96,12 @@ func add_def(def: BustleCareerDef) -> bool:
 
 
 ## The track [param career], or null.
-## @experimental
 func def_of(career: StringName) -> BustleCareerDef:
 	return _defs.get(career)
 
 
 ## True when [param id] could hold [param rank] of [param career]: the track's role is its job and
 ## it has the rank's skill minimum.
-## @experimental
 func can_hold(id: StringName, career: StringName, rank: StringName) -> bool:
 	var def: BustleCareerDef = _defs.get(career)
 	if def == null or id == &"" or roster.job_of(id) != def.role:
@@ -120,7 +116,6 @@ func can_hold(id: StringName, career: StringName, rank: StringName) -> bool:
 ## Puts [param id] on [param career] at [param rank] from game minute [param now] (a start, or a
 ## move to another rank of its track). Its review window starts at the first whole day from
 ## [param now]. False (and no change) unless it [method can_hold] the rank.
-## @experimental
 func assign(id: StringName, career: StringName, rank: StringName, now: int) -> bool:
 	if not can_hold(id, career, rank):
 		return false
@@ -140,7 +135,6 @@ func assign(id: StringName, career: StringName, rank: StringName, now: int) -> b
 
 ## Takes [param id] off its career. Its job stays; its career block pays the block's own wage again.
 ## False when it has none.
-## @experimental
 func end(id: StringName) -> bool:
 	var info: Dictionary = _careers.get(id, {})
 	if info.is_empty():
@@ -154,25 +148,21 @@ func end(id: StringName) -> bool:
 
 
 ## [param id]'s career, or empty.
-## @experimental
 func career_of(id: StringName) -> StringName:
 	return _careers.get(id, {}).get("career", &"")
 
 
 ## [param id]'s rank, or empty.
-## @experimental
 func rank_of(id: StringName) -> StringName:
 	return _careers.get(id, {}).get("rank", &"")
 
 
 ## The game minute [param id] took its rank, or -1.
-## @experimental
 func since_of(id: StringName) -> int:
 	return _careers.get(id, {}).get("since", -1)
 
 
 ## The agents with a career, sorted.
-## @experimental
 func agent_ids() -> Array[StringName]:
 	var out: Array[StringName] = []
 	out.assign(_careers.keys())
@@ -183,7 +173,6 @@ func agent_ids() -> Array[StringName]:
 ## True while [param id] is off site at minute [param now]: it has a career whose track is off
 ## site, its current block is the career block, and it has attended it. It is back when the block
 ## ends.
-## @experimental
 func is_away(id: StringName, now: int, season: StringName = &"") -> bool:
 	var career := career_of(id)
 	var schedule := roster.schedule_of(id)
@@ -200,7 +189,6 @@ func is_away(id: StringName, now: int, season: StringName = &"") -> bool:
 ## it scores only days with a career block.
 ## [code](mood_weight × mood + skill_weight × skill + attendance_weight × attendance) ÷ (sum of the
 ## weights used)[/code].
-## @experimental
 func day_performance(mood: float, skill: float = NAN, attendance: float = NAN) -> float:
 	var total := mood_weight * clampf(mood, 0.0, 1.0)
 	var weights := mood_weight
@@ -214,7 +202,6 @@ func day_performance(mood: float, skill: float = NAN, attendance: float = NAN) -
 
 
 ## The mean performance of [param id]'s current review window so far, or NAN with no closed day.
-## @experimental
 func performance(id: StringName) -> float:
 	var window: Array = _careers.get(id, {}).get("window", [])
 	if window.is_empty():
@@ -234,7 +221,6 @@ func performance(id: StringName) -> float:
 ## reviewed at the end of the last one, and the next window starts. Call it at least every few game days (the schedule keeps 7 days of
 ## attendance). Given the same mood, skill and attendance, one long call gives the same reviews as
 ## many short ones. Returns one [code]{at, performance, outcome, rank}[/code] per review.
-## @experimental
 func update(id: StringName, now: int, mood: Object = null) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var schedule := roster.schedule_of(id)
@@ -267,7 +253,6 @@ func update(id: StringName, now: int, mood: Object = null) -> Array[Dictionary]:
 
 ## Sets [constant PROMOTION_GRANTED] to true in [param inputs] (an ambition's facts) from a granted
 ## promotion of [param id] until its next review, so an ambition to be promoted completes.
-## @experimental
 func fill_inputs(id: StringName, inputs: Dictionary) -> void:
 	if bool(_careers.get(id, {}).get("promoted", false)):
 		inputs[PROMOTION_GRANTED] = true
@@ -275,7 +260,6 @@ func fill_inputs(id: StringName, inputs: Dictionary) -> void:
 
 ## Every career as plain data:
 ## [code]{agent: {career, rank, since, closed, window, promoted}}[/code].
-## @experimental
 func export_state() -> Dictionary:
 	var out := {}
 	for id: StringName in agent_ids():
@@ -289,7 +273,6 @@ func export_state() -> Dictionary:
 ## is malformed or names a track or rank there's no def for. A save without the review clock
 ## ([code]closed[/code], [code]window[/code], [code]promoted[/code]) starts it afresh from
 ## [code]since[/code]. It doesn't check who holds which role: restore the roles first.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary:
 		return false

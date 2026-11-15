@@ -6,7 +6,6 @@ extends Resource
 ## emotion it carries and the kind of reason behind it. A thought with a [member duration_hours]
 ## of 0 lasts while its condition holds (see [method BustleMood.set_held]); a need thought
 ## ([member need] set) holds while that need's pressure is at least [member need_at_least].
-## @experimental
 
 ## Its id.
 @export var id: StringName = &""
@@ -39,7 +38,6 @@ const MAX_DURATION_HOURS := 1.0e7
 ## True when it can be used: an id; a finite value; a duration from 0 to
 ## [constant MAX_DURATION_HOURS]; a stack limit of at least 1; a [member stack_mult] from 0 to 1
 ## (repeats never count more); a [member need_at_least] from 0 to 1; and a known reason kind.
-## @experimental
 func is_valid() -> bool:
 	return id != &"" and is_finite(value) and is_finite(duration_hours) and duration_hours >= 0.0 \
 			and duration_hours <= MAX_DURATION_HOURS and stack_limit >= 1 and is_finite(stack_mult) \
@@ -49,7 +47,6 @@ func is_valid() -> bool:
 
 ## A timed thought's length in whole game minutes: the duration rounded to the nearest minute, and
 ## at least 1. 0 for a held thought.
-## @experimental
 func duration_minutes() -> int:
 	if duration_hours <= 0.0:
 		return 0

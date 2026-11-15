@@ -6,7 +6,6 @@ extends BustleActionHandler
 ## ([method BustleTendJob.patient_for]), through [method BustleTendJob.tend]. It names the patient
 ## in the output ([code]tend[/code]) so the host can move and animate the healer. Done when the
 ## host did the care; failed with [code]no_patient[/code] or [code]care_refused[/code] otherwise.
-## @experimental
 
 ## The tend job it works for.
 var job: BustleTendJob

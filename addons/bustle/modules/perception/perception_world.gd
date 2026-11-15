@@ -14,7 +14,6 @@ extends RefCounted
 ##
 ## The queries ([method known_nearby], [method last_known], [method perceives],
 ## [method perceivers_of], [method awareness], [method known_with]) read the latest senses.
-## @experimental
 
 ## A perceiver's awareness of a target changed state. Emitted on state changes only.
 signal perception_changed(perceiver_id: StringName, target_id: StringName, old_state: BustleDetectionMeter.State, new_state: BustleDetectionMeter.State)
@@ -39,7 +38,6 @@ var _order: Array[StringName] = []
 
 
 ## Adds [param actor] (replacing one with the same id) and returns it.
-## @experimental
 func add_actor(actor: BustlePerceptionActor) -> BustlePerceptionActor:
 	if not _actors.has(actor.id):
 		_order.append(actor.id)
@@ -51,7 +49,6 @@ func add_actor(actor: BustlePerceptionActor) -> BustlePerceptionActor:
 
 
 ## Restarts actor [param id]'s throttle with its staggered phase (after its profile changed).
-## @experimental
 func reschedule(id: StringName) -> void:
 	var found := actor(id)
 	if found != null:
@@ -59,7 +56,6 @@ func reschedule(id: StringName) -> void:
 
 
 ## Removes the actor [param id] and every perceiver's meter for it.
-## @experimental
 func remove_actor(id: StringName) -> void:
 	_actors.erase(id)
 	_order.erase(id)
@@ -68,19 +64,16 @@ func remove_actor(id: StringName) -> void:
 
 
 ## The actor [param id], or null.
-## @experimental
 func actor(id: StringName) -> BustlePerceptionActor:
 	return _actors.get(id) as BustlePerceptionActor
 
 
 ## Every actor id, in the order they were added.
-## @experimental
 func actor_ids() -> Array[StringName]:
 	return _order.duplicate()
 
 
 ## Advances every perceiver whose turn it is by [param delta] seconds.
-## @experimental
 func tick(delta: float) -> void:
 	rays_last_tick = 0
 	sensed_last_tick = 0
@@ -99,7 +92,6 @@ func tick(delta: float) -> void:
 
 ## Senses every target from [param perceiver] once, as if [param delta] seconds passed. [method tick]
 ## calls it on the perceiver's turn; tests can call it directly.
-## @experimental
 func sense(perceiver: BustlePerceptionActor, delta: float) -> void:
 	sensed_last_tick += 1
 	var profile := perceiver.profile
@@ -125,7 +117,6 @@ func sense(perceiver: BustlePerceptionActor, delta: float) -> void:
 ## how many heard it. It lands on each hearer's meter for [param source_id] (the actor that made
 ## it), else for the event's own [member BustleNoiseEvent.source_id], else for
 ## [constant NOISE_ID], so a sound with no actor behind it still shows up as a lead.
-## @experimental
 func broadcast(event: BustleNoiseEvent, source_id: StringName = &"") -> int:
 	var key := source_id if source_id != &"" else event.source_id
 	if key == &"":
@@ -144,7 +135,6 @@ func broadcast(event: BustleNoiseEvent, source_id: StringName = &"") -> int:
 
 ## The targets [param perceiver_id] knows about (not unaware) whose last known position is within
 ## [param radius] of it, sorted.
-## @experimental
 func known_nearby(perceiver_id: StringName, radius: float) -> Array[StringName]:
 	var out: Array[StringName] = []
 	var perceiver := actor(perceiver_id)
@@ -158,7 +148,6 @@ func known_nearby(perceiver_id: StringName, radius: float) -> Array[StringName]:
 
 
 ## Where [param perceiver_id] last sensed [param target_id], or null if it never has.
-## @experimental
 func last_known(perceiver_id: StringName, target_id: StringName) -> Variant:
 	var perceiver := actor(perceiver_id)
 	var found := perceiver.awareness.meter(target_id) if perceiver != null else null
@@ -168,7 +157,6 @@ func last_known(perceiver_id: StringName, target_id: StringName) -> Variant:
 
 
 ## True when [param perceiver_id] sensed [param target_id] (seen or heard) at its last sense.
-## @experimental
 func perceives(perceiver_id: StringName, target_id: StringName) -> bool:
 	var perceiver := actor(perceiver_id)
 	var found := perceiver.awareness.meter(target_id) if perceiver != null else null
@@ -176,7 +164,6 @@ func perceives(perceiver_id: StringName, target_id: StringName) -> bool:
 
 
 ## Every perceiver that senses [param target_id] now, sorted.
-## @experimental
 func perceivers_of(target_id: StringName) -> Array[StringName]:
 	var out: Array[StringName] = []
 	for id: StringName in _order:
@@ -187,7 +174,6 @@ func perceivers_of(target_id: StringName) -> Array[StringName]:
 
 
 ## [param perceiver_id]'s awareness list (one entry per target it has sensed), sorted by id.
-## @experimental
 func awareness(perceiver_id: StringName) -> Array[BustleAwarenessEntry]:
 	var perceiver := actor(perceiver_id)
 	if perceiver == null:
@@ -198,7 +184,6 @@ func awareness(perceiver_id: StringName) -> Array[BustleAwarenessEntry]:
 
 ## The targets [param perceiver_id] knows about (not unaware) that it regards as
 ## [param wanted] (for example the hostile ones a fight picks from), sorted.
-## @experimental
 func known_with(perceiver_id: StringName, wanted: BustleDispositionPort.Disposition) -> Array[StringName]:
 	var out: Array[StringName] = []
 	var perceiver := actor(perceiver_id)
@@ -214,7 +199,6 @@ func known_with(perceiver_id: StringName, wanted: BustleDispositionPort.Disposit
 
 
 ## How [param a_id] regards [param b_id], through [member disposition].
-## @experimental
 func disposition_between(a_id: StringName, b_id: StringName) -> BustleDispositionPort.Disposition:
 	var a := actor(a_id)
 	var b := actor(b_id)

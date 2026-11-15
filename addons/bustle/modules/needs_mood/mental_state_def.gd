@@ -6,7 +6,6 @@ extends Resource
 ## state, how personality weighs it, what circumstance it needs and how long it lasts. What a
 ## state can do is fixed by [enum Behaviour]; there is no field for harming anyone, the agent
 ## included, or for any intent.
-## @experimental
 
 ## Everything a mental state can be. Nothing else can be expressed.
 enum Behaviour {
@@ -46,7 +45,6 @@ const TARGET := &"target"
 
 ## True when it can be used: an id, a known kind and circumstance, known sliders with finite
 ## weights, and a positive finite duration.
-## @experimental
 func is_valid() -> bool:
 	if id == &"" or not kind in [LOW, HIGH] or not needs in [NONE, INDULGENCE, TARGET]:
 		return false
@@ -57,13 +55,11 @@ func is_valid() -> bool:
 
 
 ## [member duration_hours] in whole game minutes, at least 1.
-## @experimental
 func duration_minutes() -> int:
 	return maxi(1, roundi(duration_hours * 60.0))
 
 
 ## A state def with these values.
-## @experimental
 static func make(p_id: StringName, p_behaviour: Behaviour, p_kind: StringName, p_weights: Dictionary[StringName, float],
 		p_hours: float, p_needs: StringName = NONE) -> BustleMentalStateDef:
 	var def := BustleMentalStateDef.new()

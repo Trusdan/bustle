@@ -4,7 +4,6 @@ extends Resource
 
 ## One factor in a goal's score: a [Curve] sampled at one input (see [BustleInputs]). The curve's
 ## output is used as it is, signed and unclamped: a curve's tangents can overshoot its value range.
-## @experimental
 
 ## The input it reads.
 @export var input: StringName = &""

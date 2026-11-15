@@ -4,7 +4,6 @@ extends Resource
 
 ## The scorer's curves and settings. Anything left unset is neutral (a factor of 1.0, or the
 ## identity curve for a need), so nothing here is tuning until a project sets it.
-## @experimental
 
 ## Need name → its response curve over pressure (0 to 1). A need with no curve uses its pressure,
 ## clamped to 0..1.

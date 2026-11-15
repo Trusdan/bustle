@@ -5,7 +5,6 @@ extends Resource
 ## A goal an agent can choose: its band, base weight, preconditions and considerations. Its score is
 ## [code]base_weight × Π consideration[/code]. A goal that uses advertisements makes one candidate
 ## per known option, scored as its own score × the option's advertisement score.
-## @experimental
 
 ## Its id, unique in a library.
 @export var id: StringName = &""

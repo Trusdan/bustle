@@ -5,7 +5,6 @@ extends Resource
 ## A passion for one skill, as data: how much faster an agent with it learns, which personality
 ## sliders make an agent take it up when it has no passion assigned, and an optional thought held
 ## while it does that skill's work. [BustleSkills] reads it. The numbers are experimental defaults.
-## @experimental
 
 ## The skill it is a passion for; a [BustleSkillDef] with this id must be installed first.
 @export var skill: StringName = &""
@@ -23,7 +22,6 @@ extends Resource
 ## True when it can be used: a skill id, a positive finite multiplier, known sliders with finite
 ## weights, and either no thought or a valid held [BustleThoughtDef] (duration 0). A timed thought,
 ## or any other resource, is not valid.
-## @experimental
 func is_valid() -> bool:
 	if skill == &"" or not is_finite(learn_mult) or learn_mult <= 0.0:
 		return false
@@ -38,7 +36,6 @@ func is_valid() -> bool:
 
 ## How strongly [param personality] matches it: [code]Σ weight × (slider − 50) / 100[/code]. 0 with
 ## no sliders or no personality.
-## @experimental
 func score(personality: BustlePersonality) -> float:
 	if personality == null:
 		return 0.0

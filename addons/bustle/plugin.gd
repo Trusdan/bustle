@@ -4,7 +4,6 @@ extends EditorPlugin
 
 ## Editor entry point for Bustle.
 ##
-## @experimental
 ## Kept thin on purpose: all logic lives in plain [RefCounted] classes so it can be tested
 ## headless. This plugin registers nothing yet.
 

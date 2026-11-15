@@ -4,7 +4,6 @@ extends Resource
 
 ## The numbers behind [BustleCrime]. Nothing here is a chance: a theft happens when its
 ## circumstances and the agent's personality add up, every time they do.
-## @experimental
 
 ## The project setting a developer can turn agents' crime off with (default on). It isn't a game
 ## option: a host doesn't show it to players.
@@ -22,6 +21,5 @@ const SETTING := "bustle/simulation/npc_crime"
 
 
 ## True when the developer setting lets agents commit crimes (on unless set to false).
-## @experimental
 static func crime_allowed() -> bool:
 	return bool(ProjectSettings.get_setting(SETTING, true))

@@ -26,7 +26,6 @@ extends RefCounted
 ##   host gives meanwhile wait behind it and run once the last lock is released. Locks are saved.
 ## - **Protection** ([method set_protection], [method is_protected]) is data for the host's combat
 ##   or health to honour.
-## @experimental
 
 ## The saved-state schema version.
 const SCHEMA := 1
@@ -41,7 +40,6 @@ var lock_reach: float = 5.0
 
 ## Changes whenever an agent is added or removed (or a save is imported), so a caller can keep its
 ## own copy of [method agent_ids] until it does.
-## @experimental
 var roster_version: int = 0
 
 var _agents: Dictionary[StringName, BustleNpcState] = {}
@@ -59,7 +57,6 @@ func _init(p_world_seed: int = 0) -> void:
 
 
 ## Registers (or replaces) archetype [param id] with the goals and scoring its agents share.
-## @experimental
 func register_archetype(id: StringName, library: BustleGoalLibrary, config: BustleScoringConfig = null) -> void:
 	if id == &"" or library == null:
 		push_error("BustleSociety: an archetype needs an id and a library")
@@ -68,14 +65,12 @@ func register_archetype(id: StringName, library: BustleGoalLibrary, config: Bust
 
 
 ## True when archetype [param id] is registered.
-## @experimental
 func has_archetype(id: StringName) -> bool:
 	return _archetypes.has(id)
 
 
 ## Replaces port [param port_name] (one of [constant BustlePorts.NAMES]) with [param port]. False
 ## when the name is unknown or the port isn't the right kind.
-## @experimental
 func set_port(port_name: StringName, port: RefCounted) -> bool:
 	if not BustlePorts.NAMES.has(String(port_name)) or port == null:
 		return false
@@ -88,7 +83,6 @@ func set_port(port_name: StringName, port: RefCounted) -> bool:
 
 ## Adds agent [param id] made from [param archetype_id]. Null (with an error) when the id is empty
 ## or taken, or the archetype isn't registered.
-## @experimental
 func add_agent(id: StringName, archetype_id: StringName, group: StringName = &"") -> BustleNpcState:
 	if id == &"" or _agents.has(id) or not _archetypes.has(archetype_id):
 		push_error("BustleSociety: can't add agent %s (%s)" % [id, archetype_id])
@@ -100,7 +94,6 @@ func add_agent(id: StringName, archetype_id: StringName, group: StringName = &""
 
 
 ## Removes agent [param id]. Its body, if any, is left to the host.
-## @experimental
 func remove_agent(id: StringName) -> void:
 	if _agents.erase(id):
 		roster_version += 1
@@ -110,13 +103,11 @@ func remove_agent(id: StringName) -> void:
 
 
 ## Agent [param id]'s state, or null.
-## @experimental
 func get_agent(id: StringName) -> BustleNpcState:
 	return _agents.get(id, null)
 
 
 ## Every agent's id, sorted.
-## @experimental
 func agent_ids() -> Array[StringName]:
 	var out: Array[StringName] = []
 	out.assign(_agents.keys())
@@ -126,7 +117,6 @@ func agent_ids() -> Array[StringName]:
 
 ## Gives agent [param agent_id] [param order] (see [method BustleBrain.order]). Returns an empty
 ## reason when it was queued, otherwise why not ([code]no_agent[/code] for an unknown agent).
-## @experimental
 func order(agent_id: StringName, p_order: BustleOrder) -> StringName:
 	var state := get_agent(agent_id)
 	return state.brain.order(p_order) if state != null else &"no_agent"
@@ -135,7 +125,6 @@ func order(agent_id: StringName, p_order: BustleOrder) -> StringName:
 ## Cancels agent [param agent_id]'s order [param order_id], queued or running. False when there is
 ## no such agent or order, or when it's the order holding the agent's locks (release those with
 ## [method unlock]).
-## @experimental
 func cancel_order(agent_id: StringName, order_id: StringName) -> bool:
 	var state := get_agent(agent_id)
 	if state == null or (order_id == lock_order_id(agent_id) and is_locked(agent_id)):
@@ -146,7 +135,6 @@ func cancel_order(agent_id: StringName, order_id: StringName) -> bool:
 ## Pins agent [param id] with [param p_lock], replacing its lock with the same id (which then counts
 ## as the newest). False when there's no such agent, the lock pins nothing, or its goal isn't in
 ## the agent's library.
-## @experimental
 func lock(id: StringName, p_lock: BustleLock) -> bool:
 	var state := get_agent(id)
 	if state == null or p_lock == null or not p_lock.is_valid() \
@@ -163,7 +151,6 @@ func lock(id: StringName, p_lock: BustleLock) -> bool:
 
 ## Releases agent [param id]'s lock [param lock_id]; its other locks stay. False when it held no
 ## such lock.
-## @experimental
 func unlock(id: StringName, lock_id: StringName) -> bool:
 	var held: Array = _locks.get(id, [])
 	for old: BustleLock in held:
@@ -177,13 +164,11 @@ func unlock(id: StringName, lock_id: StringName) -> bool:
 
 
 ## True while agent [param id] holds any lock.
-## @experimental
 func is_locked(id: StringName) -> bool:
 	return not (_locks.get(id, []) as Array).is_empty()
 
 
 ## Agent [param id]'s locks' ids, oldest first.
-## @experimental
 func lock_ids(id: StringName) -> Array[StringName]:
 	var out: Array[StringName] = []
 	for held: BustleLock in _locks.get(id, []):
@@ -193,7 +178,6 @@ func lock_ids(id: StringName) -> Array[StringName]:
 
 ## Sets agent [param id]'s protection, a [enum BustleLock.Protection]. False for an unknown agent or
 ## level.
-## @experimental
 func set_protection(id: StringName, level: int) -> bool:
 	var state := get_agent(id)
 	if state == null or level < BustleLock.Protection.NONE or level > BustleLock.Protection.ESSENTIAL:
@@ -204,7 +188,6 @@ func set_protection(id: StringName, level: int) -> bool:
 
 ## True when agent [param id] must not be killed now: ESSENTIAL always, QUEST_LOCKED while it holds a
 ## lock, NONE never. The host's combat or health honours it.
-## @experimental
 func is_protected(id: StringName) -> bool:
 	var state := get_agent(id)
 	if state == null:
@@ -214,13 +197,11 @@ func is_protected(id: StringName) -> bool:
 
 
 ## The id of the order that holds agent [param id]'s locks.
-## @experimental
 static func lock_order_id(id: StringName) -> StringName:
 	return StringName("lock/%s" % id)
 
 
 ## The population's state as plain data. Attached bodies' positions are copied in first.
-## @experimental
 func export_state() -> Dictionary:
 	var agents: Array = []
 	for id: StringName in agent_ids():
@@ -243,7 +224,6 @@ func export_state() -> Dictionary:
 
 ## Replaces the population with [param saved], all or nothing. Bodies attached to agents that are
 ## still there stay attached and move to the loaded positions. See the class description for what is refused.
-## @experimental
 func import_state(saved: Variant) -> BustleImportReport:
 	var report := BustleImportReport.new()
 	if not saved is Dictionary:
@@ -297,7 +277,6 @@ func import_state(saved: Variant) -> BustleImportReport:
 ## A SHA-256 of the canonical export: sorted keys, full precision, and whole-number floats up to
 ## 2^53 written as ints, so a state that went through JSON (which reads whole numbers back as
 ## floats) hashes the same.
-## @experimental
 func state_hash() -> String:
 	return JSON.stringify(_canonical_value(export_state()), "", true, true).sha256_text()
 
@@ -469,7 +448,6 @@ func _stage(entry: Variant, seed: int, report: BustleImportReport, index: int) -
 
 ## [param value] as a 64-bit int when it is an int or a decimal string of one (an optional minus
 ## and digits, in range); otherwise null.
-## @experimental
 static func to_int64(value: Variant) -> Variant:
 	if typeof(value) == TYPE_INT:
 		return value

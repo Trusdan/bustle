@@ -14,7 +14,6 @@ extends BustleSocialPort
 ## [b]Kinds[/b] are one-way too ([code]a[/code] counts [code]b[/code] a friend). Kinds a host sets
 ## ([method set_kind]) stay until it clears them. Kinds the [member rules] form from repeated deeds
 ## come and go with opinion ([signal kind_changed]); the rules never touch a host's kinds.
-## @experimental
 
 ## [param a]'s kind [param kind] towards [param b] formed ([param formed] true) or lapsed.
 signal kind_changed(a: StringName, b: StringName, kind: StringName, formed: bool)
@@ -34,7 +33,6 @@ var _next_seq: int = 0
 
 ## Moves the store's clock to [param now] (earlier minutes are ignored): ended entries go, and
 ## every pair's rule kinds are checked again.
-## @experimental
 func set_time(now: int) -> void:
 	if now <= now_minutes:
 		return
@@ -51,7 +49,6 @@ func set_time(now: int) -> void:
 ## [param days] game days from the store's current minute, for [param reason] (plain data; put the
 ## deed key under [code]deed[/code] when a deed caused it). Then checks the rule kinds. False for
 ## an empty or identical pair, a value or duration that isn't finite, or a non-positive duration.
-## @experimental
 func add_opinion(a: StringName, b: StringName, value: float, reason: Dictionary, days: float) -> bool:
 	if a == &"" or b == &"" or a == b or not is_finite(value) or not is_finite(days) or days <= 0.0 \
 			or days > 1.0e6 or not _is_plain(reason):
@@ -67,13 +64,11 @@ func add_opinion(a: StringName, b: StringName, value: float, reason: Dictionary,
 
 
 ## How [param a] regards [param b], from 0 to 100.
-## @experimental
 func opinion(a: StringName, b: StringName) -> int:
 	return roundi(opinion_value(a, b))
 
 
 ## [method opinion] without rounding.
-## @experimental
 func opinion_value(a: StringName, b: StringName) -> float:
 	var key := _key(a, b)
 	_expire(key)
@@ -85,7 +80,6 @@ func opinion_value(a: StringName, b: StringName) -> float:
 
 ## Up to [param count] live entries behind [param a]'s opinion of [param b], strongest first:
 ## [code]{value, reason, at, until}[/code].
-## @experimental
 func reasons(a: StringName, b: StringName, count: int = 3) -> Array[Dictionary]:
 	var key := _key(a, b)
 	_expire(key)
@@ -102,7 +96,6 @@ func reasons(a: StringName, b: StringName, count: int = 3) -> Array[Dictionary]:
 
 
 ## The kinds [param a] has towards [param b], the host's and the rules' together, sorted.
-## @experimental
 func kinds_between(a: StringName, b: StringName) -> PackedStringArray:
 	var key := _key(a, b)
 	var out := PackedStringArray(_host_kinds.get(key, PackedStringArray()))
@@ -114,13 +107,11 @@ func kinds_between(a: StringName, b: StringName) -> PackedStringArray:
 
 
 ## True: the store keeps kinds.
-## @experimental
 func supports_kinds() -> bool:
 	return true
 
 
 ## Gives [param a] the kind [param kind] towards [param b], kept until [method clear_kind].
-## @experimental
 func set_kind(a: StringName, b: StringName, kind: StringName) -> void:
 	if a == &"" or b == &"" or a == b or kind == &"":
 		return
@@ -133,7 +124,6 @@ func set_kind(a: StringName, b: StringName, kind: StringName) -> void:
 
 ## Takes the host's kind [param kind] away from [param a] towards [param b]. Kinds the rules formed
 ## are left to the rules.
-## @experimental
 func clear_kind(a: StringName, b: StringName, kind: StringName) -> void:
 	var key := _key(a, b)
 	if _host_kinds.has(key):
@@ -149,7 +139,6 @@ func clear_kind(a: StringName, b: StringName, kind: StringName) -> void:
 
 ## Applies the [member rules] to [param a]'s view of [param b]: forms a friend or rival kind when
 ## the opinion and deeds call for it, and lets it lapse past its release level.
-## @experimental
 func update_kinds(a: StringName, b: StringName) -> void:
 	var key := _key(a, b)
 	var value := opinion_value(a, b)
@@ -168,7 +157,6 @@ func update_kinds(a: StringName, b: StringName) -> void:
 
 ## The deeds [param agent] did or had done to it, newest first, up to [param count]:
 ## [code]{deed, actor, verb, target, place}[/code].
-## @experimental
 func deeds_of(agent: StringName, count: int = 5) -> Array[Dictionary]:
 	var keys: Array = _deeds.keys()
 	keys.sort_custom(func(x: StringName, y: StringName) -> bool: return _deed_number(x) > _deed_number(y))
@@ -184,7 +172,6 @@ func deeds_of(agent: StringName, count: int = 5) -> Array[Dictionary]:
 
 ## How [param agent] regards everyone it has live opinion entries or kinds about, by id:
 ## [code]{other, opinion, kinds, reasons}[/code] with up to [param count] reasons each.
-## @experimental
 func opinions_of(agent: StringName, count: int = 3) -> Array[Dictionary]:
 	var others: Array[StringName] = []
 	var prefix := "%s>" % agent
@@ -205,7 +192,6 @@ func opinions_of(agent: StringName, count: int = 3) -> Array[Dictionary]:
 
 
 ## Opinions, kinds and deeds as plain data.
-## @experimental
 func export_state() -> Dictionary:
 	var entries := {}
 	var keys: Array[String] = _entries.keys()
@@ -235,7 +221,6 @@ func export_state() -> Dictionary:
 
 
 ## Restores [method export_state]. False (and nothing changes) when malformed.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary:
 		return false

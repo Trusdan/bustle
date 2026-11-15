@@ -4,7 +4,6 @@ extends RefCounted
 
 ## The optional bridge between Bustle and the Wyrd narrative engine.
 ##
-## @experimental
 ## It is pinned to one exact Wyrd release ([constant WYRD_VERSION]) and checks it before doing
 ## anything. It reads Wyrd's [code]VERSION[/code] file and calls Wyrd by name, so this script
 ## compiles, and Bustle's core works, with no Wyrd in the project. Nothing in [code]addons/bustle/[/code]
@@ -31,7 +30,6 @@ var registered: PackedStringArray = PackedStringArray()
 
 
 ## The installed Wyrd version, or an empty string when Wyrd is not in the project.
-## @experimental
 static func installed_wyrd_version() -> String:
 	if not FileAccess.file_exists(WYRD_VERSION_FILE):
 		return ""
@@ -39,13 +37,11 @@ static func installed_wyrd_version() -> String:
 
 
 ## True when the installed Wyrd is exactly the pinned release.
-## @experimental
 static func is_supported() -> bool:
 	return installed_wyrd_version() == WYRD_VERSION
 
 
 ## True when [param wyrd] reports exactly the pinned release through [code]get_version[/code].
-## @experimental
 static func supports(wyrd: Object) -> bool:
 	return wyrd != null and wyrd.has_method(&"get_version") and str(wyrd.call(&"get_version")) == WYRD_VERSION
 
@@ -55,7 +51,6 @@ static func supports(wyrd: Object) -> bool:
 ## [member BustleWyrdFacts.mood_of]). Returns the bridge, or null, changing nothing, when Wyrd isn't
 ## exactly [constant WYRD_VERSION] (in the project and in [param wyrd]) or an argument is missing.
 ## Install once per Wyrd: a second install's dialogue facts are refused by Wyrd.
-## @experimental
 static func install(society: BustleSociety, wyrd: Object, mood_of: Callable = Callable()) -> BustleWyrdBridge:
 	if society == null or not is_supported() or not supports(wyrd):
 		return null

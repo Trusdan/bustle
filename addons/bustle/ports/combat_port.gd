@@ -11,7 +11,6 @@ extends RefCounted
 ## combat should pass a subdue fight's immediate damage through
 ## [method BustleConflict.filter_damage]. A target may still die, then or later of its wounds; the
 ## host's health system decides, and reports it in [method outcome].
-## @experimental
 
 ## Where a fight stands for one agent.
 enum Status { NONE, ENGAGED, RESOLVED }
@@ -23,7 +22,6 @@ var _outcomes: Dictionary[StringName, Dictionary] = {}
 ## [param id] engages [param target] with [param intent] ([code]subdue[/code] or
 ## [code]kill[/code]). Engaging again changes the intent. Ignored when either id is empty or they
 ## are the same.
-## @experimental
 func engage(id: StringName, target: StringName, intent: StringName = &"subdue") -> void:
 	if id == &"" or target == &"" or id == target:
 		return
@@ -32,7 +30,6 @@ func engage(id: StringName, target: StringName, intent: StringName = &"subdue") 
 
 
 ## [param id] stops fighting.
-## @experimental
 func disengage(id: StringName) -> void:
 	_status.erase(id)
 	_outcomes.erase(id)
@@ -41,12 +38,10 @@ func disengage(id: StringName) -> void:
 ## How [param id]'s fight ended, once RESOLVED: [code]{target, intent, killed, downed}[/code],
 ## where [code]killed[/code] says whether the target died and [code]downed[/code] whether it was
 ## beaten without dying. Empty before then.
-## @experimental
 func outcome(id: StringName) -> Dictionary:
 	return _outcomes.get(id, {}).duplicate() if status(id) == Status.RESOLVED else {}
 
 
 ## Where [param id]'s fight stands. NONE for an agent not fighting.
-## @experimental
 func status(id: StringName) -> Status:
 	return _status.get(id, Status.NONE) as Status

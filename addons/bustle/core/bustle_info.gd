@@ -4,7 +4,6 @@ extends RefCounted
 
 ## Facts about the installed Bustle addon.
 ##
-## @experimental
 
 ## The addon's version. It must match [code]VERSION[/code] and [code]plugin.cfg[/code] in this
 ## folder; a test checks all three.
@@ -20,7 +19,6 @@ const FOLDERS: Dictionary = {
 
 
 ## The version as [code][major, minor, patch][/code].
-## @experimental
 static func version_parts() -> PackedInt32Array:
 	var out: PackedInt32Array = []
 	for part: String in VERSION.split("."):

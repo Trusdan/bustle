@@ -13,7 +13,6 @@ extends RefCounted
 ## - **Finishing:** every order ends once, reported with [signal finished] and kept for
 ##   [method take_results]: DONE, FAILED (with the step's reason) or CANCELLED. Cancelling a queued
 ##   order removes it before it ever starts; cancelling the running one cleans its step up once.
-## @experimental
 
 ## How an order ended.
 enum Outcome { DONE, FAILED, CANCELLED, IMPOSSIBLE }
@@ -33,7 +32,6 @@ var _started: StringName = &""
 ## Queues [param order], at the back, or at the front when [param first] (an order running there
 ## is interrupted and starts its step again later). Returns an empty reason when queued, otherwise
 ## why it was refused.
-## @experimental
 func submit(order: BustleOrder, first: bool = false) -> StringName:
 	var reason := _refusal(order)
 	if reason != &"":
@@ -50,26 +48,22 @@ func submit(order: BustleOrder, first: bool = false) -> StringName:
 
 
 ## Refuses [param order] as impossible for [param reason] (for checks the queue can't make itself).
-## @experimental
 func refuse(order: BustleOrder, reason: StringName) -> StringName:
 	_report(order.id if order != null else &"", Outcome.IMPOSSIBLE, reason)
 	return reason
 
 
 ## The front order, or null.
-## @experimental
 func front() -> BustleOrder:
 	return _orders[0] if not _orders.is_empty() else null
 
 
 ## The order at [param index] (0 is the front), or null.
-## @experimental
 func peek(index: int) -> BustleOrder:
 	return _orders[index] if index >= 0 and index < _orders.size() else null
 
 
 ## The queued orders' ids, front first.
-## @experimental
 func ids() -> Array[StringName]:
 	var out: Array[StringName] = []
 	for order: BustleOrder in _orders:
@@ -78,14 +72,12 @@ func ids() -> Array[StringName]:
 
 
 ## The band [param order] competes in.
-## @experimental
 static func band_of(order: BustleOrder) -> int:
 	return BustleBands.FORCED if order.forced else BustleBands.ORDERED
 
 
 ## Runs the front order for one tick (starting or resuming it as needed). Returns the runner's
 ## state, or IDLE when the queue is empty.
-## @experimental
 func run(delta: float, now_minutes: int, agent_id: StringName) -> BustleSequenceRunner.State:
 	var order := front()
 	if order == null:
@@ -104,19 +96,16 @@ func run(delta: float, now_minutes: int, agent_id: StringName) -> BustleSequence
 
 
 ## Interrupts the running front order (it stays at the front).
-## @experimental
 func pause() -> void:
 	runner.interrupt()
 
 
 ## True while the front order has been started and not finished.
-## @experimental
 func is_started() -> bool:
 	return front() != null and _started == front().id
 
 
 ## Cancels order [param order_id], queued or running. False when it isn't queued.
-## @experimental
 func cancel(order_id: StringName, reason: StringName = &"cancelled") -> bool:
 	for i in _orders.size():
 		if _orders[i].id == order_id:
@@ -130,7 +119,6 @@ func cancel(order_id: StringName, reason: StringName = &"cancelled") -> bool:
 
 
 ## Cancels every order, front first.
-## @experimental
 func clear(reason: StringName = &"cancelled") -> void:
 	while not _orders.is_empty():
 		cancel(_orders[0].id, reason)
@@ -138,7 +126,6 @@ func clear(reason: StringName = &"cancelled") -> void:
 
 ## The results reported since the last call, oldest first, each
 ## [code]{order, outcome, reason}[/code].
-## @experimental
 func take_results() -> Array[Dictionary]:
 	var out := _results
 	_results = []

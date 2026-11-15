@@ -19,7 +19,6 @@ extends RefCounted
 ## paying, offered only while [method BustleTradePort.can_take] says yes, so every stock change
 ## goes through the trade port. A payee doesn't buy from itself. Time is whole game minutes, given
 ## by the caller.
-## @experimental
 
 ## Why [method reserve] or [method use] said no.
 const REFUSED_ACCESS := &"no_access"
@@ -58,7 +57,6 @@ func _init(p_id: StringName = &"", p_def: BustleAffordanceDef = null, p_area: St
 
 
 ## How welcome [param agent] is, from 0 (refused) to 1. Results that aren't finite count as 0.
-## @experimental
 func access(agent: StringName) -> float:
 	var out := 1.0
 	if access_hook.is_valid():
@@ -70,7 +68,6 @@ func access(agent: StringName) -> float:
 
 ## What one use costs [param agent]. Never negative. Not used for a def with an
 ## [member BustleAffordanceDef.item], which the trade port prices.
-## @experimental
 func price_for(agent: StringName) -> int:
 	if cost_hook.is_valid():
 		return maxi(int(cost_hook.call(agent, self)), 0)
@@ -78,7 +75,6 @@ func price_for(agent: StringName) -> int:
 
 
 ## The agents holding it at minute [param now] (lapsed holds are dropped), sorted.
-## @experimental
 func holders(now: int) -> Array[StringName]:
 	_lapse(now)
 	var out: Array[StringName] = _holds.keys()
@@ -87,14 +83,12 @@ func holders(now: int) -> Array[StringName]:
 
 
 ## True when [param agent] holds it at minute [param now].
-## @experimental
 func is_held_by(agent: StringName, now: int) -> bool:
 	_lapse(now)
 	return _holds.has(agent)
 
 
 ## True when a place is free (or [param agent] already holds one) at minute [param now].
-## @experimental
 func has_room(agent: StringName, now: int) -> bool:
 	_lapse(now)
 	return _holds.has(agent) or _holds.size() < def.capacity
@@ -102,7 +96,6 @@ func has_room(agent: StringName, now: int) -> bool:
 
 ## Holds a place for [param agent] from minute [param now] for the def's hold time (holding again
 ## renews it). Returns [constant OK], [constant REFUSED_ACCESS] or [constant REFUSED_FULL].
-## @experimental
 func reserve(agent: StringName, now: int) -> StringName:
 	if agent == &"" or not def.is_valid() or access(agent) <= 0.0:
 		return REFUSED_ACCESS
@@ -113,7 +106,6 @@ func reserve(agent: StringName, now: int) -> StringName:
 
 
 ## Lets go of [param agent]'s place.
-## @experimental
 func release(agent: StringName) -> void:
 	_holds.erase(agent)
 
@@ -121,7 +113,6 @@ func release(agent: StringName) -> void:
 ## The advertisement [param agent] sees at minute [param now], [param distance] away, or null when
 ## it is refused, full, or priced beyond what [param trade] says the agent has. Relief and side
 ## effects are scaled by [method access]; leisure relief also by [param leisure]'s tolerance.
-## @experimental
 func advertise(agent: StringName, now: int, distance: float = 0.0, trade: BustleTradePort = null, leisure: BustleLeisure = null) -> BustleAdvertisement:
 	var welcome := access(agent)
 	if not def.is_valid() or welcome <= 0.0 or not has_room(agent, now):
@@ -143,7 +134,6 @@ func advertise(agent: StringName, now: int, distance: float = 0.0, trade: Bustle
 ## its side effects, and releases the place. Nothing changes unless it returns [constant OK]:
 ## [constant REFUSED_ACCESS], [constant REFUSED_FULL] (no hold and no room) or
 ## [constant REFUSED_PRICE] (it can't pay, or can't buy the def's item).
-## @experimental
 func use(agent: StringName, now: int, needs: BustleNeedSet, leisure: BustleLeisure = null, trade: BustleTradePort = null) -> StringName:
 	if agent == &"" or not def.is_valid() or access(agent) <= 0.0:
 		return REFUSED_ACCESS
@@ -173,7 +163,6 @@ func use(agent: StringName, now: int, needs: BustleNeedSet, leisure: BustleLeisu
 
 
 ## Its changing state as plain data: owner, payee and holds.
-## @experimental
 func export_state() -> Dictionary:
 	var holds := {}
 	var agents: Array[StringName] = _holds.keys()
@@ -184,7 +173,6 @@ func export_state() -> Dictionary:
 
 
 ## Restores [method export_state]. False (and nothing changes) when malformed or over capacity.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary:
 		return false

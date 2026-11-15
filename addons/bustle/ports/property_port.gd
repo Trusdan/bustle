@@ -10,14 +10,12 @@ extends RefCounted
 ## marks something that can never be taken (a host marks its own: keepsakes, things a story needs).
 ## [method transfer] only ever moves an existing item from its owner to someone else. Only the
 ## host makes items ([method register]) or uses them up ([method remove]); theft never does.
-## @experimental
 
 var _items: Dictionary[StringName, Dictionary] = {}
 
 
 ## Registers [param id], owned by [param owner_id] at [param place]. False (nothing changes) when
 ## the id or owner is empty, the id is taken, or [param relieves] isn't need → finite amount.
-## @experimental
 func register(id: StringName, owner_id: StringName, place: StringName, relieves: Dictionary = {},
 		protected: bool = false) -> bool:
 	if id == &"" or owner_id == &"" or _items.has(id) or not _valid_relief(relieves):
@@ -31,19 +29,16 @@ func register(id: StringName, owner_id: StringName, place: StringName, relieves:
 
 
 ## [param id]'s record (a copy), or empty when unknown.
-## @experimental
 func item(id: StringName) -> Dictionary:
 	return _items[id].duplicate(true) if _items.has(id) else {}
 
 
 ## Who owns [param id], or empty when unknown.
-## @experimental
 func owner_of(id: StringName) -> StringName:
 	return StringName(_items[id]["owner_id"]) if _items.has(id) else &""
 
 
 ## The records of every item at [param place], by id.
-## @experimental
 func items_at(place: StringName) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: StringName in _sorted_ids():
@@ -53,7 +48,6 @@ func items_at(place: StringName) -> Array[Dictionary]:
 
 
 ## The records of every item [param owner_id] owns, wherever they are, by id.
-## @experimental
 func items_of(owner_id: StringName) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: StringName in _sorted_ids():
@@ -63,13 +57,11 @@ func items_of(owner_id: StringName) -> Array[Dictionary]:
 
 
 ## True when [param id] can never be taken.
-## @experimental
 func is_protected(id: StringName) -> bool:
 	return _items.has(id) and bool(_items[id]["protected"])
 
 
 ## Marks [param id] protected (or not). False when unknown.
-## @experimental
 func set_protected(id: StringName, protected: bool) -> bool:
 	if not _items.has(id):
 		return false
@@ -80,7 +72,6 @@ func set_protected(id: StringName, protected: bool) -> bool:
 ## Moves [param id] from [param from] to [param to]. Only the owner changes: the item stays at its
 ## place until the host moves it. False, changing nothing, when the item is
 ## unknown, protected, not owned by [param from], or [param to] is empty or [param from].
-## @experimental
 func transfer(id: StringName, from: StringName, to: StringName) -> bool:
 	if not _items.has(id) or is_protected(id) or owner_of(id) != from or to == &"" or to == from:
 		return false
@@ -90,13 +81,11 @@ func transfer(id: StringName, from: StringName, to: StringName) -> bool:
 
 ## The host uses up or destroys [param id] (eaten, broken, sold out of the world). False when
 ## unknown. Theft never calls this.
-## @experimental
 func remove(id: StringName) -> bool:
 	return _items.erase(id)
 
 
 ## The register as plain data, by id.
-## @experimental
 func export_state() -> Dictionary:
 	var items: Array = []
 	for id: StringName in _sorted_ids():
@@ -105,7 +94,6 @@ func export_state() -> Dictionary:
 
 
 ## Restores [method export_state]. False (and nothing changes) when malformed.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("items") is Array:
 		return false

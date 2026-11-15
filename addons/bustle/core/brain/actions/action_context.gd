@@ -4,7 +4,6 @@ extends RefCounted
 
 ## What a [BustleActionHandler] works with for one step: who, the step's parameters, the game time,
 ## and two dictionaries it owns.
-## @experimental
 
 ## The agent.
 var agent_id: StringName = &""

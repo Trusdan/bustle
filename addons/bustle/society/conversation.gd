@@ -21,7 +21,6 @@ extends RefCounted
 ## ([member curt_mood_scale]).
 ## [br]A low mood also lowers the chance of starting at all ([member start_mood_scale]), and a
 ## recipient can turn a start away ([member accepts]).
-## @experimental
 
 ## Where the interactions are recorded, with the world seed and moods.
 var social: BustleSocialInteractions
@@ -58,7 +57,6 @@ func _init(p_social: BustleSocialInteractions = null, p_interactions: Array[Bust
 
 
 ## The chance that [param initiator] starts a conversation, given its mood.
-## @experimental
 func chance_to_start(initiator: StringName) -> float:
 	var low := _low(_mood(initiator))
 	return clampf(start_chance * maxf(1.0 - start_mood_scale * low, 0.0), 0.0, 1.0)
@@ -66,13 +64,11 @@ func chance_to_start(initiator: StringName) -> float:
 
 ## Whether [param initiator] starts a conversation with [param recipient] at minute [param now]:
 ## a roll against [method chance_to_start], the same every time for the same inputs.
-## @experimental
 func wants_to_start(initiator: StringName, recipient: StringName, now: int) -> bool:
 	return _roll(["start", initiator, recipient, now]) < chance_to_start(initiator)
 
 
 ## True when [param recipient] won't talk with [param initiator] now ([member accepts]).
-## @experimental
 func turned_away(initiator: StringName, recipient: StringName, opener: StringName = &"") -> bool:
 	return accepts.is_valid() and not bool(accepts.call(recipient, initiator, opener))
 
@@ -80,7 +76,6 @@ func turned_away(initiator: StringName, recipient: StringName, opener: StringNam
 ## A new conversation's state (plain data, safe to save), or an empty dictionary when the pair is
 ## not two different agents. [param opener], when given, is the id of the first turn's interaction,
 ## picked even when its weight is 0.
-## @experimental
 func begin(initiator: StringName, recipient: StringName, now: int, opener: StringName = &"",
 		place: StringName = &"") -> Dictionary:
 	if initiator == &"" or recipient == &"" or initiator == recipient:
@@ -90,13 +85,11 @@ func begin(initiator: StringName, recipient: StringName, now: int, opener: Strin
 
 
 ## The game minute [param state]'s next turn happens at.
-## @experimental
 func next_minute(state: Dictionary) -> int:
 	return int(state.get("start", 0)) + int(state.get("turn", 0)) * maxi(turn_minutes, 0)
 
 
 ## True when [param state] has no turns left.
-## @experimental
 func is_finished(state: Dictionary) -> bool:
 	return int(state.get("turn", 0)) >= int(state.get("turns", 0))
 
@@ -105,7 +98,6 @@ func is_finished(state: Dictionary) -> bool:
 ## turn's [method BustleSocialInteractions.interact] result with its [code]turn[/code] number, or
 ## [code]{ok: false, reason}[/code]: [code]finished[/code], or [code]nothing_to_say[/code] (no
 ## interaction has any weight, which also ends the conversation).
-## @experimental
 func step(state: Dictionary) -> Dictionary:
 	if state.is_empty() or is_finished(state):
 		return {"ok": false, "reason": &"finished"}
@@ -130,7 +122,6 @@ func step(state: Dictionary) -> Dictionary:
 ## A whole conversation at once: [method wants_to_start], then every turn. Returns
 ## [code]{ok: true, turns}[/code] with each turn's result, or [code]{ok: false, reason}[/code]
 ## ([code]declined[/code], [code]turned_away[/code] or [code]no_pair[/code]).
-## @experimental
 func run(initiator: StringName, recipient: StringName, now: int, opener: StringName = &"",
 		place: StringName = &"") -> Dictionary:
 	var state := begin(initiator, recipient, now, opener, place)
@@ -150,7 +141,6 @@ func run(initiator: StringName, recipient: StringName, now: int, opener: StringN
 
 ## Each interaction's weight for [param speaker] talking to [param listener] (see the class
 ## description), by id, in [member interactions] order. Invalid interactions are left out.
-## @experimental
 func weights(speaker: StringName, listener: StringName) -> Dictionary[StringName, float]:
 	var out: Dictionary[StringName, float] = {}
 	var personality: Variant = personality_of.call(speaker) if personality_of.is_valid() else null
@@ -178,7 +168,6 @@ func weights(speaker: StringName, listener: StringName) -> Dictionary[StringName
 
 ## The interaction [param speaker] picks for [param listener] with [param roll] (0 to 1), by
 ## [method weights]. Null when none has any weight.
-## @experimental
 func pick(speaker: StringName, listener: StringName, roll: float) -> BustleInteractionDef:
 	var table := weights(speaker, listener)
 	var total := 0.0

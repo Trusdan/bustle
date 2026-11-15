@@ -26,7 +26,6 @@ extends RefCounted
 ## [method link_family]; family is never courted. A host
 ## [member ratings_policy] can veto any step up the ladder. Nothing is random. With rules that aren't
 ## [method BustleRomanceRules.is_valid], [method update] changes nothing.
-## @experimental
 
 ## A pair's status changed from [param old] to [param new] (empty: none). [param reason] is
 ## [code]formed[/code], [code]confirmed[/code], [code]lapsed[/code] or [code]ended[/code].
@@ -79,19 +78,16 @@ func _init(p_social: BustleSocialPort = null, p_rules: BustleRomanceRules = null
 
 
 ## The status between [param a] and [param b] (empty: none).
-## @experimental
 func status_of(a: StringName, b: StringName) -> StringName:
 	return _pairs.get(_key(a, b), {}).get("status", &"")
 
 
 ## The game minute the pair took its status, or -1.
-## @experimental
 func since_of(a: StringName, b: StringName) -> int:
 	return _pairs.get(_key(a, b), {}).get("since", -1)
 
 
 ## The pair's past changes, oldest first: [code]{status, at, reason}[/code].
-## @experimental
 func history_of(a: StringName, b: StringName) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	out.assign(_pairs.get(_key(a, b), {}).get("history", []))
@@ -100,7 +96,6 @@ func history_of(a: StringName, b: StringName) -> Array[Dictionary]:
 
 ## The one [param id] is courting, partnered, engaged or married to, at [param at_least] or above
 ## on the ladder, or empty.
-## @experimental
 func bonded_to(id: StringName, at_least: StringName = PARTNER) -> StringName:
 	var floor_rank := LADDER.find(at_least)
 	for key: String in _sorted_keys():
@@ -111,7 +106,6 @@ func bonded_to(id: StringName, at_least: StringName = PARTNER) -> StringName:
 
 
 ## The pair's compatibility from -1 to 1.
-## @experimental
 func compatibility_of(a: StringName, b: StringName) -> float:
 	if compatibility.is_valid():
 		return float(compatibility.call(a, b))
@@ -123,7 +117,6 @@ func compatibility_of(a: StringName, b: StringName) -> float:
 ## for a pair that is armed: never broken up, or below the courting release line since). Engaged
 ## and married never lapse here. [param mood_a] and [param mood_b] (anything with
 ## [code]add_thought[/code]) get the breakup thought. Returns the status after.
-## @experimental
 func update(a: StringName, b: StringName, now: int, mood_a: Object = null, mood_b: Object = null) -> StringName:
 	return _update(a, b, now, func() -> Array: return [mood_a, mood_b])
 
@@ -161,7 +154,6 @@ func _update(a: StringName, b: StringName, now: int, moods: Callable) -> StringN
 ## [member BustleRomanceRules.jealousy_opinion] gets jealous, once, until that opinion has fallen
 ## below [member BustleRomanceRules.jealousy_release]. [param mood_of] is
 ## [code]func(id) -> Object[/code] for the thoughts, or unset; it is asked only when one is due.
-## @experimental
 func update_all(ids: Array[StringName], now: int, mood_of: Callable = Callable()) -> void:
 	var sorted := ids.duplicate()
 	sorted.sort_custom(func(x: StringName, y: StringName) -> bool: return String(x) < String(y))
@@ -182,7 +174,6 @@ func update_all(ids: Array[StringName], now: int, mood_of: Callable = Callable()
 ## a second courtship behind). Affairs have no path, whatever
 ## [member BustleRomanceRules.affairs_enabled] says. The [member ratings_policy] is asked separately,
 ## just before a step.
-## @experimental
 func may_court(a: StringName, b: StringName) -> bool:
 	for kind: StringName in rules.blocked_kinds:
 		if social.kinds_between(a, b).has(String(kind)) or social.kinds_between(b, a).has(String(kind)):
@@ -193,7 +184,6 @@ func may_court(a: StringName, b: StringName) -> bool:
 ## Asks to move the pair up to [param status] ([constant ENGAGED] from partner, or
 ## [constant MARRIED] from engaged) at game minute [param now]. Only [member confirm_hook] can
 ## approve it, and only if [member ratings_policy] allows it (asked first). False (and no change) for any other step, or when the hook refuses or is unset.
-## @experimental
 func request(a: StringName, b: StringName, status: StringName, now: int) -> bool:
 	var current := status_of(a, b)
 	var steps := {ENGAGED: PARTNER, MARRIED: ENGAGED}
@@ -209,7 +199,6 @@ func request(a: StringName, b: StringName, status: StringName, now: int) -> bool
 ## decides), whatever its status; this is the only way an engaged or married pair ends. Both get
 ## the breakup thought. The pair can't court again until its lower opinion has been below the
 ## courting release line. False when they have none.
-## @experimental
 func end(a: StringName, b: StringName, now: int, mood_a: Object = null, mood_b: Object = null) -> bool:
 	if status_of(a, b) == &"":
 		return false
@@ -221,7 +210,6 @@ func end(a: StringName, b: StringName, now: int, mood_a: Object = null, mood_b: 
 ## breakup until its lower opinion has been below the courting release line), as plain data, keyed
 ## by pair; and the jealousy felt over opinions under [code]jealousy[/code]. Sorted. The kinds
 ## themselves, family included, are saved by the social port.
-## @experimental
 func export_state() -> Dictionary:
 	var out := {}
 	for key: String in _sorted_keys():
@@ -241,7 +229,6 @@ func export_state() -> Dictionary:
 ## Restores [method export_state], replacing every pair. False (and nothing changes) when it is
 ## malformed or holds a status off the ladder. A pair saved without [code]armed[/code] is armed,
 ## and a save without [code]jealousy[/code] has felt none.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary:
 		return false
@@ -284,7 +271,6 @@ func import_state(saved: Variant) -> bool:
 ## kind both ways through the social port (the other way, its counterpart). Family is never courted
 ## ([member BustleRomanceRules.blocked_kinds]). Bustle records family only when the host says so.
 ## False for an unknown relation, a missing or same agent, or a port that keeps no kinds.
-## @experimental
 func link_family(a: StringName, b: StringName, relation: StringName) -> bool:
 	if not FAMILY.has(relation) or a == &"" or b == &"" or a == b or not social.supports_kinds():
 		return false
@@ -294,7 +280,6 @@ func link_family(a: StringName, b: StringName, relation: StringName) -> bool:
 
 
 ## Takes away what [method link_family] recorded. False when it couldn't have been recorded.
-## @experimental
 func unlink_family(a: StringName, b: StringName, relation: StringName) -> bool:
 	if not FAMILY.has(relation) or a == &"" or b == &"" or a == b or not social.supports_kinds():
 		return false
@@ -308,7 +293,6 @@ func unlink_family(a: StringName, b: StringName, relation: StringName) -> bool:
 ## someone other than [param target], that partner gets jealous, once for this interaction, with
 ## [param target] as the rival. [param mood_of] gives the partner's mood for the thought. True when
 ## someone got jealous.
-## @experimental
 func notice(actor: StringName, verb: StringName, target: StringName, mood_of: Callable = Callable()) -> bool:
 	if not rules.jealousy_verbs.has(verb) or actor == &"" or target == &"" or actor == target:
 		return false

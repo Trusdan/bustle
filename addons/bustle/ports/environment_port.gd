@@ -7,7 +7,6 @@ extends RefCounted
 ## [method scores]) or fills the built-in store with [method set_room] and [method set_scores].
 ## The standalone default has no rooms and no scores. An agent in a room is indoors and one in no
 ## room outdoors ([method conditions]), for needs that rise or fall with that.
-## @experimental
 
 ## The room scores, each from 0 to 1. A score a room doesn't have is unset, not 0.
 const SCORES: Array[StringName] = [&"beauty", &"comfort", &"cleanliness", &"impressiveness"]
@@ -23,14 +22,12 @@ var _scores: Dictionary[StringName, Dictionary] = {}
 
 
 ## The room [param id] is in, or empty.
-## @experimental
 func room_of(id: StringName) -> StringName:
 	return _rooms.get(id, &"")
 
 
 ## [param room]'s scores (a subset of [constant SCORES], each from 0 to 1). Empty for no room or an
 ## unscored one.
-## @experimental
 func scores(room: StringName) -> Dictionary[StringName, float]:
 	var out: Dictionary[StringName, float] = {}
 	out.assign(_scores.get(room, {}))
@@ -39,14 +36,12 @@ func scores(room: StringName) -> Dictionary[StringName, float]:
 
 ## True while [param id] is indoors: by default, while it is in a room. A host can override it
 ## (a roofless yard counted as a room, say).
-## @experimental
 func is_indoors(id: StringName) -> bool:
 	return room_of(id) != &""
 
 
 ## The need conditions for [param id] now: [constant INDOORS] while it [method is_indoors], else
 ## [constant OUTDOORS]. Add them to the conditions passed to [method BustleNeedSet.advance].
-## @experimental
 func conditions(id: StringName) -> Array[StringName]:
 	var out: Array[StringName] = [INDOORS if is_indoors(id) else OUTDOORS]
 	return out
@@ -54,7 +49,6 @@ func conditions(id: StringName) -> Array[StringName]:
 
 ## [method conditions] for [param id] from [param port], or none when there is no port: with no
 ## environment port, the environment changes no need.
-## @experimental
 static func conditions_of(port: BustleEnvironmentPort, id: StringName) -> Array[StringName]:
 	var out: Array[StringName] = []
 	if port != null:
@@ -63,7 +57,6 @@ static func conditions_of(port: BustleEnvironmentPort, id: StringName) -> Array[
 
 
 ## Puts [param id] in [param room] (empty: in no room). False for an empty id.
-## @experimental
 func set_room(id: StringName, room: StringName) -> bool:
 	if id == &"":
 		return false
@@ -76,7 +69,6 @@ func set_room(id: StringName, room: StringName) -> bool:
 
 ## Replaces [param room]'s scores with [param values] (score → value; empty clears them). False (and
 ## no change) for an empty room, a score not in [constant SCORES] or a value outside 0 to 1.
-## @experimental
 func set_scores(room: StringName, values: Dictionary) -> bool:
 	if room == &"":
 		return false
@@ -97,7 +89,6 @@ func set_scores(room: StringName, values: Dictionary) -> bool:
 
 ## The built-in store as plain data: [code]{"rooms": {agent: room}, "scores": {room: {score:
 ## value}}}[/code], sorted. A host that overrides the lookups saves its own rooms.
-## @experimental
 func export_state() -> Dictionary:
 	var rooms := {}
 	for id: StringName in _sorted(_rooms.keys()):
@@ -113,7 +104,6 @@ func export_state() -> Dictionary:
 
 ## Restores [method export_state], replacing the store. False (and nothing changes) for malformed
 ## data, an unknown score or a value outside 0 to 1.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not saved.get("rooms") is Dictionary or not saved.get("scores") is Dictionary:
 		return false

@@ -4,7 +4,6 @@ extends Resource
 
 ## One day's blocks, for a [BustleScheduleDef]. Blocks shouldn't overlap; where they do, the one
 ## listed first wins.
-## @experimental
 
 ## The day's blocks.
 @export var blocks: Array[BustleScheduleBlock] = []

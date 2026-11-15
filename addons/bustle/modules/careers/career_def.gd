@@ -6,7 +6,6 @@ extends Resource
 ## role with a routine ([BustleRoleSchedules]); the track adds ranks, a wage per rank and a skill
 ## minimum per rank. Its career block is the routine's block for [member activity]: the agent works
 ## it off site when [member off_site] is set. Bustle ships none; the host supplies every track.
-## @experimental
 
 ## Its id, chosen by the host.
 @export var id: StringName = &""
@@ -24,7 +23,6 @@ extends Resource
 
 ## True when it can be used: an id, a role and an activity; at least one rank, every rank valid with
 ## a unique id; and a skill whenever a rank asks for one.
-## @experimental
 func is_valid() -> bool:
 	if id == &"" or role == &"" or activity == &"" or ranks.is_empty():
 		return false
@@ -37,7 +35,6 @@ func is_valid() -> bool:
 
 
 ## The index of rank [param rank_id], or -1.
-## @experimental
 func rank_index(rank_id: StringName) -> int:
 	for i: int in ranks.size():
 		if ranks[i].id == rank_id:

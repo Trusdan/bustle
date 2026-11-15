@@ -13,7 +13,6 @@ extends BustleActionHandler
 ## [code]nothing_to_say[/code]. While it runs, the output names the partner as
 ## [code]talk_to[/code], and each turn's result is in it as [code]turn[/code]. The
 ## conversation's state is plain data in the step's data, so it saves with the runner.
-## @experimental
 
 ## The conversation it runs.
 var conversation: BustleConversation

@@ -11,7 +11,7 @@ extends RefCounted
 ## [br][br]
 ## The host supplies each source as a [Callable]; empty ones are skipped. Cooldowns live only in
 ## memory: an ended one is dropped when that search runs again, and none are saved.
-## @experimental
+## @experimental: A search helper whose steps and hooks may still change; the guides document its current order.
 
 ## Found by sensing them.
 const SENSED := &"sensed"

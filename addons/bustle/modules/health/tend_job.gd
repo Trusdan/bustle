@@ -13,7 +13,6 @@ extends RefCounted
 ## [br][br]
 ## Register a [BustleTendAction] for [constant ACTION] on each healer's runner. Nothing is random and
 ## nothing is kept: the patient is chosen from the port's readings each time.
-## @experimental
 
 ## The healer's input: the urgency of the care it could give, 0 to 1, set only while above 0.
 const INPUT := &"fact.tend"
@@ -38,7 +37,6 @@ func _init(p_health: BustleHealthBehaviour = null, p_nearby: Callable = Callable
 ## Who [param healer] would tend now: of those [member nearby], not itself, the one whose
 ## [method BustleHealthPort.needs_care] is highest and above 0 (ties in id order). Empty when
 ## [param healer] is downed, or nobody needs care.
-## @experimental
 func patient_for(healer: StringName) -> StringName:
 	if health == null or health.ports == null or not nearby.is_valid() or health.is_downed(healer):
 		return &""
@@ -59,7 +57,6 @@ func patient_for(healer: StringName) -> StringName:
 
 
 ## How urgently [param patient] needs care, 0 to 1 (0 for an unusable reading).
-## @experimental
 func urgency(patient: StringName) -> float:
 	if health == null or health.ports == null:
 		return 0.0
@@ -69,7 +66,6 @@ func urgency(patient: StringName) -> float:
 
 ## Sets [param healer]'s [constant INPUT] in [param inputs] to its patient's urgency, or erases it
 ## when there is no patient.
-## @experimental
 func fill_inputs(healer: StringName, inputs: Dictionary[StringName, float]) -> void:
 	inputs.erase(INPUT)
 	var patient := patient_for(healer)
@@ -79,7 +75,6 @@ func fill_inputs(healer: StringName, inputs: Dictionary[StringName, float]) -> v
 
 ## Asks the host to have [param healer] care for [param patient], and emits [signal tended] with
 ## its answer. False with no port, or when the host refuses.
-## @experimental
 func tend(healer: StringName, patient: StringName) -> bool:
 	if health == null or health.ports == null or patient == &"" or patient == healer:
 		return false
@@ -92,7 +87,6 @@ func tend(healer: StringName, patient: StringName) -> bool:
 ## scored by [constant INPUT] in a straight line, running [constant ACTION] and then waiting
 ## [param minutes] game minutes, so care is asked for at most that often. A refused request waits
 ## the same before the goal can be chosen again. Experimental defaults.
-## @experimental
 static func goal_def(minutes: int = 30) -> BustleGoalDef:
 	var curve := Curve.new()
 	curve.add_point(Vector2(0, 0), 0, 1, Curve.TANGENT_LINEAR, Curve.TANGENT_LINEAR)

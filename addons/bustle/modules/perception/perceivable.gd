@@ -6,7 +6,6 @@ extends Node3D
 ## owner keeps [member visibility], [member noise_radius] and [member carries_light] current
 ## (for example from [BustleVisibilityModel] and [BustleNoiseModel]); the defaults are a visible,
 ## silent actor with no light.
-## @experimental
 
 ## The actor's stable id. Empty: the parent's name.
 @export var actor_id: StringName = &""

@@ -5,7 +5,6 @@ extends RefCounted
 ## How far a target's noise carries, in metres: the project's movement radius × a surface factor ×
 ## a gear factor, times the stealth-skill multiplier. It keeps no state; the numbers come from
 ## [BustleStealthRules].
-## @experimental
 
 ## The numbers.
 var rules: BustleStealthRules

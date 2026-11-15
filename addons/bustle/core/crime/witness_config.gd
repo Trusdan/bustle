@@ -5,7 +5,6 @@ extends Resource
 ## The numbers behind [BustleWitnessJudge]: what someone who knows of a theft does about it. Each
 ## outcome's score is [code]Σ weight × (value − 50) / 100[/code] over its terms, plus any loyalty.
 ## Nothing here is a chance.
-## @experimental
 
 ## Outcome → term → weight. A term is a personality slider ([constant BustlePersonality.SLIDERS])
 ## or one of [constant BustleWitnessJudge.TERMS]. By default every outcome weighs honesty, piety,

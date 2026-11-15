@@ -11,7 +11,6 @@ extends RefCounted
 ## [br][br]
 ## The defaults are a starting point, not tuning: a host sets its own. Tuning that isn't a finite
 ## number counts as 0 (the threshold as 1), and tolerances stay within 0 to 1.
-## @experimental
 
 ## The need that leisure meets.
 var need: StringName = &"leisure"
@@ -28,13 +27,11 @@ var _tolerance: Dictionary[StringName, float] = {}
 
 
 ## [param kind]'s tolerance, from 0 to 1.
-## @experimental
 func tolerance(kind: StringName) -> float:
 	return _tolerance.get(kind, 0.0)
 
 
 ## True when [param kind] is at or past the boredom threshold.
-## @experimental
 func is_bored(kind: StringName) -> bool:
 	var threshold := clampf(boredom_threshold, 0.0, 1.0) if is_finite(boredom_threshold) else 1.0
 	return tolerance(kind) >= threshold - 1e-9
@@ -42,7 +39,6 @@ func is_bored(kind: StringName) -> bool:
 
 ## How much of its relief an option of [param kind] still gives: [code]1 − tolerance[/code], or 0
 ## when bored. 1 for anything that isn't a leisure kind.
-## @experimental
 func relief_factor(kind: StringName) -> float:
 	if not kinds.has(kind):
 		return 1.0
@@ -50,7 +46,6 @@ func relief_factor(kind: StringName) -> float:
 
 
 ## The leisure kind of [param ad] (its first tag that is a kind), or empty.
-## @experimental
 func kind_of(ad: BustleAdvertisement) -> StringName:
 	for tag: StringName in ad.tags:
 		if kinds.has(tag):
@@ -60,7 +55,6 @@ func kind_of(ad: BustleAdvertisement) -> StringName:
 
 ## A copy of [param ad] with its relief of [member need] scaled by its kind's
 ## [method relief_factor]. Options of no kind come back unchanged (as a copy).
-## @experimental
 func adjust(ad: BustleAdvertisement) -> BustleAdvertisement:
 	var out := BustleAdvertisement.new(ad.option_id, ad.relief.duplicate(), ad.adds.duplicate(), ad.tags.duplicate(), ad.distance)
 	var kind := kind_of(ad)
@@ -71,7 +65,6 @@ func adjust(ad: BustleAdvertisement) -> BustleAdvertisement:
 
 ## Records one use of [param kind]: its tolerance rises by [member tolerance_per_use]. Returns the
 ## relief factor the use had (before the rise), so the caller can scale what it relieves.
-## @experimental
 func use(kind: StringName) -> float:
 	var factor := relief_factor(kind)
 	if kinds.has(kind):
@@ -80,7 +73,6 @@ func use(kind: StringName) -> float:
 
 
 ## Lets [param minutes] of game time pass: every tolerance falls.
-## @experimental
 func advance(minutes: float) -> void:
 	if not is_finite(minutes) or minutes <= 0.0:
 		return
@@ -96,7 +88,6 @@ func advance(minutes: float) -> void:
 
 
 ## The tolerances as plain data: [code]{"tolerance": {kind: value}}[/code].
-## @experimental
 func export_state() -> Dictionary:
 	var out := {}
 	var keys: Array[StringName] = _tolerance.keys()
@@ -107,7 +98,6 @@ func export_state() -> Dictionary:
 
 
 ## Restores tolerances from [method export_state]. False (and nothing changes) when malformed.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("tolerance") is Dictionary:
 		return false

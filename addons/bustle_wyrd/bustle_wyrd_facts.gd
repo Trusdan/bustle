@@ -6,7 +6,6 @@ extends RefCounted
 ## with Wyrd's stable [code]register_function[/code], so content can ask, for example,
 ## [code]npc_goal(x)[/code]. Wyrd calls a host callable; it never names Bustle.
 ##
-## @experimental
 ## Each function takes the agent as an [code]entity[/code]. An unknown agent, or one with nothing
 ## to report yet, gives an empty symbol or 0.
 ##
@@ -52,7 +51,6 @@ func _init(society: BustleSociety = null) -> void:
 
 ## Registers every function in [param wyrd] with [code]register_function[/code]. Returns the names
 ## Wyrd accepted (a name already registered there is refused, with Wyrd's error).
-## @experimental
 func register(wyrd: Object) -> PackedStringArray:
 	var done := PackedStringArray()
 	if wyrd == null:
@@ -73,7 +71,6 @@ func register(wyrd: Object) -> PackedStringArray:
 
 
 ## The goal [param id] chose on its last tick, or empty when idle or unknown.
-## @experimental
 func goal(id: StringName) -> StringName:
 	var brain := _brain(id)
 	if brain == null or brain.last_intent == null or brain.last_intent.idle:
@@ -82,7 +79,6 @@ func goal(id: StringName) -> StringName:
 
 
 ## The need that weighed most in [param id]'s last choice (ties by id), or empty when no need did.
-## @experimental
 func goal_reason(id: StringName) -> StringName:
 	var brain := _brain(id)
 	if brain == null or brain.last_intent == null or brain.last_intent.idle:
@@ -105,14 +101,12 @@ func goal_reason(id: StringName) -> StringName:
 
 
 ## [param need_id]'s pressure for [param id] on its last tick, 0 to 1. 0 when unknown.
-## @experimental
 func need(id: StringName, need_id: StringName) -> float:
 	var inputs := _inputs(id)
 	return clampf(float(inputs.get(StringName("need." + String(need_id)), 0.0)), 0.0, 1.0)
 
 
 ## [param id]'s most pressing need on its last tick (ties by id), or empty when it has none above 0.
-## @experimental
 func top_need(id: StringName) -> StringName:
 	var best := &""
 	var best_value := 0.0
@@ -132,7 +126,6 @@ func top_need(id: StringName) -> StringName:
 ## [param id]'s mood band: [constant LOW] below [member BustleMentalConfig.break_threshold],
 ## [constant HIGH] above [member BustleMentalConfig.high_spirits_above], else [constant NORMAL].
 ## Empty with no mood.
-## @experimental
 func mood_band(id: StringName) -> StringName:
 	var mood := _mood(id)
 	if mood == null:
@@ -146,14 +139,12 @@ func mood_band(id: StringName) -> StringName:
 
 
 ## [param id]'s dominant emotion, or empty.
-## @experimental
 func emotion(id: StringName) -> StringName:
 	var mood := _mood(id)
 	return StringName(mood.get(&"emotion")) if mood != null else &""
 
 
 ## [param id]'s strongest active thought, or empty.
-## @experimental
 func mood_reason(id: StringName) -> StringName:
 	var mood := _mood(id)
 	if mood == null:

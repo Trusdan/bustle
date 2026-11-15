@@ -27,7 +27,6 @@ extends RefCounted
 ## [code]{act, cause, cause_detail, intent, intent_reason, killed, at}[/code]. [code]act[/code] is
 ## a fixed id for the fight (attacker, victim and the minute it started); a host stores it on the
 ## wounds it causes, so a victim who dies later of them can be traced to the fight.
-## @experimental
 
 ## [param attacker] fought [param victim]. See the class description for [param circumstances].
 signal assaulted(attacker: StringName, victim: StringName, circumstances: Dictionary)
@@ -90,7 +89,6 @@ func _init(p_disposition: BustleDispositionPort = null, p_combat: BustleCombatPo
 ## as hostile does it take a stance, which it returns ([constant FIGHT], [constant FLEE] or
 ## [constant FETCH_HELP]; a fetcher picks the nearest ally in [param nearby]). Empty otherwise,
 ## or when it's already in a conflict.
-## @experimental
 func notice(agent: StringName, other: StringName, now: int, nearby: Array[StringName] = []) -> StringName:
 	if agent == &"" or other == &"" or agent == other or _conflicts.has(agent):
 		return &""
@@ -103,7 +101,6 @@ func notice(agent: StringName, other: StringName, now: int, nearby: Array[String
 ## 1, from the host: a harsh word, a shove). It comes to blows only when the provocation plus
 ## [method grudge] reaches [method quarrel_threshold]; then [param a] fights and [param b] takes its
 ## own stance. Nobody becomes hostile. True when it came to blows.
-## @experimental
 func quarrel(a: StringName, b: StringName, now: int, provocation: float, nearby: Array[StringName] = []) -> bool:
 	if a == &"" or b == &"" or a == b or _conflicts.has(a) or not is_finite(provocation):
 		return false
@@ -121,7 +118,6 @@ func quarrel(a: StringName, b: StringName, now: int, provocation: float, nearby:
 ## How much [param a] holds against [param b], from 0 to 1: the sum of [param a]'s negative
 ## opinion entries about [param b] (most come from deeds) over
 ## [member BustleConflictConfig.grudge_scale].
-## @experimental
 func grudge(a: StringName, b: StringName) -> float:
 	if social == null or config.grudge_scale <= 0.0:
 		return 0.0
@@ -133,7 +129,6 @@ func grudge(a: StringName, b: StringName) -> float:
 
 ## What a quarrel must reach for [param agent] to come to blows: from the config's calm, middle and
 ## hot thresholds by its temper, lowered by a low mood.
-## @experimental
 func quarrel_threshold(agent: StringName) -> float:
 	var temper := _slider(agent, &"temper")
 	var base := lerpf(config.quarrel_threshold_calm, config.quarrel_threshold, temper / 50.0) if temper < 50.0 \
@@ -145,7 +140,6 @@ func quarrel_threshold(agent: StringName) -> float:
 ## The stance [param agent] takes against a threat: [constant FIGHT] when the average of its
 ## boldness and temper reaches [member BustleConflictConfig.fight_threshold], else
 ## [constant FETCH_HELP] when [param has_help], else [constant FLEE].
-## @experimental
 func stance_for(agent: StringName, has_help: bool) -> StringName:
 	if (_slider(agent, &"boldness") + _slider(agent, &"temper")) / 2.0 >= config.fight_threshold:
 		return FIGHT
@@ -155,7 +149,6 @@ func stance_for(agent: StringName, has_help: bool) -> StringName:
 ## The nearest ally of [param agent] in [param nearby] within
 ## [member BustleConflictConfig.help_radius], not in a conflict of its own, or empty. An ally
 ## regards [param agent] as friendly, or shares its group without regarding it as hostile.
-## @experimental
 func nearest_ally(agent: StringName, nearby: Array[StringName], exclude: StringName = &"") -> StringName:
 	var here: Variant = where(agent)
 	if here == null:
@@ -179,44 +172,37 @@ func nearest_ally(agent: StringName, nearby: Array[StringName], exclude: StringN
 
 
 ## The agent [param agent] is in conflict with, or empty.
-## @experimental
 func threat_of(agent: StringName) -> StringName:
 	return StringName(_conflicts[agent]["threat"]) if _conflicts.has(agent) else &""
 
 
 ## [param agent]'s stance, or empty.
-## @experimental
 func stance_of(agent: StringName) -> StringName:
 	return StringName(_conflicts[agent]["stance"]) if _conflicts.has(agent) else &""
 
 
 ## The ally [param agent] is fetching, or empty.
-## @experimental
 func helper_of(agent: StringName) -> StringName:
 	return StringName(_conflicts[agent]["helper"]) if _conflicts.has(agent) else &""
 
 
 ## [param agent]'s intent ([constant SUBDUE] or [constant KILL]), or empty when it's in no conflict.
-## @experimental
 func intent_of(agent: StringName) -> StringName:
 	return StringName(_conflicts[agent]["intent"]) if _conflicts.has(agent) else &""
 
 
 ## Why [param agent] has its intent ([constant NO_REASON] for subduing), or empty.
-## @experimental
 func intent_reason_of(agent: StringName) -> StringName:
 	return StringName(_conflicts[agent]["intent_reason"]) if _conflicts.has(agent) else &""
 
 
 ## The whole of [param agent]'s conflict as plain data (a copy), or empty.
-## @experimental
 func conflict_of(agent: StringName) -> Dictionary:
 	return _conflicts[agent].duplicate(true) if _conflicts.has(agent) else {}
 
 
 ## Works out [param agent]'s intent again (see the class description), emitting
 ## [signal intent_changed] when it changed. Returns the intent, or empty with no conflict.
-## @experimental
 func update_intent(agent: StringName) -> StringName:
 	if not _conflicts.has(agent):
 		return &""
@@ -233,7 +219,6 @@ func update_intent(agent: StringName) -> StringName:
 
 ## Writes [param agent]'s stance into [param inputs]: 1 for its stance and 0 for the others, or
 ## no [code]threat.*[/code] stance inputs at all when it's in no conflict.
-## @experimental
 func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> void:
 	var stance := stance_of(agent)
 	for each: StringName in STANCES:
@@ -247,7 +232,6 @@ func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> vo
 ## [param helper] answers [param agent]'s call at minute [param now]: it fights [param agent]'s
 ## threat, whatever its own personality, and [param agent] is out of the conflict. False when
 ## [param agent] has no threat or [param helper] is busy.
-## @experimental
 func call_help(helper: StringName, agent: StringName, now: int) -> bool:
 	var threat := threat_of(agent)
 	if threat == &"" or helper == &"" or helper == threat or _conflicts.has(helper):
@@ -258,7 +242,6 @@ func call_help(helper: StringName, agent: StringName, now: int) -> bool:
 
 
 ## [param agent] gives up fetching help and flees instead.
-## @experimental
 func switch_to_flee(agent: StringName) -> void:
 	if _conflicts.has(agent):
 		_conflicts[agent]["stance"] = String(FLEE)
@@ -269,7 +252,6 @@ func switch_to_flee(agent: StringName) -> void:
 ## right away: unchanged for [constant KILL], else cut so the victim keeps at least
 ## [member BustleConflictConfig.scuffle_floor]. Never negative. A stopgap until a host's health
 ## system decides what blows do.
-## @experimental
 func filter_damage(damage: float, current_health: float, intent: StringName) -> float:
 	if not is_finite(damage) or damage <= 0.0:
 		return 0.0
@@ -281,7 +263,6 @@ func filter_damage(damage: float, current_health: float, intent: StringName) -> 
 ## Ends [param agent]'s fight at minute [param now] from the combat port's
 ## [method BustleCombatPort.outcome]: emits [signal assaulted], and [signal killed] when the target
 ## died, then clears the conflict and disengages.
-## @experimental
 func finish(agent: StringName, now: int) -> void:
 	var row := conflict_of(agent)
 	var result := combat.outcome(agent)
@@ -300,14 +281,12 @@ func finish(agent: StringName, now: int) -> void:
 
 
 ## Ends [param agent]'s conflict without a fight (it got away, or the host ended it).
-## @experimental
 func clear(agent: StringName) -> void:
 	_conflicts.erase(agent)
 
 
 ## Ends [param agent]'s conflict and every conflict with [param agent] as the threat (for example
 ## when it dies or leaves).
-## @experimental
 func end_involving(agent: StringName) -> void:
 	_conflicts.erase(agent)
 	for other: StringName in _conflicts.keys():
@@ -316,7 +295,6 @@ func end_involving(agent: StringName) -> void:
 
 
 ## The conflicts in progress as plain data, by agent id in order.
-## @experimental
 func export_state() -> Dictionary:
 	var ids: Array[StringName] = _conflicts.keys()
 	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
@@ -327,7 +305,6 @@ func export_state() -> Dictionary:
 
 
 ## Restores [method export_state]. False (and nothing changes) when malformed.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("conflicts") is Dictionary:
 		return false
@@ -350,7 +327,6 @@ func import_state(saved: Variant) -> bool:
 
 ## The three CRITICAL goals: [code]fight[/code], [code]flee[/code] and [code]fetch_help[/code],
 ## each eligible only while its [code]threat.*[/code] input is 1, each running its one action.
-## @experimental
 static func goal_defs() -> Array[BustleGoalDef]:
 	var out: Array[BustleGoalDef] = []
 	for stance: StringName in STANCES:
@@ -375,14 +351,12 @@ static func goal_defs() -> Array[BustleGoalDef]:
 
 
 ## Where [param agent] is (a [Vector3]), or null when [member position_of] doesn't say.
-## @experimental
 func where(agent: StringName) -> Variant:
 	var found: Variant = position_of.call(agent) if position_of.is_valid() else null
 	return found if found is Vector3 else null
 
 
 ## The fixed id of [param attacker]'s fight with [param victim] that started at minute [param now].
-## @experimental
 static func act_id(attacker: StringName, victim: StringName, now: int) -> String:
 	return "%d:%s|%d:%s|%d" % [String(attacker).length(), attacker, String(victim).length(), victim, now]
 

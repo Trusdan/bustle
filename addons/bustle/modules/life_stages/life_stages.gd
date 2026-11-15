@@ -14,7 +14,6 @@ extends BustleLifeStagePort
 ## job claim, roles) is released. An agent with no age set has no stage and no gates. With rules
 ## that aren't valid ([method error] says why), the module stays ageless: no ages, no stages, no
 ## gates.
-## @experimental
 
 ## The saved-state layout version. Version 1 saves (ages and stages only) still load.
 const STATE_VERSION := 2
@@ -62,7 +61,6 @@ func _init(p_rules: BustleLifeStageRules = null) -> void:
 
 ## Why [member rules] can't be used, or empty when they can. Checked once and kept; see
 ## [method revalidate].
-## @experimental
 func error() -> String:
 	if not _checked:
 		_error = "no rules" if rules == null else rules.validate()
@@ -71,14 +69,12 @@ func error() -> String:
 
 
 ## Checks [member rules] again, after they were changed in place. Returns [method error].
-## @experimental
 func revalidate() -> String:
 	_checked = false
 	return error()
 
 
 ## The game minute the ages were last moved on to ([method advance_to]).
-## @experimental
 func now() -> int:
 	return _now
 
@@ -87,7 +83,6 @@ func now() -> int:
 ## that age falls in, emitting [signal stage_changed] when that is a different stage. False,
 ## changing nothing, for an empty id, an age that is negative or not finite, a dead agent, or rules
 ## that aren't valid.
-## @experimental
 func set_age(id: StringName, days: float) -> bool:
 	if id == &"" or not is_finite(days) or days < 0.0 or _dead.has(id) or error() != "":
 		return false
@@ -102,7 +97,6 @@ func set_age(id: StringName, days: float) -> bool:
 ## then [signal stage_changed] into its first stage. Returns why it was refused, or empty: an empty
 ## id, an agent that already has an age or has died, a bad age, an age below the first stage, or
 ## rules that aren't valid.
-## @experimental
 func birth(id: StringName, days: float = 0.0) -> String:
 	if error() != "":
 		return error()
@@ -125,7 +119,6 @@ func birth(id: StringName, days: float = 0.0) -> String:
 ## order). Ages come from the minute alone, so one call gives the same state and signals as many
 ## shorter ones. False, changing nothing, for a minute before [method now] or rules that aren't
 ## valid.
-## @experimental
 func advance_to(minute: int) -> bool:
 	if minute < _now or error() != "":
 		return false
@@ -158,7 +151,6 @@ func advance_to(minute: int) -> bool:
 ## to it and [method living_ids] leaves it out. Romance bonds and family links are left alone: the
 ## host handles those from [signal died]. Returns why it was refused, or empty: an empty id, an
 ## already dead agent, an empty cause, or rules that aren't valid.
-## @experimental
 func note_death(id: StringName, cause: String) -> String:
 	if error() != "":
 		return error()
@@ -190,19 +182,16 @@ func note_death(id: StringName, cause: String) -> String:
 
 
 ## True when [param id]'s death has been recorded.
-## @experimental
 func is_dead(id: StringName) -> bool:
 	return _dead.has(id)
 
 
 ## The cause given for [param id]'s death, or empty.
-## @experimental
 func cause_of(id: StringName) -> String:
 	return _dead.get(id, {}).get("cause", "")
 
 
 ## The agents with an age who haven't died, in id order: the ones still to schedule.
-## @experimental
 func living_ids() -> Array[StringName]:
 	var out: Array[StringName] = []
 	for id: StringName in _sorted(_ages.keys()):
@@ -212,33 +201,28 @@ func living_ids() -> Array[StringName]:
 
 
 ## True when [param id] has an age.
-## @experimental
 func has_age(id: StringName) -> bool:
 	return _ages.has(id)
 
 
 ## [param id]'s age in game days at [method now] (0 with none). A dead agent's age stays at its
 ## death.
-## @experimental
 func age_days(id: StringName) -> float:
 	return _age_at(id, _now) if _ages.has(id) else 0.0
 
 
 ## [param id]'s age in years of [member BustleLifeStageRules.days_per_year] (0 with none or with
 ## rules that aren't valid).
-## @experimental
 func age_years(id: StringName) -> float:
 	return rules.years_of(age_days(id)) if error() == "" else 0.0
 
 
 ## [param id]'s stage, or empty. A dead agent keeps its last stage.
-## @experimental
 func stage_of(id: StringName) -> StringName:
 	return _stages.get(id, &"")
 
 
 ## False when [param id] has died or its stage blocks any of [param tags] (a goal's id and tags).
-## @experimental
 func allows_goal(id: StringName, tags: Array[StringName]) -> bool:
 	if _dead.has(id):
 		return false
@@ -248,7 +232,6 @@ func allows_goal(id: StringName, tags: Array[StringName]) -> bool:
 
 ## False when [param id] has died or its stage blocks any of [param tags] (an option's
 ## advertisement tags).
-## @experimental
 func allows_affordance(id: StringName, tags: Array[StringName]) -> bool:
 	if _dead.has(id):
 		return false
@@ -260,7 +243,6 @@ func allows_affordance(id: StringName, tags: Array[StringName]) -> bool:
 ## [code]stages[/code], [code]anchors[/code] (each age as [code][days, minute][/code], so aging
 ## carries on exactly), [code]dead[/code] ([code]{cause, at}[/code], including agents with no age)
 ## and [code]now[/code].
-## @experimental
 func export_state() -> Dictionary:
 	var ages := {}
 	var anchors := {}
@@ -283,7 +265,6 @@ func export_state() -> Dictionary:
 ## id or cause, or a time before 0 or after [code]now[/code]; a death needs no age), or rules that
 ## aren't valid. A stage is restored as saved, even if the rules have changed since and it no longer
 ## matches the age; the next [method set_age] or [method advance_to] moves it on.
-## @experimental
 func import_state(saved: Dictionary) -> bool:
 	var version := int(saved.get("version", -1))
 	if error() != "" or version < 1 or version > STATE_VERSION \

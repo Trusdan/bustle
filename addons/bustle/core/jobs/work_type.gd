@@ -6,7 +6,6 @@ extends Resource
 ## much a given agent wants it (personality and circumstances), and what it involves (place,
 ## minutes, wage). [BustleJobBoard] reads it. Standing jobs are roles and schedules, not work types.
 ## Bustle ships none; the host supplies every type. The numbers are experimental defaults.
-## @experimental
 
 ## Its id, chosen by the host.
 @export var id: StringName = &""
@@ -38,7 +37,6 @@ extends Resource
 
 ## True when it can be used: an id, finite numbers, known sliders, a non-negative skill minimum
 ## and wage, and a positive duration.
-## @experimental
 func is_valid() -> bool:
 	if id == &"" or not is_finite(min_skill) or min_skill < 0.0 or not is_finite(priority):
 		return false
@@ -55,7 +53,6 @@ func is_valid() -> bool:
 
 ## How much [param seeker] wants this work: [member priority], plus the slider and input terms.
 ## Missing sliders count as 50 and missing inputs as 0.
-## @experimental
 func score(seeker: BustleJobSeeker) -> float:
 	var total := priority
 	for slider: StringName in priority_weights:

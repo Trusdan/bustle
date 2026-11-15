@@ -5,7 +5,6 @@ extends RefCounted
 ## The priority bands goals sit in. A band is a whole number and the higher one wins: the scorer
 ## chooses only from the highest band that has an eligible candidate, and scores are never compared
 ## across bands. The gaps leave room for bands that later features add between these.
-## @experimental
 
 ## Danger: fight, flee, search for a lost target.
 const CRITICAL := 100
@@ -27,7 +26,6 @@ const IDLE := 20
 
 
 ## The name of [param band], or its number when it isn't one of these.
-## @experimental
 static func name_of(band: int) -> String:
 	match band:
 		FORCED:

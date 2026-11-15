@@ -4,7 +4,6 @@ extends RefCounted
 
 ## One point light, as [BustlePointLightProbe] sees it. Plain data; the project keeps it in step with
 ## whatever torch, candle or window it stands for.
-## @experimental
 
 ## A free id, reported in [member BustleLightSample.sources].
 var id: StringName = &""

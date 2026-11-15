@@ -10,7 +10,6 @@ extends RefCounted
 ## employer of the job held then), so a later change of job never moves who pays.
 ## [method settle] pays every agent's ended shifts through the trade port. After editing
 ## [member jobs], call [method refresh_all].
-## @experimental
 
 ## [param id]'s routine changed from [param old_def] to [param new_def] (either may be null).
 signal schedule_changed(id: StringName, old_def: BustleScheduleDef, new_def: BustleScheduleDef)
@@ -33,7 +32,6 @@ func _init(p_roles: BustleRolesPort = null, p_jobs: BustleRoleSchedules = null) 
 
 
 ## Adds agent [param id], with its own routine [param own] for when it has no job.
-## @experimental
 func add_agent(id: StringName, own: BustleScheduleDef = null) -> void:
 	if id == &"":
 		return
@@ -42,7 +40,6 @@ func add_agent(id: StringName, own: BustleScheduleDef = null) -> void:
 
 
 ## Removes agent [param id].
-## @experimental
 func remove_agent(id: StringName) -> void:
 	_own.erase(id)
 	_schedules.erase(id)
@@ -50,14 +47,12 @@ func remove_agent(id: StringName) -> void:
 
 
 ## Picks every agent's routine and employer again (after [member jobs] was edited).
-## @experimental
 func refresh_all() -> void:
 	for id: StringName in ids():
 		_refresh(id)
 
 
 ## Sets agent [param id]'s own routine (used when it has no job).
-## @experimental
 func set_own(id: StringName, own: BustleScheduleDef) -> void:
 	if _own.has(id):
 		_own[id] = own
@@ -65,7 +60,6 @@ func set_own(id: StringName, own: BustleScheduleDef) -> void:
 
 
 ## The agents, sorted.
-## @experimental
 func ids() -> Array[StringName]:
 	var out: Array[StringName] = _schedules.keys()
 	out.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
@@ -73,7 +67,6 @@ func ids() -> Array[StringName]:
 
 
 ## [param id]'s job: the first role it holds that has a routine, or empty.
-## @experimental
 func job_of(id: StringName) -> StringName:
 	for role: String in roles.roles_of(id):
 		if jobs.schedules.has(StringName(role)) and jobs.schedules[StringName(role)] != null:
@@ -82,7 +75,6 @@ func job_of(id: StringName) -> StringName:
 
 
 ## [param id]'s schedule, or null for an unknown agent.
-## @experimental
 func schedule_of(id: StringName) -> BustleSchedule:
 	return _schedules.get(id)
 
@@ -90,7 +82,6 @@ func schedule_of(id: StringName) -> BustleSchedule:
 ## Pays every agent's ended, attended, unpaid shifts at minute [param now] through [param trade],
 ## each by the payer fixed when it was attended. Returns
 ## [code]{agent, start, activity, amount, payer, paid}[/code] per wage tried, by agent then start.
-## @experimental
 func settle(now: int, trade: BustleTradePort) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: StringName in ids():
@@ -101,7 +92,6 @@ func settle(now: int, trade: BustleTradePort) -> Array[Dictionary]:
 
 
 ## Every agent's attendance as plain data, by id.
-## @experimental
 func export_state() -> Dictionary:
 	var out := {}
 	for id: StringName in ids():
@@ -111,7 +101,6 @@ func export_state() -> Dictionary:
 
 ## Restores [method export_state] for the agents it has (others are skipped). False, changing
 ## nothing, when any entry is malformed.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("schedules") is Dictionary:
 		return false

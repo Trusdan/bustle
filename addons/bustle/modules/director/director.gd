@@ -20,7 +20,6 @@ extends RefCounted
 ## ([method hooks]); Bustle keeps no economy.
 ## [br][br]
 ## With no events, nothing fires, and the director port is left as it is.
-## @experimental
 
 ## The story needs nothing in particular.
 const NEED_NONE := 0
@@ -61,7 +60,6 @@ func _init(p_rules: BustleDirectorRules = null, p_ports: BustlePorts = null) -> 
 
 
 ## Adds [param def]. False, changing nothing, when it is null, invalid, or its id is taken.
-## @experimental
 func add_event(def: BustleEventDef) -> bool:
 	if def == null or def.validate() != "" or find(def.id) != null:
 		return false
@@ -70,7 +68,6 @@ func add_event(def: BustleEventDef) -> bool:
 
 
 ## The event with [param id], or null.
-## @experimental
 func find(id: StringName) -> BustleEventDef:
 	for def: BustleEventDef in _defs:
 		if def.id == id:
@@ -80,7 +77,6 @@ func find(id: StringName) -> BustleEventDef:
 
 ## The story's tension at [param now] on [param inputs], 0 to 1: the weighted inputs plus each
 ## remembered event's tension, fading over the memory.
-## @experimental
 func tension(now: int, inputs: Dictionary) -> float:
 	if rules.validate() != "":
 		return 0.0
@@ -99,7 +95,6 @@ func tension(now: int, inputs: Dictionary) -> float:
 
 ## What the story needs at [param now]: [constant NEED_RELIEVE] at or above the high line,
 ## [constant NEED_RAISE] at or below the low line, otherwise [constant NEED_NONE].
-## @experimental
 func need(now: int, inputs: Dictionary) -> int:
 	var value := tension(now, inputs)
 	if value >= rules.high:
@@ -111,7 +106,6 @@ func need(now: int, inputs: Dictionary) -> int:
 
 ## The eligible events at [param now], best first (see the class description). Empty within the
 ## beat gap, before the last fired event, or with invalid rules.
-## @experimental
 func eligible(now: int, inputs: Dictionary, locked: bool) -> Array[BustleEventDef]:
 	var out: Array[BustleEventDef] = []
 	if rules.validate() != "":
@@ -150,7 +144,6 @@ func eligible(now: int, inputs: Dictionary, locked: bool) -> Array[BustleEventDe
 
 ## Fires the best eligible event at [param now] on the host's [param inputs], with the quest lock
 ## [param locked], and emits [signal event_fired]. Returns its id, or empty when none fires.
-## @experimental
 func update(now: int, inputs: Dictionary = {}, locked: bool = false) -> StringName:
 	var candidates := eligible(now, inputs, locked)
 	if candidates.is_empty():
@@ -169,7 +162,6 @@ func update(now: int, inputs: Dictionary = {}, locked: bool = false) -> StringNa
 ## [param inputs] with the population and wealth hooks set: [param population] as
 ## [constant INPUT_POPULATION] and [param wealth] as [constant INPUT_WEALTH]. A copy; the host's
 ## dictionary is left alone.
-## @experimental
 static func hooks(population: int, wealth: float, inputs: Dictionary = {}) -> Dictionary:
 	var out := inputs.duplicate()
 	out[INPUT_POPULATION] = float(population)
@@ -178,14 +170,12 @@ static func hooks(population: int, wealth: float, inputs: Dictionary = {}) -> Di
 
 
 ## The game minute [param id] last fired, or -1.
-## @experimental
 func last_fired(id: StringName) -> int:
 	return _last.get(id, -1)
 
 
 ## Cooldowns and recent history as plain data. Tension comes from these and the inputs, so it
 ## comes back with them.
-## @experimental
 func export_state() -> Dictionary:
 	var last := {}
 	var ids: Array = _last.keys()
@@ -201,7 +191,6 @@ func export_state() -> Dictionary:
 ## Restores [method export_state]. Minutes may be whole floats, as in a save read back from JSON.
 ## False, changing nothing, for another version, a malformed entry, a minute that isn't whole, an
 ## event id the director doesn't have, or history out of order.
-## @experimental
 func import_state(saved: Dictionary) -> bool:
 	if int(saved.get("version", -1)) != STATE_VERSION or not saved.get("last") is Dictionary \
 			or not saved.get("history") is Array:

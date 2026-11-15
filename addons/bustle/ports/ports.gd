@@ -4,7 +4,6 @@ extends RefCounted
 
 ## One of each port, starting with every standalone default, so Bustle runs with no host. A host
 ## replaces the ones it implements by assigning its own subclass.
-## @experimental
 
 ## Opinions, relationship kinds and deeds.
 var social := BustleSocialPort.new()
@@ -43,7 +42,6 @@ const NAMES: PackedStringArray = [
 
 
 ## The names of ports that have been set to null. Empty when all are present.
-## @experimental
 func missing() -> PackedStringArray:
 	var out := PackedStringArray()
 	for port_name: String in NAMES:

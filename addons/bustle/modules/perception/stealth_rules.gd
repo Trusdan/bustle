@@ -4,7 +4,6 @@ extends Resource
 
 ## The numbers behind [BustleVisibilityModel] and [BustleNoiseModel]. A project supplies its own as a
 ## [code].tres[/code]; the defaults here are PROPOSED tuning, not final values.
-## @experimental
 
 ## How the target holds itself.
 enum Posture { STANDING, CROUCHED }

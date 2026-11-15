@@ -6,7 +6,6 @@ extends Node3D
 ## registers with the [BustlePerceptionSystem] under [member actor_id]; pair it with a
 ## [BustlePerceivable] with the same id if the actor can also be sensed. Differences between
 ## actors come from the [member profile] data, never from code.
-## @experimental
 
 ## The actor's stable id. Empty: the parent's name.
 @export var actor_id: StringName = &""
@@ -36,13 +35,11 @@ func _exit_tree() -> void:
 
 
 ## The system it registered with, or null.
-## @experimental
 func system() -> BustlePerceptionSystem:
 	return _system
 
 
 ## Its awareness list (see [method BustlePerceptionWorld.awareness]).
-## @experimental
 func awareness() -> Array[BustleAwarenessEntry]:
 	if _system == null:
 		var empty: Array[BustleAwarenessEntry] = []

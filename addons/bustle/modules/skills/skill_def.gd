@@ -5,7 +5,6 @@ extends Resource
 ## One skill, as data: its id, its top level, how much practice each level costs, how it fades and
 ## how much it speeds and improves work. [BustleSkills] reads it. Bustle ships no skills; the host supplies every def.
 ## The numbers here are experimental defaults.
-## @experimental
 
 ## Its id, chosen by the host (for example [code]cooking[/code]).
 @export var id: StringName = &""
@@ -27,7 +26,6 @@ extends Resource
 
 ## True when it can be used: an id, a positive top level, a floor in [code]0..max_level[/code],
 ## a non-negative decay rate, finite work bonuses and a curve of positive finite costs.
-## @experimental
 func is_valid() -> bool:
 	if id == &"" or max_level <= 0 or xp_curve.is_empty():
 		return false
@@ -44,14 +42,12 @@ func is_valid() -> bool:
 
 
 ## The XP that level [param band] costs (from [param band] to [param band] + 1).
-## @experimental
 func cost_of(band: int) -> float:
 	return xp_curve[mini(maxi(band, 0), xp_curve.size() - 1)]
 
 
 ## The level [param xp] gives: whole levels for each band paid, plus the fraction of the next,
 ## never above [member max_level].
-## @experimental
 func level_for(xp: float) -> float:
 	var left := maxf(xp, 0.0)
 	for band: int in max_level:
@@ -63,7 +59,6 @@ func level_for(xp: float) -> float:
 
 
 ## The XP that reaches [param level] exactly, the inverse of [method level_for].
-## @experimental
 func xp_for(level: float) -> float:
 	var target := clampf(level, 0.0, float(max_level))
 	var xp := 0.0
@@ -77,6 +72,5 @@ func xp_for(level: float) -> float:
 
 
 ## The XP at [member max_level]; practice past it is not kept.
-## @experimental
 func max_xp() -> float:
 	return xp_for(float(max_level))

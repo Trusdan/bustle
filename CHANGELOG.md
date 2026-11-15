@@ -1,8 +1,19 @@
 # Changelog
 
-All notable changes to Bustle. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Before 1.0, any minor version may change the API. Every public class is marked `@experimental` until then.
+All notable changes to Bustle. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). The public API, and what may change in which release, is set out in [docs/public-api/VERSIONING.md](docs/public-api/VERSIONING.md): from 1.0, deprecations come in a minor release with a warning and removals only in a major one. Before 1.0 the proposed frozen surface ([docs/public-api/PUBLIC_API.md](docs/public-api/PUBLIC_API.md)) is already checked in CI, and anything still marked `@experimental` may change in any release.
 
 ## [Unreleased]
+
+### Added
+
+- The proposed v1 public API: `docs/public-api/PUBLIC_API.md` lists the frozen classes, ports, Callable hooks, signals and save-state calls, each with its file and purpose, and the experimental classes and members with the reason each stays so. `docs/public-api/public_api.json` holds every frozen symbol and its signature. `tools/public_api.sh --write` generates both from the `##` doc comments; everything not listed is internal.
+- `docs/public-api/VERSIONING.md`: the semver and deprecation policy. Deprecate in a minor release with a warning and a "Deprecated" entry here, remove only in a major release, and what counts as breaking (a removed or renamed symbol, changed signal arguments, a changed method or hook signature, a save-format change without migration).
+- `BustleDeprecation`: `warn(symbol, instead)` pushes a deprecation warning once per symbol per run.
+- A public API check (`tools/public_api.sh --check`, run in CI against the committed manifest and the pull request's base branch). It fails when a frozen symbol is removed, renamed or changed without an entry in `docs/public-api/deprecations.json`; new symbols pass. Fixture tests cover its rules.
+
+### Changed
+
+- `@experimental` is removed from the proposed frozen surface. It stays, with a reason, on the debug tools (`BustleDebug`, `BustleDebugConsole`, `BustleDebugOverlay`, `BustleInspector`), the brain's internals (`BustleCandidate`, `BustleChoiceKeeper`, `BustleScoreContext`, `BustleUtilityScorer`), `BustleWitnessJudge` and `BustleFindPerson`, and on the four members whose types are among them (`BustleBrain.keeper`, `BustleBrain.last_candidates`, `BustleCrimeWatch.judge`, `BustleModifierSet.fill_context`). No code or behaviour changed.
 
 ## [0.9.0] - 2026-11-14
 

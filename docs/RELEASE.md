@@ -32,7 +32,7 @@ CI runs `tools/build_release.sh --check --list` on every pull request, so a chan
 1. **CI is green on `main`:** `test`, `test-windows` and `test-core-only`.
 2. **Versions are bumped** in `addons/bustle/plugin.cfg`, `addons/bustle/VERSION` and `BustleInfo.VERSION`, and in `addons/bustle_wyrd/plugin.cfg` and `addons/bustle_wyrd/VERSION`. `tests/core/test_versions_agree.gd` checks that all five agree, and `tests/core/test_info.gd` pins the version's parts.
 3. **`CHANGELOG.md` is updated:** `[Unreleased]` moves into a dated section for the version, with a "Breaking changes since" list (or "None"), and an empty `[Unreleased]` is left at the top. Release notes are drafted in `docs/release-notes/<version>.md`.
-4. **The API docs are regenerated** (`tools/gen_api_docs.sh`).
+4. **The API docs are regenerated** (`tools/gen_api_docs.sh`), and the public API manifest is current (`tools/public_api.sh --write`). Every deprecation and removal follows [public-api/VERSIONING.md](public-api/VERSIONING.md), with its entry in `public-api/deprecations.json`.
 5. **The pull request is merged** into `main`, with CI green on the merge commit.
 
 ## The tag and the release (maintainer only)

@@ -5,7 +5,6 @@ extends Resource
 ## The numbers behind [BustleConflict]: who fights, how far help is looked for, how far agents
 ## flee, and how much it takes for a quarrel to come to blows. Nothing here is a chance: every
 ## fight and every intent to kill has a reason.
-## @experimental
 
 ## The average of an agent's boldness and temper (0 to 100) at or above which it fights a threat.
 ## Below it, it fetches help when an ally is near, and flees otherwise.

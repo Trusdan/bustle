@@ -6,7 +6,6 @@ extends Resource
 ## and when it can no longer happen. [BustleAmbitions] reads it. Every circumstance, progress
 ## input and fact is a name the host fills each update, so a template refers to no particular
 ## person, place or system.
-## @experimental
 
 ## Its id. Ties between equal scores break by id.
 @export var id: StringName = &""
@@ -44,7 +43,6 @@ extends Resource
 ## True when it can be used: an id, known sliders with finite weights and minimums, a finite
 ## target, boosts that are finite and not negative, and some way to complete (a progress line or a
 ## done fact).
-## @experimental
 func is_valid() -> bool:
 	if id == &"" or not is_finite(target) or (progress_input == &"" and done_fact == &""):
 		return false
@@ -57,7 +55,6 @@ func is_valid() -> bool:
 
 ## True when [param inputs] say it's done: [member done_fact] is true, or [member progress_input]
 ## has reached [member target] and every [member done_facts] is true.
-## @experimental
 func is_done(inputs: Dictionary) -> bool:
 	if done_fact != &"" and bool(inputs.get(done_fact, false)):
 		return true
@@ -67,13 +64,11 @@ func is_done(inputs: Dictionary) -> bool:
 
 
 ## True when [param inputs] say it can no longer happen: any [member moot_facts] is true.
-## @experimental
 func is_moot(inputs: Dictionary) -> bool:
 	return moot_facts.any(func(fact: StringName) -> bool: return bool(inputs.get(fact, false)))
 
 
 ## A template with these values.
-## @experimental
 static func make(p_id: StringName, p_weights: Dictionary[StringName, float], p_requires: Array[StringName] = [],
 		p_progress: StringName = &"", p_target: float = 0.0) -> BustleAmbitionDef:
 	var def := BustleAmbitionDef.new()

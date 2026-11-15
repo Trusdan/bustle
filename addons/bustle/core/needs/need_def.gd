@@ -10,7 +10,6 @@ extends Resource
 ## [code]need.<id>.rate[/code] modifier (only while one of [member rises_when] holds, or always when
 ## that is empty), plus [member condition_rates] for every condition that holds. The rate modifier
 ## scales the rises only, never a fall (a negative base rate or condition rate).
-## @experimental
 
 ## Its id: the scorer reads its pressure as the input [code]need.<id>[/code].
 @export var id: StringName = &""
@@ -33,7 +32,6 @@ extends Resource
 ## parts (a negative base rate, recovery under a condition) never are. Conditions are summed once
 ## each, in sorted order, so the same set gives the same number however it is listed. Non-finite
 ## numbers count as 0, and a result that isn't finite is 0.
-## @experimental
 func rate_under(conditions: Array[StringName], rate_mult: float = 1.0) -> float:
 	var mult := maxf(_finite(rate_mult), 0.0)
 	var held: Array[StringName] = []

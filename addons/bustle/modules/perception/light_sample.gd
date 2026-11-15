@@ -3,7 +3,6 @@ class_name BustleLightSample
 extends RefCounted
 
 ## How much light reaches one point, from a [BustleLightProbe].
-## @experimental
 
 ## The light level, 0 (dark) to 1 (fully lit).
 var level: float = 0.0

@@ -5,7 +5,6 @@ extends RefCounted
 ## A task given to an agent from outside (a player or a quest): a sequence to run, optionally on a
 ## target. Ordinary orders sit in [constant BustleBands.ORDERED], below urgent self-care; a
 ## [member forced] one sits above everything, danger included.
-## @experimental
 
 ## The order's id, unique in its agent's queue.
 var id: StringName = &""

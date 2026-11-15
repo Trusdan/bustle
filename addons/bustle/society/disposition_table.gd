@@ -10,7 +10,6 @@ extends Resource
 ## [member symmetric], [code]"b>a"[/code] is used when [code]"a>b"[/code] is missing. Actor
 ## rules win over group rules; anything unlisted gets [member default_disposition]. Members of the
 ## same group are [member same_group] to each other unless a rule says otherwise.
-## @experimental
 
 ## For anything no rule covers.
 @export var default_disposition: BustleDispositionPort.Disposition = BustleDispositionPort.Disposition.NEUTRAL
@@ -25,7 +24,6 @@ extends Resource
 
 
 ## How [param a_id] in [param a_group] regards [param b_id] in [param b_group].
-## @experimental
 func lookup(a_id: StringName, a_group: StringName, b_id: StringName, b_group: StringName) -> BustleDispositionPort.Disposition:
 	var found: Variant = _rule(actors, a_id, b_id)
 	if found == null:
@@ -38,7 +36,6 @@ func lookup(a_id: StringName, a_group: StringName, b_id: StringName, b_group: St
 
 
 ## Sets the rule for how group [param a] regards group [param b].
-## @experimental
 func set_group_rule(a: StringName, b: StringName, value: BustleDispositionPort.Disposition) -> void:
 	groups["%s>%s" % [a, b]] = value
 

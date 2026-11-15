@@ -4,7 +4,6 @@ extends Resource
 
 ## What the health behaviour does with the host's readings: the capacity effects on modifiers, the
 ## thoughts, and what a downed agent may not choose. [method defaults] gives experimental values.
-## @experimental
 
 ## The capacity → modifier effects. Every capacity named here also writes
 ## [code]capacity.<name>[/code] (base 1) as its clamped amount.
@@ -24,7 +23,6 @@ extends Resource
 ## [code]in_great_pain[/code] (−14) instead;
 ## [br]- the [code]sick[/code] tag holds [code]feeling_sick[/code] (−8), and the [code]fever[/code]
 ## tag [code]feverish[/code] (−6).
-## @experimental
 static func defaults() -> BustleHealthConfig:
 	var config := BustleHealthConfig.new()
 	for row: Array in [[&"moving", &"move.speed"], [&"manipulation", &"work.speed"],
@@ -49,7 +47,6 @@ static func defaults() -> BustleHealthConfig:
 
 ## Why it can't be used, or empty: an invalid or missing effect or thought rule, or an empty
 ## downed block.
-## @experimental
 func validate() -> String:
 	for i: int in effects.size():
 		if effects[i] == null or not effects[i].is_valid():

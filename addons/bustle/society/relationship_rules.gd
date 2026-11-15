@@ -6,7 +6,6 @@ extends Resource
 ## when the opinion reaches its level and enough deeds of the right sign (opinion entries with a
 ## deed in their reason) fall inside the window; it lapses only once the opinion crosses back past
 ## its release level, so it doesn't flicker. These are starting numbers, not tuning.
-## @experimental
 
 ## The kind repeated kindness forms.
 @export var friend_kind: StringName = &"friend"

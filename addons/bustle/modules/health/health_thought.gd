@@ -5,7 +5,6 @@ extends Resource
 ## A thought held while the host reports a health state: either pain of at least
 ## [member pain_at_least], or a visible tag such as [code]sick[/code] ([member tag]). Set exactly
 ## one of the two.
-## @experimental
 
 ## Held while pain is at least this (above 0). NAN: not a pain thought.
 @export var pain_at_least: float = NAN
@@ -17,7 +16,6 @@ extends Resource
 
 ## True when exactly one of pain or tag is set, the pain line is in 0..1 and above 0, and the
 ## thought is a valid held health thought.
-## @experimental
 func is_valid() -> bool:
 	var by_pain := not is_nan(pain_at_least)
 	if by_pain == (tag != &""):

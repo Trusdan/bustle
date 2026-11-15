@@ -50,7 +50,6 @@ extends RefCounted
 ##   if there is none, or the agent has no known position, the spawn waits and is retried on later
 ##   updates. An agent that stops being FULL has its position kept and its body freed
 ##   ([method BustleWorldPort.free_body]).
-## @experimental
 
 ## The rings.
 enum Ring { FULL, LIGHT, OFF_SCREEN }
@@ -124,7 +123,6 @@ func _init(p_society: BustleSociety = null, p_config: BustleSimRingConfig = null
 ## summarised at once, split exactly as [method catch_up] splits it (passed to [member summary_hook],
 ## with [signal caught_up] and its report), and the kept window is then thought one interval a tick
 ## as usual. A backlog within the cap is untouched.
-## @experimental
 func tick(delta: float) -> void:
 	if society == null:
 		return
@@ -171,7 +169,6 @@ func tick(delta: float) -> void:
 ## older is summarised (passed to [member summary_hook]) rather than run. Deterministic for the same
 ## state and senses. Returns [code]{agent, from, to, ticks, simulated_minutes, skipped_minutes}[/code]
 ## and emits [signal caught_up] when anything happened.
-## @experimental
 func catch_up(id: StringName) -> Dictionary:
 	var state := society.get_agent(id) if society != null else null
 	var now := society.ports.clock.now_minutes() if society != null else 0
@@ -223,13 +220,11 @@ func _bound_backlog(state: BustleNpcState, now: int) -> void:
 
 ## Has the next [method tick] re-sort every agent, whatever else has changed: for instance after the
 ## host moves an agent to another area.
-## @experimental
 func request_sort() -> void:
 	_sort_requested = true
 
 
 ## Re-sorts every agent after [param delta] real seconds.
-## @experimental
 func update(delta: float) -> void:
 	if society == null:
 		return
@@ -369,19 +364,16 @@ func _roster() -> Array[StringName]:
 
 
 ## Agent [param id]'s ring. OFF_SCREEN for an agent not sorted yet.
-## @experimental
 func ring_of(id: StringName) -> Ring:
 	return int(_agents.get(id, {}).get("ring", Ring.OFF_SCREEN)) as Ring
 
 
 ## The clock minute agent [param id] entered its ring, or -1 for an agent not sorted yet.
-## @experimental
 func entered_minutes(id: StringName) -> int:
 	return int(_agents.get(id, {}).get("entered", -1))
 
 
 ## How many agents are in each ring: [code]{FULL: n, LIGHT: n, OFF_SCREEN: n}[/code].
-## @experimental
 func counts() -> Dictionary:
 	var out := {"FULL": 0, "LIGHT": 0, "OFF_SCREEN": 0}
 	for entry: Dictionary in _agents.values():

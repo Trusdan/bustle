@@ -8,7 +8,6 @@ extends BustleActionHandler
 ## [code]gear[/code] in the output, the gear being [member BustleCrimeWatch.travel_gear]); Bustle
 ## names where, the host moves the body. Done once the word is delivered, forgotten, or there's
 ## nobody to reach yet.
-## @experimental
 
 ## The watch whose errands it runs.
 var watch: BustleCrimeWatch

@@ -8,7 +8,6 @@ extends BustleActionHandler
 ## escalate. Done when the port reports the fight RESOLVED (then [method BustleConflict.finish]
 ## reports it) or the conflict was cleared. Fails with [code]no_threat[/code] when the agent has
 ## none.
-## @experimental
 
 ## The conflicts it serves.
 var conflict: BustleConflict

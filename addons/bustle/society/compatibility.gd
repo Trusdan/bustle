@@ -6,14 +6,12 @@ extends RefCounted
 ## pair in a world: the same for the same two ids and world seed, the same both ways round, and
 ## different in another world. It comes from a 64-bit FNV-1a hash of the seed and the two ids in
 ## sorted order. A host may blend in how close the two agents' personality sliders are.
-## @experimental
 
 
 ## The compatibility of [param a] and [param b] in a world seeded [param world_seed]. With
 ## [param a_personality] and [param b_personality] given and [param slider_weight] above 0, that
 ## share comes from how close their sliders are (1 when equal, -1 when opposite), the rest from the
 ## hash. 0 for an empty id or an agent paired with itself.
-## @experimental
 static func of(a: StringName, b: StringName, world_seed: int, a_personality: BustlePersonality = null,
 		b_personality: BustlePersonality = null, slider_weight: float = 0.0) -> float:
 	if a == &"" or b == &"" or a == b:

@@ -5,7 +5,6 @@ extends Resource
 ## How a [BustleMemory] holds and forgets, as data. Each kind of memory fades on its own half-life
 ## in game hours; each source starts at its own strength. An entry is forgotten once its strength
 ## falls below [member forget_below]. These are starting numbers, not tuning: a host sets its own.
-## @experimental
 
 ## The most entries one agent keeps; past it, the weakest goes.
 @export var capacity: int = 32
@@ -20,14 +19,12 @@ extends Resource
 
 
 ## [param kind]'s half-life in game minutes (at least 1).
-## @experimental
 func half_life_minutes(kind: StringName) -> float:
 	var hours: float = half_life_hours.get(kind, default_half_life_hours)
 	return maxf(hours * 60.0, 1.0) if is_finite(hours) else 1.0
 
 
 ## [param source]'s starting strength, from 0 to 1 (0 for an unknown source).
-## @experimental
 func strength_of(source: StringName) -> float:
 	var value: float = source_strength.get(source, 0.0)
 	return clampf(value, 0.0, 1.0) if is_finite(value) else 0.0

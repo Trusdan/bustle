@@ -171,6 +171,18 @@ jobs:
       - name: API docs are up to date
         run: tools/gen_api_docs.sh --check
 
+      # docs/public-api/VERSIONING.md: a frozen symbol removed, renamed or changed fails unless
+      # docs/public-api/deprecations.json has an entry for it; new symbols pass. On a pull request
+      # it also compares with the base branch's manifest, so editing the committed one can't hide a break.
+      - name: Public API keeps its frozen symbols
+        run: |
+          set -euo pipefail
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            tools/public_api.sh --check --base "origin/${GITHUB_BASE_REF}"
+          else
+            tools/public_api.sh --check
+          fi
+
       - name: Release zips build reproducibly
         run: tools/build_release.sh --check --list --out "$RUNNER_TEMP/release"
 

@@ -6,7 +6,6 @@ extends RefCounted
 ## stealth-skill multiplier, clamped to [code]min_visibility..max_visibility[/code]. 1.0 is a
 ## standing, walking target in full light with neutral clothing and no skill. It keeps no state;
 ## the numbers come from [BustleStealthRules].
-## @experimental
 
 ## The numbers.
 var rules: BustleStealthRules

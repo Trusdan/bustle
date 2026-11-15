@@ -6,7 +6,7 @@ extends RefCounted
 ## candidates from the last tick (never recomputed), the last intent, the runner and the order
 ## queue. Parts that come from modules not installed yet are marked
 ## [code]{available: false, module: <name>}[/code] instead of being made up. Read-only.
-## @experimental
+## @experimental: Development tool. The snapshot's keys follow the brain's internals and may change in any minor release.
 
 ## The modules the inspector marks unavailable, by field: the field → the module that will fill it.
 const UNAVAILABLE := {"ring": "rings", "memory": "memory", "schedule": "schedules"}

@@ -15,7 +15,6 @@ extends RefCounted
 ## [BustleTradePort]. Its payer is the block's own, else the [member employer] when it was
 ## attended, fixed then and saved. A missed block pays nothing; a payment the payer can't make stays
 ## owed (kept past the attendance window) and is tried again on every settle until paid.
-## @experimental
 
 ## Attended within the tolerance.
 const ON_TIME := &"on_time"
@@ -49,7 +48,6 @@ func _init(p_def: BustleScheduleDef = null) -> void:
 
 ## Swaps the routine for [param new_def] (a new job, say), keeping attendance. The old routine's
 ## activity inputs are erased by the next [method fill_inputs].
-## @experimental
 func set_def(new_def: BustleScheduleDef) -> void:
 	for activity: StringName in activities():
 		if not _retired.has(activity):
@@ -62,7 +60,6 @@ func set_def(new_def: BustleScheduleDef) -> void:
 ## The block current at minute [param now]: [code]{block, start, end, day}[/code] with absolute
 ## minutes and the game day it belongs to, or an empty dictionary. A block carried over from the
 ## night before wins over one starting today.
-## @experimental
 func block_at(now: int, season: StringName = &"") -> Dictionary:
 	var today := floori(float(now) / 1440.0)
 	for day_index: int in [today - 1, today]:
@@ -74,13 +71,11 @@ func block_at(now: int, season: StringName = &"") -> Dictionary:
 
 ## The blocks of game day [param day_index] (those starting that day), in order, as
 ## [code]{block, start, end, day}[/code]. Invalid blocks are skipped.
-## @experimental
 func occurrences(day_index: int, season: StringName = &"") -> Array[Dictionary]:
 	return _occurrences(day_index, season)
 
 
 ## Every activity the routine uses, sorted.
-## @experimental
 func activities() -> Array[StringName]:
 	var out: Array[StringName] = []
 	var plans: Array = [def.day]
@@ -99,7 +94,6 @@ func activities() -> Array[StringName]:
 ## Writes the scorer's inputs for minute [param now]: [code]schedule.<activity>[/code] is 1 for the
 ## current block, and [constant FREE_TIME] is 1 when there is none. The routine's other activity
 ## inputs (and free time, while a block is current) are erased; other inputs are left alone.
-## @experimental
 func fill_inputs(inputs: Dictionary[StringName, float], now: int, season: StringName = &"") -> void:
 	for activity: StringName in _retired:
 		inputs.erase(StringName("schedule.%s" % activity))
@@ -116,7 +110,6 @@ func fill_inputs(inputs: Dictionary[StringName, float], now: int, season: String
 ## The agent is doing [param activity] at minute [param now]. When that is the current block's
 ## activity, records its arrival (the first one counts) and returns [constant ON_TIME] or
 ## [constant LATE]; otherwise returns empty.
-## @experimental
 func attend(now: int, activity: StringName, season: StringName = &"") -> StringName:
 	var current := block_at(now, season)
 	if current.is_empty() or (current["block"] as BustleScheduleBlock).activity != activity:
@@ -131,7 +124,6 @@ func attend(now: int, activity: StringName, season: StringName = &"") -> StringN
 
 
 ## True when the block current at minute [param now] has been attended (and so hasn't ended).
-## @experimental
 func attended_now(now: int, season: StringName = &"") -> bool:
 	var current := block_at(now, season)
 	return not current.is_empty() and _attended.has(int(current["start"])) \
@@ -142,7 +134,6 @@ func attended_now(now: int, season: StringName = &"") -> bool:
 ## [code]{on_time, late, missed, pending}[/code] counts of its blocks (only those for
 ## [param activity], when given). A block that hasn't ended and wasn't attended is pending, not
 ## missed.
-## @experimental
 func report(day_index: int, now: int, season: StringName = &"", activity: StringName = &"") -> Dictionary:
 	var out := {"on_time": 0, "late": 0, "missed": 0, "pending": 0}
 	for occurrence: Dictionary in _occurrences(day_index, season):
@@ -164,7 +155,6 @@ func report(day_index: int, now: int, season: StringName = &"", activity: String
 ## [param employer] only pays records saved without one.
 ## Returns one [code]{start, activity, amount, payer, paid}[/code] per wage tried, in start order;
 ## an unpaid one stays owed.
-## @experimental
 func settle(now: int, agent: StringName, trade: BustleTradePort, employer: StringName = &"") -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var starts: Array[int] = _attended.keys()
@@ -182,7 +172,6 @@ func settle(now: int, agent: StringName, trade: BustleTradePort, employer: Strin
 
 
 ## The attendance as plain data: [code]{"attended": {start: {activity, arrived, end, wage, payer, paid}}}[/code].
-## @experimental
 func export_state() -> Dictionary:
 	var keys: Array[int] = _attended.keys()
 	keys.sort()
@@ -193,7 +182,6 @@ func export_state() -> Dictionary:
 
 
 ## Restores [method export_state]. False (and nothing changes) when malformed.
-## @experimental
 func import_state(saved: Variant) -> bool:
 	if not saved is Dictionary or not (saved as Dictionary).get("attended") is Dictionary:
 		return false

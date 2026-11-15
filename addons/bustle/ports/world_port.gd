@@ -6,7 +6,6 @@ extends RefCounted
 ## overrides every method. The standalone default is one area, [constant DEFAULT_AREA], with
 ## everyone in it, places at positions set with [method set_place] (the origin for any other), no
 ## travel time, and **no bodies**: it never spawns, frees or moves anything, so it is headless only.
-## @experimental
 
 ## The default's only area.
 const DEFAULT_AREA := &"default"
@@ -15,58 +14,49 @@ var _places: Dictionary[StringName, Vector3] = {}
 
 
 ## The area [param _id] is in.
-## @experimental
 func area_of(_id: StringName) -> StringName:
 	return DEFAULT_AREA
 
 
 ## The area the player is in.
-## @experimental
 func player_area() -> StringName:
 	return DEFAULT_AREA
 
 
 ## Where the player is. Default: the origin.
-## @experimental
 func player_position() -> Vector3:
 	return Vector3.ZERO
 
 
 ## True when the player could see [param _position] right now (used so bodies don't appear in
 ## view). Default: false, so a headless world never relocates a spawn.
-## @experimental
 func is_in_view(_position: Vector3) -> bool:
 	return false
 
 
 ## True when [param _area] is an interior (a building or cave the player sees all of at once).
 ## Default: false.
-## @experimental
 func is_interior(_area: StringName) -> bool:
 	return false
 
 
 ## The areas next to [param _area]. Default: none.
-## @experimental
 func neighbour_areas(_area: StringName) -> Array[StringName]:
 	return []
 
 
 ## True when [param place] has a known position.
-## @experimental
 func has_place(place: StringName) -> bool:
 	return _places.has(place)
 
 
 ## Where [param place] is. Check [method has_place] first: an unknown place answers the origin.
-## @experimental
 func place_position(place: StringName) -> Vector3:
 	return _places.get(place, Vector3.ZERO)
 
 
 ## Sets where [param place] is (the default's data). Non-finite positions and empty names are
 ## ignored.
-## @experimental
 func set_place(place: StringName, position: Vector3) -> void:
 	if place != &"" and position.is_finite():
 		_places[place] = position
@@ -74,7 +64,6 @@ func set_place(place: StringName, position: Vector3) -> void:
 
 ## The areas from [param a] to [param b], both included. Default: [code][a][/code] when they are
 ## the same, else [code][a, b][/code]; empty when either is empty.
-## @experimental
 func path_between(a: StringName, b: StringName) -> Array[StringName]:
 	if a == &"" or b == &"":
 		return []
@@ -82,19 +71,16 @@ func path_between(a: StringName, b: StringName) -> Array[StringName]:
 
 
 ## Game minutes to travel from area [param _a] to [param _b]. Default: 0.
-## @experimental
 func travel_minutes(_a: StringName, _b: StringName) -> int:
 	return 0
 
 
 ## Makes the body of [param _id] at [param _xf] and returns it. Default: null (no bodies).
-## @experimental
 func spawn_body(_id: StringName, _xf: Transform3D) -> Node3D:
 	return null
 
 
 ## Removes the body of [param _id]. Default: nothing to remove.
-## @experimental
 func free_body(_id: StringName) -> void:
 	pass
 
@@ -102,6 +88,5 @@ func free_body(_id: StringName) -> void:
 ## Asks the host to bring [param _count] of [param _kind] into [param _area] (empty: the host's
 ## choice) for the story event [param _event]. The host decides and makes them; Bustle never
 ## creates anything itself. True when the host did. Default: false, and nothing happens.
-## @experimental
 func request_spawn(_kind: StringName, _area: StringName, _count: int, _event: StringName) -> bool:
 	return false
