@@ -15,6 +15,8 @@ extends BustleSocialPort
 ## ([method set_kind]) stay until it clears them. Kinds the [member rules] form from repeated deeds
 ## come and go with opinion ([signal kind_changed]); the rules never touch a host's kinds.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param a]'s kind [param kind] towards [param b] formed ([param formed] true) or lapsed.
 signal kind_changed(a: StringName, b: StringName, kind: StringName, formed: bool)
 
@@ -34,6 +36,8 @@ var _next_seq: int = 0
 ## Moves the store's clock to [param now] (earlier minutes are ignored): ended entries go, and
 ## every pair's rule kinds are checked again.
 func set_time(now: int) -> void:
+	if now < now_minutes:
+		_Warn.warn("BustleSocialStore.time_backwards", "BustleSocialStore: set_time() went back in time; the clock stays")
 	if now <= now_minutes:
 		return
 	now_minutes = now
@@ -114,6 +118,7 @@ func supports_kinds() -> bool:
 ## Gives [param a] the kind [param kind] towards [param b], kept until [method clear_kind].
 func set_kind(a: StringName, b: StringName, kind: StringName) -> void:
 	if a == &"" or b == &"" or a == b or kind == &"":
+		_Warn.warn("BustleSocialStore.bad_kind", "BustleSocialStore: set_kind() needs two different ids and a kind; ignored")
 		return
 	var key := _key(a, b)
 	var kinds: PackedStringArray = _host_kinds.get(key, PackedStringArray())

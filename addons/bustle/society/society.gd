@@ -28,6 +28,8 @@ extends RefCounted
 ## - **Protection** ([method set_protection], [method is_protected]) is data for the host's combat
 ##   or health to honour.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The saved-state schema version.
 const SCHEMA := 1
 
@@ -57,10 +59,11 @@ func _init(p_world_seed: int = 0) -> void:
 	world_seed = p_world_seed
 
 
-## Registers (or replaces) archetype [param id] with the goals and scoring its agents share.
+## Registers (or replaces) archetype [param id] with the goals and scoring its agents share. An
+## empty id or no library is ignored, with one warning per run.
 func register_archetype(id: StringName, library: BustleGoalLibrary, config: BustleScoringConfig = null) -> void:
 	if id == &"" or library == null:
-		push_error("BustleSociety: an archetype needs an id and a library")
+		_Warn.warn("BustleSociety.bad_archetype", "BustleSociety: an archetype needs an id and a library; ignored")
 		return
 	_archetypes[id] = [library, config if config != null else BustleScoringConfig.new()]
 
@@ -82,11 +85,11 @@ func set_port(port_name: StringName, port: RefCounted) -> bool:
 	return true
 
 
-## Adds agent [param id] made from [param archetype_id]. Null (with an error) when the id is empty
-## or taken, or the archetype isn't registered.
+## Adds agent [param id] made from [param archetype_id]. Null (with one warning per run) when the
+## id is empty or taken, or the archetype isn't registered.
 func add_agent(id: StringName, archetype_id: StringName, group: StringName = &"") -> BustleNpcState:
 	if id == &"" or _agents.has(id) or not _archetypes.has(archetype_id):
-		push_error("BustleSociety: can't add agent %s (%s)" % [id, archetype_id])
+		_Warn.warn("BustleSociety.add_agent_refused", "BustleSociety: can't add agent %s (%s): an empty or taken id, or an unknown archetype" % [id, archetype_id])
 		return null
 	var state := _make(id, archetype_id, group)
 	_agents[id] = state

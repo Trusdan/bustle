@@ -5,6 +5,8 @@ extends RefCounted
 ## One perceiver's awareness list: a [BustleDetectionMeter] per target it has sensed, keyed by
 ## the target's id. Meters are made the first time a target is sensed or heard.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## A target's meter changed state.
 signal state_changed(target_id: StringName, old: BustleDetectionMeter.State, new: BustleDetectionMeter.State)
 
@@ -84,3 +86,5 @@ func import_state(data: Dictionary, profile: BustlePerceptionProfile) -> void:
 		var value: Variant = data[key]
 		if value is Dictionary:
 			meter_for(StringName(str(key)), profile).import_state(value)
+		else:
+			_Warn.warn("BustleAwareness.bad_row", "BustleAwareness: import_state() got a row that isn't a dictionary; it's skipped")

@@ -19,6 +19,8 @@ extends RefCounted
 ## once they're gone for good, so a feud with someone dead ends moot, not settled), and
 ## [code]rival_gone[/code] once they're gone for good.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The agents and the social port.
 var society: BustleSociety
 ## The like line and family kinds.
@@ -112,12 +114,16 @@ func _known(agent: StringName) -> Array[StringName]:
 
 func _gone(id: StringName) -> bool:
 	if is_gone.is_valid():
-		return bool(is_gone.call(id))
+		var gone: Variant = is_gone.call(id)
+		if _Warn.fits(gone, "bool", "BustleAmbitionTargets.is_gone"):
+			return bool(gone)
 	return society.get_agent(id) == null
 
 
 func _settlement(id: StringName) -> StringName:
 	if settlement_of.is_valid():
-		return StringName(settlement_of.call(id))
+		var settlement: Variant = settlement_of.call(id)
+		if _Warn.fits(settlement, "name", "BustleAmbitionTargets.settlement_of"):
+			return StringName(settlement)
 	var state := society.get_agent(id)
 	return state.area if state != null else &""

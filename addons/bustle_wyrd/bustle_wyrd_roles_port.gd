@@ -57,6 +57,8 @@ func roles_of(id: StringName) -> PackedStringArray:
 ## Wyrd's signal, once per change.
 func set_holder(role: StringName, id: StringName) -> void:
 	var roles := _roles()
+	if roles == null:
+		_Warn.warn("BustleWyrdRolesPort.no_roles", "BustleWyrdRolesPort: no Wyrd roles; set_holder() is ignored")
 	if roles == null or role == &"":
 		return
 	if id != &"":

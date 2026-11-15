@@ -23,6 +23,8 @@ extends RefCounted
 ## emitted as [signal insulted]; with a [member conflict], the insulted agent then quarrels through
 ## the usual fight rules, which never mean to kill. Nothing here sets any intent.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param agent], in a state, insulted [param target] (words only). [param provocation] is how hard,
 ## 0 to 1, from the state's tier.
 signal insulted(agent: StringName, target: StringName, provocation: float)
@@ -110,7 +112,7 @@ func applied_state(agent: StringName) -> StringName:
 func accepts(agent: StringName, _visitor: StringName, opener: StringName = &"") -> bool:
 	if not _states.has(agent) or StringName(_states[agent].active().get("id", "")) != &"withdraw":
 		return true
-	return (is_locked.is_valid() and bool(is_locked.call(agent))) or config.welcome_openers.has(opener)
+	return (is_locked.is_valid() and _Warn.as_bool(is_locked.call(agent), false, "BustleMentalBehaviour.is_locked")) or config.welcome_openers.has(opener)
 
 
 ## What [param agent]'s state decides from now: [code]{locked, indulgence, target, target_opinion,
@@ -118,7 +120,7 @@ func accepts(agent: StringName, _visitor: StringName, opener: StringName = &"") 
 func circumstances_of(agent: StringName, _personality: BustlePersonality = null) -> Dictionary:
 	var target := lash_target(agent)
 	var social := society.ports.social
-	return {"locked": is_locked.is_valid() and bool(is_locked.call(agent)),
+	return {"locked": is_locked.is_valid() and _Warn.as_bool(is_locked.call(agent), false, "BustleMentalBehaviour.is_locked"),
 		"indulgence": _indulgence(agent) != &"", "target": String(target),
 		"target_opinion": float(social.opinion(agent, target)) if target != &"" else 50.0,
 		"target_rival": target != &"" and social.kinds_between(agent, target).has("rival")}
@@ -165,7 +167,7 @@ static func _before(a: Array, b: Array) -> bool:
 func fill_inputs(agent: StringName, inputs: Dictionary[StringName, float]) -> void:
 	for id: StringName in GOAL_STATES:
 		inputs.erase(StringName(INPUT_PREFIX + String(id)))
-	if not _states.has(agent) or (is_locked.is_valid() and bool(is_locked.call(agent))):
+	if not _states.has(agent) or (is_locked.is_valid() and _Warn.as_bool(is_locked.call(agent), false, "BustleMentalBehaviour.is_locked")):
 		return
 	var id := StringName(_states[agent].active().get("id", ""))
 	if not GOAL_STATES.has(id) or (id == &"binge" and _indulgence(agent) == &"") or (id == &"lash_out" and lash_target(agent) == &""):
@@ -273,7 +275,7 @@ func _on_entered(agent: StringName, _id: StringName, _info: Dictionary) -> void:
 
 
 func _indulgence(agent: StringName) -> StringName:
-	return StringName(indulgence_of.call(agent)) if indulgence_of.is_valid() else &""
+	return _Warn.as_name(indulgence_of.call(agent), &"", "BustleMentalBehaviour.indulgence_of") if indulgence_of.is_valid() else &""
 
 
 func _where(id: StringName) -> Variant:

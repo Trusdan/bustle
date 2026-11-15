@@ -12,6 +12,8 @@ extends RefCounted
 ## round) and one per initiator, so agents don't greet the same person over and over, or everyone
 ## at once.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The social port everything is recorded through. A new [BustleSocialStore] by default.
 var store: BustleSocialPort
 ## The world seed, for compatibility and the outcome's randomness.
@@ -79,6 +81,7 @@ static func outcome(def: BustleInteractionDef, initiator: StringName, recipient:
 func interact(def: BustleInteractionDef, initiator: StringName, recipient: StringName, now: int,
 		place: StringName = &"", witnesses: Array[Dictionary] = []) -> Dictionary:
 	if def == null or not def.is_valid():
+		_Warn.warn("BustleSocialInteractions.invalid_def:%s" % (def.id if def != null else &""), "BustleSocialInteractions: the interaction %s is invalid; it's refused" % (def.id if def != null else &"<null>"))
 		return {"ok": false, "reason": &"invalid"}
 	if initiator == &"" or recipient == &"" or initiator == recipient:
 		return {"ok": false, "reason": &"no_pair"}

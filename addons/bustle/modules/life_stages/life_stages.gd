@@ -15,6 +15,8 @@ extends BustleLifeStagePort
 ## that aren't valid ([method error] says why), the module stays ageless: no ages, no stages, no
 ## gates.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The saved-state layout version. Version 1 saves (ages and stages only) still load, through a
 ## 1 -> 2 step ([BustleSaveFormat]).
 const STATE_VERSION := 2
@@ -66,6 +68,8 @@ func error() -> String:
 	if not _checked:
 		_error = "no rules" if rules == null else rules.validate()
 		_checked = true
+		if _error != "":
+			_Warn.warn("BustleLifeStages.invalid_rules", "BustleLifeStages: the rules can't be used (%s); ages and stages don't change until they're fixed" % _error)
 	return _error
 
 

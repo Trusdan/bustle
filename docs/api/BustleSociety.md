@@ -60,7 +60,7 @@ Changes whenever an agent is added or removed (or a save is imported), so a call
 func register_archetype(id: StringName, library: BustleGoalLibrary, config: BustleScoringConfig = null) -> void
 ```
 
-Registers (or replaces) archetype `id` with the goals and scoring its agents share.
+Registers (or replaces) archetype `id` with the goals and scoring its agents share. An empty id or no library is ignored, with one warning per run.
 
 ### `has_archetype`
 
@@ -84,7 +84,7 @@ Replaces port `port_name` (one of `BustlePorts.NAMES`) with `port`. False when t
 func add_agent(id: StringName, archetype_id: StringName, group: StringName = &"") -> BustleNpcState
 ```
 
-Adds agent `id` made from `archetype_id`. Null (with an error) when the id is empty or taken, or the archetype isn't registered.
+Adds agent `id` made from `archetype_id`. Null (with one warning per run) when the id is empty or taken, or the archetype isn't registered.
 
 ### `remove_agent`
 

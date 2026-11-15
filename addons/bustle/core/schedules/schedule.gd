@@ -16,6 +16,8 @@ extends RefCounted
 ## attended, fixed then and saved. A missed block pays nothing; a payment the payer can't make stays
 ## owed (kept past the attendance window) and is tried again on every settle until paid.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## Attended within the tolerance.
 const ON_TIME := &"on_time"
 ## Attended after the tolerance.
@@ -212,6 +214,7 @@ func _occurrences(day_index: int, season: StringName) -> Array[Dictionary]:
 		return out
 	for block: BustleScheduleBlock in plan.blocks:
 		if block == null or not block.is_valid():
+			_Warn.warn("BustleSchedule.invalid_block:%s" % def.id, "BustleSchedule: %s has an invalid block; it's skipped" % def.id)
 			continue
 		var start := day_index * 1440 + block.start_minute
 		out.append({"block": block, "start": start, "end": start + block.length(), "day": day_index})

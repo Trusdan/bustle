@@ -19,6 +19,8 @@ extends RefCounted
 ## set [member BustleBrain.gate] to [method allows]. With the default port everyone is healthy and a
 ## tick does nothing. Nothing is random: the same readings give the same results.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The modifier source its effects are set under.
 const SOURCE := &"health"
 ## The pain input, 0 to 1.
@@ -69,7 +71,7 @@ func apply(id: StringName, modifiers: BustleModifierSet) -> void:
 	if modifiers == null:
 		return
 	modifiers.remove_source(SOURCE)
-	if config.validate() != "":
+	if not _config_ok():
 		return
 	var mults: Dictionary[StringName, float] = {}
 	var names: Array[StringName] = []
@@ -91,7 +93,7 @@ func apply(id: StringName, modifiers: BustleModifierSet) -> void:
 ## then each tag rule whose tag it shows, in rule order.
 func chosen(id: StringName) -> Array[BustleHealthThought]:
 	var out: Array[BustleHealthThought] = []
-	if config.validate() != "":
+	if not _config_ok():
 		return out
 	var amount := pain(id)
 	var port := _port()
@@ -118,7 +120,7 @@ func sync(id: StringName, mood: Object = null) -> Array[StringName]:
 	var ids: Array[StringName] = []
 	for rule: BustleHealthThought in rules:
 		ids.append(rule.thought.id)
-	if mood == null or not mood.has_method(&"set_held") or config.validate() != "":
+	if mood == null or not _settable(mood) or not _config_ok():
 		return ids
 	for rule: BustleHealthThought in config.thoughts:
 		if not rules.has(rule) and not ids.has(rule.thought.id) \
@@ -138,6 +140,7 @@ func fill_inputs(id: StringName, inputs: Dictionary[StringName, float]) -> void:
 		inputs.erase(key)
 	var port := _port()
 	if port == null:
+		_Warn.warn("BustleHealthBehaviour.no_port", "BustleHealthBehaviour: no health port; health fills no inputs")
 		return
 	var values := {INPUT_PAIN: pain(id), INPUT_CARE: _unit(port.needs_care(id), 0.0),
 		INPUT_DOWNED: 1.0 if port.is_incapacitated(id) else 0.0, INPUT_CONTAGIOUS: 1.0 if port.is_contagious(id) else 0.0}
@@ -175,13 +178,27 @@ func illness_began(id: StringName, tag: StringName, mood: Object) -> bool:
 ## the port no longer shows ([method BustleHealthPort.visible_tags]); a tag still shown keeps its
 ## thought. The next [method sync] stays the source of truth.
 func recovered(id: StringName, mood: Object) -> void:
-	if id == &"" or mood == null or not mood.has_method(&"set_held") or config.validate() != "":
+	if id == &"" or mood == null or not _settable(mood) or not _config_ok():
 		return
 	var port := _port()
 	var shown: Array[StringName] = port.visible_tags(id) if port != null else ([] as Array[StringName])
 	for rule: BustleHealthThought in config.thoughts:
 		if rule.tag != &"" and not shown.has(rule.tag):
 			mood.call(&"set_held", rule.thought, false, {})
+
+
+func _settable(mood: Object) -> bool:
+	if mood.has_method(&"set_held"):
+		return true
+	_Warn.warn("BustleHealthBehaviour.mood_without_set_held", "BustleHealthBehaviour: the mood has no set_held(); its thoughts aren't held")
+	return false
+
+
+func _config_ok() -> bool:
+	var why := config.validate()
+	if why != "":
+		_Warn.warn("BustleHealthBehaviour.invalid_config", "BustleHealthBehaviour: the config is invalid (%s); health has no effect until it's fixed" % why)
+	return why == ""
 
 
 ## The gate for [member BustleBrain.gate]: false while [param id] is downed and the goal

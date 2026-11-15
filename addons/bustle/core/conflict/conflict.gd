@@ -28,6 +28,8 @@ extends RefCounted
 ## a fixed id for the fight (attacker, victim and the minute it started); a host stores it on the
 ## wounds it causes, so a victim who dies later of them can be traced to the fight.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param attacker] fought [param victim]. See the class description for [param circumstances].
 signal assaulted(attacker: StringName, victim: StringName, circumstances: Dictionary)
 ## [param victim] died in [param attacker]'s fight (after [signal assaulted]).
@@ -376,11 +378,11 @@ func _begin(agent: StringName, other: StringName, cause: StringName, detail: Dic
 
 func _kill_reason(agent: StringName, threat: StringName, cause: StringName) -> StringName:
 	if lethal_reason_of.is_valid():
-		var given := StringName(str(lethal_reason_of.call(agent, threat, cause)))
+		var given := _Warn.as_name(lethal_reason_of.call(agent, threat, cause), &"", "BustleConflict.lethal_reason_of")
 		if given != &"":
 			return given
 	if threat_of(threat) == agent and intent_of(threat) == KILL \
-			and (health.is_life_threatened(agent) or (cornered_of.is_valid() and bool(cornered_of.call(agent, threat)))):
+			and (health.is_life_threatened(agent) or (cornered_of.is_valid() and _Warn.as_bool(cornered_of.call(agent, threat), false, "BustleConflict.cornered_of"))):
 		return DEFEND_LIFE
 	return NO_REASON
 
@@ -399,4 +401,4 @@ func _mood(agent: StringName) -> float:
 
 
 func _group(agent: StringName) -> StringName:
-	return StringName(str(group_of.call(agent))) if group_of.is_valid() else &""
+	return _Warn.as_name(group_of.call(agent), &"", "BustleConflict.group_of") if group_of.is_valid() else &""

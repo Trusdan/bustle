@@ -27,6 +27,8 @@ extends RefCounted
 ## A theft by someone who isn't an agent of the society (the player's character, for example) goes
 ## through [method record_theft] instead: it emits the same [signal theft] and moves nothing.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param thief] took [param item] from [param owner_id]. [param circumstances]:
 ## [code]{place, need, pressure, score, at}[/code] from [method steal], what drove it; from
 ## [method record_theft], [code]place[/code], [code]at[/code] and whatever else the host gave.
@@ -73,7 +75,7 @@ func consider(agent: StringName, now: int) -> Dictionary:
 	if not BustleCrimeConfig.crime_allowed() or not enabled or exempt.has(agent):
 		return {}
 	var state := society.get_agent(agent)
-	if state == null or (is_locked.is_valid() and bool(is_locked.call(agent))):
+	if state == null or (is_locked.is_valid() and _Warn.as_bool(is_locked.call(agent), false, "BustleCrime.is_locked")):
 		return {}
 	var pressing := _pressing_need(agent)
 	if pressing.is_empty():
@@ -227,7 +229,9 @@ func _best_item(agent: StringName, area: StringName, need: StringName) -> Dictio
 
 func _observed(agent: StringName, area: StringName) -> bool:
 	if is_observed.is_valid():
-		return bool(is_observed.call(agent, area))
+		var observed: Variant = is_observed.call(agent, area)
+		if _Warn.fits(observed, "bool", "BustleCrime.is_observed"):
+			return bool(observed)
 	for other: StringName in society.agent_ids():
 		if other != agent and society.get_agent(other).area == area and not society.ports.health.is_incapacitated(other):
 			return true

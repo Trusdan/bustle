@@ -16,6 +16,8 @@ extends RefCounted
 ## agent's crowd tolerance (the [code]social.crowd_tolerance[/code] modifier, base
 ## [constant DEFAULT_CROWD_TOLERANCE]).
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## No one else near.
 const ALONE := &"alone"
 ## Some people near, no more than the agent's crowd tolerance.
@@ -80,6 +82,8 @@ func set_pressure(id: StringName, value: float) -> bool:
 ## is scaled by the [code]need.<id>.rate[/code] modifier in [param modifiers] (base 1). Negative or
 ## non-finite minutes do nothing.
 func advance(minutes: float, conditions: Array[StringName], modifiers: BustleModifierSet = null) -> void:
+	if not is_finite(minutes):
+		_Warn.warn("BustleNeedSet.non_finite_minutes", "BustleNeedSet: advance() got minutes that aren't finite; nothing changes")
 	if not is_finite(minutes) or minutes <= 0.0:
 		return
 	var hours := minutes / 60.0

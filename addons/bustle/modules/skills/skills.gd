@@ -18,6 +18,8 @@ extends BustleSkillSet
 ## [BustleModifierSet] as [code]work.speed[/code] and [code]work.quality[/code], and holds a
 ## passion's thought in its mood while it does that work.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The modifier source [method apply] writes under.
 const SOURCE := &"skills"
 
@@ -196,7 +198,10 @@ func apply(id: StringName, modifiers: BustleModifierSet, using_skill: StringName
 		if share > 0.0:
 			_write(modifiers, &"work.speed", using_skill, def.speed_add * share)
 			_write(modifiers, &"work.quality", using_skill, def.quality_add * share)
-	if mood == null or not mood.has_method(&"set_held"):
+	if mood == null:
+		return
+	if not mood.has_method(&"set_held"):
+		_Warn.warn("BustleSkills.mood_without_set_held", "BustleSkills: the mood has no set_held(); passion thoughts aren't held")
 		return
 	var held: Resource = null
 	if def != null and passion_of(id, using_skill, personality) != null:

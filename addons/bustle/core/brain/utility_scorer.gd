@@ -29,6 +29,8 @@ extends RefCounted
 ##   only one is). With nothing eligible, the IDLE fallback is returned.
 ## @experimental: Internal to [BustleBrain]: hosts shape scores through goals, considerations and the brain's hooks.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## How far below the window's edge still counts as inside it.
 const EPSILON := 1e-9
 ## How much worse the side-effect pressure is taken to be.
@@ -176,7 +178,7 @@ func advertisement_score(ad: BustleAdvertisement, context: BustleScoreContext, c
 			mood *= curve.sample(mood_input)
 	var preview := 1.0
 	if config.expected_thought_gain.is_valid():
-		preview = float(config.expected_thought_gain.call(ad, context))
+		preview = _Warn.as_float(config.expected_thought_gain.call(ad, context), 1.0, "BustleScoringConfig.expected_thought_gain")
 	if not (is_finite(need_value) and is_finite(distance) and is_finite(mood) and is_finite(preview)):
 		reasons.append({"kind": &"not_finite", "what": &"factors"})
 		return NAN

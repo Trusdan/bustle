@@ -27,6 +27,8 @@ extends RefCounted
 ## the template is disabled (even when it was assigned earlier), and for
 ## [member BustleAmbitionConfig.never_boost] goals; the ambition stays assigned all the while.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param agent] took on ambition [param id]. [param info]: see [method active].
 signal ambition_started(agent: StringName, id: StringName, info: Dictionary)
 ## [param agent] achieved ambition [param id].
@@ -159,7 +161,7 @@ func is_eligible(def: BustleAmbitionDef, now: int, personality: BustlePersonalit
 ## [member BustleAmbitionConfig.never_boost] goal, or, for a template with a target, when it has no
 ## target right now or the option isn't that target.
 func boost(goal_id: StringName, option_id: StringName = &"") -> float:
-	if _active.is_empty() or _locked or (is_locked.is_valid() and bool(is_locked.call(agent_id))) or not enabled or not BustleAmbitionConfig.allowed() or config.never_boost.has(goal_id):
+	if _active.is_empty() or _locked or (is_locked.is_valid() and _Warn.as_bool(is_locked.call(agent_id), false, "BustleAmbitions.is_locked")) or not enabled or not BustleAmbitionConfig.allowed() or config.never_boost.has(goal_id):
 		return 1.0
 	var def := config.find(StringName(_active["id"]))
 	if def == null or not def.enabled or not def.boosts.has(goal_id):

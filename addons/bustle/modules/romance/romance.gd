@@ -27,6 +27,8 @@ extends RefCounted
 ## [member ratings_policy] can veto any step up the ladder. Nothing is random. With rules that aren't
 ## [method BustleRomanceRules.is_valid], [method update] changes nothing.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## A pair's status changed from [param old] to [param new] (empty: none). [param reason] is
 ## [code]formed[/code], [code]confirmed[/code], [code]lapsed[/code] or [code]ended[/code].
 signal status_changed(a: StringName, b: StringName, old: StringName, new: StringName, reason: StringName)
@@ -108,7 +110,9 @@ func bonded_to(id: StringName, at_least: StringName = PARTNER) -> StringName:
 ## The pair's compatibility from -1 to 1.
 func compatibility_of(a: StringName, b: StringName) -> float:
 	if compatibility.is_valid():
-		return float(compatibility.call(a, b))
+		var compat: Variant = compatibility.call(a, b)
+		if _Warn.fits(compat, "number", "BustleRomance.compatibility"):
+			return float(compat)
 	return BustleCompatibility.of(a, b, world_seed)
 
 
@@ -122,7 +126,10 @@ func update(a: StringName, b: StringName, now: int, mood_a: Object = null, mood_
 
 
 func _update(a: StringName, b: StringName, now: int, moods: Callable) -> StringName:
-	if a == &"" or b == &"" or a == b or not social.supports_kinds() or not rules.is_valid():
+	var valid := rules.is_valid()
+	if not valid:
+		_Warn.warn("BustleRomance.invalid_rules", "BustleRomance: the rules are invalid; no romance updates until they're fixed")
+	if a == &"" or b == &"" or a == b or not social.supports_kinds() or not valid:
 		return status_of(a, b)
 	var status := status_of(a, b)
 	var low := mini(social.opinion(a, b), social.opinion(b, a))
@@ -189,7 +196,7 @@ func request(a: StringName, b: StringName, status: StringName, now: int) -> bool
 	var steps := {ENGAGED: PARTNER, MARRIED: ENGAGED}
 	if not steps.has(status) or current != steps[status] or not confirm_hook.is_valid() or not _allows(a, b, status):
 		return false
-	if not bool(confirm_hook.call(a, b, status)):
+	if not _Warn.as_bool(confirm_hook.call(a, b, status), false, "BustleRomance.confirm_hook"):
 		return false
 	_move(a, b, status, now, &"confirmed")
 	return true
@@ -334,7 +341,7 @@ func _feel(agent: StringName, partner: StringName, rival: StringName, cause: Str
 
 
 func _allows(a: StringName, b: StringName, status: StringName) -> bool:
-	return not ratings_policy.is_valid() or bool(ratings_policy.call(a, b, status))
+	return not ratings_policy.is_valid() or _Warn.as_bool(ratings_policy.call(a, b, status), true, "BustleRomance.ratings_policy")
 
 
 func _move(a: StringName, b: StringName, status: StringName, now: int, reason: StringName) -> void:

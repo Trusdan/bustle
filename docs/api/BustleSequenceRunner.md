@@ -170,4 +170,4 @@ The runner's state as plain data.
 func import_state(p_sequence: BustleActionSequence, saved: Dictionary) -> bool
 ```
 
-Restores `export_state()`'s state for `p_sequence`, the same sequence it was saved with. False, leaving the runner IDLE, when the saved state doesn't fit that sequence.
+Restores `export_state()`'s state for `p_sequence`, the same sequence it was saved with. False, changing nothing, when the saved state doesn't fit that sequence.

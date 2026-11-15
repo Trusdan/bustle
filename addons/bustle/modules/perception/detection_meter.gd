@@ -17,6 +17,8 @@ extends RefCounted
 ##                                          │ level ≥ alert_at ──▶ ALERT
 ## [/codeblock]
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The state changed from [param old] to [param new].
 signal state_changed(old: State, new: State)
 ## It became suspicious of something at [param position].
@@ -164,11 +166,14 @@ func export_state() -> Dictionary:
 	}
 
 
-## Restores [method export_state]'s data. Unknown or missing values fall back to unaware. Emits
+## Restores [method export_state]'s data. Unknown or missing values fall back to unaware, with
+## one warning per run for a value of the wrong type or range. Emits
 ## no signals.
 func import_state(data: Dictionary) -> void:
 	if not BustleSaveFormat._readable(data):
 		return
+	if _coerced(data):
+		_Warn.warn("BustleDetectionMeter.bad_value", "BustleDetectionMeter: import_state() got a value of the wrong type or range; it's read as unaware or zero")
 	level = clampf(float(data.get("level", 0.0)), 0.0, 1.0)
 	var index := State.keys().find(str(data.get("state", "unaware")).to_upper())
 	state = State.UNAWARE if index < 0 else index as State
@@ -232,3 +237,15 @@ func _enter(next: State) -> void:
 			level = 0.0
 			has_last_known = false
 	state_changed.emit(old, next)
+
+
+# True when import_state() will have to coerce something in [param data].
+func _coerced(data: Dictionary) -> bool:
+	for key: String in ["level", "lost_time", "search_left", "since_sensed"]:
+		if data.has(key) and typeof(data[key]) != TYPE_FLOAT and typeof(data[key]) != TYPE_INT:
+			return true
+	var at: Variant = data.get("last_known", [0.0, 0.0, 0.0])
+	return (data.has("level") and (float(data["level"]) < 0.0 or float(data["level"]) > 1.0)) \
+			or (data.has("state") and State.keys().find(str(data["state"]).to_upper()) < 0) \
+			or not (at is Array and (at as Array).size() == 3) \
+			or (data.has("has_last_known") and typeof(data["has_last_known"]) != TYPE_BOOL)

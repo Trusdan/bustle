@@ -20,6 +20,8 @@ extends RefCounted
 ## no longer the track's role leaves the track. Nothing is random: the same mood, skill and
 ## attendance give the same reviews.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param id]'s career changed: [param career] at [param old_rank] became [param new_rank]. An
 ## empty [param old_rank] is a start; an empty [param new_rank] is the end of the career.
 signal career_changed(id: StringName, career: StringName, old_rank: StringName, new_rank: StringName)
@@ -352,7 +354,7 @@ func _decide(id: StringName, def: BustleCareerDef, from_rank: StringName, to_ran
 		demotion_due.emit(id, def.id, from_rank, to_rank)
 	if not review_hook.is_valid():
 		return true
-	return bool(review_hook.call(id, def.id, from_rank, to_rank, kind))
+	return _Warn.as_bool(review_hook.call(id, def.id, from_rank, to_rank, kind), true, "BustleCareers.review_hook")
 
 
 func _skill(id: StringName, def: BustleCareerDef) -> float:

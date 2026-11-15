@@ -13,6 +13,8 @@ extends RefCounted
 ## it with [member BustleTraitDef.mults]. Nothing here depends on the mood module: a mood is
 ## anything with a [code]mood[/code] number.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## Below this mood (0 to 100), a friend needs comforting.
 var low_mood: float = 30.0
 ## The relationship kinds (the agent's of the friend) that count as a friend.
@@ -53,7 +55,7 @@ func advertise(agent_id: StringName, noticed: Array[StringName], social: BustleS
 		if not found is Object or found.get(&"mood") == null:
 			continue
 		var amount := urgency(float(found.get(&"mood")))
-		if low_state_of.is_valid() and bool(low_state_of.call(other)):
+		if low_state_of.is_valid() and _Warn.as_bool(low_state_of.call(other), false, "BustleComfort.low_state_of"):
 			amount = maxf(amount, clampf(low_state_urgency, 0.0, 1.0))
 		if amount <= 0.0:
 			continue

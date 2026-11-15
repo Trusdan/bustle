@@ -12,6 +12,8 @@ extends RefCounted
 ## The defaults are a starting point, not tuning: a host sets its own. Tuning that isn't a finite
 ## number counts as 0 (the threshold as 1), and tolerances stay within 0 to 1.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The need that leisure meets.
 var need: StringName = &"leisure"
 ## The leisure kinds (tags on options).
@@ -74,6 +76,8 @@ func use(kind: StringName) -> float:
 
 ## Lets [param minutes] of game time pass: every tolerance falls.
 func advance(minutes: float) -> void:
+	if not is_finite(minutes):
+		_Warn.warn("BustleLeisure.non_finite_minutes", "BustleLeisure: advance() got minutes that aren't finite; nothing changes")
 	if not is_finite(minutes) or minutes <= 0.0:
 		return
 	var fall := _rate(tolerance_decay_per_day) * minutes / 1440.0

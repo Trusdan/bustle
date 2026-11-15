@@ -11,6 +11,8 @@ extends RefCounted
 ## [method settle] pays every agent's ended shifts through the trade port. After editing
 ## [member jobs], call [method refresh_all].
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param id]'s routine changed from [param old_def] to [param new_def] (either may be null).
 signal schedule_changed(id: StringName, old_def: BustleScheduleDef, new_def: BustleScheduleDef)
 
@@ -34,6 +36,7 @@ func _init(p_roles: BustleRolesPort = null, p_jobs: BustleRoleSchedules = null) 
 ## Adds agent [param id], with its own routine [param own] for when it has no job.
 func add_agent(id: StringName, own: BustleScheduleDef = null) -> void:
 	if id == &"":
+		_Warn.warn("BustleScheduleRoster.empty_id", "BustleScheduleRoster: add_agent() got an empty id; ignored")
 		return
 	_own[id] = own
 	_refresh(id)
