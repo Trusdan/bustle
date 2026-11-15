@@ -29,6 +29,16 @@ Bustle is a **generic addon for living non-player populations in Godot 4** (4.7 
 - Every public class and method gets a **`##` doc comment**. API before 1.0 is marked **`@experimental`**.
 - Put logic in plain **`RefCounted`** classes so GUT can test it headless. **`plugin.gd` stays thin.**
 
+## Errors and bad input
+
+Every public entry point answers bad input in exactly one way ([docs/errors.md](docs/errors.md)):
+
+- **Refuse with a reason** when the host is expected to check the call. Return `false`, `null`, an empty result or a `BustleImportReport`, say when in the `##` comment, and **change nothing on a refused call** (validate first, then mutate).
+- **Warn once** when the call can't report it: an invalid config or definition, a hook that returns the wrong type, a non-finite number, missing wiring. That's one `push_warning()` per problem per run, keyed by class and problem (never by agent or minute), and **never every tick**. The call then behaves as it did without the warning.
+- **Assert in debug builds only** for Bustle's own invariants, never for host input.
+
+Never ignore bad input silently, and never `push_error()` for host input. Every refused or warned path gets a test.
+
 ## Workflow
 
 - **One pull request per task.** Branch from the latest `main` as **`claude/<short-slug>`**.
