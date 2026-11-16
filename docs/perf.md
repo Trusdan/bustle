@@ -209,3 +209,5 @@ perf gate (timings at 2.0x budget): OK
 Both are within the 2× CI gate, so the gate passes. FULL, LIGHT, the save size and stuck agents are within budget.
 
 Optimising perception and OFF_SCREEN is tracked as a follow-up. The budgets stay as ratified.
+
+**Re-run pending:** perception and OFF_SCREEN ticking have since been optimised with no change in behaviour. A re-run of `tools/perf_bench.sh` on the reference machine is pending; the run above stays the recorded one until then.
