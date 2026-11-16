@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Corey Patrick Jones (github.com/Trusdan)
 extends SceneTree
-## The performance gate (docs/perf.md, "The CI gate"). It reads the summary line each timing bench
-## printed, one file per bench in a folder, and judges every budgeted number against
+## The performance gate (docs/perf.md, "Budgets and the CI gate"). It reads the summary line each
+## timing bench printed, one file per bench in a folder, and judges every budgeted number against
 ## bench/perf_budgets.gd: a timing fails only above [code]CI_HEADROOM[/code] times its budget, the
 ## save size fails above its budget, and any stuck agent fails. A missing or unreadable line, or a
 ## bench run with other than the budget configuration, fails too. It prints one line per number

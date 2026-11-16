@@ -194,10 +194,11 @@ jobs:
           echo "::notice title=Population bench::${out}"
           [[ "$out" == *": OK" ]]
 
-      # The performance gate (docs/perf.md, "The CI gate"). The three report steps above stay
-      # report-only at 1x budget; this step judges their lines against bench/perf_budgets.gd and
-      # fails the job only on a large regression: a timing above CI_HEADROOM (2x) its budget, a save
-      # over its budget, a stuck agent, or a bench that printed no summary line.
+      # The performance gate (docs/perf.md, "Budgets and the CI gate"). The three report steps
+      # above stay report-only at 1x budget; this step judges their lines against
+      # bench/perf_budgets.gd and fails the job only on a large regression: a timing above
+      # CI_HEADROOM (2x) its budget, a save over its budget, a stuck agent, or a bench that
+      # printed no summary line.
       - name: Performance gate (2x budget)
         run: |
           set -euo pipefail

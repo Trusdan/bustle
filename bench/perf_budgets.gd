@@ -18,6 +18,6 @@ const OFFSCREEN_AVG_MS := 0.5
 const SAVE_BYTES_PER_AGENT := 2048
 
 ## The CI gate fails a timing at this many times its budget. Shared runners' timings swing to
-## about 1.8 times their median (docs/perf.md, "The CI gate"), so a gate at the budget itself
-## would fail on noise. The save size and stuck agents are deterministic and get no headroom.
+## about 1.8 times their median (docs/perf.md, "Budgets and the CI gate"), so a gate at the
+## budget itself would fail on noise. The save size and stuck agents are deterministic and get no headroom.
 const CI_HEADROOM := 2.0

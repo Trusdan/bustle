@@ -191,6 +191,21 @@ tools/perf_bench.sh
 
 ## Reference machine
 
-One measurement on a named reference machine, the maintainer's own Windows PC, recorded only as reported from a run of `tools/perf_bench.sh`. The gate's `machine:` line names the OS, the processor and the Godot build as Godot reports them.
+One measurement on a named reference machine, the maintainer's own Windows PC, recorded exactly as the maintainer reported it. It was run on commit `6a29f01e` with the same commands as `tools/perf_bench.sh`, from PowerShell. The `machine:` line is the OS, processor and Godot build as Godot reports them. "build unknown" is the population bench's own wording when it can't read the commit.
 
-**Not recorded yet:** waiting for the maintainer's run.
+```text
+machine: Windows 10.0.26200, Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz, 8 logical processors, Godot 4.7.2-stable (official)
+perception bench: 40 actors, 600 frames: average 1.569 ms, p99 3.394 ms (budget 1.0 / 2.0 ms): OVER BUDGET
+rings bench: 40 LIGHT, 200 OFF_SCREEN, 7200 frames (120 real s, 60 game min), Godot 4.7.2-stable (official): LIGHT average 0.250 ms p99 0.818 ms (budget 0.3), OFF_SCREEN average 0.678 ms p99 2.000 ms (budget 0.5): OVER BUDGET
+population bench: 40 FULL, 40 LIGHT, 200 OFF_SCREEN, seed 1, 7200 frames (60 game min), 1 stuck days, Godot 4.7.2-stable (official), build unknown: FULL average 0.522 ms p99 1.603 ms (budget 1.0 / 2.0), LIGHT average 0.267 ms p99 0.918 ms (budget 0.3), OFF_SCREEN average 0.746 ms p99 2.014 ms (budget 0.5), frame average 2.630 ms p99 6.386 ms, memory 5455.4 KiB (19951 B an agent), save 546 B an agent (budget 2048), stuck spells 0, longest still 0 min: OVER BUDGET
+perf gate (timings at 2.0x budget): OK
+```
+
+**Perception and OFF_SCREEN are over budget on the reference machine:**
+
+- Perception: average 1.569 ms against 1.0 ms, and p99 3.394 ms against 2.0 ms.
+- OFF_SCREEN: average 0.678 ms in the rings bench and 0.746 ms in the population bench, against 0.5 ms.
+
+Both are within the 2× CI gate, so the gate passes. FULL, LIGHT, the save size and stuck agents are within budget.
+
+Optimising perception and OFF_SCREEN is tracked as a follow-up. The budgets stay as ratified.
