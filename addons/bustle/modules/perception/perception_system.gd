@@ -29,6 +29,7 @@ var last_tick_usec: int = 0
 var _perceivers: Dictionary = {}
 var _perceivables: Dictionary = {}
 var _space: PhysicsDirectSpaceState3D
+var _query := PhysicsRayQueryParameters3D.new()
 
 
 func _enter_tree() -> void:
@@ -99,9 +100,10 @@ func _actor_for(id: StringName) -> BustlePerceptionActor:
 func _sync() -> void:
 	var world_3d := get_viewport().world_3d if is_inside_tree() and get_viewport() != null else null
 	_space = world_3d.direct_space_state if world_3d != null else null
+	var actors := world._actors
 	for id: StringName in _perceivables:
 		var node: BustlePerceivable = _perceivables[id]
-		var actor := world.actor(id)
+		var actor: BustlePerceptionActor = actors.get(id)
 		actor.position = node.global_position
 		actor.visibility = node.visibility
 		actor.noise_radius = node.noise_radius
@@ -109,9 +111,11 @@ func _sync() -> void:
 		actor.group = node.group
 	for id: StringName in _perceivers:
 		var node: BustlePerceiver = _perceivers[id]
-		var actor := world.actor(id)
-		actor.position = node.global_position
-		actor.forward = -node.global_basis.z
+		var actor: BustlePerceptionActor = actors.get(id)
+		# One global transform for both: global_position and global_basis each work it out.
+		var xform := node.global_transform
+		actor.position = xform.origin
+		actor.forward = -xform.basis.z
 		actor.profile = node.profile
 		if not _perceivables.has(id):
 			actor.group = node.group
@@ -121,9 +125,22 @@ func _ray(from: Vector3, to: Vector3, perceiver_id: StringName, target_id: Strin
 	if _space == null:
 		return true
 	var exclude: Array[RID] = []
-	for node: Variant in [_perceivers.get(perceiver_id), _perceivables.get(perceiver_id), _perceivers.get(target_id), _perceivables.get(target_id)]:
-		var body := (node as Node).get_parent() as CollisionObject3D if node != null else null
-		if body != null:
-			exclude.append(body.get_rid())
-	var query := PhysicsRayQueryParameters3D.create(from, to, sight_mask, exclude)
-	return _space.intersect_ray(query).is_empty()
+	_exclude(exclude, _perceivers.get(perceiver_id))
+	_exclude(exclude, _perceivables.get(perceiver_id))
+	_exclude(exclude, _perceivers.get(target_id))
+	_exclude(exclude, _perceivables.get(target_id))
+	# One query, reused: every field is set for each ray, as create() would.
+	_query.from = from
+	_query.to = to
+	_query.collision_mask = sight_mask
+	_query.exclude = exclude
+	return _space.intersect_ray(_query).is_empty()
+
+
+# Adds the body [param node] sits on (its parent, if a physics body) to [param exclude].
+static func _exclude(exclude: Array[RID], node: Node) -> void:
+	if node == null:
+		return
+	var body := node.get_parent() as CollisionObject3D
+	if body != null:
+		exclude.append(body.get_rid())

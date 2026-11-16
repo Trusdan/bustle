@@ -135,35 +135,56 @@ func tick(delta: float) -> void:
 	if last_sorted:
 		update(_since_sort)
 	var now := society.ports.clock.now_minutes()
-	var spent := {"FULL": 0, "LIGHT": 0, "OFF_SCREEN": 0}
+	var full_usec := 0
+	var light_usec := 0
+	var offscreen_usec := 0
+	# The OFF_SCREEN interval and the catch-up cap in intervals, read again after anything that runs
+	# host code (a think, a backlog summary), which could change the config.
+	var interval := maxi(config.offscreen_interval_game_minutes, 1)
+	var kept := maxi(config.catch_up_cap_game_days, 0) * 1440 / interval
 	for id: StringName in ids:
-		var entry: Dictionary = _agents.get(id, {})
-		if entry.is_empty():
+		var found: Variant = _agents.get(id)
+		if found == null or (found as Dictionary).is_empty():
 			continue
+		var entry: Dictionary = found
 		var state := society.get_agent(id)
 		var ring: int = entry["ring"]
 		var started := Time.get_ticks_usec()
 		if ring == Ring.OFF_SCREEN:
-			if state.last_update_minute < 0:
-				state.last_update_minute = now - _phase(id)
-			_bound_backlog(state, now)
-			var interval := maxi(config.offscreen_interval_game_minutes, 1)
-			if now - state.last_update_minute >= interval:
+			var last := state.last_update_minute
+			if last < 0:
+				last = now - _phase(id)
+				state.last_update_minute = last
+			# _bound_backlog()'s own first test, inline: it acts only on a backlog past the cap.
+			if (now - last) / interval > kept:
+				_bound_backlog(state, now)
+				interval = maxi(config.offscreen_interval_game_minutes, 1)
+				kept = maxi(config.catch_up_cap_game_days, 0) * 1440 / interval
+				last = state.last_update_minute
+			if now - last >= interval:
 				state.last_update_minute += interval
 				_think(state, Ring.OFF_SCREEN, state.last_update_minute, interval * 60.0)
+				interval = maxi(config.offscreen_interval_game_minutes, 1)
+				kept = maxi(config.catch_up_cap_game_days, 0) * 1440 / interval
+			offscreen_usec += Time.get_ticks_usec() - started
+			continue
+		var hz := config.full_brain_hz if ring == Ring.FULL else config.light_rate_hz
+		var wait := 1.0 / maxf(hz, 0.001)
+		if not entry.has("think"):
+			# A fixed per-agent offset so agents in a ring don't all think in the same frame.
+			entry["think"] = wait * (1.0 - posmod(BustleBrain.seed_for(society.world_seed, id), 1000) / 1000.0)
+		entry["think"] = float(entry["think"]) + maxf(delta, 0.0)
+		if float(entry["think"]) >= wait - 1e-9:
+			entry["think"] = 0.0
+			state.last_update_minute = now
+			_think(state, ring, now, wait)
+			interval = maxi(config.offscreen_interval_game_minutes, 1)
+			kept = maxi(config.catch_up_cap_game_days, 0) * 1440 / interval
+		if ring == Ring.FULL:
+			full_usec += Time.get_ticks_usec() - started
 		else:
-			var hz := config.full_brain_hz if ring == Ring.FULL else config.light_rate_hz
-			var wait := 1.0 / maxf(hz, 0.001)
-			if not entry.has("think"):
-				# A fixed per-agent offset so agents in a ring don't all think in the same frame.
-				entry["think"] = wait * (1.0 - posmod(BustleBrain.seed_for(society.world_seed, id), 1000) / 1000.0)
-			entry["think"] = float(entry["think"]) + maxf(delta, 0.0)
-			if float(entry["think"]) >= wait - 1e-9:
-				entry["think"] = 0.0
-				state.last_update_minute = now
-				_think(state, ring, now, wait)
-		spent[Ring.keys()[ring]] += Time.get_ticks_usec() - started
-	last_timings = spent
+			light_usec += Time.get_ticks_usec() - started
+	last_timings = {"FULL": full_usec, "LIGHT": light_usec, "OFF_SCREEN": offscreen_usec}
 
 
 ## Brings agent [param id] up to the clock's minute with OFF_SCREEN thinking from its

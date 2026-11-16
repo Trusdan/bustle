@@ -61,8 +61,25 @@ func _init(p_profile: BustlePerceptionProfile = null) -> void:
 ## Advances the meter by [param delta] seconds. [param observer_forward] is the way the observer
 ## faces (any length). Returns true when it sensed the target this tick.
 func tick(delta: float, observer_position: Vector3, observer_forward: Vector3, target: BustleSenseTarget) -> bool:
-	var sight := sight_rate(observer_position, observer_forward, target)
-	var hearing := hearing_rate(observer_position, target)
+	var to_target := target.position - observer_position
+	var distance := to_target.length()
+	return _tick_at(delta, target, distance, _cone_at(observer_forward, to_target, distance))
+
+
+# tick() with the target's distance from the observer and its sight cone already worked out
+# (_cone_at()), so a caller that has them (the perception world) doesn't work them out twice.
+func _tick_at(delta: float, target: BustleSenseTarget, distance: float, cone: float) -> bool:
+	# _sight_rate_at() and _hearing_rate_at(), inline: the same arithmetic, run for every sensed
+	# pair. tests/perception/test_perception_unchanged.gd checks both paths give the same results.
+	var sight := 0.0
+	if target.line_of_sight and (profile.sight_light != BustlePerceptionProfile.SightLight.CARRIED_LIGHT_ONLY or target.carries_light) \
+			and not cone <= 0.0:
+		sight = profile.fill_rate_sight * maxf(target.visibility, 0.0) * (1.0 - distance / profile.sight_range) * cone
+	var hearing := 0.0
+	if profile.hears:
+		var reach := target.noise_radius * profile.hearing_scale
+		if not reach <= 0.0 and not distance >= reach:
+			hearing = profile.fill_rate_hearing * (1.0 - distance / reach)
 	seen_now = sight > 0.0
 	heard_now = hearing > 0.0
 	var rate := sight + hearing
@@ -97,12 +114,17 @@ func hear_event(event: BustleNoiseEvent, observer_position: Vector3) -> bool:
 ## outside both cones, no line of sight, an observer that doesn't see, or a profile that needs a
 ## carried light on a target without one.
 func sight_rate(observer_position: Vector3, observer_forward: Vector3, target: BustleSenseTarget) -> float:
+	var to_target := target.position - observer_position
+	var distance := to_target.length()
+	return _sight_rate_at(target, distance, _cone_at(observer_forward, to_target, distance))
+
+
+func _sight_rate_at(target: BustleSenseTarget, distance: float, cone: float) -> float:
 	if not target.line_of_sight or not light_allows(target):
 		return 0.0
-	var cone := sight_cone(observer_position, observer_forward, target.position)
 	if cone <= 0.0:
 		return 0.0
-	var falloff := 1.0 - observer_position.distance_to(target.position) / profile.sight_range
+	var falloff := 1.0 - distance / profile.sight_range
 	return profile.fill_rate_sight * maxf(target.visibility, 0.0) * falloff * cone
 
 
@@ -111,10 +133,14 @@ func sight_rate(observer_position: Vector3, observer_forward: Vector3, target: B
 ## an observer that doesn't see. A host can call it first and cast its sight ray only when it is
 ## above 0.
 func sight_cone(observer_position: Vector3, observer_forward: Vector3, point: Vector3) -> float:
+	var to_point := point - observer_position
+	return _cone_at(observer_forward, to_point, to_point.length())
+
+
+# sight_cone() for the point [param to_point] away, [param distance] being its length.
+func _cone_at(observer_forward: Vector3, to_point: Vector3, distance: float) -> float:
 	if not profile.sees or profile.sight_range <= 0.0:
 		return 0.0
-	var to_point := point - observer_position
-	var distance := to_point.length()
 	if distance >= profile.sight_range:
 		return 0.0
 	if distance <= _NEAR or observer_forward.length_squared() <= 0.0:
@@ -137,12 +163,15 @@ func light_allows(target: BustleSenseTarget) -> bool:
 ## Hearing's fill rate per second for [param target], or 0 when its noise doesn't reach the
 ## observer (or the observer doesn't hear).
 func hearing_rate(observer_position: Vector3, target: BustleSenseTarget) -> float:
+	return _hearing_rate_at(target, observer_position.distance_to(target.position))
+
+
+func _hearing_rate_at(target: BustleSenseTarget, distance: float) -> float:
 	if not profile.hears:
 		return 0.0
 	var reach := target.noise_radius * profile.hearing_scale
 	if reach <= 0.0:
 		return 0.0
-	var distance := observer_position.distance_to(target.position)
 	if distance >= reach:
 		return 0.0
 	return profile.fill_rate_hearing * (1.0 - distance / reach)

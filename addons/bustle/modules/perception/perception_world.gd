@@ -35,12 +35,17 @@ const _EPSILON := 0.000001
 
 var _actors: Dictionary = {}
 var _order: Array[StringName] = []
+# The actors in _order's order, so the senses loop needn't look each one up.
+var _order_actors: Array[BustlePerceptionActor] = []
 
 
 ## Adds [param actor] (replacing one with the same id) and returns it.
 func add_actor(actor: BustlePerceptionActor) -> BustlePerceptionActor:
 	if not _actors.has(actor.id):
 		_order.append(actor.id)
+		_order_actors.append(actor)
+	else:
+		_order_actors[_order.find(actor.id)] = actor
 	_actors[actor.id] = actor
 	actor._due = actor.period() * _phase(actor.id)
 	if not actor.awareness.state_changed.is_connected(_on_state_changed.bind(actor.id)):
@@ -58,7 +63,10 @@ func reschedule(id: StringName) -> void:
 ## Removes the actor [param id] and every perceiver's meter for it.
 func remove_actor(id: StringName) -> void:
 	_actors.erase(id)
-	_order.erase(id)
+	var index := _order.find(id)
+	if index >= 0:
+		_order.remove_at(index)
+		_order_actors.remove_at(index)
 	for other: StringName in _order:
 		(_actors[other] as BustlePerceptionActor).awareness.forget(id)
 
@@ -77,11 +85,14 @@ func actor_ids() -> Array[StringName]:
 func tick(delta: float) -> void:
 	rays_last_tick = 0
 	sensed_last_tick = 0
-	for id: StringName in _order:
-		var perceiver: BustlePerceptionActor = _actors[id]
-		if not perceiver.perceives():
+	# _order_actors changes in step with _order, so this walks the same actors as walking _order
+	# would, even when host code adds or removes one mid-tick.
+	for perceiver: BustlePerceptionActor in _order_actors:
+		var profile := perceiver.profile
+		if profile == null:
 			continue
-		var period := perceiver.period()
+		# perceiver.period(), inline: this runs for every actor every tick.
+		var period := 0.0 if profile.perception_hz <= 0.0 else 1.0 / profile.perception_hz
 		perceiver._due -= delta
 		if perceiver._due > _EPSILON:
 			continue
@@ -95,22 +106,66 @@ func tick(delta: float) -> void:
 func sense(perceiver: BustlePerceptionActor, delta: float) -> void:
 	sensed_last_tick += 1
 	var profile := perceiver.profile
-	for target_id: StringName in _order:
-		if target_id == perceiver.id:
+	var perceiver_id := perceiver.id
+	# These are read once and kept while only skipped targets go by. Host code can change them
+	# (the sight ray, or a perception_changed handler during a meter's tick), so they are read
+	# again after any target that ran it.
+	var awareness := perceiver.awareness
+	var meters: Dictionary = awareness._meters
+	var position := perceiver.position
+	var forward := perceiver.forward
+	var sight_reach := profile.sight_range if profile.sees else 0.0
+	var hears := profile.hears
+	var hearing_scale := profile.hearing_scale
+	# One target per sense, refilled for each actor: nothing keeps it past its meter's tick.
+	var target := BustleSenseTarget.new()
+	var index := -1
+	for target_actor: BustlePerceptionActor in _order_actors:
+		index += 1
+		var target_id: StringName = _order[index]
+		if target_id == perceiver_id:
 			continue
-		var target_actor: BustlePerceptionActor = _actors[target_id]
-		if not target_actor.perceivable:
-			if perceiver.awareness.has(target_id):
-				perceiver.awareness.meter(target_id).tick(delta, perceiver.position, perceiver.forward, BustleSenseTarget.new(target_actor.position, 0.0, 0.0, false))
+		var meter: BustleDetectionMeter = meters.get(target_id)
+		if target_actor.perceivable:
+			var to_target := target_actor.position - position
+			var distance := to_target.length()
+			if meter == null:
+				if distance >= maxf(sight_reach, target_actor.noise_radius * hearing_scale if hears else 0.0):
+					continue
+				meter = awareness.meter_for(target_id, profile)
+			target.position = target_actor.position
+			target.visibility = target_actor.visibility
+			target.noise_radius = target_actor.noise_radius
+			target.carries_light = target_actor.carries_light
+			var cone := meter._cone_at(forward, to_target, distance)
+			# _clear_view(), inline: no ray for a target that can't be seen anyway.
+			var clear := false
+			# The same comparisons as before (a NaN visibility still gets its ray).
+			if not target.visibility <= 0.0 and not cone <= 0.0 \
+					and (meter.profile.sight_light != BustlePerceptionProfile.SightLight.CARRIED_LIGHT_ONLY or target.carries_light):
+				clear = _ray(perceiver, target_actor, target)
+			target.line_of_sight = clear
+			if perceiver.position == position and perceiver.forward == forward:
+				meter._tick_at(delta, target, distance, cone)
+			else:
+				# The sight ray moved or turned the perceiver: sense from where it is now.
+				meter.tick(delta, perceiver.position, perceiver.forward, target)
+		elif meter != null:
+			target.position = target_actor.position
+			target.visibility = 0.0
+			target.noise_radius = 0.0
+			target.line_of_sight = false
+			target.carries_light = false
+			meter.tick(delta, position, forward, target)
+		else:
 			continue
-		var distance := perceiver.position.distance_to(target_actor.position)
-		var reach := maxf(profile.sight_range if profile.sees else 0.0, target_actor.noise_radius * profile.hearing_scale if profile.hears else 0.0)
-		if distance >= reach and not perceiver.awareness.has(target_id):
-			continue
-		var target := target_actor.as_target()
-		var meter := perceiver.awareness.meter_for(target_id, profile)
-		target.line_of_sight = _clear_view(perceiver, target_actor, meter, target)
-		meter.tick(delta, perceiver.position, perceiver.forward, target)
+		awareness = perceiver.awareness
+		meters = awareness._meters
+		position = perceiver.position
+		forward = perceiver.forward
+		sight_reach = profile.sight_range if profile.sees else 0.0
+		hears = profile.hears
+		hearing_scale = profile.hearing_scale
 
 
 ## Sends a one-off sound to every perceiver ([method BustleDetectionMeter.hear_event]). Returns
@@ -205,11 +260,8 @@ func disposition_between(a_id: StringName, b_id: StringName) -> BustleDispositio
 	return disposition.disposition(a_id, a.group if a != null else &"", b_id, b.group if b != null else &"")
 
 
-func _clear_view(perceiver: BustlePerceptionActor, target_actor: BustlePerceptionActor, meter: BustleDetectionMeter, target: BustleSenseTarget) -> bool:
-	if target.visibility <= 0.0 or not meter.light_allows(target):
-		return false
-	if meter.sight_cone(perceiver.position, perceiver.forward, target.position) <= 0.0:
-		return false
+# The sight ray for a target in range, in the cone, visible and lit enough.
+func _ray(perceiver: BustlePerceptionActor, target_actor: BustlePerceptionActor, target: BustleSenseTarget) -> bool:
 	if not line_of_sight.is_valid():
 		return true
 	rays_last_tick += 1
