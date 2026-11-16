@@ -203,18 +203,18 @@ func import_state(data: Dictionary) -> void:
 		return
 	if _coerced(data):
 		_Warn.warn("BustleDetectionMeter.bad_value", "BustleDetectionMeter: import_state() got a value of the wrong type or range; it's read as unaware or zero")
-	level = clampf(float(data.get("level", 0.0)), 0.0, 1.0)
+	level = clampf(_number(data.get("level", 0.0)), 0.0, 1.0)
 	var index := State.keys().find(str(data.get("state", "unaware")).to_upper())
 	state = State.UNAWARE if index < 0 else index as State
 	var at: Variant = data.get("last_known", [])
 	if at is Array and (at as Array).size() == 3:
-		last_known_position = Vector3(float(at[0]), float(at[1]), float(at[2]))
+		last_known_position = Vector3(_number(at[0]), _number(at[1]), _number(at[2]))
 	else:
 		last_known_position = Vector3.ZERO
 	has_last_known = data.get("has_last_known", false) == true
-	_lost_time = maxf(0.0, float(data.get("lost_time", 0.0)))
-	_search_left = maxf(0.0, float(data.get("search_left", 0.0)))
-	var since := float(data.get("since_sensed", -1.0))
+	_lost_time = maxf(0.0, _number(data.get("lost_time", 0.0)))
+	_search_left = maxf(0.0, _number(data.get("search_left", 0.0)))
+	var since := _number(data.get("since_sensed", -1.0))
 	since_sensed = since if since >= 0.0 else INF
 	seen_now = false
 	heard_now = false
@@ -276,7 +276,19 @@ func _coerced(data: Dictionary) -> bool:
 		if data.has(key) and typeof(data[key]) != TYPE_FLOAT and typeof(data[key]) != TYPE_INT:
 			return true
 	var at: Variant = data.get("last_known", [0.0, 0.0, 0.0])
-	return (data.has("level") and (float(data["level"]) < 0.0 or float(data["level"]) > 1.0)) \
+	if at is Array and (at as Array).any(func(v: Variant) -> bool: return typeof(v) != TYPE_FLOAT and typeof(v) != TYPE_INT):
+		return true
+	return (data.has("level") and (_number(data["level"]) < 0.0 or _number(data["level"]) > 1.0)) \
 			or (data.has("state") and State.keys().find(str(data["state"]).to_upper()) < 0) \
 			or not (at is Array and (at as Array).size() == 3) \
 			or (data.has("has_last_known") and typeof(data["has_last_known"]) != TYPE_BOOL)
+
+
+# A saved number as a float: what float() gives for the types it converts (numbers, bools and
+# strings, as import_state() always read them), and 0 for any other (null, an array, a vector...),
+# which float() can't convert. _coerced() warns about every value that isn't a number.
+static func _number(value: Variant) -> float:
+	match typeof(value):
+		TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_STRING, TYPE_STRING_NAME:
+			return float(value)
+	return 0.0
