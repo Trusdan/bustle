@@ -339,6 +339,15 @@ func reconsider(agent: StringName, id: int, now: int) -> StringName
 
 `agent` decides again about record `id` at minute `now`, with the same judge and today's inputs (fear, opinions). Only for a record it knows of and has no errand about. Returns the outcome, or empty when it can't.
 
+### `prune`
+
+```gdscript
+func prune(before_minute: int) -> Dictionary[]
+```
+
+Removes the closed records whose last event was before minute `before_minute`, and returns them (copies, by id) for the host to archive or drop. A record is closed when it is a witnessed theft, or a deed already found or recovered (`notice_losses()`), and no errand refers to it any more (delivered, forgotten or dropped). Its last event is the latest of `at`, `found_at` and `recovered_at`. Open deeds and records an errand still refers to are never removed, and ids are never reused.
+Nothing calls it: without a call, every record is kept for good, as before. A long game can call it now and then (for example once a game day, keeping the last week) so the save stops growing. A pruned record is gone for `question()`, `reconsider()`, `known_by()` and `stolen_goods_of()`.
+
 ### `export_state`
 
 ```gdscript

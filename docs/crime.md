@@ -74,7 +74,15 @@ The watch then finds witnesses as usual: the agents who perceived the theft, by 
   - **An item back with its owner isn't a loss.** `notice_losses()` asks the property port who owns each item now (`owner_of(item)`). When it's the owner again (the host returned it, or the owner took it back), nothing is missing, so the deed isn't found: it closes quietly as recovered. `recovered_at` in its record is the minute the owner looked. Nothing is emitted, remembered, decided or reported, and the deed leaves `open_deeds()` for good. An item still with the thief, passed on to someone else or gone (eaten, say) is missing, and its deed is found as above. Bustle itself never returns goods, so this only matters to a host that does.
   - *Why a mark, not a quiet `found_at`:* `found_at` means the owner found the item gone, which didn't happen. A separate mark keeps that true, and the record still shows the theft and that the goods came back. Only a recovered deed has `recovered_at`, so every other record, and every older save, is exactly as before.
 - **Questioning:** `question(agent, now)` gives what an agent can tell about each record it knows of: `{id, item, owner_id, place, at, thief, outcome}`. It names the thief only if the agent witnessed the theft and still remembers the thief in its memory, so a witness who stayed silent can still be asked, until it forgets.
-- **Saving:** `export_state()` and `import_state(saved)` (all or nothing). A recovered deed keeps its `recovered_at`; a save with one that isn't a whole minute, or on a record that isn't an unfound deed, is refused.
+- **Saving:** `export_state()` and `import_state(saved)` (all or nothing). A recovered deed keeps its `recovered_at`; a save with one that isn't a whole minute, or on a record that isn't an unfound deed, is refused. So is a save whose `next_id` isn't above 0, a record whose `found_at` is below -1, and a witnessed theft with a `found_at` other than -1 (only a deed is found). A refused save changes nothing.
+- **Pruning (optional):** records are kept for good unless the host prunes them. `prune(before_minute)` removes the *closed* records whose last event was before that minute, and returns them (copies, by id) for the host to archive or drop:
+  - **Closed:** a witnessed theft, or a deed already found or recovered, that no errand still refers to (its reports were delivered, forgotten or dropped).
+  - **Last event:** the latest of `at`, `found_at` and `recovered_at`, so a deed found yesterday isn't pruned for a theft long ago.
+  - **Never pruned:** an open deed (still to be found), or a record an errand refers to.
+  - Ids are never reused, and a pruned watch saves and loads with gaps in its ids.
+  - A long game can prune now and then, for example once a game day, keeping the last few days. A year of three thefts a day, pruned daily keeping three days, stays at about a dozen records (`tests/crime/test_crime_prune_soak.gd`).
+  - A pruned record is gone for `question()`, `reconsider()`, `known_by()` and `stolen_goods_of()`. A host hook that reads `records()` (for example to count how often a witness has seen a thief) should keep its own count if it prunes.
+  - Nothing calls it by default, so without a call nothing changes: the same records, saves and hashes.
 
 ### What a witness does
 
