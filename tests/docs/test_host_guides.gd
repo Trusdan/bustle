@@ -57,6 +57,8 @@ func test_every_page_names_only_real_classes_and_paths() -> void:
 		var text := FileAccess.get_file_as_string(path)
 		assert_ne(text, "", path)
 		for name: String in _matches(text, "\\b(Bustle[A-Z][A-Za-z]*)\\b"):
+			if name.begins_with("BustleWyrd") and not DirAccess.dir_exists_absolute("res://addons/bustle_wyrd"):
+				continue  # The optional bridge is removed in the core-only run.
 			assert_true(classes.has(name), "%s: class %s exists" % [path, name])
 		for named: String in _matches(text, "`((?:addons|demo|docs|tests|tools)/[A-Za-z0-9_./]+?)`"):
 			var target := "res://" + named
