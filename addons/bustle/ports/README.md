@@ -1,6 +1,6 @@
 # ports
 
-The interfaces a host project implements to connect Bustle to its own world (places, time, relations). Bustle calls them; it never reaches into the host directly. Each has a safe standalone default, so Bustle runs with no host. `BustlePorts` holds one of each, starting with the defaults; a host replaces the ones it implements with its own subclass.
+The interfaces a host project implements to connect Bustle to its own world (places, time, relations). Bustle calls them; it never reaches into the host directly. Each has a safe standalone default, so Bustle runs with no host. `BustlePorts` holds one of each, starting with the defaults; a host replaces the ones it implements with its own subclass. How to implement each one, with its contract, a minimal implementation and common mistakes, is in `docs/ports.md`.
 
 | Port | What | Standalone default |
 | --- | --- | --- |
