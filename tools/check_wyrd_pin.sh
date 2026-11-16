@@ -20,8 +20,12 @@ if [[ "$actual" != "$WYRD_COMMIT" ]]; then
 fi
 
 # Compare the committed copy (not the working tree, so editor-generated files do not count).
+# Read from the commit's blobs, not git archive: .gitattributes keeps addons/wyrd/ out of archives.
 mkdir -p "$work/vendored"
-git archive HEAD addons/wyrd | tar -x -C "$work/vendored"
+while IFS= read -r -d '' path; do
+	mkdir -p "$work/vendored/$(dirname "$path")"
+	git cat-file blob "HEAD:$path" > "$work/vendored/$path"
+done < <(git ls-tree -r -z --name-only HEAD -- addons/wyrd)
 if ! diff -r -q "$work/wyrd/addons/wyrd" "$work/vendored/addons/wyrd"; then
 	echo "addons/wyrd/ does not match ${WYRD_REPO}@${WYRD_TAG} (${WYRD_COMMIT}). Re-vendor it from that tag." >&2
 	exit 1

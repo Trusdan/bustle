@@ -8,3 +8,16 @@
 *.tres text eol=lf
 *.png binary
 *.ttf binary
+
+# The source archive (GitHub's "Download ZIP" and the archive of a commit, which the Godot Asset
+# Library installs from) holds only the addons, LICENSE and README.md. Everything else stays in
+# the repository: tools/check_source_archive.sh checks this, and docs/RELEASE.md explains it.
+/**                 export-ignore
+/addons             !export-ignore
+/addons/**          !export-ignore
+/addons/wyrd        export-ignore
+/addons/wyrd/**     export-ignore
+/addons/gut         export-ignore
+/addons/gut/**      export-ignore
+/LICENSE            !export-ignore
+/README.md          !export-ignore
