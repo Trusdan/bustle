@@ -4,7 +4,9 @@ extends RefCounted
 ## test_perception_unchanged.gd: every state change, the rays and senses of each tick, every
 ## meter's saved state and per-tick flags, and the public meter calls on random inputs. Each
 ## block of the record is hashed; the fixture holds the hashes made by the code before the
-## performance work, so the same results give the same lines.
+## performance work, so the same results give the same lines. Actors turn by adding to their
+## facing and normalising it, never through sin or cos, whose last bit can differ between
+## platforms: the record is the same on Linux and Windows.
 
 ## Ticks per hashed block.
 const BLOCK := 30
@@ -34,7 +36,7 @@ static func world_lines() -> PackedStringArray:
 		for id: StringName in world.actor_ids():
 			var actor := world.actor(id)
 			if actor.forward != Vector3.ZERO:
-				actor.forward = actor.forward.rotated(Vector3.UP, rng.randf_range(-0.2, 0.2))
+				actor.forward = (actor.forward.normalized() + Vector3(rng.randf_range(-0.2, 0.2), 0, rng.randf_range(-0.2, 0.2))).normalized()
 				actor.position += actor.forward.normalized() * rng.randf_range(0.0, 0.12)
 				actor.position = actor.position.clamp(Vector3(-25, 0, -25), Vector3(25, 3, 25))
 			actor.visibility = clampf(actor.visibility + rng.randf_range(-0.05, 0.05), 0.0, 1.3)
@@ -100,10 +102,12 @@ static func system_lines(parent: Node) -> PackedStringArray:
 	system.perception_changed.connect(func(p: StringName, t: StringName, old: int, new: int) -> void:
 		record.append("changed %s %s %d %d" % [p, t, old, new]))
 	var walkers: Array[Node3D] = []
+	var facings: Array[Vector3] = []
 	for i in 12:
 		var walker := Node3D.new()
 		walker.position = Vector3(rng.randf_range(-12, 12), 0, rng.randf_range(-12, 12))
-		walker.rotation.y = rng.randf_range(-PI, PI)
+		facings.append(Vector3(rng.randf_range(-1, 1), 0, rng.randf_range(-1, 1)).normalized())
+		walker.basis = Basis.looking_at(facings[i])
 		if i % 3 != 2:
 			var eyes := BustlePerceiver.new()
 			eyes.actor_id = StringName("w%02d" % i)
@@ -120,9 +124,10 @@ static func system_lines(parent: Node) -> PackedStringArray:
 		walkers.append(walker)
 	var out := PackedStringArray()
 	for frame in 240:
-		for walker: Node3D in walkers:
-			walker.position += -walker.global_basis.z * 0.03
-			walker.rotation.y += rng.randf_range(-0.08, 0.08)
+		for i in walkers.size():
+			facings[i] = (facings[i] + Vector3(rng.randf_range(-0.08, 0.08), 0, rng.randf_range(-0.08, 0.08))).normalized()
+			walkers[i].basis = Basis.looking_at(facings[i])
+			walkers[i].position += facings[i] * 0.03
 		system.step(1.0 / 60.0)
 		for id: StringName in system.world.actor_ids():
 			var actor := system.world.actor(id)
