@@ -7,8 +7,10 @@ extends SceneTree
 ## budget, and exits 1 when over it.
 ##   godot --headless --path . -s res://bench/perception_bench.gd [-- --frames=600 --actors=40]
 
-const BUDGET_AVG_MS := 1.0
-const BUDGET_P99_MS := 2.0
+const Budgets := preload("res://bench/perf_budgets.gd")
+
+const BUDGET_AVG_MS := Budgets.PERCEPTION_AVG_MS
+const BUDGET_P99_MS := Budgets.PERCEPTION_P99_MS
 
 var _frames := 600
 var _actors := 40

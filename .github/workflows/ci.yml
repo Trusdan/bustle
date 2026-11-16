@@ -166,6 +166,7 @@ jobs:
           set -euo pipefail
           out="$(godot --headless --path . -s res://bench/perception_bench.gd 2>&1 | tr -d '\r' | grep -E '^perception bench: [0-9]' || true)"
           echo "$out"
+          mkdir -p "$RUNNER_TEMP/perf" && printf '%s\n' "$out" > "$RUNNER_TEMP/perf/perception.txt"
           echo "::notice title=Perception bench::${out}"
           [[ "$out" == *": OK" ]]
 
@@ -176,11 +177,12 @@ jobs:
           set -euo pipefail
           out="$(godot --headless --path . -s res://bench/rings_bench.gd 2>&1 | tr -d '\r' | grep -E '^rings bench: [0-9]' || true)"
           echo "$out"
+          mkdir -p "$RUNNER_TEMP/perf" && printf '%s\n' "$out" > "$RUNNER_TEMP/perf/rings.txt"
           echo "::notice title=Ring bench::${out}"
           [[ "$out" == *": OK" ]]
 
       # The population bench (docs/perf.md): 40 FULL, 40 LIGHT and 200 OFF_SCREEN agents against the
-      # proposed budgets, plus a game day with nobody stuck. A report only: shared runners' timings
+      # budgets, plus a game day with nobody stuck. A report only: shared runners' timings
       # vary, and no number here is a claim about a minimum machine.
       - name: Population bench (report only)
         continue-on-error: true
@@ -188,8 +190,24 @@ jobs:
           set -euo pipefail
           out="$(godot --headless --path . -s res://bench/population_bench.gd 2>&1 | tr -d '\r' | grep -E '^population bench: [0-9]' || true)"
           echo "$out"
+          mkdir -p "$RUNNER_TEMP/perf" && printf '%s\n' "$out" > "$RUNNER_TEMP/perf/population.txt"
           echo "::notice title=Population bench::${out}"
           [[ "$out" == *": OK" ]]
+
+      # The performance gate (docs/perf.md, "The CI gate"). The three report steps above stay
+      # report-only at 1x budget; this step judges their lines against bench/perf_budgets.gd and
+      # fails the job only on a large regression: a timing above CI_HEADROOM (2x) its budget, a save
+      # over its budget, a stuck agent, or a bench that printed no summary line.
+      - name: Performance gate (2x budget)
+        run: |
+          set -euo pipefail
+          set +e
+          out="$(godot --headless --path . -s res://bench/perf_gate.gd -- "$RUNNER_TEMP/perf" 2>&1 | tr -d '\r')"
+          code=$?
+          set -e
+          grep -E '^(machine: |ok |FAIL |perf gate |usage: )' <<< "$out" || echo "$out"
+          echo "::notice title=Performance gate::$(grep -E '^perf gate ' <<< "$out" || echo 'no verdict')"
+          exit "$code"
 
       # docs/api/ is generated from the ## doc comments; fail if a comment changed without
       # regenerating it (run tools/gen_api_docs.sh and commit the result).
