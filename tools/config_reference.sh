@@ -2,10 +2,12 @@
 # Copyright (c) 2026 Corey Patrick Jones (github.com/Trusdan)
 # Writes docs/config.md: every @export field in addons/bustle/ and every bustle/... project setting,
 # with its type, default, range and effect. Ranges for numbers without an editor hint come from
-# tools/config_reference/ranges.tsv (hand-checked; one "Class.field<TAB>range" per line).
+# tools/config_reference/ranges.tsv (hand-checked; one "Class.field<TAB>range" per line). A second
+# section lists the runtime tunables named in tools/config_reference/tunables.tsv.
 #   tools/config_reference.sh          regenerate docs/config.md
 #   tools/config_reference.sh --check  fail if docs/config.md is out of date, a number field has no
-#                                      range entry, or an entry names no field (used by CI)
+#                                      range entry, an entry names no field, or a listed runtime class
+#                                      has a public variable tunables.tsv doesn't classify (used by CI)
 # Needs the pinned Godot (tools/pins.env) on PATH as `godot`.
 set -euo pipefail
 
@@ -30,7 +32,7 @@ page=docs/config.md
 
 godot --headless --path . --import >/dev/null 2>&1
 if ! godot --headless --path . -s res://tools/config_reference/config_reference.gd -- \
-		"$root/tools/config_reference/ranges.tsv" "$work/config.md" >"$work/log" 2>&1 \
+		"$root/tools/config_reference/ranges.tsv" "$root/tools/config_reference/tunables.tsv" "$work/config.md" >"$work/log" 2>&1 \
 		|| grep -E -q 'SCRIPT ERROR|Parse Error' "$work/log"; then
 	cat "$work/log"
 	echo "The configuration reference couldn't be built." >&2

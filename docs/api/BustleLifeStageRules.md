@@ -14,7 +14,7 @@ The life stages and the calendar they are read with. Ages are game days; `days_p
 var days_per_year: float = 360.0
 ```
 
-Game days in one year, for `days_of()` and `years_of()`. Finite and above 0. An experimental default; Bustle assumes no calendar.
+Game days in one year, for `days_of()` and `years_of()`. Finite and above 0. Bustle assumes no calendar: a host sets its own.
 
 ### `minutes_per_day`
 

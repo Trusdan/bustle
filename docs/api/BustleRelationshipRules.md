@@ -71,3 +71,13 @@ var window_days: float = 14.0
 ```
 
 Game days the deeds must fall within.
+
+## Methods
+
+### `validate`
+
+```gdscript
+func validate() -> String
+```
+
+Why the lines are out of order, or empty: `friend_release` above `friend_at`, or `rival_release` below `rival_at`. Several problems are joined with `"; "`. The social store warns once about each and uses the values as they are.

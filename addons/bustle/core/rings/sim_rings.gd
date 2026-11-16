@@ -147,9 +147,10 @@ func tick(delta: float) -> void:
 			if state.last_update_minute < 0:
 				state.last_update_minute = now - _phase(id)
 			_bound_backlog(state, now)
-			if now - state.last_update_minute >= config.offscreen_interval_game_minutes:
-				state.last_update_minute += config.offscreen_interval_game_minutes
-				_think(state, Ring.OFF_SCREEN, state.last_update_minute, config.offscreen_interval_game_minutes * 60.0)
+			var interval := maxi(config.offscreen_interval_game_minutes, 1)
+			if now - state.last_update_minute >= interval:
+				state.last_update_minute += interval
+				_think(state, Ring.OFF_SCREEN, state.last_update_minute, interval * 60.0)
 		else:
 			var hz := config.full_brain_hz if ring == Ring.FULL else config.light_rate_hz
 			var wait := 1.0 / maxf(hz, 0.001)

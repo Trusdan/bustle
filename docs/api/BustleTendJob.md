@@ -94,4 +94,4 @@ Asks the host to have `healer` care for `patient`, and emits `tended` with its a
 static func goal_def(minutes: int = 30) -> BustleGoalDef
 ```
 
-The tend goal: band `BustleBands.PERSONAL`, tags `tend` and `work`, scored by `INPUT` in a straight line, running `ACTION` and then waiting `minutes` game minutes, so care is asked for at most that often. A refused request waits the same before the goal can be chosen again. Experimental defaults.
+The tend goal: band `BustleBands.PERSONAL`, tags `tend` and `work`, scored by `INPUT` in a straight line, running `ACTION` and then waiting `minutes` game minutes, so care is asked for at most that often. A refused request waits the same before the goal can be chosen again.

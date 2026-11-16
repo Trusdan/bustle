@@ -29,6 +29,16 @@ static func reset() -> void:
 	_warned.clear()
 
 
+## Warns once for each problem in [param problems], a [code]validate()[/code] result whose problems
+## are joined with [code]"; "[/code], keyed by [param owner] and the problem. Nothing for an empty
+## result. The caller keeps using the values as they are.
+static func config(owner: String, problems: String) -> void:
+	if problems == "":
+		return
+	for problem: String in problems.split("; "):
+		warn("%s.%s" % [owner, problem], "%s: %s; using the values as they are" % [owner, problem])
+
+
 ## A hook's bool result: [param value] when it's a bool or an int, otherwise [param unset] with a warning for [param hook].
 static func as_bool(value: Variant, unset: bool, hook: String) -> bool:
 	if typeof(value) == TYPE_BOOL or typeof(value) == TYPE_INT:

@@ -25,7 +25,7 @@ Make a `BustleAmbitions.new(agent_id, config)` for each agent with a profile; th
 - **`target_input`:** the input naming the person it's about (only candidates whose option is that person are boosted);
 - **`enabled`:** false means it's never assigned. A host turns templates off here.
 
-The defaults are configurable experimental values:
+The defaults, all configurable:
 
 | Template | Weights | Eligible | Done | Moot |
 | --- | --- | --- | --- | --- |
@@ -35,7 +35,7 @@ The defaults are configurable experimental values:
 | `settle_feud` | honesty 1.0, sociability 0.4 | `has_rival` | `rival_opinion` ≥ 50 and `rival_cleared`, or `feud_settled` | `rival_gone` |
 | `leave_settlement` | curiosity 0.8, boldness 0.6, greed −0.3 | | `left_settlement` | `cannot_leave` |
 
-Default boosts, also configurable experimental values:
+Default boosts, also configurable:
 
 | Template | Boosts |
 | --- | --- |

@@ -39,7 +39,7 @@ var config: BustleHealthConfig
 var ports: BustlePorts
 
 
-## Starts with [param p_config] (the experimental defaults when null), reading [param p_ports].
+## Starts with [param p_config] ([method BustleHealthConfig.defaults] when null), reading [param p_ports].
 func _init(p_config: BustleHealthConfig = null, p_ports: BustlePorts = null) -> void:
 	config = p_config if p_config != null else BustleHealthConfig.defaults()
 	ports = p_ports

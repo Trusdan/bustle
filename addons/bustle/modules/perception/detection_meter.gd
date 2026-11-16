@@ -197,6 +197,8 @@ static func state_name(value: State) -> String:
 
 
 func _update_state(delta: float, sensed: bool) -> void:
+	if profile.suspicious_at > profile.alert_at:  # The one problem validate() names; kept inline on this hot path.
+		_Warn.config("BustlePerceptionProfile", profile.validate())
 	match state:
 		State.UNAWARE:
 			if level >= profile.suspicious_at:

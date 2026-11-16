@@ -100,3 +100,22 @@ func catharsis_def() -> BustleThoughtDef:
 	def.emotion = &"relieved"
 	def.reason_kind = &"event"
 	return def
+
+
+## Why the lines are out of order, or empty: [member extreme_fraction] above
+## [member major_fraction], an exit line above its entry line ([member high_spirits_exit] above
+## [member high_spirits_above], [member inspired_exit] above [member inspired_above]), or a negative
+## [member recover_margin] (a low state's exit below its entry). Several problems are joined with
+## [code]"; "[/code]. Mental states warn once about each and use the values as they are.
+## @experimental: Added before 1.0; it may be frozen in a later minor release.
+func validate() -> String:
+	var out: PackedStringArray = []
+	if extreme_fraction > major_fraction:
+		out.append("extreme_fraction is above major_fraction")
+	if high_spirits_exit > high_spirits_above:
+		out.append("high_spirits_exit is above high_spirits_above")
+	if inspired_exit > inspired_above:
+		out.append("inspired_exit is above inspired_above")
+	if recover_margin < 0.0:
+		out.append("recover_margin is negative")
+	return "; ".join(out)

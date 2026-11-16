@@ -24,7 +24,7 @@ The host reports practice and time, and puts the skill in use into effect:
 
 ## Skills
 
-`BustleSkillDef` holds one skill. The numbers are configurable experimental defaults.
+`BustleSkillDef` holds one skill. Every number is configurable.
 
 | Field | Default | Meaning |
 | --- | --- | --- |
@@ -70,7 +70,7 @@ An agent's passions are:
 score = Σ weight × (slider − 50) / 100
 ```
 
-This is the same scale the ambitions module uses. Every passion with a score of at least `passion_min_score` qualifies. They are ordered by score, highest first, with ties broken by skill id, and the first `max_derived_passions` are kept. Both are properties of `BustleSkills` and configurable experimental defaults:
+This is the same scale the ambitions module uses. Every passion with a score of at least `passion_min_score` qualifies. They are ordered by score, highest first, with ties broken by skill id, and the first `max_derived_passions` are kept. Both are configurable properties of `BustleSkills`:
 
 | Setting | Default | Meaning |
 | --- | --- | --- |

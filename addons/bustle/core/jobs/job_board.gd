@@ -34,7 +34,7 @@ const NEED := &"job"
 ## for practice and [code]trade[/code] for wages. Null (or a null port): no roles are held, every
 ## skill is 0, nothing is practised and no wage is paid.
 var ports: BustlePorts
-## The appeal of a posting an agent scores 0 for (see [method appeal]). An experimental default.
+## The appeal of a posting an agent scores 0 for (see [method appeal]).
 var appeal_base: float = 0.5
 
 var _types: Dictionary[StringName, BustleWorkType] = {}

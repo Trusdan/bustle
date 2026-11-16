@@ -185,3 +185,11 @@ func skill_noise_multiplier(skill: float) -> float
 ```
 
 The multiplier stealth `skill` leaves on noise: never below the floor, never above 1.
+
+### `validate`
+
+```gdscript
+func validate() -> String
+```
+
+Why the visibility bounds are out of order, or empty: `min_visibility` above `max_visibility`. The visibility model warns once about it and uses the values as they are.

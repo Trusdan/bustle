@@ -28,7 +28,7 @@ Compatibility is `BustleCompatibility.of(a, b, world_seed)` unless the host sets
 - a pair where either holds a `blocked_kinds` kind toward the other (`parent`, `child`, `sibling` or `in_law` by default);
 - a pair where either agent is already courting or bonded to anyone. Courting is one at a time.
 
-The thresholds are on `BustleRomanceRules` and are experimental defaults. With rules that aren't `is_valid()` (a release line at or above its forming line, say), `update` changes nothing.
+The thresholds are on `BustleRomanceRules`, and a host can change any of them. With rules that aren't `is_valid()` (a release line at or above its forming line, say), `update` changes nothing.
 
 ## Breakups
 

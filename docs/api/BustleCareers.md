@@ -128,7 +128,7 @@ Outcome → a timed thought (a `BustleThoughtDef`) added to the agent's mood aft
 var mood_weight: float = 0.4
 ```
 
-The weights of the performance terms (see `day_performance()`). Experimental defaults.
+The weight of the mood term in a day's performance (see `day_performance()`).
 
 ### `skill_weight`
 
@@ -136,11 +136,15 @@ The weights of the performance terms (see `day_performance()`). Experimental def
 var skill_weight: float = 0.3
 ```
 
+The weight of the skill term in a day's performance.
+
 ### `attendance_weight`
 
 ```gdscript
 var attendance_weight: float = 0.3
 ```
+
+The weight of the attendance term in a day's performance.
 
 ### `skill_full`
 

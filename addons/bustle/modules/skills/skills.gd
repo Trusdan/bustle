@@ -24,9 +24,9 @@ const _Warn := preload("res://addons/bustle/core/warn_once.gd")
 const SOURCE := &"skills"
 
 ## The lowest score ([method BustlePassionDef.score]) at which a passion is derived. 0.2 is one
-## slider at 70 with weight 1. An experimental default.
+## slider at 70 with weight 1.
 var passion_min_score: float = 0.2
-## The most passions derived for one agent. An experimental default.
+## The most passions derived for one agent.
 var max_derived_passions: int = 1
 
 var _defs: Dictionary[StringName, BustleSkillDef] = {}

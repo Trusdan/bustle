@@ -66,7 +66,7 @@ A doctor is just a role the host gives. To keep tending to certain agents, give 
 
 ## Config defaults
 
-`BustleHealthConfig.defaults()`. These are experimental values; change any of them.
+`BustleHealthConfig.defaults()`, which `BustleHealthBehaviour` uses when it is given no config. A new `BustleHealthConfig` resource starts empty instead: no effects and no thoughts, so health changes nothing until the host adds some. Change any of these values.
 
 | Setting | Default |
 | --- | --- |

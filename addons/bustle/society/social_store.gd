@@ -145,6 +145,7 @@ func clear_kind(a: StringName, b: StringName, kind: StringName) -> void:
 ## Applies the [member rules] to [param a]'s view of [param b]: forms a friend or rival kind when
 ## the opinion and deeds call for it, and lets it lapse past its release level.
 func update_kinds(a: StringName, b: StringName) -> void:
+	_Warn.config("BustleRelationshipRules", rules.validate())
 	var key := _key(a, b)
 	var value := opinion_value(a, b)
 	var window := now_minutes - roundi(maxf(rules.window_days, 0.0) * 1440.0)

@@ -92,6 +92,7 @@ func update(now: int, personality: BustlePersonality = null, inputs: Dictionary 
 		for def: BustleFearDef in config.fears:
 			if def != null and def.is_valid() and def.trigger == event:
 				_form(def, now, inputs, mood)
+	_Warn.config("BustleAspirationConfig", config.validate())
 	while _count(&"auto") < config.auto_wants and _wants.size() < config.want_cap:
 		var chosen := choose(now, personality, inputs)
 		if chosen == null:

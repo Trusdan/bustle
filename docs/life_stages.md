@@ -19,7 +19,7 @@ stages.note_death(&"smith", "illness") # the host decides; Bustle only records i
 
 Ages are game days. The host sets them with `set_age(id, days)`, as of the module's current minute (`now()`). A negative or non-finite age, an empty id or a dead agent is refused and changes nothing. `age_days(id)` and `age_years(id)` read an age back. An agent with no age has no stage and no gates.
 
-`BustleLifeStageRules.days_per_year` (360, an experimental default) only converts with `days_of(years)` and `years_of(days)`. Bustle assumes no calendar: a host picks its own year length, or works in days throughout.
+`BustleLifeStageRules.days_per_year` (360 by default) only converts with `days_of(years)` and `years_of(days)`. Bustle assumes no calendar: a host picks its own year length, or works in days throughout.
 
 ## Aging
 

@@ -6,8 +6,8 @@ extends Resource
 ## only converts years to days and back, so a host picks its own year length. Use [method validate]
 ## before relying on a set: [BustleLifeStages] ignores rules that aren't valid.
 
-## Game days in one year, for [method days_of] and [method years_of]. Finite and above 0. An
-## experimental default; Bustle assumes no calendar.
+## Game days in one year, for [method days_of] and [method years_of]. Finite and above 0. Bustle
+## assumes no calendar: a host sets its own.
 @export var days_per_year: float = 360.0
 ## Game minutes in one day, for [method BustleLifeStages.advance_to]. Above 0; 1440 matches the
 ## default clock port.

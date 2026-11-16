@@ -26,7 +26,7 @@ The modifier source `apply()` writes under.
 var passion_min_score: float = 0.2
 ```
 
-The lowest score (`BustlePassionDef.score()`) at which a passion is derived. 0.2 is one slider at 70 with weight 1. An experimental default.
+The lowest score (`BustlePassionDef.score()`) at which a passion is derived. 0.2 is one slider at 70 with weight 1.
 
 ### `max_derived_passions`
 
@@ -34,7 +34,7 @@ The lowest score (`BustlePassionDef.score()`) at which a passion is derived. 0.2
 var max_derived_passions: int = 1
 ```
 
-The most passions derived for one agent. An experimental default.
+The most passions derived for one agent.
 
 ## Methods
 

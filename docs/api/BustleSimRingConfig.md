@@ -78,7 +78,7 @@ How often a LIGHT agent's brain thinks (real hertz).
 var offscreen_interval_game_minutes: int = 60
 ```
 
-How often an OFF_SCREEN agent's brain thinks (game minutes).
+How often an OFF_SCREEN agent's brain thinks (game minutes). 0 or less counts as 1.
 
 ### `resort_hz`
 

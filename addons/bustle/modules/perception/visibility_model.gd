@@ -7,6 +7,8 @@ extends RefCounted
 ## standing, walking target in full light with neutral clothing and no skill. It keeps no state;
 ## the numbers come from [BustleStealthRules].
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## The numbers.
 var rules: BustleStealthRules
 
@@ -19,6 +21,8 @@ func _init(p_rules: BustleStealthRules = null) -> void:
 ## [param wear_factor] is the project's clothing value (1.0 is neutral); [param skill] is the
 ## target's stealth skill.
 func compute(light_level: float, posture: BustleStealthRules.Posture, movement: BustleStealthRules.Movement, wear_factor: float = 1.0, skill: float = 0.0) -> float:
+	if rules.min_visibility > rules.max_visibility:  # The one problem validate() names; kept inline on this hot path.
+		_Warn.config("BustleStealthRules", rules.validate())
 	var value := rules.light_factor(light_level) * rules.posture_factor(posture) \
 		* rules.movement_factor(movement) * maxf(wear_factor, 0.0)
 	value *= rules.skill_visibility_multiplier(skill)

@@ -145,3 +145,13 @@ var perception_hz: float = 10.0
 ```
 
 How many times per second a perceiver with this profile senses (throttling; 0 or less: every frame).
+
+## Methods
+
+### `validate`
+
+```gdscript
+func validate() -> String
+```
+
+Why the thresholds are out of order, or empty: `suspicious_at` above `alert_at`. The detection meter warns once about it and uses the values as they are.
