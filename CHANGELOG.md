@@ -6,6 +6,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- The supported Godot range is stated as Godot 4.7.x (CI tests 4.7.2-stable on Linux and Windows) in `README.md` and `addons/bustle/plugin.cfg`, and `tools/check_godot_range.sh` (with its self-test, both in CI) fails when either drifts from `GODOT_TAG` in `tools/pins.env`.
 - `docs/config.md`: a generated reference of every `@export` field and `bustle/...` project setting, with type, default, range and effect (ranges hand-checked in `tools/config_reference/ranges.tsv`), kept in sync by `tools/config_reference.sh --check` in CI; and `docs/defaults-review.md`, which confirms each default and lists the proposals awaiting a decision.
 - `docs/errors.md`: the error-handling policy (refuse with a reason and change nothing, warn once per problem and never every tick, assert only for Bustle's own invariants) and an audit of the frozen public API against it. The changes it proposes are not made yet.
 - The proposed v1 public API: `docs/public-api/PUBLIC_API.md` lists the frozen classes, ports, Callable hooks, signals and save-state calls, each with its file and purpose, and the experimental classes and members with the reason each stays so. `docs/public-api/public_api.json` holds every frozen symbol and its signature. `tools/public_api.sh --write` generates both from the `##` doc comments; everything not listed is internal.
