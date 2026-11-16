@@ -58,6 +58,10 @@ jobs:
             | grep -E '^(Scripts|Tests|Passing Tests|Asserts) ' | tr -s ' ' | paste -sd ',' -)"
           echo "::notice title=GUT on Windows::${totals}"
 
+      # The standalone example project (examples/village/): loads headless with no errors.
+      - name: Example project loads headless
+        run: tools/example.sh --check
+
   # The core addon on its own: the optional Wyrd bridge, the vendored Wyrd and their tests are
   # deleted first, so the core never depends on them.
   test-core-only:
@@ -246,6 +250,11 @@ jobs:
             exit 1
           fi
           echo "Editor loaded the project and plugins with no errors."
+
+      # The standalone example project (examples/village/), in its own project with a copy of the
+      # addon: import, its two-day check, the main scene and the editor, with no errors or warnings.
+      - name: Example project loads headless
+        run: tools/example.sh --check
 
       # Proves the hygiene check itself with made-up terms: an added term fails, a removed one
       # passes, vendored folders are skipped, and the term is never printed.

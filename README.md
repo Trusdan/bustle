@@ -20,6 +20,7 @@ A generic addon for living non-player populations in Godot: the people of a plac
 | `addons/wyrd/` | A test-only copy of Wyrd 1.0.1 for the bridge tests (`tools/wyrd-pin.env`). Not part of a release. |
 | `addons/gut/` | Vendored [GUT](https://github.com/bitwes/Gut) 9.7.1, for the tests only. |
 | `demo/` | A small neutral demo: the house and colony scenes and a headless harness ([demo/README.md](demo/README.md)). |
+| `examples/village/` | A small standalone example project: four villagers with needs, jobs from roles, a mood, skills and room thoughts, in a visible scene. It uses the public API only. Run `tools/example.sh` first to copy the addon in ([examples/village/README.md](examples/village/README.md)). |
 | `docs/api/` | The API reference, generated from the `##` doc comments. |
 | `docs/upgrading.md` | What to check or change when moving up a release, one section per release. |
 | `docs/config.md` | Every config field and project setting with its type, default, range and effect, generated; the review of the defaults is in [docs/defaults-review.md](docs/defaults-review.md). |
