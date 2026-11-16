@@ -119,6 +119,13 @@ jobs:
           tools/check_godot_range.sh
           tools/test_check_godot_range.sh
 
+      # Each plugin folder carries an exact copy of the root LICENSE and a README.md, so a project
+      # that copies only that folder keeps them. Fails when a copy drifts; the self-test checks it.
+      - name: Plugin folders' license copies match LICENSE
+        run: |
+          tools/check_license_copies.sh
+          tools/test_check_license_copies.sh
+
       - name: Install pinned Godot
         run: |
           set -euo pipefail

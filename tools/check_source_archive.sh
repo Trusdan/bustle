@@ -5,8 +5,9 @@
 # hold, which is what the Godot Asset Library installs from. The export-ignore rules in
 # .gitattributes must leave only:
 #   addons/bustle/, addons/bustle_wyrd/, LICENSE and README.md
-# and all four must be there. Nothing else (tests, demo, docs, tools, the vendored Wyrd and GUT,
-# the dev project.godot) may get in, and a new top-level file fails until a rule covers it.
+# and all four must be there, each plugin folder with its plugin.cfg, LICENSE and README.md.
+# Nothing else (tests, demo, docs, tools, the vendored Wyrd and GUT, the dev project.godot) may
+# get in, and a new top-level file fails until a rule covers it.
 #
 #   tools/check_source_archive.sh [--ref REF] [--load]
 #     --ref   the commit to check (default HEAD)
@@ -38,7 +39,7 @@ if [[ -n "$extra" ]]; then
 	echo "($(wc -l <<< "$extra") in all.) Add an export-ignore rule for them in .gitattributes." >&2
 	exit 1
 fi
-for need in LICENSE README.md addons/bustle/plugin.cfg addons/bustle_wyrd/plugin.cfg; do
+for need in LICENSE README.md addons/bustle/{plugin.cfg,LICENSE,README.md} addons/bustle_wyrd/{plugin.cfg,LICENSE,README.md}; do
 	if ! grep -q -x -F "$need" <<< "$files"; then
 		echo "The source archive of $commit misses $need: an export-ignore rule in .gitattributes is too wide." >&2
 		exit 1
