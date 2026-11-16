@@ -171,6 +171,11 @@ jobs:
       - name: API docs are up to date
         run: tools/gen_api_docs.sh --check
 
+      # docs/config.md is generated from every @export field and project setting, with ranges from
+      # tools/config_reference/ranges.tsv; fail if it is stale or a number field has no range.
+      - name: Configuration reference is up to date
+        run: tools/config_reference.sh --check
+
       # docs/public-api/VERSIONING.md: a frozen symbol removed, renamed or changed fails unless
       # docs/public-api/deprecations.json has an entry for it; new symbols pass. On a pull request
       # it also compares with the base branch's manifest, so editing the committed one can't hide a break.

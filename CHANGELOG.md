@@ -6,6 +6,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- `docs/config.md`: a generated reference of every `@export` field and `bustle/...` project setting, with type, default, range and effect (ranges hand-checked in `tools/config_reference/ranges.tsv`), kept in sync by `tools/config_reference.sh --check` in CI; and `docs/defaults-review.md`, which confirms each default and lists the proposals awaiting a decision.
 - `docs/errors.md`: the error-handling policy (refuse with a reason and change nothing, warn once per problem and never every tick, assert only for Bustle's own invariants) and an audit of the frozen public API against it. The changes it proposes are not made yet.
 - The proposed v1 public API: `docs/public-api/PUBLIC_API.md` lists the frozen classes, ports, Callable hooks, signals and save-state calls, each with its file and purpose, and the experimental classes and members with the reason each stays so. `docs/public-api/public_api.json` holds every frozen symbol and its signature. `tools/public_api.sh --write` generates both from the `##` doc comments; everything not listed is internal.
 - `docs/public-api/VERSIONING.md`: the semver and deprecation policy. Deprecate in a minor release with a warning and a "Deprecated" entry here, remove only in a major release, and what counts as breaking (a removed or renamed symbol, changed signal arguments, a changed method or hook signature, a save-format change without migration).

@@ -1,0 +1,199 @@
+# Hand-checked ranges: Class.field<TAB>range. Every number field without an editor hint needs one;
+# a hinted field may have one to say whether the range is checked, clamped or unchecked.
+BustleThoughtDef.value	any finite; checked
+BustleThoughtDef.duration_hours	0 to 10,000,000; checked
+BustleThoughtDef.stack_limit	1 or more; checked
+BustleThoughtDef.stack_mult	0 to 1; checked
+BustleMoodConfig.baseline	min_mood to max_mood; clamped (non-finite: the middle)
+BustleMoodConfig.rise_per_hour	0 or more; clamped (non-finite: 0)
+BustleMoodConfig.fall_per_hour	0 or more; clamped (non-finite: 0)
+BustleMoodConfig.volatility	0 or more; clamped (non-finite: 0)
+BustleMoodConfig.min_mood	any finite (non-finite: 0); swapped with max_mood if above it
+BustleMoodConfig.max_mood	any finite (non-finite: 100); swapped with min_mood if below it
+BustleMentalStateDef.weights	slider ids from BustlePersonality; any finite weight; checked
+BustleMentalStateDef.duration_hours	above 0; checked
+BustleMentalConfig.break_threshold	the mood range (0 to 100 by default); unchecked
+BustleMentalConfig.major_fraction	0 to 1, above extreme_fraction; unchecked
+BustleMentalConfig.extreme_fraction	0 to 1, below major_fraction; unchecked
+BustleMentalConfig.recover_margin	0 or more; unchecked
+BustleMentalConfig.high_spirits_above	the mood range, above high_spirits_exit; unchecked
+BustleMentalConfig.high_spirits_exit	the mood range, below high_spirits_above; unchecked
+BustleMentalConfig.inspired_above	the mood range, above inspired_exit; unchecked
+BustleMentalConfig.inspired_exit	the mood range, below inspired_above; unchecked
+BustleMentalConfig.inspired_slider	0 to 100 (the slider scale); unchecked
+BustleMentalConfig.dislike_line	0 to 100 (the opinion scale); unchecked
+BustleMentalConfig.dislike_weight	0 or more; unchecked
+BustleMentalConfig.lash_radius	0 or more metres; unchecked
+BustleMentalConfig.lash_reach	0 or more metres; unchecked
+BustleMentalConfig.insults_per_victim	0 or more (0: no insults); unchecked
+BustleMentalConfig.provocation	tier → 0 to 1; a non-finite value is refused by the quarrel
+BustleMentalConfig.catharsis_value	any finite; checked as the thought's value
+BustleMentalConfig.catharsis_hours	above 0, up to 10,000,000; checked as the thought's duration
+BustleMentalConfig.catharsis_stack	1 or more; checked as the thought's stack limit
+BustleMentalConfig.catharsis_stack_mult	0 to 1; checked as the thought's stack factor
+BustleSimRingConfig.full_radius	0 or more metres; unchecked
+BustleSimRingConfig.hysteresis	0 or more metres; unchecked
+BustleSimRingConfig.min_dwell_seconds	0 or more (0: no wait); unchecked
+BustleSimRingConfig.light_to_offscreen_delay_seconds	0 or more (0: no delay); unchecked
+BustleSimRingConfig.no_pop_in_distance	0 or more metres; unchecked
+BustleSimRingConfig.full_brain_hz	above 0; clamped to at least 0.001
+BustleSimRingConfig.light_rate_hz	above 0; clamped to at least 0.001
+BustleSimRingConfig.offscreen_interval_game_minutes	1 or more; catch-up clamps it to 1, a live tick at 0 thinks every tick
+BustleSimRingConfig.resort_hz	0 or more (0 or less: every tick); unchecked
+BustleSimRingConfig.resort_move	0 or more metres; unchecked
+BustleSimRingConfig.catch_up_cap_game_days	0 or more; clamped
+BustleSimRingConfig.max_full_bodies	0 or more (0 or less: no cap); unchecked
+BustleSimRingConfig.max_full_bodies_interior	0 or more (0 or less: max_full_bodies applies); unchecked
+BustlePerceptionProfile.sight_range	0 or more metres (0 or less: sees nothing); unchecked
+BustlePerceptionProfile.sight_angle_deg	0 to 360 degrees; unchecked
+BustlePerceptionProfile.peripheral_angle_deg	0 to 360 degrees, at or above sight_angle_deg to have a band; unchecked
+BustlePerceptionProfile.hearing_scale	0 or more; unchecked
+BustlePerceptionProfile.fill_rate_sight	0 or more per second; unchecked
+BustlePerceptionProfile.fill_rate_hearing	0 or more per second; unchecked
+BustlePerceptionProfile.decay_rate	0 or more per second; unchecked
+BustlePerceptionProfile.suspicious_at	0 to 1, below alert_at; unchecked
+BustlePerceptionProfile.alert_at	0 to 1, above suspicious_at; unchecked
+BustlePerceptionProfile.search_time	0 or more seconds; unchecked
+BustlePerceptionProfile.lose_track_time	0 or more seconds; unchecked
+BustlePerceptionProfile.perception_hz	0 or more (0 or less: every frame); unchecked
+BustleStealthRules.standing	0 or more; unchecked (the result is clamped to min_visibility to max_visibility)
+BustleStealthRules.crouched	0 or more; unchecked (the result is clamped to min_visibility to max_visibility)
+BustleStealthRules.still	0 or more; unchecked (the result is clamped to min_visibility to max_visibility)
+BustleStealthRules.walking	0 or more; unchecked (the result is clamped to min_visibility to max_visibility)
+BustleStealthRules.running	0 or more; unchecked (the result is clamped to min_visibility to max_visibility)
+BustleStealthRules.skill_visibility_reduction_per_point	0 or more; unchecked (the multiplier is clamped to skill_visibility_floor to 1)
+BustleStealthRules.skill_visibility_floor	0 to 1; unchecked
+BustleStealthRules.skill_noise_reduction_per_point	0 or more; unchecked (the multiplier is clamped to skill_noise_floor to 1)
+BustleStealthRules.skill_noise_floor	0 to 1; unchecked
+BustleStealthRules.min_visibility	0 or more, at most max_visibility; unchecked
+BustleStealthRules.max_visibility	at least min_visibility; unchecked
+BustleRomanceRules.courting_opinion	0 to 100, above courting_release; checked
+BustleRomanceRules.courting_compat	any finite (compatibility is -1 to 1); checked
+BustleRomanceRules.courting_release	0 to 100, below courting_opinion; checked
+BustleRomanceRules.partner_opinion	0 to 100, above partner_release; checked
+BustleRomanceRules.partner_days	0 or more; checked
+BustleRomanceRules.partner_release	0 to 100, below partner_opinion; checked
+BustleRomanceRules.history_limit	1 or more; checked
+BustleRomanceRules.jealousy_opinion	0 to 100, above jealousy_release; checked
+BustleRomanceRules.jealousy_release	0 to 100, below jealousy_opinion; checked
+BustleRomanceRules.jealousy_opinion_value	any finite; checked
+BustleRomanceRules.jealousy_opinion_days	above 0 (0 only with jealousy_opinion_value 0); checked
+BustleConflictConfig.fight_threshold	0 to 100 (the slider scale); unchecked
+BustleConflictConfig.help_radius	0 or more metres; unchecked
+BustleConflictConfig.flee_distance	0 or more metres; unchecked
+BustleConflictConfig.flee_margin	0 or more metres; clamped
+BustleConflictConfig.scuffle_floor	0 or more; unchecked
+BustleConflictConfig.quarrel_threshold_calm	0 or more; unchecked
+BustleConflictConfig.quarrel_threshold	0 or more; unchecked
+BustleConflictConfig.quarrel_threshold_hot	0 or more; unchecked
+BustleConflictConfig.quarrel_mood_scale	0 to 1; unchecked (the factor is clamped at 0)
+BustleConflictConfig.grudge_scale	above 0 (0 or less: no grudge); unchecked
+BustleInteractionDef.recipient_value	any finite; checked
+BustleInteractionDef.initiator_value	any finite; checked
+BustleInteractionDef.spread	0 or more; checked
+BustleInteractionDef.compatibility_scale	0 or more; checked
+BustleInteractionDef.mood_scale	0 or more; checked
+BustleInteractionDef.days	above 0, up to 1,000,000; checked
+BustleInteractionDef.weight	0 or more; checked
+BustleInteractionDef.slider_weights	slider ids from BustlePersonality; any finite weight; checked
+BustleWorkType.min_skill	0 or more (above 0 needs a skill); checked
+BustleWorkType.priority	any finite; checked
+BustleWorkType.priority_weights	slider ids from BustlePersonality; any finite weight; checked
+BustleWorkType.need_weights	non-empty input ids; any finite weight; checked
+BustleWorkType.xp_per_hour	0 or more; checked
+BustleWorkType.wage	0 or more; checked
+BustleWorkType.minutes	1 or more; checked
+BustleWantDef.weights	slider ids from BustlePersonality; any finite weight; checked
+BustleWantDef.target	any finite; checked
+BustleWantDef.duration_hours	above 0; checked
+BustleWantDef.cooldown_hours	0 or more; checked
+BustleWantDef.points	0 or more; checked
+BustleWantDef.boosts	goal → 1 or more (capped by BustleAspirationConfig.max_want_boost); checked
+BustleSkillDef.max_level	1 or more; checked
+BustleSkillDef.decay_floor	0 to max_level; checked
+BustleSkillDef.decay_per_day	0 or more; checked
+BustleSkillDef.xp_curve	at least one entry, each above 0; checked
+BustleSkillDef.speed_add	any finite; checked
+BustleSkillDef.quality_add	any finite; checked
+BustleRelationshipRules.friend_at	0 to 100 (the opinion scale), above friend_release; unchecked
+BustleRelationshipRules.friend_release	0 to 100, below friend_at; unchecked
+BustleRelationshipRules.rival_at	0 to 100, below rival_release; unchecked
+BustleRelationshipRules.rival_release	0 to 100, above rival_at; unchecked
+BustleRelationshipRules.min_deeds	0 or more; unchecked
+BustleRelationshipRules.window_days	0 or more; clamped
+BustleMemoryConfig.capacity	1 or more; clamped to at least 1
+BustleMemoryConfig.half_life_hours	kind → above 0 game hours; clamped to at least 1 minute (non-finite: 1 minute)
+BustleMemoryConfig.default_half_life_hours	above 0; clamped to at least 1 minute (non-finite: 1 minute)
+BustleMemoryConfig.source_strength	source → 0 to 1; clamped (non-finite: 0)
+BustleMemoryConfig.forget_below	0 to 1; unchecked
+BustleGoalDef.base_weight	0 or more; unchecked (a score that isn't finite makes the goal ineligible)
+BustleGoalDef.min_score	0 or more; unchecked
+BustleGoalDef.min_commit_minutes	0 or more; unchecked
+BustleGoalDef.fail_cooldown_minutes	0 or more; clamped
+BustleDirectorRules.tension_inputs	non-empty input keys; any finite weight; checked
+BustleDirectorRules.memory_minutes	1 or more; checked
+BustleDirectorRules.high	above low, up to 1; checked
+BustleDirectorRules.low	0 or more, below high; checked
+BustleDirectorRules.beat_gap_minutes	0 to memory_minutes; checked
+BustleGoalDef.band	0 or more, usually a BustleBands constant (IDLE 20 up to FORCED 110); unchecked (a negative band is never chosen)
+BustleCareerRank.wage	0 or more; checked
+BustleCareerRank.min_skill	0 or more (above 0 needs the track's skill); checked
+BustleCareerRank.review_days	1 or more; checked
+BustleCareerRank.promote_if	any finite (performance is 0 to 1), above demote_if; checked
+BustleCareerRank.demote_if	any finite, below promote_if; checked
+BustleAffordanceDef.relief	need → 0 or more; checked
+BustleAffordanceDef.adds	need → 0 or more; checked
+BustleAffordanceDef.capacity	1 or more; checked
+BustleAffordanceDef.hold_minutes	1 or more; checked
+BustleAffordanceDef.price	0 or more; checked
+BustleEventDef.tension	any finite; checked
+BustleEventDef.cooldown_minutes	0 or more; checked
+BustleEventDef.weight	any finite; checked
+BustleEventDef.score_inputs	non-empty input keys; any finite points; checked
+BustleAmbitionDef.weights	slider ids from BustlePersonality; any finite weight; checked
+BustleAmbitionDef.min_sliders	slider ids from BustlePersonality; 0 to 100 (any finite is accepted); checked
+BustleAmbitionDef.target	any finite; checked
+BustleAmbitionDef.boosts	goal → 0 or more; checked
+BustleTraitDef.adds	valid modifier keys; any finite amount; checked
+BustleTraitDef.mults	valid modifier keys; any finite multiplier; checked
+BustleTraitDef.slider_offsets	slider ids from BustlePersonality; any finite (the slider is clamped to 0 to 100); checked
+BustleScheduleDef.week_length	1 or more; checked
+BustleScheduleDef.week_offset	any; taken modulo week_length
+BustleScheduleDef.late_minutes	0 or more; clamped
+BustleAspirationConfig.auto_wants	0 to want_cap; unchecked
+BustleAspirationConfig.want_cap	0 or more (0: no wants); unchecked
+BustleAspirationConfig.max_want_boost	1 or more; clamped to at least 1
+BustleWitnessConfig.kind_weights	relationship kind → any finite; unchecked
+BustleWitnessConfig.threshold	any finite; unchecked
+BustleScheduleBlock.late_minutes	-1 or more (-1: the schedule's own); checked
+BustleScheduleBlock.wage	0 or more; checked
+BustleRoomThought.at_least	0 to 1, or NAN (exactly one of at_least and at_most is set); checked
+BustleRoomThought.at_most	0 to 1, or NAN (exactly one of at_least and at_most is set); checked
+BustlePerceivable.visibility	0 or more; clamped at 0 in sight, the visibility model clamps it further
+BustlePerceivable.noise_radius	0 or more metres; unchecked
+BustlePassionDef.learn_mult	above 0; checked
+BustlePassionDef.sliders	slider ids from BustlePersonality; any finite weight; checked
+BustleNeedDef.rate_per_hour	any finite (a non-finite rate counts as 0); a negative rate falls
+BustleNeedDef.condition_rates	condition → any finite (non-finite counts as 0)
+BustleCrimeConfig.threshold	any finite; unchecked
+BustleCrimeConfig.slider_weights	slider ids from BustlePersonality; any finite weight; unchecked
+BustleFearDef.avoid_mult	0 to 1; checked
+BustleFearDef.duration_hours	0 or more (0 needs a cleared_fact); checked
+BustleLifeStageRules.days_per_year	above 0; checked
+BustleLifeStageRules.minutes_per_day	1 or more; checked
+BustleLifeStageDef.min_days	0 or more, above the previous stage's; checked by BustleLifeStageRules
+BustleHealthEffect.at_zero	0 or more; checked
+BustleHealthEffect.power	above 0; checked
+BustleHealthThought.pain_at_least	above 0, up to 1, or NAN (exactly one of a pain line and a tag is set); checked
+BustleAmbitionConfig.cooldown_days	0 or more; unchecked
+BustleAmbitionConfig.like_line	0 to 100 (the opinion scale); unchecked
+BustleScoringConfig.pick_window	0 to 1; clamped
+BustleEventEffect.count	1 or more (spawn effects); checked
+BustleDebugOverlay.label_height	any metres; unchecked
+BustleActionStep.max_retries	0 or more; unchecked (0 or less: no retry)
+BustleScheduleBlock.start_minute	0 to 1439; checked
+BustleScheduleBlock.end_minute	0 to 1440; checked
+BustleCrimeConfig.min_need	0 to 1; unchecked
+BustleThoughtDef.need_at_least	0 to 1; checked
+BustleAffordanceDef.others_mult	0 to 1; checked
+BustleNeedDef.start	0 to 1; clamped (non-finite: 0)
