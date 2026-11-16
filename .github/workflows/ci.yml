@@ -101,6 +101,13 @@ jobs:
       - name: Vendored Wyrd matches its pin
         run: tools/check_wyrd_pin.sh
 
+      # README.md and addons/bustle/plugin.cfg state the supported Godot range; it must match
+      # GODOT_TAG in tools/pins.env. The self-test proves the check fails on each kind of drift.
+      - name: Supported Godot range matches the pin
+        run: |
+          tools/check_godot_range.sh
+          tools/test_check_godot_range.sh
+
       - name: Install pinned Godot
         run: |
           set -euo pipefail

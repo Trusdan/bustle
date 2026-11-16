@@ -1,6 +1,8 @@
 # Bustle
 
-A generic addon for living non-player populations in Godot 4 (4.7 or newer): the people of a place and their daily life. MIT licensed.
+A generic addon for living non-player populations in Godot: the people of a place and their daily life. MIT licensed.
+
+**Supported Godot:** Godot 4.7.x (CI tests 4.7.2-stable on Linux and Windows). Other Godot versions and macOS are not tested.
 
 **Status: 0.9.0.** It has the project scaffold (0.1.0), the perception module (0.2.0: senses for every actor, awareness queries and dispositions) and the headless simulation core (0.3.0: the utility scorer, brains with action sequences, the host ports, the society registry with save and load, orders, debug tools and simulation rings). 0.4.0 adds needs, mood and thoughts, affordances, schedules with roles, jobs and wages, personality sliders and trait bundles, memory and FindPerson, social opinions, greetings, conversations and comfort, and trade-port buying, with owners taking from their own stock for free. 0.5.0 adds cause-driven conflict: fight, flee or fetch help, an intent to subdue or kill only for a reason, non-lethal scuffles, quarrels, and assaulted and killed events, with the combat port taking an intent and reporting how a fight ended. 0.6.0 adds guarded theft, witnesses and reporting, mental states, ambitions, and host locks with protection levels. 0.7.0 adds the optional Wyrd bridge, social ports for interactions and conversations, recording a theft by an outsider, and the house and colony demos. 0.8.0 adds a stuck watch and thought entries on the demo timeline, a 30-day demo soak, a 40 / 40 / 200 population bench, and rings that re-sort only when something calls for it. 0.9.0 adds a job board, skills and passions, careers, rooms and indoors/outdoors, wants and fears, romance, life stages, reactions to the host's health with a tend job, and a causal storyteller, all opt-in; full house and colony demo sessions with a module-toggle matrix, a tutorial and a module guide; and a bounded off-screen catch-up and an optional FULL cap on the simulation rings. APIs remain experimental before 1.0. More features come in later releases.
 
@@ -33,9 +35,10 @@ tools/gen_api_docs.sh       # regenerate docs/api/ after changing doc comments
 tools/config_reference.sh   # regenerate docs/config.md after changing an @export field or its range
 tools/check_wyrd_pin.sh     # check addons/wyrd/ against tools/wyrd-pin.env
 tools/test_check_hygiene.sh # self-test of the content-hygiene check
+tools/check_godot_range.sh  # check the supported Godot range in README.md and plugin.cfg against tools/pins.env
 godot --headless --path . -s res://bench/perception_bench.gd  # perception performance (docs/perf.md)
 ```
 
-CI runs on Ubuntu and Windows, runs the core alone with the bridge and Wyrd removed, checks the API docs and that the editor loads the project cleanly, and checks every change against a private deny-list of terms.
+CI runs the GUT suite with the pinned Godot (`GODOT_TAG` in `tools/pins.env`) on Linux (Ubuntu) and Windows, checks that the supported Godot range above matches that pin (`tools/check_godot_range.sh`), runs the core alone with the bridge and Wyrd removed, checks the API docs and that the editor loads the project cleanly, and checks every change against a private deny-list of terms.
 
 See [CHANGELOG.md](CHANGELOG.md) and [docs/RELEASE.md](docs/RELEASE.md).
