@@ -6,6 +6,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- `tools/check_godot_range.sh` also fails when `CLAUDE.md`'s "Godot X.Y.x" stops matching the major.minor of `GODOT_TAG` in `tools/pins.env`, naming `CLAUDE.md` as the file to update; its self-test covers a wrong minor there.
 - Host guides: `docs/ports.md` gives every port's contract (each method's return and default, and which part of Bustle reads it), a minimal implementation and common mistakes; `docs/host-walkthrough.md` connects the clock, world and roles from an empty project; `docs/upgrading.md` has a section per release (0.8.0 to 0.9.0, and 0.9.x to 1.0). `tests/docs/test_host_guides.gd` compiles every snippet, plugs each port example into a society, runs the walkthrough and checks that every port member is covered.
 - The supported Godot range is stated as Godot 4.7.x (CI tests 4.7.2-stable on Linux and Windows) in `README.md` and `addons/bustle/plugin.cfg`, and `tools/check_godot_range.sh` (with its self-test, both in CI) fails when either drifts from `GODOT_TAG` in `tools/pins.env`.
 - `docs/config.md`: a generated reference of every `@export` field and `bustle/...` project setting, with type, default, range and effect (ranges hand-checked in `tools/config_reference/ranges.tsv`), kept in sync by `tools/config_reference.sh --check` in CI; and `docs/defaults-review.md`, which confirms each default and lists the proposals awaiting a decision.
