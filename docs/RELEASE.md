@@ -11,6 +11,13 @@ A release has **two zips**:
 
 Neither zip contains `addons/wyrd/` (a test-only copy), `addons/gut/`, `demo/`, `tests/`, `docs/`, `tools/` or the dev `project.godot`.
 
+Each addon folder also carries its own `LICENSE` (an exact copy of the root one) and a short `README.md` (what the addon is, the Godot version, the license and a link to the docs), so a project that copies only the folder keeps them. From the first release after 0.9.0, each zip therefore holds the license twice: at the top and inside the folder. `tools/check_license_copies.sh` fails when a copy drifts from the root `LICENSE` or a folder's README is missing, and CI runs it with its self-test. **If the root `LICENSE` changes** (a new copyright year, say), copy it into both folders in the same pull request:
+
+```bash
+cp LICENSE addons/bustle/LICENSE && cp LICENSE addons/bustle_wyrd/LICENSE
+tools/check_license_copies.sh
+```
+
 ## Building the zips
 
 `tools/build_release.sh` builds both zips the same way every time:
@@ -41,7 +48,7 @@ The published hashes of each release go in `tools/release/published.sha256` (one
 
 GitHub's "Download ZIP" and the archive of a commit are a third way to get Bustle, and the one the Godot Asset Library installs from: it downloads the archive of the commit the listing names, not a release zip. So the release zips alone don't cover it. The `export-ignore` rules in `.gitattributes` leave only these in a source archive:
 
-- `addons/bustle/` and `addons/bustle_wyrd/`;
+- `addons/bustle/` and `addons/bustle_wyrd/`, each with its own `LICENSE` and `README.md`;
 - `LICENSE` and `README.md`.
 
 Everything else stays in the repository but out of the archive: `addons/wyrd/` (test-only), `addons/gut/`, `demo/`, `examples/`, `tests/`, `docs/`, `tools/`, `bench/`, the dev `project.godot` and the repository's own files. The rules ignore everything first and then let the four paths back in, so a new top-level file stays out until a rule names it.
@@ -49,7 +56,8 @@ Everything else stays in the repository but out of the archive: `addons/wyrd/` (
 The release zips are built from the same commit with `git archive` too, and the rules leave their paths alone, so the zips don't change: v0.9.0, tagged before the rules, still gives its published hashes. `tools/check_wyrd_pin.sh` reads the vendored Wyrd from the commit's files instead of an archive, since the rules keep it out of archives.
 
 ```bash
-tools/check_source_archive.sh                # HEAD's archive holds only the four paths, and all of them
+tools/check_source_archive.sh                # HEAD's archive holds only the four paths, and all of them,
+                                             # with each plugin folder's plugin.cfg, LICENSE and README.md
 tools/check_source_archive.sh --load         # also open it as a fresh project, both plugins on and no Wyrd
 tools/test_check_source_archive.sh --load    # self-test: HEAD passes; v0.9.0 and a too-wide rule fail
 ```

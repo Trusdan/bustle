@@ -39,6 +39,7 @@ tools/check_wyrd_pin.sh     # check addons/wyrd/ against tools/wyrd-pin.env
 tools/test_check_hygiene.sh # self-test of the content-hygiene check
 tools/check_godot_range.sh  # check the supported Godot range in README.md and plugin.cfg against tools/pins.env
 tools/check_source_archive.sh # check that a source archive holds only the addons, LICENSE and README.md
+tools/check_license_copies.sh # check the plugin folders' LICENSE copies against the root LICENSE
 godot --headless --path . -s res://bench/perception_bench.gd  # perception performance (docs/perf.md)
 ```
 
