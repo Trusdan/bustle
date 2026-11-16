@@ -19,6 +19,7 @@ A generic addon for living non-player populations in Godot 4 (4.7 or newer): the
 | `addons/gut/` | Vendored [GUT](https://github.com/bitwes/Gut) 9.7.1, for the tests only. |
 | `demo/` | A small neutral demo: the house and colony scenes and a headless harness ([demo/README.md](demo/README.md)). |
 | `docs/api/` | The API reference, generated from the `##` doc comments. |
+| `docs/config.md` | Every config field and project setting with its type, default, range and effect, generated; the review of the defaults is in [docs/defaults-review.md](docs/defaults-review.md). |
 
 ## Install
 
@@ -29,6 +30,7 @@ Copy `addons/bustle/` into your project's `addons/` folder and enable **Bustle**
 ```bash
 tools/run_tests.sh          # import the project and run GUT headless (Godot from tools/pins.env on PATH)
 tools/gen_api_docs.sh       # regenerate docs/api/ after changing doc comments
+tools/config_reference.sh   # regenerate docs/config.md after changing an @export field or its range
 tools/check_wyrd_pin.sh     # check addons/wyrd/ against tools/wyrd-pin.env
 tools/test_check_hygiene.sh # self-test of the content-hygiene check
 godot --headless --path . -s res://bench/perception_bench.gd  # perception performance (docs/perf.md)
