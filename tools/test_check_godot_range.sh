@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright (c) 2026 Corey Patrick Jones (github.com/Trusdan)
-# Self-test for tools/check_godot_range.sh on scratch copies of the three files it reads: the real
+# Self-test for tools/check_godot_range.sh on scratch copies of the four files it reads: the real
 # repository passes, and each kind of drift fails with a message naming the file to update.
 set -euo pipefail
 
@@ -18,6 +18,7 @@ scratch() {
 	cp "$repo/tools/pins.env" "$work/root/tools/pins.env"
 	cp "$repo/README.md" "$work/root/README.md"
 	cp "$repo/addons/bustle/plugin.cfg" "$work/root/addons/bustle/plugin.cfg"
+	cp "$repo/CLAUDE.md" "$work/root/CLAUDE.md"
 	if [[ -n "${1:-}" ]]; then
 		sed -i "$2" "$work/root/$1"
 	fi
@@ -58,6 +59,9 @@ expect 1 "a README without the line fails" "README.md"
 
 scratch addons/bustle/plugin.cfg 's/Godot [0-9]*\.[0-9]*\.x/Godot 4.6.x/'
 expect 1 "a plugin description naming another minor fails" "addons/bustle/plugin.cfg"
+
+scratch CLAUDE.md 's/Godot [0-9]*\.[0-9]*\.x/Godot 4.6.x/'
+expect 1 "a CLAUDE.md naming another minor fails" "CLAUDE.md"
 
 if [[ $fail -ne 0 ]]; then
 	exit 1

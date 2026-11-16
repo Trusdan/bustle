@@ -5,7 +5,8 @@
 # Checks:
 #   README.md has the line "**Supported Godot:** Godot X.Y.x (CI tests <GODOT_TAG> on Linux and Windows)."
 #   where X.Y is the major.minor of GODOT_TAG, and <GODOT_TAG> is the pinned tag itself;
-#   addons/bustle/plugin.cfg's description names "Godot X.Y.x" with the same X.Y.
+#   addons/bustle/plugin.cfg's description names "Godot X.Y.x" with the same X.Y;
+#   CLAUDE.md names "Godot X.Y.x" with the same X.Y.
 # Each failure names the file to update.
 set -euo pipefail
 
@@ -13,6 +14,7 @@ root="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 pins="$root/tools/pins.env"
 readme="$root/README.md"
 plugin="$root/addons/bustle/plugin.cfg"
+guide="$root/CLAUDE.md"
 
 tag="$(sed -n 's/^GODOT_TAG=//p' "$pins" | tr -d '\r' | head -n 1)"
 if [[ ! "$tag" =~ ^([0-9]+)\.([0-9]+)(\.[0-9]+)?-[A-Za-z0-9.]+$ ]]; then
@@ -45,6 +47,17 @@ if [[ "$described" =~ Godot\ ([0-9]+\.[0-9]+)\.x ]]; then
 	fi
 else
 	echo "addons/bustle/plugin.cfg's description names no \"Godot ${minor}.x\": update it in addons/bustle/plugin.cfg." >&2
+	fail=1
+fi
+
+stated="$(grep -o -E 'Godot [0-9]+\.[0-9]+\.x' "$guide" | head -n 1 || true)"
+if [[ "$stated" =~ ^Godot\ ([0-9]+\.[0-9]+)\.x$ ]]; then
+	if [[ "${BASH_REMATCH[1]}" != "$minor" ]]; then
+		echo "CLAUDE.md states Godot ${BASH_REMATCH[1]}.x, but tools/pins.env pins ${tag}: update it in CLAUDE.md to Godot ${minor}.x." >&2
+		fail=1
+	fi
+else
+	echo "CLAUDE.md names no \"Godot ${minor}.x\": update it in CLAUDE.md." >&2
 	fail=1
 fi
 
