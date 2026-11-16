@@ -99,7 +99,7 @@ Otherwise `BustleWitnessJudge` decides, with the same formulas for every agent a
   - `gossip` when `gossip_to(agent, record)` names someone (by default nobody).
 - **Score:** each eligible outcome scores `Σ weight × (value − 50) / 100` over its terms in `BustleWitnessConfig.weights`, plus loyalty: `kind_weights` for each relationship kind between the witness and the thief (none by default).
 - **Values:**
-  - personality sliders (`personality_of`);
+  - personality sliders, from the judge's own `personality_of` when it's set. When it isn't, the judge uses the crime's `BustleCrime.personality_of`, the same hook that decides who steals, so a host wires personalities once. With neither set, the sliders are neutral (50). An explicitly set judge hook always wins, and a `BustleWitnessJudge` used on its own, outside a watch, never borrows the crime's hook;
   - the witness's opinions of the thief and the victim (the social port);
   - its fear of the thief (`fear_of`);
   - the authority's standing with it (`standing_of`, by default its opinion of the role's holder).

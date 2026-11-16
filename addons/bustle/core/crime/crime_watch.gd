@@ -384,6 +384,7 @@ func _decide(row: Dictionary, agent: StringName, knows_thief: bool, source: Stri
 		outcome = StringName(reported)
 	else:
 		judge.authority_role = authority_role
+		judge._fallback_personality_of = crime.personality_of
 		outcome = StringName(judge.decide(agent, case)["outcome"])
 	if not BustleWitnessJudge.OUTCOMES.has(outcome):
 		outcome = BustleWitnessJudge.SILENT

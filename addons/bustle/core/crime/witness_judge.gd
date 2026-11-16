@@ -38,13 +38,19 @@ var society: BustleSociety
 var config: BustleWitnessConfig
 ## The role a report goes to (for the standing term).
 var authority_role: StringName = &"authority"
-## (id) → that agent's [BustlePersonality], or null (neutral sliders).
+## (id) → that agent's [BustlePersonality], or null (neutral sliders). Empty: when a
+## [BustleCrimeWatch] decides with this judge, its crime's [member BustleCrime.personality_of], so a
+## host wires personalities once; otherwise neutral sliders. Set, it wins.
 var personality_of: Callable = Callable()
 ## (witness, thief) → how much the witness fears the thief, 0 to 100. Empty: 50.
 var fear_of: Callable = Callable()
 ## (witness) → the authority's standing with the witness, 0 to 100. Empty: its opinion of the
 ## role's holder, or 50 when nobody holds it.
 var standing_of: Callable = Callable()
+
+# The hook used while personality_of is empty: BustleCrime.personality_of, which the watch sets
+# before each decision.
+var _fallback_personality_of: Callable = Callable()
 
 
 func _init(p_society: BustleSociety = null, p_config: BustleWitnessConfig = null) -> void:
@@ -87,7 +93,8 @@ func decide(witness: StringName, case: Dictionary) -> Dictionary:
 
 func _values(witness: StringName, thief: StringName, victim: StringName) -> Dictionary:
 	var out := {}
-	var found: Variant = personality_of.call(witness) if personality_of.is_valid() else null
+	var hook := personality_of if personality_of.is_valid() else _fallback_personality_of
+	var found: Variant = hook.call(witness) if hook.is_valid() else null
 	if found is BustlePersonality:
 		for slider: StringName in BustlePersonality.SLIDERS:
 			out[slider] = (found as BustlePersonality).slider(slider)
