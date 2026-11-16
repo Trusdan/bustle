@@ -1,0 +1,3 @@
+# Godot's cache, and the addon copied in by tools/example.sh (not committed: the one copy is addons/bustle/).
+/.godot/
+/addons/
