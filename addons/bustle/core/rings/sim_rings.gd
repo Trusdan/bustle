@@ -138,10 +138,12 @@ func tick(delta: float) -> void:
 	var full_usec := 0
 	var light_usec := 0
 	var offscreen_usec := 0
-	# The OFF_SCREEN interval and the catch-up cap in intervals, read again after anything that runs
-	# host code (a think, a backlog summary), which could change the config.
+	# The OFF_SCREEN interval and the catch-up cap in intervals. Host code (a think, a backlog
+	# summary) could change the config, so after any it runs they are read again before the next
+	# OFF_SCREEN agent uses them.
 	var interval := maxi(config.offscreen_interval_game_minutes, 1)
 	var kept := maxi(config.catch_up_cap_game_days, 0) * 1440 / interval
+	var stale := false
 	for id: StringName in ids:
 		var found: Variant = _agents.get(id)
 		if found == null or (found as Dictionary).is_empty():
@@ -151,6 +153,10 @@ func tick(delta: float) -> void:
 		var ring: int = entry["ring"]
 		var started := Time.get_ticks_usec()
 		if ring == Ring.OFF_SCREEN:
+			if stale:
+				interval = maxi(config.offscreen_interval_game_minutes, 1)
+				kept = maxi(config.catch_up_cap_game_days, 0) * 1440 / interval
+				stale = false
 			var last := state.last_update_minute
 			if last < 0:
 				last = now - _phase(id)
@@ -164,8 +170,7 @@ func tick(delta: float) -> void:
 			if now - last >= interval:
 				state.last_update_minute += interval
 				_think(state, Ring.OFF_SCREEN, state.last_update_minute, interval * 60.0)
-				interval = maxi(config.offscreen_interval_game_minutes, 1)
-				kept = maxi(config.catch_up_cap_game_days, 0) * 1440 / interval
+				stale = true
 			offscreen_usec += Time.get_ticks_usec() - started
 			continue
 		var hz := config.full_brain_hz if ring == Ring.FULL else config.light_rate_hz
@@ -178,8 +183,7 @@ func tick(delta: float) -> void:
 			entry["think"] = 0.0
 			state.last_update_minute = now
 			_think(state, ring, now, wait)
-			interval = maxi(config.offscreen_interval_game_minutes, 1)
-			kept = maxi(config.catch_up_cap_game_days, 0) * 1440 / interval
+			stale = true
 		if ring == Ring.FULL:
 			full_usec += Time.get_ticks_usec() - started
 		else:
