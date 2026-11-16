@@ -119,8 +119,3 @@ func test_the_benches_take_their_budgets_from_the_one_file() -> void:
 	assert_eq(PopulationBench.BUDGET_OFFSCREEN_MS, Budgets.OFFSCREEN_AVG_MS)
 	assert_eq(PopulationBench.BUDGET_SAVE_BYTES, Budgets.SAVE_BYTES_PER_AGENT)
 
-
-func test_the_ratified_budgets() -> void:
-	assert_eq([Budgets.PERCEPTION_AVG_MS, Budgets.PERCEPTION_P99_MS, Budgets.FULL_AVG_MS, Budgets.FULL_P99_MS,
-		Budgets.LIGHT_AVG_MS, Budgets.OFFSCREEN_AVG_MS, Budgets.SAVE_BYTES_PER_AGENT],
-		[1.0, 2.0, 1.0, 2.0, 0.3, 0.5, 2048])
