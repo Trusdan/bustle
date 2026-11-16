@@ -13,6 +13,7 @@ import subprocess
 import sys
 import zlib
 
+sys.dont_write_bytecode = True  # no __pycache__ in the repository
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import zlib_deflate  # noqa: E402
 

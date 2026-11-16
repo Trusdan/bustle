@@ -64,6 +64,7 @@ zip_from_commit() {
 	git archive --format=tar "$commit" -- "$@" | "$python" -c '
 import io, sys, tarfile, time, zipfile
 zip_path, epoch = sys.argv[1], int(sys.argv[2])
+sys.dont_write_bytecode = True  # no __pycache__ in the repository
 sys.path.insert(0, sys.argv[3])
 import zlib_deflate
 # Every deflated entry goes through the pure-Python compressor instead of the system zlib.
