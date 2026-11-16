@@ -27,6 +27,8 @@ extends RefCounted
 ## thought, an aftermath only: it can start another state as soon as its mood is below the line
 ## again. This part only decides and records states; what an agent does in one comes later.
 
+const _Warn := preload("res://addons/bustle/core/warn_once.gd")
+
 ## [param agent] entered state [param id]. [param info]: see [method active].
 signal state_entered(agent: StringName, id: StringName, info: Dictionary)
 ## [param agent] left state [param id]: [param reason] is ended, recovered, replaced (high spirits
@@ -93,6 +95,7 @@ func update(now: int, mood: BustleMood, personality: BustlePersonality = null, c
 ## Which state [param mood], [param personality] and [param circumstances] would start now (see
 ## [method update]), or null. Doesn't change anything.
 func choose(mood: BustleMood, personality: BustlePersonality = null, circumstances: Dictionary = {}) -> BustleMentalStateDef:
+	_Warn.config("BustleMentalConfig", config.validate())
 	var value := mood.mood
 	if value < break_threshold(mood):
 		var best: BustleMentalStateDef = null

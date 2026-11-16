@@ -5,7 +5,7 @@ extends Resource
 ## One kind of posted, one-off work, as data: who may take it (a role, a skill level, tags), how
 ## much a given agent wants it (personality and circumstances), and what it involves (place,
 ## minutes, wage). [BustleJobBoard] reads it. Standing jobs are roles and schedules, not work types.
-## Bustle ships none; the host supplies every type. The numbers are experimental defaults.
+## Bustle ships none; the host supplies every type.
 
 ## Its id, chosen by the host.
 @export var id: StringName = &""

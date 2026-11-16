@@ -86,7 +86,7 @@ func tend(healer: StringName, patient: StringName) -> bool:
 ## The tend goal: band [constant BustleBands.PERSONAL], tags [code]tend[/code] and [code]work[/code],
 ## scored by [constant INPUT] in a straight line, running [constant ACTION] and then waiting
 ## [param minutes] game minutes, so care is asked for at most that often. A refused request waits
-## the same before the goal can be chosen again. Experimental defaults.
+## the same before the goal can be chosen again.
 static func goal_def(minutes: int = 30) -> BustleGoalDef:
 	var curve := Curve.new()
 	curve.add_point(Vector2(0, 0), 0, 1, Curve.TANGENT_LINEAR, Curve.TANGENT_LINEAR)

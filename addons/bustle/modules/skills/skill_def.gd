@@ -4,7 +4,6 @@ extends Resource
 
 ## One skill, as data: its id, its top level, how much practice each level costs, how it fades and
 ## how much it speeds and improves work. [BustleSkills] reads it. Bustle ships no skills; the host supplies every def.
-## The numbers here are experimental defaults.
 
 ## Its id, chosen by the host (for example [code]cooking[/code]).
 @export var id: StringName = &""

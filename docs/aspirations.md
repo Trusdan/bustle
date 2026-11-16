@@ -51,7 +51,7 @@ brain.score_boost = func(goal: StringName, option: StringName) -> float:
 - it must not already be fulfilled by the inputs;
 - it must not be active or cooling down.
 
-The host can also give one with `post_want(id, now)`. All wants together stay within `want_cap` (3). Both numbers are on `BustleAspirationConfig` and are experimental defaults.
+The host can also give one with `post_want(id, now)`. All wants together stay within `want_cap` (3). Both numbers are on `BustleAspirationConfig`, and a host can change them.
 
 **How wants end.**
 

@@ -24,7 +24,7 @@ extends Resource
 @export var full_brain_hz: float = 2.0
 ## How often a LIGHT agent's brain thinks (real hertz).
 @export var light_rate_hz: float = 1.0
-## How often an OFF_SCREEN agent's brain thinks (game minutes).
+## How often an OFF_SCREEN agent's brain thinks (game minutes). 0 or less counts as 1.
 @export var offscreen_interval_game_minutes: int = 60
 ## How often [method BustleSimRings.tick] re-sorts every agent when nothing else asks it to (real
 ## hertz): the most a ring change waits for, a dwell or delay included, is one period. 0: every tick.

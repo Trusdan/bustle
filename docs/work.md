@@ -25,7 +25,7 @@ The board never turns into employment: a standing job stays a role. Nothing on t
 | `minutes` | 60 | How long the work takes. |
 | `place` | none | Where it's done, unless a posting says otherwise. |
 
-The numbers are configurable experimental defaults. The score uses the same slider scale as ambitions and passions.
+Every number is configurable. The score uses the same slider scale as ambitions and passions.
 
 ## The board
 
@@ -49,7 +49,7 @@ The board only ranks work. It never leaves out work an agent dislikes; the agent
 
 1. **Advertise.** Each tick, before the brain ticks, call `board.advertise(seeker, senses)`. It adds one advertisement per posting the agent can claim, or only the one it holds. Each advertisement:
    - has the posting id as its option;
-   - relieves the need `job` by the posting's **appeal**, `clamp(appeal_base + score, 0, 1)` (`appeal_base` is 0.5, an experimental default);
+   - relieves the need `job` by the posting's **appeal**, `clamp(appeal_base + score, 0, 1)` (`appeal_base` is 0.5 by default);
    - carries the tag `job`, so a trait or mental state can scale work with `tag.job.mult`.
 
    It also sets the input `need.job` to 1. Work an agent dislikes has a low appeal, down to 0, so its other goals win.

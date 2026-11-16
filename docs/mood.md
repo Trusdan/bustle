@@ -117,7 +117,7 @@ A state that ends doesn't start another in the same update. At the next update, 
   - With it off, or with the agent's own `enabled` false, no state starts and an active one ends (`disabled`, without catharsis).
 - **Saving:** `export_state()` and `import_state(saved)`. Import refuses an unknown state, a wrong kind or tier, or an end that isn't after the start, without changing anything.
 
-The numbers are configurable experimental defaults, not tuning.
+Every number is configurable.
 
 ### Behaviour
 

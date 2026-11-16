@@ -3,19 +3,21 @@ class_name BustleHealthConfig
 extends Resource
 
 ## What the health behaviour does with the host's readings: the capacity effects on modifiers, the
-## thoughts, and what a downed agent may not choose. [method defaults] gives experimental values.
+## thoughts, and what a downed agent may not choose. A new resource starts empty: no effects and no
+## thoughts, so health changes nothing until the host adds some. [method defaults] gives Bustle's
+## default config, which [BustleHealthBehaviour] uses when it is given none.
 
 ## The capacity → modifier effects. Every capacity named here also writes
-## [code]capacity.<name>[/code] (base 1) as its clamped amount.
+## [code]capacity.<name>[/code] (base 1) as its clamped amount. Empty in a new resource.
 @export var effects: Array[BustleHealthEffect] = []
-## The pain and tag thoughts.
+## The pain and tag thoughts. Empty in a new resource.
 @export var thoughts: Array[BustleHealthThought] = []
 ## While downed ([method BustleHealthPort.is_incapacitated]), a goal whose id or tags, or an option
 ## whose advertisement tags, include any of these is not chosen.
 @export var downed_blocks: Array[StringName] = [&"work", &"travel"]
 
 
-## Experimental defaults:
+## The config [BustleHealthBehaviour] uses when it is given none:
 ## [br]- [code]moving[/code] scales [code]move.speed[/code], [code]manipulation[/code] scales
 ## [code]work.speed[/code], and [code]consciousness[/code] scales both, each in a straight line to
 ## 0 at no capacity;

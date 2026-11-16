@@ -52,7 +52,7 @@ The ports it reads: `roles` and `skills` for the gates, `skills` for practice an
 var appeal_base: float = 0.5
 ```
 
-The appeal of a posting an agent scores 0 for (see `appeal()`). An experimental default.
+The appeal of a posting an agent scores 0 for (see `appeal()`).
 
 ## Methods
 

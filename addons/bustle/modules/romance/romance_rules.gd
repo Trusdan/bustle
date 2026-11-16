@@ -4,7 +4,7 @@ extends Resource
 
 ## The lines of the courtship ladder, for [BustleRomance]. Opinions are 0 to 100 and compatibility
 ## -1 to 1 (see [BustleCompatibility]). Each release line sits below its forming line, so a status
-## doesn't flicker. The numbers are experimental defaults.
+## doesn't flicker.
 
 ## Both opinions at least this, with [member courting_compat], start courting.
 @export var courting_opinion: int = 70

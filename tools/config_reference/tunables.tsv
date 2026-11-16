@@ -1,0 +1,55 @@
+# Runtime tunables: public variables (not @export) on runtime classes that change behaviour, for the
+# second section of docs/config.md. One "Class.var<TAB>range" per line, or "Class.var<TAB>skip: why"
+# for a public variable of a listed class that isn't a tunable (state, wiring or a seed). Every
+# number, bool, name or list of those on a listed class must be here, either way.
+BustleSkills.passion_min_score	any finite (each slider adds weight × -0.5 to 0.5); unchecked
+BustleSkills.max_derived_passions	0 or more; clamped
+BustleCareers.mood_weight	0 or more; unchecked (weights used summing to 0 or less give performance 0)
+BustleCareers.skill_weight	0 or more; unchecked
+BustleCareers.attendance_weight	0 or more; unchecked
+BustleCareers.skill_full	above 0 (0 or less: every skill counts as full); unchecked
+BustleCareers.late_credit	0 to 1; unchecked
+BustleCareers.neutral_mood	0 to 1; unchecked
+BustleConversation.turns	0 or more; clamped
+BustleConversation.turn_minutes	0 or more; clamped
+BustleConversation.start_chance	0 to 1; clamped (with the mood term)
+BustleConversation.start_mood_scale	0 to 1; unchecked (the factor is clamped at 0)
+BustleConversation.curt_mood_scale	0 or more; unchecked
+BustleConversation.opinion_weight	0 or more; unchecked (each weight is clamped at 0)
+BustleComfort.low_mood	the mood range (0 to 100 by default); 0 or less: no friend needs comforting by mood
+BustleComfort.low_state_urgency	0 to 1; clamped
+BustleComfort.kinds	—
+BustleComfort.need	—
+BustleComfort.tags	—
+BustleSocialInteractions.pair_cooldown_minutes	0 or more; clamped
+BustleSocialInteractions.agent_cooldown_minutes	0 or more; clamped
+BustleSocialInteractions.world_seed	skip: a seed, set by the host
+BustleSociety.lock_reach	0 or more metres; unchecked
+BustleSociety.world_seed	skip: a seed, set by the host
+BustleSociety.roster_version	skip: state
+BustleJobBoard.appeal_base	0 to 1; the appeal is clamped to 0 to 1
+BustleLeisure.need	—
+BustleLeisure.kinds	—
+BustleLeisure.tolerance_per_use	0 or more; clamped (non-finite: 0)
+BustleLeisure.tolerance_decay_per_day	0 or more; clamped (non-finite: 0)
+BustleLeisure.boredom_threshold	0 to 1; clamped (non-finite: 1)
+BustleChoiceKeeper.momentum	1 or more (below 1 penalises the current choice); unchecked
+BustleChoiceKeeper.goal_id	skip: state
+BustleChoiceKeeper.option_id	skip: state
+BustleChoiceKeeper.band	skip: state
+BustleChoiceKeeper.since_minutes	skip: state
+BustleChoiceKeeper.cooldowns	skip: state
+BustleChoiceKeeper.failed_at	skip: state
+BustleCrimeWatch.authority_role	—
+BustleCrimeWatch.instant	—
+BustleCrimeWatch.travel_gear	—
+BustleWitnessJudge.authority_role	—
+BustleFindPerson.min_confidence	0 to 1; unchecked
+BustleFindPerson.cooldown_minutes	0 or more; clamped
+BustleCrime.enabled	—
+BustleCrime.exempt	—
+BustleAmbitions.enabled	—
+BustleAmbitions.pin	—
+BustleMentalState.enabled	—
+BustleAmbitions.agent_id	skip: wiring, set by the constructor
+BustleMentalState.agent_id	skip: wiring, set by the constructor

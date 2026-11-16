@@ -28,7 +28,7 @@ Only the host puts an agent on a track. A new holder of a role is not enrolled a
 | `off_site` | **true** | The agent is away while it attends the career block. Set it to false for a track worked on site. |
 | `ranks` | | `BustleCareerRank`s, lowest first. |
 
-`BustleCareerRank`, with experimental defaults:
+`BustleCareerRank`, with its defaults:
 
 | Field | Default | Meaning |
 | --- | --- | --- |
@@ -62,7 +62,7 @@ performance = (mood_weight × mood + skill_weight × skill + attendance_weight �
 | skill | The track's skill level now ÷ `skill_full` (10), at most 1. Left out for a track with no skill. | `skill_weight` 0.3 |
 | attendance | The day's career blocks: (on time + `late_credit` × late) ÷ blocks, with `late_credit` 0.5 and missed counting 0 (from `BustleSchedule.report`). | `attendance_weight` 0.3 |
 
-All of these are properties of `BustleCareers` and configurable experimental defaults. For example, at skill 5 and on time every day, mood 90 scores `0.4 × 0.9 + 0.3 × 0.5 + 0.3 × 1 = 0.81`, and mood 20 scores 0.28 less (0.53). So low mood lowers performance linearly, by `mood_weight` per unit of mood range.
+All of these are configurable properties of `BustleCareers`. For example, at skill 5 and on time every day, mood 90 scores `0.4 × 0.9 + 0.3 × 0.5 + 0.3 × 1 = 0.81`, and mood 20 scores 0.28 less (0.53). So low mood lowers performance linearly, by `mood_weight` per unit of mood range.
 
 `performance(id)` is the mean of the current window so far.
 

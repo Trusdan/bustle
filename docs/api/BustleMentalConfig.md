@@ -213,3 +213,11 @@ func catharsis_def() -> BustleThoughtDef
 ```
 
 The catharsis thought, for [BustleMood](BustleMood.md): a host passes it with its other thought defs when it loads a mood.
+
+### `validate`
+
+```gdscript
+func validate() -> String
+```
+
+Why the lines are out of order, or empty: `extreme_fraction` above `major_fraction`, an exit line above its entry line (`high_spirits_exit` above `high_spirits_above`, `inspired_exit` above `inspired_above`), or a negative `recover_margin` (a low state's exit below its entry). Several problems are joined with `"; "`. Mental states warn once about each and use the values as they are.

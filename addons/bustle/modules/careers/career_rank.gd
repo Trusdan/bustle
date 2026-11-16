@@ -4,7 +4,7 @@ extends Resource
 
 ## One rank of a career track, as data: its id, the wage a career block earns at it, the skill
 ## level an agent needs to hold it, and how it is reviewed. [BustleCareerDef] lists them lowest
-## first. The review numbers are experimental defaults.
+## first.
 
 ## Its id, unique in its track.
 @export var id: StringName = &""

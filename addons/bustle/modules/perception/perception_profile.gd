@@ -48,3 +48,12 @@ enum SightLight {
 ## How many times per second a perceiver with this profile senses (throttling; 0 or less: every
 ## frame).
 @export var perception_hz: float = 10.0
+
+
+## Why the thresholds are out of order, or empty: [member suspicious_at] above [member alert_at].
+## The detection meter warns once about it and uses the values as they are.
+## @experimental: Added before 1.0; it may be frozen in a later minor release.
+func validate() -> String:
+	if suspicious_at > alert_at:
+		return "suspicious_at is above alert_at"
+	return ""

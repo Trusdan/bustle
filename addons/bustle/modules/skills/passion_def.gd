@@ -4,7 +4,7 @@ extends Resource
 
 ## A passion for one skill, as data: how much faster an agent with it learns, which personality
 ## sliders make an agent take it up when it has no passion assigned, and an optional thought held
-## while it does that skill's work. [BustleSkills] reads it. The numbers are experimental defaults.
+## while it does that skill's work. [BustleSkills] reads it.
 
 ## The skill it is a passion for; a [BustleSkillDef] with this id must be installed first.
 @export var skill: StringName = &""

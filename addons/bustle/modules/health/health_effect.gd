@@ -4,7 +4,7 @@ extends Resource
 
 ## How one host capacity scales one modifier key: at full capacity the key is untouched, and below
 ## it the key is multiplied by [code]at_zero + (1 - at_zero) × capacity^power[/code]. Several effects
-## on one key multiply together. Experimental defaults are in [method BustleHealthConfig.defaults].
+## on one key multiply together. Bustle's defaults are in [method BustleHealthConfig.defaults].
 
 ## The capacity it reads ([method BustleHealthPort.capacity]).
 @export var capacity: StringName = &""

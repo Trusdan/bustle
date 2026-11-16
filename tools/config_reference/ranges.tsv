@@ -13,13 +13,13 @@ BustleMoodConfig.max_mood	any finite (non-finite: 100); swapped with min_mood if
 BustleMentalStateDef.weights	slider ids from BustlePersonality; any finite weight; checked
 BustleMentalStateDef.duration_hours	above 0; checked
 BustleMentalConfig.break_threshold	the mood range (0 to 100 by default); unchecked
-BustleMentalConfig.major_fraction	0 to 1, above extreme_fraction; unchecked
-BustleMentalConfig.extreme_fraction	0 to 1, below major_fraction; unchecked
-BustleMentalConfig.recover_margin	0 or more; unchecked
-BustleMentalConfig.high_spirits_above	the mood range, above high_spirits_exit; unchecked
-BustleMentalConfig.high_spirits_exit	the mood range, below high_spirits_above; unchecked
-BustleMentalConfig.inspired_above	the mood range, above inspired_exit; unchecked
-BustleMentalConfig.inspired_exit	the mood range, below inspired_above; unchecked
+BustleMentalConfig.major_fraction	0 to 1, at least extreme_fraction; warned
+BustleMentalConfig.extreme_fraction	0 to 1, at most major_fraction; warned
+BustleMentalConfig.recover_margin	0 or more; warned
+BustleMentalConfig.high_spirits_above	the mood range, at least high_spirits_exit; warned
+BustleMentalConfig.high_spirits_exit	the mood range, at most high_spirits_above; warned
+BustleMentalConfig.inspired_above	the mood range, at least inspired_exit; warned
+BustleMentalConfig.inspired_exit	the mood range, at most inspired_above; warned
 BustleMentalConfig.inspired_slider	0 to 100 (the slider scale); unchecked
 BustleMentalConfig.dislike_line	0 to 100 (the opinion scale); unchecked
 BustleMentalConfig.dislike_weight	0 or more; unchecked
@@ -38,7 +38,7 @@ BustleSimRingConfig.light_to_offscreen_delay_seconds	0 or more (0: no delay); un
 BustleSimRingConfig.no_pop_in_distance	0 or more metres; unchecked
 BustleSimRingConfig.full_brain_hz	above 0; clamped to at least 0.001
 BustleSimRingConfig.light_rate_hz	above 0; clamped to at least 0.001
-BustleSimRingConfig.offscreen_interval_game_minutes	1 or more; catch-up clamps it to 1, a live tick at 0 thinks every tick
+BustleSimRingConfig.offscreen_interval_game_minutes	1 or more; clamped to at least 1
 BustleSimRingConfig.resort_hz	0 or more (0 or less: every tick); unchecked
 BustleSimRingConfig.resort_move	0 or more metres; unchecked
 BustleSimRingConfig.catch_up_cap_game_days	0 or more; clamped
@@ -51,8 +51,8 @@ BustlePerceptionProfile.hearing_scale	0 or more; unchecked
 BustlePerceptionProfile.fill_rate_sight	0 or more per second; unchecked
 BustlePerceptionProfile.fill_rate_hearing	0 or more per second; unchecked
 BustlePerceptionProfile.decay_rate	0 or more per second; unchecked
-BustlePerceptionProfile.suspicious_at	0 to 1, below alert_at; unchecked
-BustlePerceptionProfile.alert_at	0 to 1, above suspicious_at; unchecked
+BustlePerceptionProfile.suspicious_at	0 to 1, at most alert_at; warned
+BustlePerceptionProfile.alert_at	0 to 1, at least suspicious_at; warned
 BustlePerceptionProfile.search_time	0 or more seconds; unchecked
 BustlePerceptionProfile.lose_track_time	0 or more seconds; unchecked
 BustlePerceptionProfile.perception_hz	0 or more (0 or less: every frame); unchecked
@@ -65,8 +65,8 @@ BustleStealthRules.skill_visibility_reduction_per_point	0 or more; unchecked (th
 BustleStealthRules.skill_visibility_floor	0 to 1; unchecked
 BustleStealthRules.skill_noise_reduction_per_point	0 or more; unchecked (the multiplier is clamped to skill_noise_floor to 1)
 BustleStealthRules.skill_noise_floor	0 to 1; unchecked
-BustleStealthRules.min_visibility	0 or more, at most max_visibility; unchecked
-BustleStealthRules.max_visibility	at least min_visibility; unchecked
+BustleStealthRules.min_visibility	0 or more, at most max_visibility; warned
+BustleStealthRules.max_visibility	at least min_visibility; warned
 BustleRomanceRules.courting_opinion	0 to 100, above courting_release; checked
 BustleRomanceRules.courting_compat	any finite (compatibility is -1 to 1); checked
 BustleRomanceRules.courting_release	0 to 100, below courting_opinion; checked
@@ -115,10 +115,10 @@ BustleSkillDef.decay_per_day	0 or more; checked
 BustleSkillDef.xp_curve	at least one entry, each above 0; checked
 BustleSkillDef.speed_add	any finite; checked
 BustleSkillDef.quality_add	any finite; checked
-BustleRelationshipRules.friend_at	0 to 100 (the opinion scale), above friend_release; unchecked
-BustleRelationshipRules.friend_release	0 to 100, below friend_at; unchecked
-BustleRelationshipRules.rival_at	0 to 100, below rival_release; unchecked
-BustleRelationshipRules.rival_release	0 to 100, above rival_at; unchecked
+BustleRelationshipRules.friend_at	0 to 100 (the opinion scale), at least friend_release; warned
+BustleRelationshipRules.friend_release	0 to 100, at most friend_at; warned
+BustleRelationshipRules.rival_at	0 to 100, at most rival_release; warned
+BustleRelationshipRules.rival_release	0 to 100, at least rival_at; warned
 BustleRelationshipRules.min_deeds	0 or more; unchecked
 BustleRelationshipRules.window_days	0 or more; clamped
 BustleMemoryConfig.capacity	1 or more; clamped to at least 1
@@ -160,8 +160,8 @@ BustleTraitDef.slider_offsets	slider ids from BustlePersonality; any finite (the
 BustleScheduleDef.week_length	1 or more; checked
 BustleScheduleDef.week_offset	any; taken modulo week_length
 BustleScheduleDef.late_minutes	0 or more; clamped
-BustleAspirationConfig.auto_wants	0 to want_cap; unchecked
-BustleAspirationConfig.want_cap	0 or more (0: no wants); unchecked
+BustleAspirationConfig.auto_wants	0 to want_cap; warned
+BustleAspirationConfig.want_cap	0 or more (0: no wants), at least auto_wants; warned
 BustleAspirationConfig.max_want_boost	1 or more; clamped to at least 1
 BustleWitnessConfig.kind_weights	relationship kind → any finite; unchecked
 BustleWitnessConfig.threshold	any finite; unchecked

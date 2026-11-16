@@ -61,9 +61,11 @@ var review_hook: Callable = Callable()
 ## Outcome → a timed thought (a [code]BustleThoughtDef[/code]) added to the agent's mood after a
 ## review with that outcome. Leave empty without the needs_mood module.
 var thoughts: Dictionary[StringName, Resource] = {}
-## The weights of the performance terms (see [method day_performance]). Experimental defaults.
+## The weight of the mood term in a day's performance (see [method day_performance]).
 var mood_weight: float = 0.4
+## The weight of the skill term in a day's performance.
 var skill_weight: float = 0.3
+## The weight of the attendance term in a day's performance.
 var attendance_weight: float = 0.3
 ## The skill level that counts as full marks.
 var skill_full: float = 10.0

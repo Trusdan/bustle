@@ -81,3 +81,12 @@ func skill_visibility_multiplier(skill: float) -> float:
 ## The multiplier stealth [param skill] leaves on noise: never below the floor, never above 1.
 func skill_noise_multiplier(skill: float) -> float:
 	return clampf(1.0 - maxf(skill, 0.0) * skill_noise_reduction_per_point, skill_noise_floor, 1.0)
+
+
+## Why the visibility bounds are out of order, or empty: [member min_visibility] above
+## [member max_visibility]. The visibility model warns once about it and uses the values as they are.
+## @experimental: Added before 1.0; it may be frozen in a later minor release.
+func validate() -> String:
+	if min_visibility > max_visibility:
+		return "min_visibility is above max_visibility"
+	return ""
