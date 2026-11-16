@@ -37,6 +37,43 @@ CI checks on every pull request that the build works and is reproducible:
 
 The published hashes of each release go in `tools/release/published.sha256` (one `<sha256>  <zip name>` line per zip).
 
+## The source archive
+
+GitHub's "Download ZIP" and the archive of a commit are a third way to get Bustle, and the one the Godot Asset Library installs from: it downloads the archive of the commit the listing names, not a release zip. So the release zips alone don't cover it. The `export-ignore` rules in `.gitattributes` leave only these in a source archive:
+
+- `addons/bustle/` and `addons/bustle_wyrd/`;
+- `LICENSE` and `README.md`.
+
+Everything else stays in the repository but out of the archive: `addons/wyrd/` (test-only), `addons/gut/`, `demo/`, `examples/`, `tests/`, `docs/`, `tools/`, `bench/`, the dev `project.godot` and the repository's own files. The rules ignore everything first and then let the four paths back in, so a new top-level file stays out until a rule names it.
+
+The release zips are built from the same commit with `git archive` too, and the rules leave their paths alone, so the zips don't change: v0.9.0, tagged before the rules, still gives its published hashes. `tools/check_wyrd_pin.sh` reads the vendored Wyrd from the commit's files instead of an archive, since the rules keep it out of archives.
+
+```bash
+tools/check_source_archive.sh                # HEAD's archive holds only the four paths, and all of them
+tools/check_source_archive.sh --load         # also open it as a fresh project, both plugins on and no Wyrd
+tools/test_check_source_archive.sh --load    # self-test: HEAD passes; v0.9.0 and a too-wide rule fail
+```
+
+CI runs the self-test with `--load` on Linux: the archive's addons must load in a fresh project's editor with no errors or warnings, the bridge included, since a user may install it without Wyrd.
+
+## The Asset Library listing
+
+The listing text is drafted in [asset-library/listing.md](asset-library/listing.md), one section per field of the submission form. **Submitting is a separate step that needs the maintainer's go-ahead;** a pull request only keeps the draft current.
+
+- **The icon** is `docs/asset-library/icon.svg`, made in this repository and MIT licensed like the rest. The Asset Library needs a direct link to a square PNG or JPEG of at least 128 × 128 pixels, so its 256 × 256 PNG render, `icon.png`, is committed next to it. After changing the SVG, render the PNG again and commit both; CI fails when they differ:
+
+  ```bash
+  godot --headless --path . -s res://tools/asset_library/render_icon.gd             # write icon.png
+  godot --headless --path . -s res://tools/asset_library/render_icon.gd -- --check  # fail unless it matches
+  ```
+
+  `plugin.cfg` has no icon setting in Godot 4 (its keys are the name, description, author, version and script), so the icon is referenced only by the listing. The folder holds a `.gdignore`, so Godot doesn't import the icon into the dev project.
+
+- **Submitting or updating the entry** (maintainer, after the release's tag and zips, steps 6 to 9):
+  1. Check the archive of the tag: `tools/check_source_archive.sh --ref vX.Y.Z --load`.
+  2. Fill in the *at submission* fields of the listing: the version, the tag's full commit hash as the download commit, and the icon URL pinned to that commit.
+  3. Submit, or edit the existing entry, on the Asset Library with the listing's text. One entry covers one Godot minor version.
+
 ## Before the tag (in a pull request)
 
 1. **CI is green on `main`:** `test`, `test-windows` and `test-core-only`.

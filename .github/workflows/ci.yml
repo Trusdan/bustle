@@ -219,6 +219,15 @@ jobs:
       - name: Release zips reproduce the published hashes
         run: tools/test_build_release.sh --require-classic
 
+      # docs/RELEASE.md: the source archive (what the Asset Library installs from) holds only the
+      # addons, LICENSE and README.md, and its addons load in a fresh project with no errors or
+      # warnings, the Wyrd bridge without Wyrd included. v0.9.0 and a too-wide rule must fail.
+      - name: Source archive holds only the addons
+        run: tools/test_check_source_archive.sh --load
+
+      - name: Asset Library icon matches its SVG
+        run: godot --headless --path . -s res://tools/asset_library/render_icon.gd -- --check
+
       # Opens the project in the editor (headless) with the Bustle and GUT plugins
       # enabled. Fails on a non-zero exit, on any ERROR / SCRIPT ERROR line, or if
       # project.godot is not in Godot's own format (the GUI editor would rewrite it).
