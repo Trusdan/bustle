@@ -5,7 +5,7 @@ If a task description and this file disagree, follow this file and say so in the
 
 ## What this project is
 
-Bustle is a **generic addon for living non-player populations in Godot 4** (4.7 or newer): the people of a place and their daily life. Any Godot game should be able to use it. It is MIT licensed.
+Bustle is a **generic addon for living non-player populations in Godot 4.7.x**: the people of a place and their daily life. Any Godot game should be able to use it. It is MIT licensed.
 
 - `addons/bustle/` is the addon. It depends **only on Godot**. Its folders: `core/` (plain data and rules, no nodes), `society/` (how members relate), `ports/` (interfaces the host implements), `debug/` (inspection tools) and `modules/` (optional features).
 - `addons/bustle_wyrd/` is an **optional** bridge to the Wyrd narrative engine, pinned to one exact Wyrd release. Nothing in `addons/bustle/` refers to it.
