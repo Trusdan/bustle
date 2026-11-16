@@ -22,6 +22,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Changed
 
+- `BustleDetectionMeter.import_state()` reads a saved number that is null, or any other value `float()` can't convert (an array, a vector), as 0 with its one-time warning instead of a script error; `last_known` coordinates too, which now warn as well. Values it already read, numbers included, import as before.
 - `BustleWitnessJudge` falls back to `BustleCrime.personality_of` when its own `personality_of` is unset and a `BustleCrimeWatch` decides with it, so a host wires personalities once. An explicitly set judge hook still wins, and with neither set the sliders stay neutral.
 - `BustleCrimeWatch.notice_losses()` no longer finds a deed whose item the property port shows back with its owner: the deed closes quietly as recovered (`recovered_at` in its record, only on such a deed; no `deed_found`, decision or report) and leaves `open_deeds()`. An item still with the thief, passed on or gone is found as before. Saves keep the mark, and older saves load unchanged.
 - Perception and OFF_SCREEN ticking cost less per frame: the senses work out each pair's distance and sight cone once, read each target once and make no objects per pair; the component sync reads one transform per perceiver; the ring loop makes no dictionary or array per agent and skips the backlog check that can't act. What they decide, save and emit, and the order agents tick in, are unchanged: new tests compare exact records with the code before the change.
