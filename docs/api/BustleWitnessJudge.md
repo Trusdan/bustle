@@ -100,7 +100,7 @@ The role a report goes to (for the standing term).
 var personality_of: Callable = Callable()
 ```
 
-(id) → that agent's [BustlePersonality](BustlePersonality.md), or null (neutral sliders).
+(id) → that agent's [BustlePersonality](BustlePersonality.md), or null (neutral sliders). Empty: when a [BustleCrimeWatch](BustleCrimeWatch.md) decides with this judge, its crime's `BustleCrime.personality_of`, so a host wires personalities once; otherwise neutral sliders. Set, it wins.
 
 ### `fear_of`
 
