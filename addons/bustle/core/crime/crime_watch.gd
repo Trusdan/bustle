@@ -116,7 +116,9 @@ func _init(p_crime: BustleCrime = null) -> void:
 ## Record [param id] (a copy): [code]{id, thief, owner_id, item, place, at, witnesses, known_by,
 ## decisions, reporters, deed, found_at}[/code]. [code]deed[/code] is true when nobody witnessed
 ## it; [code]decisions[/code] is agent → outcome; [code]found_at[/code] is the minute its owner
-## found it, or -1. Empty when unknown.
+## found it, or -1. A deed whose item was back with its owner when the owner looked
+## ([method notice_losses]) also has [code]recovered_at[/code], that minute; no other record has
+## it. Empty when unknown.
 func record(id: int) -> Dictionary:
 	return _records[id].duplicate(true) if _records.has(id) else {}
 
@@ -129,11 +131,12 @@ func records() -> Array[Dictionary]:
 	return out
 
 
-## The deeds nobody has found yet, by id: the traces the host's law can follow.
+## The deeds nobody has found yet, by id: the traces the host's law can follow. A deed closed as
+## recovered ([method notice_losses]) isn't open.
 func open_deeds() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: int in _sorted_ids():
-		if _records[id]["deed"] and int(_records[id]["found_at"]) < 0:
+		if _records[id]["deed"] and int(_records[id]["found_at"]) < 0 and not _records[id].has("recovered_at"):
 			out.append(record(id))
 	return out
 
@@ -179,12 +182,20 @@ func stolen_goods_of(agent: StringName) -> Array[Dictionary]:
 ## and nobody saw go: each such deed is found, the owner knows of it and remembers the item there,
 ## [signal deed_found] is emitted, and the owner decides what to do (not knowing the thief).
 ## Returns the record ids found.
+## [br][br]
+## A deed whose item the property port shows back with its owner ([method BustlePropertyPort.owner_of])
+## isn't found: nothing is missing. It closes quietly as recovered instead ([code]recovered_at[/code]
+## in its record is [param now]): no signal, no memory, no decision, and it's no longer open. An
+## item still with the thief, passed on to someone else or gone is missing, and its deed is found.
 func notice_losses(owner_id: StringName, place: StringName, now: int) -> Array[int]:
 	var found: Array[int] = []
 	for id: int in _sorted_ids():
 		var row := _records[id]
-		if not row["deed"] or int(row["found_at"]) >= 0 or StringName(row["owner_id"]) != owner_id \
-				or StringName(row["place"]) != place:
+		if not row["deed"] or int(row["found_at"]) >= 0 or row.has("recovered_at") \
+				or StringName(row["owner_id"]) != owner_id or StringName(row["place"]) != place:
+			continue
+		if crime.society.ports.property.owner_of(StringName(row["item"])) == owner_id:
+			row["recovered_at"] = now
 			continue
 		row["found_at"] = now
 		_learn(row, owner_id)
@@ -481,5 +492,9 @@ static func _valid_record(row: Variant) -> bool:
 		if not agent is String or not BustleWitnessJudge.OUTCOMES.has(StringName(str(row["decisions"][agent]))) \
 				or not row["decisions"][agent] is String:
 			return false
+	# recovered_at is only on a deed closed as recovered, which was never found.
+	if row.has("recovered_at") and (not row["recovered_at"] is int or not row.get("deed") is bool
+			or not bool(row["deed"]) or not row.get("found_at") is int or int(row["found_at"]) >= 0):
+		return false
 	return row.get("id") is int and int(row["id"]) > 0 and row.get("at") is int and row.get("found_at") is int \
 		and row.get("deed") is bool and bool(row["deed"]) == (row["witnesses"] as Array).is_empty()

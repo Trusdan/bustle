@@ -56,7 +56,7 @@ The watch then finds witnesses as usual: the agents who perceived the theft, by 
 
 ## After a theft (`BustleCrimeWatch`)
 
-`BustleCrimeWatch.new(crime)` follows every `theft` and keeps a record of it: `{id, thief, owner_id, item, place, at, witnesses, known_by, decisions, reporters, deed, found_at}`. Every theft is witnessed and remembered, or it leaves a deed. Everyone who knows of it then decides what to do about it (see "What a witness does").
+`BustleCrimeWatch.new(crime)` follows every `theft` and keeps a record of it: `{id, thief, owner_id, item, place, at, witnesses, known_by, decisions, reporters, deed, found_at}`, plus `recovered_at` on a deed closed as recovered (below). Every theft is witnessed and remembered, or it leaves a deed. Everyone who knows of it then decides what to do about it (see "What a witness does").
 
 - **Witnesses.** An agent witnesses a theft only if `perceives(agent, thief, place)` says it perceived it. By default that's every other agent in the place who isn't incapacitated. There are no made-up witnesses.
   - With both defaults, a thief only steals where nobody can perceive it, so every theft is a deed.
@@ -68,11 +68,13 @@ The watch then finds witnesses as usual: the agents who perceived the theft, by 
   - decides what to do.
 - **Reports**, when a witness or owner decides to report, go to a role, `authority_role` (default `authority`), never to a named agent. `crime_reported(reporter, role, report)` carries the record as the reporter knows it, plus `reporter`, `role`, `authority` (the holder it reached), `source` and `reported_at`. A report only counts once it reaches the holder (see "Errands"). Who holds the role, and what follows a report, is the host's.
 - **Deeds.** A theft nobody perceived is a deed, an open trace:
-  - `open_deeds()` lists the ones not yet found.
+  - `open_deeds()` lists the ones not yet found or recovered.
   - `stolen_goods_of(agent)` lists the records of stolen goods an agent still owns, the evidence on it.
   - The host calls `notice_losses(owner_id, place, now)` when an owner is somewhere, for example each tick. It finds what was stolen from that owner there. The owner remembers the item where it was taken, `deed_found(finder, item, record)` is emitted, and the owner decides what to do. The owner doesn't know the thief, so it can't confront anyone, and any report has an empty `thief`.
+  - **An item back with its owner isn't a loss.** `notice_losses()` asks the property port who owns each item now (`owner_of(item)`). When it's the owner again (the host returned it, or the owner took it back), nothing is missing, so the deed isn't found: it closes quietly as recovered. `recovered_at` in its record is the minute the owner looked. Nothing is emitted, remembered, decided or reported, and the deed leaves `open_deeds()` for good. An item still with the thief, passed on to someone else or gone (eaten, say) is missing, and its deed is found as above. Bustle itself never returns goods, so this only matters to a host that does.
+  - *Why a mark, not a quiet `found_at`:* `found_at` means the owner found the item gone, which didn't happen. A separate mark keeps that true, and the record still shows the theft and that the goods came back. Only a recovered deed has `recovered_at`, so every other record, and every older save, is exactly as before.
 - **Questioning:** `question(agent, now)` gives what an agent can tell about each record it knows of: `{id, item, owner_id, place, at, thief, outcome}`. It names the thief only if the agent witnessed the theft and still remembers the thief in its memory, so a witness who stayed silent can still be asked, until it forgets.
-- **Saving:** `export_state()` and `import_state(saved)` (all or nothing).
+- **Saving:** `export_state()` and `import_state(saved)` (all or nothing). A recovered deed keeps its `recovered_at`; a save with one that isn't a whole minute, or on a record that isn't an unfound deed, is refused.
 
 ### What a witness does
 

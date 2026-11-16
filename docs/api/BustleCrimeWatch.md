@@ -239,7 +239,7 @@ func record(id: int) -> Dictionary
 ```
 
 Record `id` (a copy): `{id, thief, owner_id, item, place, at, witnesses, known_by,
-decisions, reporters, deed, found_at}`. `deed` is true when nobody witnessed it; `decisions` is agent → outcome; `found_at` is the minute its owner found it, or -1. Empty when unknown.
+decisions, reporters, deed, found_at}`. `deed` is true when nobody witnessed it; `decisions` is agent → outcome; `found_at` is the minute its owner found it, or -1. A deed whose item was back with its owner when the owner looked (`notice_losses()`) also has `recovered_at`, that minute; no other record has it. Empty when unknown.
 
 ### `records`
 
@@ -255,7 +255,7 @@ Every record, by id.
 func open_deeds() -> Dictionary[]
 ```
 
-The deeds nobody has found yet, by id: the traces the host's law can follow.
+The deeds nobody has found yet, by id: the traces the host's law can follow. A deed closed as recovered (`notice_losses()`) isn't open.
 
 ### `known_by`
 
@@ -288,6 +288,7 @@ func notice_losses(owner_id: StringName, place: StringName, now: int) -> int[]
 ```
 
 `owner_id`, at `place` at minute `now`, finds what was stolen from it there and nobody saw go: each such deed is found, the owner knows of it and remembers the item there, `deed_found` is emitted, and the owner decides what to do (not knowing the thief). Returns the record ids found.
+A deed whose item the property port shows back with its owner (`BustlePropertyPort.owner_of()`) isn't found: nothing is missing. It closes quietly as recovered instead (`recovered_at` in its record is `now`): no signal, no memory, no decision, and it's no longer open. An item still with the thief, passed on to someone else or gone is missing, and its deed is found.
 
 ### `errands_of`
 
