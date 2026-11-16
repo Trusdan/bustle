@@ -8,13 +8,20 @@
 # The files come from the commit itself (git archive), never the working tree, so local changes
 # and untracked files can't slip in. Entries are sorted by path, every entry has the commit's own
 # time and the same permissions, and the compression is fixed: the same commit gives byte-identical
-# zips. It refuses to build when the addon's and the bridge's versions disagree.
+# zips on any machine. It refuses to build when the addon's and the bridge's versions disagree.
 #
-#   tools/build_release.sh [--ref REF] [--out DIR] [--list] [--check]
-#     --ref    the commit to build (default HEAD)
-#     --out    where to write the zips (default build/release)
-#     --list   also print each zip's file list
-#     --check  build twice in fresh folders and fail unless both builds are byte-identical
+# The compression doesn't use the system's zlib, whose output depends on its build (classic zlib
+# and zlib-ng compress the same file to different bytes). tools/release/zlib_deflate.py, a pure-
+# Python port of classic zlib's level-9 deflate, writes every entry instead, so the bytes are
+# classic zlib's wherever it runs. Each zip is then read back with the system's zlib and checked.
+#
+#   tools/build_release.sh [--ref REF] [--out DIR] [--list] [--check] [--expect FILE]
+#     --ref     the commit to build (default HEAD)
+#     --out     where to write the zips (default build/release)
+#     --list    also print each zip's file list
+#     --check   build twice in fresh folders and fail unless both builds are byte-identical
+#     --expect  fail unless each zip's SHA-256 is the one FILE lists ("<sha256>  <zip name>"
+#               lines, as tools/release/published.sha256 holds for published releases)
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -22,15 +29,24 @@ ref="HEAD"
 out="build/release"
 list=0
 check=0
+expect=""
 while [[ $# -gt 0 ]]; do
 	case "$1" in
 		--ref) ref="$2"; shift 2 ;;
 		--out) out="$2"; shift 2 ;;
 		--list) list=1; shift ;;
 		--check) check=1; shift ;;
+		--expect) expect="$2"; shift 2 ;;
 		*) echo "unknown argument: $1" >&2; exit 2 ;;
 	esac
 done
+
+python="$(command -v python3 || command -v python || true)"
+if [[ -z "$python" ]]; then
+	echo "python3 is not on PATH" >&2
+	exit 1
+fi
+deflate_dir="$(pwd)/tools/release"
 
 commit="$(git rev-parse --verify "$ref^{commit}")"
 version="$(git show "$commit:addons/bustle/VERSION" | tr -d '[:space:]')"
@@ -45,9 +61,21 @@ epoch="$(git log -1 --format=%ct "$commit")"
 zip_from_commit() {
 	local zip="$1"
 	shift
-	git archive --format=tar "$commit" -- "$@" | python3 -c '
+	git archive --format=tar "$commit" -- "$@" | "$python" -c '
 import io, sys, tarfile, time, zipfile
 zip_path, epoch = sys.argv[1], int(sys.argv[2])
+sys.dont_write_bytecode = True  # no __pycache__ in the repository
+sys.path.insert(0, sys.argv[3])
+import zlib_deflate
+# Every deflated entry goes through the pure-Python compressor instead of the system zlib.
+if not hasattr(zipfile, "_get_compressor"):
+	sys.exit("this Python'"'"'s zipfile has no _get_compressor, so the compressor cannot be pinned")
+system_compressor = zipfile._get_compressor
+def pinned_compressor(compress_type, compresslevel=None):
+	if compress_type == zipfile.ZIP_DEFLATED and compresslevel == 9:
+		return zlib_deflate.Compressor()
+	return system_compressor(compress_type, compresslevel)
+zipfile._get_compressor = pinned_compressor
 stamp = time.gmtime(max(epoch, 315532800))[:6]  # zip times start in 1980
 files = {}
 with tarfile.open(fileobj=io.BytesIO(sys.stdin.buffer.read())) as tar:
@@ -61,7 +89,12 @@ with zipfile.ZipFile(zip_path, "w") as out:
 		info.create_system = 3
 		info.external_attr = 0o100644 << 16
 		out.writestr(info, files[name], compresslevel=9)
-' "$zip" "$epoch"
+# Read it back with the system zlib: every entry must decompress to the committed file.
+with zipfile.ZipFile(zip_path) as back:
+	for name in sorted(files):
+		if back.read(name) != files[name]:
+			sys.exit("%s: %s does not read back as committed" % (zip_path, name))
+' "$zip" "$epoch" "$deflate_dir"
 }
 
 build() {
@@ -75,7 +108,7 @@ build() {
 # The zips must hold only what docs/RELEASE.md lists.
 verify() {
 	local zip="$1" prefix="$2"
-	python3 -c '
+	"$python" -c '
 import sys, zipfile
 names = zipfile.ZipFile(sys.argv[1]).namelist()
 prefix = sys.argv[2]
@@ -89,10 +122,10 @@ report() {
 	local dir="$1"
 	for name in "bustle-$version.zip" "bustle-wyrd-bridge-$version.zip"; do
 		local count
-		count="$(python3 -c 'import sys, zipfile; print(len(zipfile.ZipFile(sys.argv[1]).namelist()))' "$dir/$name")"
+		count="$("$python" -c 'import sys, zipfile; print(len(zipfile.ZipFile(sys.argv[1]).namelist()))' "$dir/$name")"
 		echo "$(sha256sum "$dir/$name" | cut -d" " -f1)  $name  ($count files)"
 		if [[ $list -eq 1 ]]; then
-			python3 -c 'import sys, zipfile; print("\n".join("    " + n for n in zipfile.ZipFile(sys.argv[1]).namelist()))' "$dir/$name"
+			"$python" -c 'import sys, zipfile; print("\n".join("    " + n for n in zipfile.ZipFile(sys.argv[1]).namelist()))' "$dir/$name"
 		fi
 	done
 }
@@ -102,6 +135,22 @@ build "$out"
 verify "$out/bustle-$version.zip" "addons/bustle/"
 verify "$out/bustle-wyrd-bridge-$version.zip" "addons/bustle_wyrd/"
 report "$out"
+
+if [[ -n "$expect" ]]; then
+	for name in "bustle-$version.zip" "bustle-wyrd-bridge-$version.zip"; do
+		want="$(awk -v n="$name" '$2 == n {print $1}' "$expect")"
+		got="$(sha256sum "$out/$name" | cut -d" " -f1)"
+		if [[ -z "$want" ]]; then
+			echo "$expect lists no hash for $name" >&2
+			exit 1
+		fi
+		if [[ "$got" != "$want" ]]; then
+			echo "$name is $got, but $expect expects $want: this build does not reproduce it" >&2
+			exit 1
+		fi
+	done
+	echo "Both zips match $expect."
+fi
 
 if [[ $check -eq 1 ]]; then
 	again="$(mktemp -d)"
