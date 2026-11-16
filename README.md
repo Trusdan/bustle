@@ -13,7 +13,7 @@ A generic addon for living non-player populations in Godot: the people of a plac
 | `addons/bustle/` | The addon. Depends only on Godot. |
 | `addons/bustle/core/` | Plain data and rules with no nodes, tested headless. `needs/`: the needs engine ([docs/needs.md](docs/needs.md)). `affordances/`: smart objects ([docs/affordances.md](docs/affordances.md)). `schedules/`: daily routines ([docs/schedules.md](docs/schedules.md)). `personality/`: sliders and traits ([docs/personality.md](docs/personality.md)). `memory/`: memory and FindPerson ([docs/memory.md](docs/memory.md)). `conflict/`: fight, flee and fetch help ([docs/conflict.md](docs/conflict.md)). `crime/`: theft, witnesses and reporting ([docs/crime.md](docs/crime.md)). |
 | `addons/bustle/society/` | How the members of a population relate to each other. The built-in social store ([docs/social.md](docs/social.md)) and locks ([docs/locks.md](docs/locks.md)). |
-| `addons/bustle/ports/` | The interfaces a host project implements to connect Bustle to its world. |
+| `addons/bustle/ports/` | The interfaces a host project implements to connect Bustle to its world: each port's contract, a minimal implementation and common mistakes are in [docs/ports.md](docs/ports.md), and [docs/host-walkthrough.md](docs/host-walkthrough.md) connects the clock, world and roles from an empty project. |
 | `addons/bustle/debug/` | Tools for inspecting a running population. |
 | `addons/bustle/modules/` | Optional features, each usable on its own. `perception/`: senses for every actor ([docs/perception.md](docs/perception.md)). `needs_mood/`: mood, thoughts and mental states ([docs/mood.md](docs/mood.md)). `ambitions/`: long-term aims ([docs/ambitions.md](docs/ambitions.md)). |
 | `addons/bustle_wyrd/` | Optional bridge to the [Wyrd](https://github.com/Trusdan/wyrd) narrative engine, pinned to Wyrd 1.0.1. |
@@ -21,6 +21,7 @@ A generic addon for living non-player populations in Godot: the people of a plac
 | `addons/gut/` | Vendored [GUT](https://github.com/bitwes/Gut) 9.7.1, for the tests only. |
 | `demo/` | A small neutral demo: the house and colony scenes and a headless harness ([demo/README.md](demo/README.md)). |
 | `docs/api/` | The API reference, generated from the `##` doc comments. |
+| `docs/upgrading.md` | What to check or change when moving up a release, one section per release. |
 | `docs/config.md` | Every config field and project setting with its type, default, range and effect, generated; the review of the defaults is in [docs/defaults-review.md](docs/defaults-review.md). |
 
 ## Install
