@@ -5,13 +5,15 @@ extends SceneTree
 ## OFF_SCREEN agents (elsewhere), each with a small goal library, run for one game hour at 60 frames
 ## a second and 30× game speed (two real minutes). It times each ring's thinking per frame and
 ## reports the agent counts, the simulated time, the engine version and the raw timings (average
-## and 99th percentile) against the proposed budgets, and exits 1 when an average is over budget.
+## and 99th percentile) against the budgets (bench/perf_budgets.gd), and exits 1 when an average is over budget.
 ##   godot --headless --path . -s res://bench/rings_bench.gd [-- --light=40 --offscreen=200 --frames=7200]
 
+const Budgets := preload("res://bench/perf_budgets.gd")
+
 ## LIGHT: average milliseconds per frame.
-const BUDGET_LIGHT_MS := 0.3
+const BUDGET_LIGHT_MS := Budgets.LIGHT_AVG_MS
 ## OFF_SCREEN: average milliseconds per frame, amortised over the game hour.
-const BUDGET_OFFSCREEN_MS := 0.5
+const BUDGET_OFFSCREEN_MS := Budgets.OFFSCREEN_AVG_MS
 ## Game seconds per real second.
 const GAME_SPEED := 30.0
 

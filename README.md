@@ -41,6 +41,7 @@ tools/check_godot_range.sh  # check the supported Godot range in README.md and p
 tools/check_source_archive.sh # check that a source archive holds only the addons, LICENSE and README.md
 tools/check_license_copies.sh # check the plugin folders' LICENSE copies against the root LICENSE
 godot --headless --path . -s res://bench/perception_bench.gd  # perception performance (docs/perf.md)
+tools/perf_bench.sh         # the three timing benches and the performance gate (docs/perf.md)
 ```
 
 CI runs the GUT suite with the pinned Godot (`GODOT_TAG` in `tools/pins.env`) on Linux (Ubuntu) and Windows, checks that the supported Godot range above matches that pin (`tools/check_godot_range.sh`), runs the core alone with the bridge and Wyrd removed, checks the API docs and that the editor loads the project cleanly, and checks every change against a private deny-list of terms.

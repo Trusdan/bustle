@@ -8,7 +8,7 @@ extends SceneTree
 ##
 ## [b]Budgets.[/b] One game hour at 60 frames a second and 30× game speed: it times each ring's
 ## thinking per frame (FULL is the brains and their sequences) and reports the averages and 99th
-## percentiles against the proposed budgets, the whole frame, the static memory the population
+## percentiles against the budgets (bench/perf_budgets.gd), the whole frame, the static memory the population
 ## takes, and the save size per agent. Numbers from a shared CI runner are a report, not a claim
 ## about any machine.
 ##
@@ -28,15 +28,17 @@ extends SceneTree
 
 const StuckWatch := preload("res://demo/harness/demo_stuck_watch.gd")
 
+const Budgets := preload("res://bench/perf_budgets.gd")
+
 ## FULL brains and sequences: average and 99th percentile milliseconds per frame.
-const BUDGET_FULL_MS := 1.0
-const BUDGET_FULL_P99_MS := 2.0
+const BUDGET_FULL_MS := Budgets.FULL_AVG_MS
+const BUDGET_FULL_P99_MS := Budgets.FULL_P99_MS
 ## LIGHT: average milliseconds per frame.
-const BUDGET_LIGHT_MS := 0.3
+const BUDGET_LIGHT_MS := Budgets.LIGHT_AVG_MS
 ## OFF_SCREEN: average milliseconds per frame, amortised over the game hour.
-const BUDGET_OFFSCREEN_MS := 0.5
+const BUDGET_OFFSCREEN_MS := Budgets.OFFSCREEN_AVG_MS
 ## Save size: bytes per agent.
-const BUDGET_SAVE_BYTES := 2048
+const BUDGET_SAVE_BYTES := Budgets.SAVE_BYTES_PER_AGENT
 ## Game seconds per real second in the budget run.
 const GAME_SPEED := 30.0
 ## The needs, each with its own rise per game minute.
