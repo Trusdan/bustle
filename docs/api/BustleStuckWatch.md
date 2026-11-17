@@ -84,7 +84,7 @@ Notes what `agent` did over the `minutes` ending at game minute `now`. `seen` ho
 func observe_agent(state: BustleNpcState, now: int, minutes: int, seen: Dictionary = {}) -> Dictionary
 ```
 
-`observe()` for `state`, filling in what the state shows: the goal and step from its brain, a failure only when the brain thought again (so watching more often than it thinks doesn't count one failure twice), and its position (FULL or LIGHT, when known) or its area (OFF_SCREEN). `travel_hook` can make it legitimate. For an OFF_SCREEN agent, catch-up still advancing within `ring_config`'s off-screen interval is legitimate unless `check_offscreen_progress`, and `offscreen_progress_hook` can report progress. Anything in `seen` (the keys `observe()` takes) is used as given, and `legit` or `progress` there adds to what the watch finds. Refuses a null `state`: it warns once and returns an empty change.
+`observe()` for `state`, filling in what the state shows: the goal and step from its brain, a failure only when the brain thought again, and its position (FULL or LIGHT, when known) or its area (OFF_SCREEN). An observation of the same intent as last time neither adds to nor resets the failure run, so a failure loop is found however often the agent is watched between thinks. `travel_hook` can make it legitimate. For an OFF_SCREEN agent, catch-up still advancing within `ring_config`'s off-screen interval is legitimate unless `check_offscreen_progress`, and `offscreen_progress_hook` can report progress. Anything in `seen` (the keys `observe()` takes) is used as given, and `legit` or `progress` there adds to what the watch finds. Refuses a null `state`: it warns once and returns an empty change.
 
 ### `is_stuck`
 

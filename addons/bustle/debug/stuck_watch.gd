@@ -66,6 +66,54 @@ var _intents: Dictionary[StringName, BustleIntent] = {}
 ## may be left out. Returns a change to report: empty, or
 ## [code]{event: "stuck", reason, since}[/code] or [code]{event: "unstuck", reason, minutes}[/code].
 func observe(agent: StringName, now: int, minutes: int, seen: Dictionary) -> Dictionary:
+	return _observe(agent, now, minutes, seen, false)
+
+
+## [method observe] for [param state], filling in what the state shows: the goal and step from its
+## brain, a failure only when the brain thought again, and its position (FULL or LIGHT, when known)
+## or its area (OFF_SCREEN). An observation of the same intent as last time neither adds to nor
+## resets the failure run, so a failure loop is found however often the agent is watched between
+## thinks. [member travel_hook] can make it legitimate. For an OFF_SCREEN agent, catch-up
+## still advancing within [member ring_config]'s off-screen interval is legitimate unless
+## [member check_offscreen_progress], and [member offscreen_progress_hook] can report progress.
+## Anything in [param seen] (the keys [method observe] takes) is used as given, and
+## [code]legit[/code] or [code]progress[/code] there adds to what the watch finds.
+## Refuses a null [param state]: it warns once and returns an empty change.
+func observe_agent(state: BustleNpcState, now: int, minutes: int, seen: Dictionary = {}) -> Dictionary:
+	if state == null:
+		_Warn.warn("BustleStuckWatch.no_agent", "BustleStuckWatch: observe_agent() got no agent; nothing was observed")
+		return {}
+	var out := seen.duplicate()
+	var brain := state.brain
+	var intent: BustleIntent = brain.last_intent if brain != null else null
+	if not out.has("goal"):
+		out["goal"] = intent.goal_id if intent != null else &""
+	if not out.has("step"):
+		out["step"] = brain.runner.step_index if brain != null and brain.runner != null else 0
+	# The same intent as last time: no new think, so the failure run stays as it is.
+	var same_think := not out.has("failed") and _intents.has(state.id) and _intents[state.id] == intent
+	if not out.has("failed"):
+		out["failed"] = intent != null and not intent.failure.is_empty() and not same_think
+	_intents[state.id] = intent
+	var legit := bool(out.get("legit", false))
+	if travel_hook.is_valid():
+		legit = _Warn.as_bool(travel_hook.call(state.id, now), false, "BustleStuckWatch.travel_hook") or legit
+	if state.sim_ring == BustleSimRings.Ring.OFF_SCREEN:
+		if not out.has("place"):
+			out["place"] = state.area
+		if not check_offscreen_progress:
+			legit = legit or (state.last_update_minute >= 0 and now - state.last_update_minute <= _offscreen_interval())
+		if offscreen_progress_hook.is_valid() and _Warn.as_bool(offscreen_progress_hook.call(state.id, now), false,
+				"BustleStuckWatch.offscreen_progress_hook"):
+			out["progress"] = true
+	elif not out.has("position") and state.has_position:
+		out["position"] = state.position
+	out["legit"] = legit
+	return _observe(state.id, now, minutes, out, same_think)
+
+
+# observe()'s rule. With keep_fails, the failure run is left as it was (no new think was seen).
+func _observe(agent: StringName, now: int, minutes: int, seen: Dictionary, keep_fails: bool) -> Dictionary:
 	var row: Dictionary = _rows.get(agent, {})
 	if row.is_empty():
 		row = {"since": now, "still": 0, "anchor": seen.get("position", Vector3.ZERO), "place": seen.get("place", &""),
@@ -87,9 +135,10 @@ func observe(agent: StringName, now: int, minutes: int, seen: Dictionary) -> Dic
 		row["still"] = int(row["still"]) + minutes
 		row["longest"] = maxi(int(row["longest"]), int(row["still"]))
 	row["key"] = key
-	var goal := StringName(seen.get("goal", &""))
-	row["fails"] = (int(row["fails"]) + 1 if goal == row["fail_goal"] else 1) if bool(seen.get("failed", false)) else 0
-	row["fail_goal"] = goal if bool(seen.get("failed", false)) else &""
+	if not keep_fails:
+		var goal := StringName(seen.get("goal", &""))
+		row["fails"] = (int(row["fails"]) + 1 if goal == row["fail_goal"] else 1) if bool(seen.get("failed", false)) else 0
+		row["fail_goal"] = goal if bool(seen.get("failed", false)) else &""
 	var reason := ""
 	if bool(seen.get("state_overdue", false)):
 		reason = "state_overdue"
@@ -108,46 +157,6 @@ func observe(agent: StringName, now: int, minutes: int, seen: Dictionary) -> Dic
 		spell["minutes"] = now - int(spell["since"])
 		return {"event": "unstuck", "reason": row["reason"], "minutes": spell["minutes"]}
 	return {}
-
-
-## [method observe] for [param state], filling in what the state shows: the goal and step from its
-## brain, a failure only when the brain thought again (so watching more often than it thinks
-## doesn't count one failure twice), and its position (FULL or LIGHT, when known) or its area
-## (OFF_SCREEN). [member travel_hook] can make it legitimate. For an OFF_SCREEN agent, catch-up
-## still advancing within [member ring_config]'s off-screen interval is legitimate unless
-## [member check_offscreen_progress], and [member offscreen_progress_hook] can report progress.
-## Anything in [param seen] (the keys [method observe] takes) is used as given, and
-## [code]legit[/code] or [code]progress[/code] there adds to what the watch finds.
-## Refuses a null [param state]: it warns once and returns an empty change.
-func observe_agent(state: BustleNpcState, now: int, minutes: int, seen: Dictionary = {}) -> Dictionary:
-	if state == null:
-		_Warn.warn("BustleStuckWatch.no_agent", "BustleStuckWatch: observe_agent() got no agent; nothing was observed")
-		return {}
-	var out := seen.duplicate()
-	var brain := state.brain
-	var intent: BustleIntent = brain.last_intent if brain != null else null
-	if not out.has("goal"):
-		out["goal"] = intent.goal_id if intent != null else &""
-	if not out.has("step"):
-		out["step"] = brain.runner.step_index if brain != null and brain.runner != null else 0
-	if not out.has("failed"):
-		out["failed"] = intent != null and not intent.failure.is_empty() and _intents.get(state.id) != intent
-	_intents[state.id] = intent
-	var legit := bool(out.get("legit", false))
-	if travel_hook.is_valid():
-		legit = _Warn.as_bool(travel_hook.call(state.id, now), false, "BustleStuckWatch.travel_hook") or legit
-	if state.sim_ring == BustleSimRings.Ring.OFF_SCREEN:
-		if not out.has("place"):
-			out["place"] = state.area
-		if not check_offscreen_progress:
-			legit = legit or (state.last_update_minute >= 0 and now - state.last_update_minute <= _offscreen_interval())
-		if offscreen_progress_hook.is_valid() and _Warn.as_bool(offscreen_progress_hook.call(state.id, now), false,
-				"BustleStuckWatch.offscreen_progress_hook"):
-			out["progress"] = true
-	elif not out.has("position") and state.has_position:
-		out["position"] = state.position
-	out["legit"] = legit
-	return observe(state.id, now, minutes, out)
 
 
 ## True while [param agent] is stuck.

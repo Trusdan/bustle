@@ -163,6 +163,43 @@ func test_observe_agent_counts_one_failed_think_once() -> void:
 	assert_eq(watch.spells()[0]["reason"], "fail_loop")
 
 
+## Gives [param state] a new intent for [param goal] (failed when [param failed]) and watches it
+## [param times] times, [constant STEP] minutes apart from [param minute]. Returns the next minute.
+static func _think_and_watch(watch: BustleStuckWatch, state: BustleNpcState, goal: StringName, failed: bool,
+		times: int, minute: int) -> int:
+	_think(state, goal, failed)
+	for i: int in times:
+		watch.observe_agent(state, minute, STEP, {"legit": true})
+		minute += STEP
+	return minute
+
+
+func test_a_failed_think_watched_many_times_still_makes_a_loop_on_the_third() -> void:
+	for times: int in [2, 3, 5]:
+		var watch := BustleStuckWatch.new()
+		var state := _agent(&"a", BustleSimRings.Ring.FULL)
+		var minute := 0
+		for think: int in 2:
+			minute = _think_and_watch(watch, state, &"fetch", true, times, minute)
+		assert_false(watch.is_stuck(&"a"), "two failed thinks, each watched %d times" % times)
+		minute = _think_and_watch(watch, state, &"fetch", true, times, minute)
+		assert_true(watch.is_stuck(&"a"), "the third failed think in a row, each watched %d times" % times)
+		assert_eq(watch.spells().size(), 1, "one spell (%d)" % times)
+		assert_eq(watch.spells()[0]["reason"], "fail_loop")
+
+
+func test_a_successful_think_between_failures_still_breaks_the_run() -> void:
+	var watch := BustleStuckWatch.new()
+	var state := _agent(&"a", BustleSimRings.Ring.FULL)
+	var minute := 0
+	for failed: bool in [true, true, false, true, true]:
+		minute = _think_and_watch(watch, state, &"fetch", failed, 2, minute)
+	assert_false(watch.is_stuck(&"a"), "two failures, a success, then two more: no three in a row")
+	_think_and_watch(watch, state, &"fetch", true, 2, minute)
+	assert_true(watch.is_stuck(&"a"), "the third failure since the success is a loop")
+	assert_eq(watch.spells()[0]["reason"], "fail_loop")
+
+
 func test_observe_agent_uses_what_the_caller_saw_as_given() -> void:
 	var watch := BustleStuckWatch.new()
 	var state := _agent(&"a", BustleSimRings.Ring.LIGHT)
