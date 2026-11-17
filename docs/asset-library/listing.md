@@ -20,7 +20,7 @@ The form takes one Godot version per entry. Bustle supports Godot 4.7.x and CI t
 
 ## Version
 
-*At submission:* the release's version from `addons/bustle/VERSION`, for example `1.0.0`.
+1.0.0 (the release's version from `addons/bustle/VERSION`; check it against the tag at submission).
 
 ## Repository host
 
@@ -60,6 +60,8 @@ Optional modules, each switched on or off on its own: perception (sight, hearing
 The game connects Bustle to its world through small ports (the clock, the map, roles, combat, trade and others). A walkthrough, a guide to every port and a standalone example project are in the repository. A society saves and loads as plain data.
 
 Written in GDScript only, with static typing, no native code and no other addons required. An optional bridge to the Wyrd narrative engine is included in addons/bustle_wyrd; it does nothing unless Wyrd is installed and the bridge is set up, and can be left out.
+
+The public API is stable from 1.0: listed classes and methods are deprecated with a warning before they are removed, and removed only in a major release.
 
 Supports Godot 4.7. MIT licensed.
 ```

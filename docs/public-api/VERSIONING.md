@@ -3,7 +3,7 @@
 Bustle and its Wyrd bridge follow [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`). This page says what that promises, what counts as a breaking change, and how an API is retired.
 
 - **What it applies to:** the frozen public API in [PUBLIC_API.md](PUBLIC_API.md), with every symbol and signature in [public_api.json](public_api.json). Anything not listed there is internal (the page says how internal code is marked), and has no promise.
-- **When it applies:** in full from 1.0.0. Before 1.0 the check below already runs, so a breaking change to the listed surface has to be recorded in [deprecations.json](deprecations.json). It can't slip through unnoticed.
+- **When it applies:** in full from 1.0.0, the first stable release. The check below runs on every pull request, so a breaking change to the listed surface has to be recorded in [deprecations.json](deprecations.json) and can't slip through unnoticed.
 
 ## What each release may change
 
@@ -68,6 +68,7 @@ A signature change goes the same way: add the new form, deprecate the old one, a
 - It **passes** on new symbols, and notes that the manifest is behind the code.
 - CI also runs `tools/save_fixtures.sh --check`: the golden save fixtures of each release must be exactly what that tag writes, and `tests/save/test_save_fixtures.gd` loads every one into the current code ([saves.md](../saves.md)).
 - It **notes** a raised `STATE_VERSION` (or the society's `SCHEMA`) as a save-format change, so a reviewer can confirm that `import_state()` still reads the older shape.
+- It **notes** a new value of `BustleInfo.VERSION` (an `x.y.z` string) as a release, not an API change. Any other constant's new value is a signature change.
 
 ```bash
 tools/public_api.sh --check                   # against the committed manifest
@@ -80,6 +81,7 @@ tools/public_api.sh --write                   # record the current surface (refu
 - a covered removal in the same major, or one whose `since` was a major release, fails;
 - a covered signature change follows the same rule: it fails in the same major or when `since` was a major release, and passes in the next major;
 - a changed or dropped hook call fails, a covered one passes in the next major, and a first-recorded call is a note. Every frozen hook has a call.
+- a new release version in `BustleInfo.VERSION` is a note, while any other constant's new value, or a version that isn't `x.y.z`, still fails (`tests/api/test_public_api_release_version.gd`).
 
 ## Marking what isn't frozen
 
