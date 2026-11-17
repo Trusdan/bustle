@@ -366,7 +366,7 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleTradePort.export_state()` | `addons/bustle/ports/trade_port.gd` | The default's balances as plain data (ids → amounts). |
 | `BustleTradePort.import_state()` | `addons/bustle/ports/trade_port.gd` | Restores `export_state()`. |
 
-## Experimental classes (15)
+## Experimental classes (17)
 
 Usable, but not frozen: they may change in any minor release.
 
@@ -377,6 +377,8 @@ Usable, but not frozen: they may change in any minor release.
 | `BustleDebug` | `addons/bustle/debug/debug_gate.gd` | Development tool. The debug gate may gain or change switches along with the debug tools. |
 | `BustleDebugConsole` | `addons/bustle/debug/debug_console.gd` | Development tool. Its commands and their output may change in any minor release. |
 | `BustleDebugOverlay` | `addons/bustle/debug/debug_overlay.gd` | Development tool. What it draws may change in any minor release. |
+| `BustleFetchHealer` | `addons/bustle/modules/health/fetch_healer.gd` | Added after 1.0 for the health module. The urgency line, weights, reach and band are PROPOSED defaults, not tuning. |
+| `BustleFetchHealerAction` | `addons/bustle/modules/health/fetch_healer_action.gd` | Added after 1.0 for the health module. |
 | `BustleFindPerson` | `addons/bustle/core/memory/find_person.gd` | A search helper whose steps and hooks may still change; the guides document its current order. |
 | `BustleInspector` | `addons/bustle/debug/inspector.gd` | Development tool. The snapshot's keys follow the brain's internals and may change in any minor release. |
 | `BustleRestSick` | `addons/bustle/modules/health/rest_sick.gd` | Added after 1.0 for the health module. The tags, lines, weights and band are PROPOSED defaults, not tuning. |
@@ -388,7 +390,7 @@ Usable, but not frozen: they may change in any minor release.
 | `BustleUtilityScorer` | `addons/bustle/core/brain/utility_scorer.gd` | Internal to `BustleBrain`: hosts shape scores through goals, considerations and the brain's hooks. |
 | `BustleWitnessJudge` | `addons/bustle/core/crime/witness_judge.gd` | The default witness decision; its scoring terms may change. Hosts replace it with `BustleCrimeWatch.should_report`. |
 
-## Experimental members (10)
+## Experimental members (11)
 
 Members of frozen classes that are not frozen yet.
 
@@ -399,6 +401,7 @@ Members of frozen classes that are not frozen yet.
 | `BustleBrain.last_candidates` | Its type, `BustleCandidate`, is internal and may change in any minor release. |
 | `BustleCrimeWatch.judge` | Its type, `BustleWitnessJudge`, is internal and may change in any minor release. |
 | `BustleCrimeWatch.prune` | Added before 1.0; it may be frozen in a later minor release. |
+| `BustleFetchHelpAction.approach` | Added after 1.0, when fetching a healer started to reuse this rule. |
 | `BustleMentalConfig.validate` | Added before 1.0; it may be frozen in a later minor release. |
 | `BustleModifierSet.fill_context` | Its type, `BustleScoreContext`, is internal and may change in any minor release. |
 | `BustlePerceptionProfile.validate` | Added before 1.0; it may be frozen in a later minor release. |

@@ -27,6 +27,7 @@ A save whose `"version"` holds a Dictionary is read as data, not as a version. S
 | `BustleBrain` (inside the society's agents) | `"version"` | 1 | 1 | 1 | 1 |
 | `BustleDirector` | `"version"` | 1 | 1 | not present | 1 |
 | `BustleLifeStages` | `"version"` | 2 | 1, 2 (a 1 → 2 step) | not present | 2 |
+| `BustleFetchHealer` (experimental) | `"version"` | 1 | 1 | not present | not present |
 | `BustleAffordance`, `BustleAffordanceSet`, `BustleAmbitions`, `BustleAwareness`, `BustleConflict`, `BustleCrimeWatch`, `BustleDetectionMeter`, `BustleLeisure`, `BustleMemory`, `BustleMentalBehaviour`, `BustleMentalState`, `BustleMood`, `BustleNeedSet`, `BustlePersonality`, `BustlePropertyPort`, `BustleSchedule`, `BustleScheduleRoster`, `BustleSequenceRunner`, `BustleSocialInteractions`, `BustleSocialStore`, `BustleTradePort` | `"version"`, missing = 1 | 1 | 1 | 1 (no key) | 1 (no key) |
 | `BustleAspirations`, `BustleCareers`, `BustleEnvironmentPort`, `BustleJobBoard`, `BustleRomance`, `BustleRoomThoughts`, `BustleSkills` | `"version"`, missing = 1 | 1 | 1 | not present | 1 (no key) |
 

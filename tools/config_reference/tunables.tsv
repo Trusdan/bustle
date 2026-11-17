@@ -61,3 +61,8 @@ BustleRestSick.capacity_lines	each line above 0, at most 1 (outside it, warns on
 BustleRestSick.capacity_weight	0 to 1 (clamped; not a number: warns once, uses 1)
 BustleRestSick.sick_tags	—
 BustleRestSick.tag_weight	0 to 1 (clamped; not a number: warns once, uses 1)
+BustleFetchHealer.care_roles	—
+BustleFetchHealer.care_weight	0 to 1 (clamped; not a number: warns once, uses 1)
+BustleFetchHealer.downed_weight	0 to 1 (clamped; not a number: warns once, uses 1)
+BustleFetchHealer.reach	0 or more metres (below 0 counts as 0; not finite: warns once, uses 15)
+BustleFetchHealer.urgent_at	0 to 1 (clamped; not a number: warns once, uses 1)
