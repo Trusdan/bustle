@@ -366,7 +366,7 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleTradePort.export_state()` | `addons/bustle/ports/trade_port.gd` | The default's balances as plain data (ids → amounts). |
 | `BustleTradePort.import_state()` | `addons/bustle/ports/trade_port.gd` | Restores `export_state()`. |
 
-## Experimental classes (13)
+## Experimental classes (15)
 
 Usable, but not frozen: they may change in any minor release.
 
@@ -379,6 +379,8 @@ Usable, but not frozen: they may change in any minor release.
 | `BustleDebugOverlay` | `addons/bustle/debug/debug_overlay.gd` | Development tool. What it draws may change in any minor release. |
 | `BustleFindPerson` | `addons/bustle/core/memory/find_person.gd` | A search helper whose steps and hooks may still change; the guides document its current order. |
 | `BustleInspector` | `addons/bustle/debug/inspector.gd` | Development tool. The snapshot's keys follow the brain's internals and may change in any minor release. |
+| `BustleRestSick` | `addons/bustle/modules/health/rest_sick.gd` | Added after 1.0 for the health module. The tags, lines, weights and band are PROPOSED defaults, not tuning. |
+| `BustleRestSickAction` | `addons/bustle/modules/health/rest_sick_action.gd` | Added after 1.0 for the health module. |
 | `BustleScoreContext` | `addons/bustle/core/brain/score_context.gd` | Internal to `BustleBrain`: the scorer's per-tick view. The brain's own hooks are the frozen way in. |
 | `BustleSeekCare` | `addons/bustle/modules/health/seek_care.gd` | Added after 1.0 for the health module. The threshold, the reach and the wait are proposed defaults, not tuning. |
 | `BustleSeekCareAction` | `addons/bustle/modules/health/seek_care_action.gd` | Added after 1.0 for the health module. |

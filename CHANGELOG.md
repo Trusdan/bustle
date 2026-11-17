@@ -7,6 +7,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 ### Added
 
 - A seek-care goal in the health module (`BustleSeekCare`, `BustleSeekCareAction`, `@experimental`, opt-in). An agent whose `needs_care` is at or above `threshold` (0.5), and who isn't downed, goes to the holder of the first held care role the host names (`care_roles`, through the roles port), or else to a host-named `care_place` the world port knows. It waits there, where a healer's tend job can find it. Bustle names the target (`move_to`, `talk_to` and `seek_care` in the output), and the host moves the body and gives the care. Bustle keeps no health state, and makes no rolls. The tend job is unchanged. See `docs/health.md`.
+- A rest-when-sick goal in the health module (`BustleRestSick`, `BustleRestSickAction`, `@experimental`, opt-in). An agent the port shows a host-listed sick tag for (`sick_tags`), or with a capacity below its line (`capacity_lines`), rests instead of working until the port says it is better. It ends on the first tick after the tag clears or the capacity comes back. Its band (65, PROPOSED) is above duty and below orders, so orders, locks and urgent needs still come first, and orders stay ungated. It rests at the agent's own bed from the property port (an item relieving `bed_need`), or where it stands. A downed agent doesn't take it, and with `seek_care` set it yields to seeking care. The tags, lines, weights and band are PROPOSED defaults. Bustle keeps no illness state, and makes no rolls. See `docs/health.md`.
 
 ## [1.0.0] - 2026-11-17
 

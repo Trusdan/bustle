@@ -2,7 +2,7 @@
 
 Agents react to their health, but Bustle keeps none of it. The host owns bodies, harm, illness, medicine and recovery, and reports them through `BustleHealthPort`. Bustle reads the port and responds: slower work and movement, thoughts, brain inputs, a downed agent kept from work and travel, and healers who ask the host to tend the sick. Bustle simulates no body parts and stores no wound, illness or body state. Nothing is random: the same readings give the same results.
 
-All of it is opt-in. With the default port everyone is healthy, a tick does nothing, no one tends and no one seeks care.
+All of it is opt-in. With the default port everyone is healthy, a tick does nothing, no one tends, no one seeks care and no one rests for illness.
 
 ## The port contract
 
@@ -84,6 +84,26 @@ A doctor is just a role the host gives. To keep tending to certain agents, give 
 
 With the default port, or without the goal in an agent's library, nothing changes.
 
+## The rest-when-sick goal
+
+`BustleRestSick.new(health, sick_tags)` (experimental) makes an agent who is ill rest instead of working or running errands, until the health port says it is better. Bustle names where to rest. The host moves the body and owns the illness and the recovery. Nothing about illness is kept: every answer comes from the ports each time.
+
+- **Who rests:** an agent the port shows one of `sick_tags` for (`visible_tags`), or one of whose capacities is below its line in `capacity_lines` (`capacity`). `sickness(agent)` is how ill it is, 0 to 1: `tag_weight` for a listed tag, and `capacity_weight` × (line − capacity) / line for each capacity below its line, whichever is highest. `fill_inputs(agent, inputs)` sets `fact.rest_sick` to that.
+- **Who doesn't:** a downed agent (as for seeking care), a locked one (`is_locked`, for example `society.is_locked`), and, when `seek_care` is set, one that should seek care first.
+- **Its place:** band `BustleRestSick.BAND` (65), above duty (60) and below orders (70). It outranks ordinary work, errands and free time, but never an order, a lock or an urgent need (80). Orders aren't gated: an order still runs.
+- **Where:** `bed_for(agent)` picks the agent's own item (`BustlePropertyPort.items_of`) that relieves `bed_need` the most, at a place the world port knows. The agent goes there first (`move_to`, judged by `where` within 2 metres or by `can_reach`), and otherwise rests where it stands. A bed with no `where` or `can_reach` warns once and isn't used, the same as a care place.
+- **Resting:** register `BustleRestSickAction.new(rest)` for `rest_sick`. It names the bed in the output (`rest_sick`: the item, or empty where the agent stands) and runs while the agent should rest.
+- **Ending:** it is done on the first tick after the port clears the tag or restores the capacity, and the goal stops being eligible at the same time.
+- **The goal:** `BustleRestSick.goal_def(band)`, the `rest_sick` goal, tagged `rest_sick` and `travel` (so the downed gate blocks it too) and scored by `fact.rest_sick` in a straight line.
+
+### Resting and seeking care together
+
+The two goals are separate, and each works alone. When both are in an agent's library and both are eligible:
+
+- **By default,** resting wins. It sits in a higher band (65) than seeking care (`PERSONAL`, 40), so an ill agent rests and doesn't go for care.
+- **With `rest.seek_care = seek`,** seeking care comes first. While `seek.wants_care(agent)` holds, the agent isn't eligible to rest, so it goes to the healer and waits there. Once its need for care is below the seek-care threshold (or there is nowhere to go), it rests until the port says it is better.
+- **Shared rules:** both skip a downed agent and carry `travel`. Both take their settings as properties and their goal's band as a `goal_def` argument. Both judge a place by `where` within 2 metres or by `can_reach`, and drop a place they can't judge with one warning.
+
 ## Config defaults
 
 `BustleHealthConfig.defaults()`, which `BustleHealthBehaviour` uses when it is given no config. A new `BustleHealthConfig` resource starts empty instead: no effects and no thoughts, so health changes nothing until the host adds some. Change any of these values.
@@ -99,5 +119,9 @@ With the default port, or without the goal in an agent's library, nothing change
 | Seek-care roles and place | none (`care_roles`, `care_place`): nobody seeks care until the host names them |
 | Seek-care reach | 2 metres from a care place (`BustleSeekCare.REACH`); a healer in its area |
 | Seek-care wait and band | 30 minutes, `PERSONAL` (`BustleSeekCare.goal_def(minutes, band)`) |
+| Rest-when-sick tags and lines | PROPOSED: tag `sick`; `consciousness` below 0.5 (`sick_tags`, `capacity_lines`) |
+| Rest-when-sick weights | PROPOSED: 1 for a tag, 1 for a capacity at 0 (`tag_weight`, `capacity_weight`) |
+| Rest-when-sick band | PROPOSED: 65, between duty and orders (`BustleRestSick.BAND`, `goal_def(band)`) |
+| Rest-when-sick bed | none (`bed_need`): the agent rests where it stands until the host names a need its beds relieve |
 
 `config.validate()` returns why a config can't be used, or empty. With an invalid config the behaviour does nothing.
