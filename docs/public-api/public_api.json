@@ -45,6 +45,22 @@
 			"purpose": "A world overlay for developing: a label above each agent's attached body with its ring, band, goal, step, top 3 scores and need inputs (from `BustleInspector`).",
 			"reason": "Development tool. What it draws may change in any minor release."
 		},
+		"BustleFetchHealer": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/modules/health/fetch_healer.gd",
+			"purpose": "Fetching a healer, opt-in: when an agent is downed or urgently needs care and no healer is within reach, a bystander goes to the nearest healer and tells it, by the same movement and arrival rule as fetching help in a fight (`BustleFetchHelpAction.approach()`).",
+			"reason": "Added after 1.0 for the health module. The urgency line, weights, reach and band are PROPOSED defaults, not tuning."
+		},
+		"BustleFetchHealerAction": {
+			"addon": "bustle",
+			"extends": "BustleActionHandler",
+			"kind": "class",
+			"path": "addons/bustle/modules/health/fetch_healer_action.gd",
+			"purpose": "`fetch_healer`: goes on with the agent's errand (`BustleFetchHealer.errand_of()`).",
+			"reason": "Added after 1.0 for the health module."
+		},
 		"BustleFindPerson": {
 			"addon": "bustle",
 			"extends": "RefCounted",
@@ -132,6 +148,7 @@
 		"BustleBrain.last_candidates": "Its type, `BustleCandidate`, is internal and may change in any minor release.",
 		"BustleCrimeWatch.judge": "Its type, `BustleWitnessJudge`, is internal and may change in any minor release.",
 		"BustleCrimeWatch.prune": "Added before 1.0; it may be frozen in a later minor release.",
+		"BustleFetchHelpAction.approach": "Added after 1.0, when fetching a healer started to reuse this rule.",
 		"BustleMentalConfig.validate": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleModifierSet.fill_context": "Its type, `BustleScoreContext`, is internal and may change in any minor release.",
 		"BustlePerceptionProfile.validate": "Added before 1.0; it may be frozen in a later minor release.",

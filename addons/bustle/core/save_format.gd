@@ -19,7 +19,7 @@ const _UNVERSIONED: Array[StringName] = [&"BustleAffordance", &"BustleAffordance
 	&"BustleSequenceRunner", &"BustleSkills", &"BustleSocialInteractions", &"BustleSocialStore", &"BustleTradePort"]
 ## The classes with a version constant; each has a static [code]_save_format()[/code] next to its
 ## [code]import_state()[/code] giving its key, current version and steps.
-const _VERSIONED: Array[StringName] = [&"BustleBrain", &"BustleDirector", &"BustleLifeStages", &"BustleSociety"]
+const _VERSIONED: Array[StringName] = [&"BustleBrain", &"BustleDirector", &"BustleFetchHealer", &"BustleLifeStages", &"BustleSociety"]
 const _UNVERSIONED_FORMAT: Dictionary = {"key": "version", "current": 1, "missing": 1, "steps": {}}
 
 static var _formats: Dictionary = {}

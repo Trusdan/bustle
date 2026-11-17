@@ -911,6 +911,18 @@ Public variables on runtime objects that change behaviour, set in code rather th
 | `instant` | `bool` | `false` | true or false | True: reports, telling the victim and gossip are delivered the moment they're decided, without travel. For developers and tests; off unless `INSTANT_SETTING` is on. |
 | `travel_gear` | `StringName` | `&"hurry"` | — | The movement gear an errand asks for (`gear` in the action output). |
 
+### BustleFetchHealer
+
+`bustle/modules/health/fetch_healer.gd`
+
+| Variable | Type | Default | Range | Effect |
+| --- | --- | --- | --- | --- |
+| `care_roles` | `Array[StringName]` | `[]` | — | The roles whose holders give care. Empty: only `healers`. |
+| `urgent_at` | `float` | `0.8` | 0 to 1 (clamped; not a number: warns once, uses 1) | The need for care, 0 to 1, from which a patient who is up needs a healer fetched. PROPOSED: 0.8. |
+| `downed_weight` | `float` | `1.0` | 0 to 1 (clamped; not a number: warns once, uses 1) | How urgent a downed patient is, 0 to 1. PROPOSED: 1. |
+| `care_weight` | `float` | `1.0` | 0 to 1 (clamped; not a number: warns once, uses 1) | How urgent a patient is per unit of need for care, 0 to 1. PROPOSED: 1. |
+| `reach` | `float` | `15.0` | 0 or more metres (below 0 counts as 0; not finite: warns once, uses 15) | Metres: a healer this close to the patient needs no fetching. PROPOSED: 15, as `BustleConflictConfig.help_radius`. |
+
 ### BustleFindPerson
 
 `bustle/core/memory/find_person.gd`

@@ -28,12 +28,22 @@ func tick(context: BustleActionContext, _delta: float) -> Status:
 	if helper == &"" or conflict.threat_of(helper) != &"":
 		conflict.switch_to_flee(agent)
 		return Status.DONE
-	var here: Variant = conflict.where(agent)
-	var there: Variant = conflict.where(helper)
-	if helper != &"" and here != null and there != null and (here as Vector3).distance_to(there) > REACH:
-		context.output["move_to"] = there
-		context.output["talk_to"] = helper
+	if approach(context, conflict.where(agent), conflict.where(helper), helper):
 		return Status.RUNNING
 	if not conflict.call_help(helper, agent, context.now_minutes):
 		conflict.switch_to_flee(agent)
 	return Status.DONE
+
+
+## The fetch-help movement and arrival rule, shared by every errand that goes to fetch someone:
+## while the agent at [param here] is more than [constant REACH] metres from [param helper] at
+## [param there], it asks the host to move it there ([code]move_to[/code] and [code]talk_to[/code]
+## in [param context]'s output) and returns true. Once within reach, or at once when either
+## position is unknown (not a [Vector3]), it returns false: the agent has arrived.
+## @experimental: Added after 1.0, when fetching a healer started to reuse this rule.
+static func approach(context: BustleActionContext, here: Variant, there: Variant, helper: StringName) -> bool:
+	if helper != &"" and here is Vector3 and there is Vector3 and (here as Vector3).distance_to(there) > REACH:
+		context.output["move_to"] = there
+		context.output["talk_to"] = helper
+		return true
+	return false

@@ -33,3 +33,11 @@ The conflicts it serves.
 ```gdscript
 func tick(context: BustleActionContext, _delta: float) -> int
 ```
+
+### `approach`
+
+```gdscript
+static func approach(context: BustleActionContext, here: Variant, there: Variant, helper: StringName) -> bool
+```
+
+The fetch-help movement and arrival rule, shared by every errand that goes to fetch someone: while the agent at `here` is more than `REACH` metres from `helper` at `there`, it asks the host to move it there (`move_to` and `talk_to` in `context`'s output) and returns true. Once within reach, or at once when either position is unknown (not a `Vector3`), it returns false: the agent has arrived.
