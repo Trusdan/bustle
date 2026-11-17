@@ -948,6 +948,16 @@ Public variables on runtime objects that change behaviour, set in code rather th
 | --- | --- | --- | --- | --- |
 | `enabled` | `bool` | `true` | true or false | False: no state starts, and an active one ends (the host's own switch). |
 
+### BustleSeekCare
+
+`bustle/modules/health/seek_care.gd`
+
+| Variable | Type | Default | Range | Effect |
+| --- | --- | --- | --- | --- |
+| `threshold` | `float` | `0.5` | 0 to 1 (outside it, warns once and uses 0.5) | The need for care, 0 to 1, from which an agent seeks it. Above 0: an agent who needs no care never seeks it. |
+| `care_roles` | `Array[StringName]` | `[]` | — | The roles whose holders give care, in order of preference. Empty: no one is sought. |
+| `care_place` | `StringName` | `&""` | — | A place to go for care when no care role is held (for example an infirmary), or empty. Needs `where` or `can_reach` to tell when the patient is there. |
+
 ### BustleSkills
 
 `bustle/modules/skills/skills.gd`

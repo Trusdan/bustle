@@ -69,6 +69,22 @@
 			"purpose": "What the scorer knows about one agent at one moment: its input values, the options it knows of, its need weights and tag multipliers, and how to check preconditions it doesn't know itself.",
 			"reason": "Internal to `BustleBrain`: the scorer's per-tick view. The brain's own hooks are the frozen way in."
 		},
+		"BustleSeekCare": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/modules/health/seek_care.gd",
+			"purpose": "The seek-care goal, opt-in: an agent who needs care goes to someone, or somewhere, that can give it.",
+			"reason": "Added after 1.0 for the health module. The threshold, the reach and the wait are proposed defaults, not tuning."
+		},
+		"BustleSeekCareAction": {
+			"addon": "bustle",
+			"extends": "BustleActionHandler",
+			"kind": "class",
+			"path": "addons/bustle/modules/health/seek_care_action.gd",
+			"purpose": "`seek_care`: takes the agent to where it can get care (`BustleSeekCare.destination_for()`).",
+			"reason": "Added after 1.0 for the health module."
+		},
 		"BustleStuckWatch": {
 			"addon": "bustle",
 			"extends": "RefCounted",
