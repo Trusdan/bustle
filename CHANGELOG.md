@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+
+- A seek-care goal in the health module (`BustleSeekCare`, `BustleSeekCareAction`, `@experimental`, opt-in). An agent whose `needs_care` is at or above `threshold` (0.5), and who isn't downed, goes to the holder of the first held care role the host names (`care_roles`, through the roles port), or else to a host-named `care_place` the world port knows. It waits there, where a healer's tend job can find it. Bustle names the target (`move_to`, `talk_to` and `seek_care` in the output), and the host moves the body and gives the care. Bustle keeps no health state, and makes no rolls. The tend job is unchanged. See `docs/health.md`.
+
 ## [1.0.0] - 2026-11-17
 
 The first stable release. The public API is frozen: [docs/public-api/PUBLIC_API.md](docs/public-api/PUBLIC_API.md) lists it, CI checks every change against it, and from here a symbol is deprecated with a warning in a minor release and removed only in a major one. Bad input is answered the same way everywhere, saves from 0.8.0 and 0.9.0 load through versioned migrations, every default was reviewed, and the perf budgets are ratified and gated in CI. New host guides, a configuration reference, a standalone example project, a stuck watch in the debug tools and reproducible release zips come with it. Nothing is random.

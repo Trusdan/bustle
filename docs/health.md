@@ -2,7 +2,7 @@
 
 Agents react to their health, but Bustle keeps none of it. The host owns bodies, harm, illness, medicine and recovery, and reports them through `BustleHealthPort`. Bustle reads the port and responds: slower work and movement, thoughts, brain inputs, a downed agent kept from work and travel, and healers who ask the host to tend the sick. Bustle simulates no body parts and stores no wound, illness or body state. Nothing is random: the same readings give the same results.
 
-All of it is opt-in. With the default port everyone is healthy, a tick does nothing, and no one tends.
+All of it is opt-in. With the default port everyone is healthy, a tick does nothing, no one tends and no one seeks care.
 
 ## The port contract
 
@@ -64,6 +64,26 @@ Orders aren't gated. An order is the host's call, so the host should stop orderi
 
 A doctor is just a role the host gives. To keep tending to certain agents, give the tend goal only to their libraries, or answer `nearby` only for them.
 
+## The seek-care goal
+
+`BustleSeekCare.new(health, care_roles)` (experimental) lets an agent who needs care go to someone, or somewhere, that can give it. Bustle names where. The host moves the body, gives the care and owns the recovery. Nothing about health is kept: every answer comes from the ports each time.
+
+- **Who seeks care:** an agent whose `needs_care` is at or above `threshold` (0.5), who isn't downed and who has somewhere to go. `fill_inputs(patient, inputs)` sets `fact.seek_care` to its need, so the goal scores higher the more urgent the care. A threshold outside 0 to 1 warns once and 0.5 is used.
+- **Where:** `destination_for(patient)` picks the holder of the first of `care_roles` that is held (`BustleRolesPort.holder_of`), skipping the patient itself and a downed holder. If none is held, it falls back to `care_place`, a place the world port knows (`has_place`). With neither, the agent doesn't seek care. Who counts as a healer stays the host's call: name the roles, and give them to whom it chooses.
+- **Getting there:** register `BustleSeekCareAction.new(seek)` for `seek_care` on each agent's runner.
+  - While the agent is on its way, the action names the target in the output (`seek_care`) and asks the host to move the agent: `move_to` is the target's position, and `talk_to` is the healer when the target is a person.
+  - Positions come from `where` (`func(id) -> Vector3 or null`), or else the world port's position of the agent's area.
+  - It stops once the agent no longer needs to seek care (it recovered or is downed). It fails with `no_care` when there is nowhere to go.
+- **Arriving:** a healer is reached in its area (`area_of`). A care place is reached within 2 metres of it (by `where`). `can_reach` (`func(patient, target) -> bool`) replaces both. A care place without `where` or `can_reach` warns once and isn't used, since its arrival couldn't be told.
+- **Being tended:** once there, the patient waits (30 minutes by default, then the goal can be chosen again). A healer whose tend job counts the patient as `nearby` (for example by area) now finds it and asks the host to care. The tend job is unchanged.
+- **The goal:** `BustleSeekCare.goal_def(minutes, band)` is the `seek_care` goal:
+  - band `PERSONAL` by default, so duty, urgent needs and orders outrank it;
+  - tags `seek_care` and `travel`, so the downed gate blocks it too;
+  - scored by `fact.seek_care` in a straight line;
+  - it runs `seek_care`, then waits `minutes` (30). A failed run waits the same before the goal can be chosen again.
+
+With the default port, or without the goal in an agent's library, nothing changes.
+
 ## Config defaults
 
 `BustleHealthConfig.defaults()`, which `BustleHealthBehaviour` uses when it is given no config. A new `BustleHealthConfig` resource starts empty instead: no effects and no thoughts, so health changes nothing until the host adds some. Change any of these values.
@@ -75,5 +95,9 @@ A doctor is just a role the host gives. To keep tending to certain agents, give 
 | Tag thoughts | `sick` → `feeling_sick` (−8); `fever` → `feverish` (−6) |
 | Downed blocks | `work`, `travel` |
 | Tend wait | 30 minutes (`BustleTendJob.goal_def(minutes)`) |
+| Seek-care threshold | 0.5 (`BustleSeekCare.threshold`) |
+| Seek-care roles and place | none (`care_roles`, `care_place`): nobody seeks care until the host names them |
+| Seek-care reach | 2 metres from a care place (`BustleSeekCare.REACH`); a healer in its area |
+| Seek-care wait and band | 30 minutes, `PERSONAL` (`BustleSeekCare.goal_def(minutes, band)`) |
 
 `config.validate()` returns why a config can't be used, or empty. With an invalid config the behaviour does nothing.
