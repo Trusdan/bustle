@@ -103,6 +103,7 @@ BustleWorkType.need_weights	non-empty input ids; any finite weight; checked
 BustleWorkType.xp_per_hour	0 or more; checked
 BustleWorkType.wage	0 or more; checked
 BustleWorkType.minutes	1 or more; checked
+BustleWorkType.min_capacities	non-empty capacity names; each minimum 0 to 1; checked
 BustleWantDef.weights	slider ids from BustlePersonality; any finite weight; checked
 BustleWantDef.target	any finite; checked
 BustleWantDef.duration_hours	above 0; checked

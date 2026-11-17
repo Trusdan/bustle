@@ -149,11 +149,15 @@
 		"BustleCrimeWatch.judge": "Its type, `BustleWitnessJudge`, is internal and may change in any minor release.",
 		"BustleCrimeWatch.prune": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleFetchHelpAction.approach": "Added after 1.0, when fetching a healer started to reuse this rule.",
+		"BustleJobBoard.refusal": "Added after 1.0 with capacity minimums.",
+		"BustleJobBoard.release_unfit": "Added after 1.0 with capacity minimums.",
 		"BustleMentalConfig.validate": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleModifierSet.fill_context": "Its type, `BustleScoreContext`, is internal and may change in any minor release.",
 		"BustlePerceptionProfile.validate": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleRelationshipRules.validate": "Added before 1.0; it may be frozen in a later minor release.",
-		"BustleStealthRules.validate": "Added before 1.0; it may be frozen in a later minor release."
+		"BustleStealthRules.validate": "Added before 1.0; it may be frozen in a later minor release.",
+		"BustleWorkType.min_capacities": "Added after 1.0 for the health module. No minimums are set by default; any a host sets are its own.",
+		"BustleWorkType.short_capacity": "Added after 1.0 for the health module."
 	},
 	"format": 1,
 	"frozen": {
