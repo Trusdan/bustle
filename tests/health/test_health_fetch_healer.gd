@@ -305,3 +305,47 @@ func test_proposed_defaults_no_rolls_and_the_goal() -> void:
 		var text := FileAccess.get_file_as_string("res://addons/bustle/modules/health/" + path)
 		for word: String in ["RandomNumberGenerator", "randf", "randi", "rand_range"]:
 			assert_false(text.contains(word), "%s has no %s" % [path, word])
+
+
+func test_two_patients_and_one_healer_never_take_the_healer_from_each_other() -> void:
+	_port.downed = [&"patient", &"p2"]
+	_at[&"p2"] = Vector3(4, 0, 0)
+	assert_eq(_fetch.notice(&"bystander", &"patient", 0), &"healer")
+	assert_eq(_fetch.notice(&"other", &"p2", 0), &"healer", "both set off before anyone arrives")
+	assert_true(_fetch.arrive(&"bystander", 5))
+	assert_eq(_fetch.summoned_to(&"healer"), &"patient")
+	assert_false(_fetch.arrive(&"other", 6), "the healer is already summoned")
+	assert_eq(_fetch.summoned_to(&"healer"), &"patient", "the first summons is kept")
+	assert_eq(_ended, [[&"bystander", &"patient", &"arrived"], [&"other", &"p2", &"healer_busy"]])
+	var nearby: Callable = _fetch.nearby_with_summons(func(_h: StringName) -> Array[StringName]: return [])
+	assert_eq(nearby.call(&"healer"), [&"patient"] as Array[StringName], "the first patient stays reachable")
+	assert_eq(_fetch.nearest_healer(&"p2"), &"", "the only healer is busy")
+	assert_eq(_fetch.notice(&"other", &"p2", 7), &"", "so nobody sets off again for it")
+	_at[&"spare"] = Vector3(70, 0, 0)
+	_fetch.healers = func() -> Array[StringName]: return [&"spare"]
+	assert_eq(_fetch.notice(&"other", &"p2", 8), &"spare", "the next-nearest free healer")
+	_fetch.tended(&"healer", &"patient", true)
+	assert_eq(_fetch.nearest_healer(&"p2"), &"healer", "free again once it tended the first")
+
+
+func test_a_kept_summons_and_a_rerouted_errand_survive_a_save() -> void:
+	_port.downed = [&"patient", &"p2"]
+	_at[&"p2"] = Vector3(4, 0, 0)
+	_at[&"spare"] = Vector3(70, 0, 0)
+	_fetch.healers = func() -> Array[StringName]: return [&"spare"]
+	_fetch.notice(&"bystander", &"patient", 0)
+	_fetch.arrive(&"bystander", 5)
+	assert_eq(_fetch.notice(&"other", &"p2", 6), &"spare")
+	var saved := _fetch.export_state()
+	assert_eq(saved, {"version": 1, "errands": {"other": {"patient": "p2", "healer": "spare", "since": 6}},
+		"summons": {"healer": "patient"}})
+	var restored := BustleFetchHealer.new(_health, [&"doctor"] as Array[StringName])
+	restored.where = _fetch.where
+	restored.healers = _fetch.healers
+	assert_true(restored.import_state(JSON.parse_string(JSON.stringify(saved))))
+	assert_eq(restored.export_state(), saved)
+	assert_eq(restored.summoned_to(&"healer"), &"patient")
+	assert_eq(restored.notice(&"third", &"p2", 7), &"", "p2 already has an errand")
+	assert_true(restored.arrive(&"other", 8))
+	assert_eq(restored.summoned_to(&"spare"), &"p2")
+	assert_eq(restored.summoned_to(&"healer"), &"patient", "each healer keeps its own patient")

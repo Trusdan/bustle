@@ -17,11 +17,13 @@ extends RefCounted
 ## [br][br]
 ## [b]Errands:[/b] [method notice] (or [method look], over [member nearby]) starts one when a bystander
 ## who isn't downed, isn't busy ([member is_busy]) and has no errand sees a patient who has none,
-## and no healer is within [member reach] of the patient. It goes to the nearest healer. On arrival
+## and no healer is within [member reach] of the patient. It goes to the nearest healer not already
+## summoned to another patient; a healer keeps the first summons it gets. On arrival
 ## ([method arrive]) the healer is summoned: [method summoned_to] names the patient, its
 ## [constant SUMMONED] input is set, and [method nearby_with_summons] adds the patient to the tend
 ## job's [member BustleTendJob.nearby]. An errand ends when the patient recovers or dies
-## ([member is_dead]), when the bystander is downed, or when the healer can't be fetched; a summons
+## ([member is_dead]), when the bystander is downed, when the healer can't be fetched, or when it
+## was summoned to another patient first ([code]healer_busy[/code]); a summons
 ## ends when the patient is tended ([method tended]), recovers or dies.
 ## [br][br]
 ## Errands and summons are saved ([method export_state]). Nothing is random.
@@ -41,8 +43,9 @@ const ACTION := &"fetch_healer"
 ## [param bystander] set off to fetch [param healer] for [param patient].
 signal errand_started(bystander: StringName, patient: StringName, healer: StringName)
 ## [param bystander]'s errand for [param patient] ended, for [param reason]: [code]arrived[/code],
-## [code]recovered[/code], [code]dead[/code], [code]bystander_downed[/code], [code]no_healer[/code]
-## or [code]dropped[/code].
+## [code]recovered[/code], [code]dead[/code], [code]bystander_downed[/code], [code]no_healer[/code],
+## [code]healer_busy[/code] (the healer was summoned to another patient meanwhile) or
+## [code]dropped[/code].
 signal errand_ended(bystander: StringName, patient: StringName, reason: StringName)
 ## [param healer] was told about [param patient].
 signal summoned(healer: StringName, patient: StringName)
@@ -138,8 +141,8 @@ func healer_within_reach(patient: StringName) -> bool:
 	return false
 
 
-## The healer nearest to [param patient] (ties in id order), not [param bystander], or empty. A
-## healer with no position isn't chosen.
+## The healer nearest to [param patient] (ties in id order), not [param bystander] and not already
+## summoned to another patient, or empty. A healer with no position isn't chosen.
 func nearest_healer(patient: StringName, bystander: StringName = &"") -> StringName:
 	var here: Variant = position_of(patient)
 	if not here is Vector3:
@@ -148,7 +151,7 @@ func nearest_healer(patient: StringName, bystander: StringName = &"") -> StringN
 	var best_distance := INF
 	for healer: StringName in healers_for(patient):
 		var there: Variant = position_of(healer)
-		if healer == bystander or not there is Vector3:
+		if healer == bystander or not there is Vector3 or not [&"", patient].has(summoned_to(healer)):
 			continue
 		var distance := (here as Vector3).distance_to(there)
 		if distance < best_distance:
@@ -223,13 +226,18 @@ func errand_for(patient: StringName) -> Dictionary:
 
 
 ## [param bystander] reached its healer at minute [param _now]: the healer is summoned to the
-## patient and the errand ends ([code]arrived[/code]). False when it has no errand.
+## patient and the errand ends ([code]arrived[/code]). A healer keeps the first summons it gets:
+## when it was summoned to another patient meanwhile, the errand ends ([code]healer_busy[/code])
+## and the healer's summons is left as it was. False when it has no errand, or the healer is busy.
 func arrive(bystander: StringName, _now: int) -> bool:
 	var errand := errand_of(bystander)
 	if errand.is_empty():
 		return false
 	var healer := StringName(errand["healer"])
 	var patient := StringName(errand["patient"])
+	if not [&"", patient].has(summoned_to(healer)):
+		_end(bystander, &"healer_busy")
+		return false
 	_end(bystander, &"arrived")
 	_summons[healer] = patient
 	summoned.emit(healer, patient)

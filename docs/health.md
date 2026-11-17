@@ -110,7 +110,7 @@ The two goals are separate, and each works alone. When both are in an agent's li
 
 - **Patients:** `urgency(patient)` is `downed_weight` (1) for a downed agent, else `care_weight` (1) × its `needs_care` when that is at or above `urgent_at` (0.8), else 0. A dead patient (`is_dead`, for example `life_stages.is_dead`) needs no healer.
 - **Healers:** the holders of `care_roles` and whoever `healers` (`func() -> Array[StringName]`, for example the agents with the tend goal) names, never the patient and never a downed agent. Who may tend stays the host's call.
-- **Starting an errand:** `notice(bystander, patient, now)`, or `look(bystander, now)` over the `nearby` hook, starts one to the healer nearest the patient. All of these must hold:
+- **Starting an errand:** `notice(bystander, patient, now)`, or `look(bystander, now)` over the `nearby` hook, starts one to the healer nearest the patient who isn't already summoned to another patient. All of these must hold:
   - the patient needs a healer and no errand or summons is under way for it;
   - no healer is within `reach` (15 metres) of the patient;
   - the bystander isn't the patient or a healer, isn't downed, isn't busy (`is_busy`, for example with an order) and has no errand.
@@ -125,7 +125,8 @@ The two goals are separate, and each works alone. When both are in an agent's li
   - `summoned_to(healer)` names the patient, and `fact.summoned` is set to its urgency;
   - `nearby_with_summons(base)`, given as the tend job's `nearby`, adds the patient to whom the unchanged tend job can choose;
   - connect the tend job's `tended` signal to `fetch.tended` to end the summons once care is given.
-- **Ending:** an errand ends (`errand_ended`) when the patient recovers (`recovered`) or dies (`dead`), the bystander is downed (`bystander_downed`), the healer can no longer be fetched (`no_healer`), or the host calls `drop(patient)` (`dropped`). A summons ends when the patient is tended, recovers, dies or is dropped.
+- **One summons per healer:** a healer keeps the first summons it gets. A bystander who arrives at a healer that was summoned to another patient meanwhile ends its errand (`healer_busy`) and leaves that summons alone. A later errand for the second patient goes to the next-nearest free healer, or waits until the healer's summons ends.
+- **Ending:** an errand ends (`errand_ended`) when the patient recovers (`recovered`) or dies (`dead`), the bystander is downed (`bystander_downed`), the healer can no longer be fetched (`no_healer`) or is already summoned (`healer_busy`), or the host calls `drop(patient)` (`dropped`). A summons ends when the patient is tended, recovers, dies or is dropped. For a patient who is up, "recovers" means its `needs_care` falls below `urgent_at`: the summons then ends quietly, even while the healer is on its way, and seeking care (from its own, lower threshold) can carry on from there.
 - **The goal:** `BustleFetchHealer.goal_def(band)` is the `fetch_healer` goal:
   - band `URGENT` by default ("help someone in trouble"), so it outranks orders and duty once started, but a bystander busy with an order doesn't start one;
   - tags `fetch_healer` and `travel`, so the downed gate blocks it too;

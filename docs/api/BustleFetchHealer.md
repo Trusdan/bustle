@@ -9,7 +9,7 @@ Inherits: `RefCounted`
 Fetching a healer, opt-in: when an agent is downed or urgently needs care and no healer is within reach, a bystander goes to the nearest healer and tells it, by the same movement and arrival rule as fetching help in a fight (`BustleFetchHelpAction.approach()`). The healer is then summoned to the patient, and the tend job does the rest. Bustle names who and where; the host moves the bodies and gives the care.
 **Patients:** `urgency()`: a downed agent (`BustleHealthBehaviour.is_downed()`), or one whose `BustleHealthPort.needs_care()` is at or above `urgent_at`.
 **Healers:** the holders of `care_roles` (`BustleRolesPort.holder_of()`) and whoever `healers` names (for example the agents with the tend goal), never a downed one. Who may tend stays the host's call.
-**Errands:** `notice()` (or `look()`, over `nearby`) starts one when a bystander who isn't downed, isn't busy (`is_busy`) and has no errand sees a patient who has none, and no healer is within `reach` of the patient. It goes to the nearest healer. On arrival (`arrive()`) the healer is summoned: `summoned_to()` names the patient, its `SUMMONED` input is set, and `nearby_with_summons()` adds the patient to the tend job's `BustleTendJob.nearby`. An errand ends when the patient recovers or dies (`is_dead`), when the bystander is downed, or when the healer can't be fetched; a summons ends when the patient is tended (`tended()`), recovers or dies.
+**Errands:** `notice()` (or `look()`, over `nearby`) starts one when a bystander who isn't downed, isn't busy (`is_busy`) and has no errand sees a patient who has none, and no healer is within `reach` of the patient. It goes to the nearest healer not already summoned to another patient; a healer keeps the first summons it gets. On arrival (`arrive()`) the healer is summoned: `summoned_to()` names the patient, its `SUMMONED` input is set, and `nearby_with_summons()` adds the patient to the tend job's `BustleTendJob.nearby`. An errand ends when the patient recovers or dies (`is_dead`), when the bystander is downed, when the healer can't be fetched, or when it was summoned to another patient first (`healer_busy`); a summons ends when the patient is tended (`tended()`), recovers or dies.
 Errands and summons are saved (`export_state()`). Nothing is random.
 
 ## Signals
@@ -28,7 +28,7 @@ signal errand_started(bystander: StringName, patient: StringName, healer: String
 signal errand_ended(bystander: StringName, patient: StringName, reason: StringName)
 ```
 
-`bystander`'s errand for `patient` ended, for `reason`: `arrived`, `recovered`, `dead`, `bystander_downed`, `no_healer` or `dropped`.
+`bystander`'s errand for `patient` ended, for `reason`: `arrived`, `recovered`, `dead`, `bystander_downed`, `no_healer`, `healer_busy` (the healer was summoned to another patient meanwhile) or `dropped`.
 
 ### `summoned`
 
@@ -194,7 +194,7 @@ True when a healer is within `reach` of `patient` (by `position_of()`).
 func nearest_healer(patient: StringName, bystander: StringName = &"") -> StringName
 ```
 
-The healer nearest to `patient` (ties in id order), not `bystander`, or empty. A healer with no position isn't chosen.
+The healer nearest to `patient` (ties in id order), not `bystander` and not already summoned to another patient, or empty. A healer with no position isn't chosen.
 
 ### `notice`
 
@@ -234,7 +234,7 @@ The errand under way for `patient` (`{bystander, healer, since}`), or empty.
 func arrive(bystander: StringName, _now: int) -> bool
 ```
 
-`bystander` reached its healer at minute `_now`: the healer is summoned to the patient and the errand ends (`arrived`). False when it has no errand.
+`bystander` reached its healer at minute `_now`: the healer is summoned to the patient and the errand ends (`arrived`). A healer keeps the first summons it gets: when it was summoned to another patient meanwhile, the errand ends (`healer_busy`) and the healer's summons is left as it was. False when it has no errand, or the healer is busy.
 
 ### `summoned_to`
 
