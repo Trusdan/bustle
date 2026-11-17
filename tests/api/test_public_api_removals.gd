@@ -118,15 +118,17 @@ func test_a_class_entry_holds_a_member_removal_to_the_same_rule() -> void:
 		"BustleExamplePort.lookup: removed in 1.4.0; %s (since 1.3.0)" % SAME_MAJOR)
 
 
-func test_a_covered_signature_change_is_unchanged_by_the_version() -> void:
+func test_a_covered_signature_change_follows_the_same_rule() -> void:
+	var change := "\n    was: func old_name(id: StringName) -> void\n    now: func old_name(id: StringName, now: int = 0) -> void"
 	for version: String in ["1.3.0", "1.4.0", "2.0.0"]:
 		var current := _base()
 		current["frozen"]["BustleExample"]["methods"]["old_name"] = "func old_name(id: StringName, now: int = 0) -> void"
 		current["version"] = version
 		var result := ApiDiff.compare(_base(), current, _load("deprecations_since_minor.json"))
-		assert_true(ApiDiff.passes(result), version)
-		assert_eq(result["deprecated"].size(), 1, version)
-		assert_string_contains(str(result["deprecated"]), "signature changed", version)
+		if version == "2.0.0":
+			_assert_passes(result, "BustleExample.old_name: signature changed%s (deprecated in 1.3.0)" % change)
+		else:
+			_assert_fails(result, "BustleExample.old_name: signature changed in %s; signature changes need a major release after the minor that deprecated it (since 1.3.0)%s" % [version, change])
 
 
 func test_an_uncovered_removal_still_fails_as_before_in_a_major() -> void:
