@@ -1913,7 +1913,7 @@
 			"addon": "bustle",
 			"constants": {
 				"FOLDERS": "const FOLDERS = {\"core\": \"Plain data and rules with no nodes, tested headless.\", \"debug\": \"Tools for inspecting a running population.\", \"modules\": \"Optional features, each usable on its own.\", \"ports\": \"The interfaces a host project implements to connect Bustle to its world.\", \"society\": \"How the members of a population relate to each other.\"}",
-				"VERSION": "const VERSION = \"0.9.0\""
+				"VERSION": "const VERSION = \"1.0.0\""
 			},
 			"extends": "RefCounted",
 			"hooks": {},
@@ -4472,5 +4472,5 @@
 			"signals": {}
 		}
 	},
-	"version": "0.9.0"
+	"version": "1.0.0"
 }

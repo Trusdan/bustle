@@ -11,6 +11,8 @@ extends RefCounted
 ## [method change_problem]. New symbols never fail. A raised save version
 ## ([code]STATE_VERSION[/code], or the society's [code]SCHEMA[/code]) is a save-format change and is reported, not failed: the policy
 ## requires [code]import_state()[/code] to migrate the older shape.
+## A new value of [code]BustleInfo.VERSION[/code] (the release's own version string) is a release,
+## not an API change: it is reported as a note, not failed.
 ##
 ## A Callable hook's call ([code]func(...) -> T[/code], from its doc comment) is part of its
 ## flattened signature: a changed call, or a call dropped from the doc comment, is a signature
@@ -21,6 +23,8 @@ const ApiManifest := preload("res://tools/public_api/api_manifest.gd")
 const SAVE_VERSION: String = "STATE_VERSION"
 ## The constants that hold a save version: a raise of either is a note, not a break.
 const SAVE_VERSIONS: Array[String] = [SAVE_VERSION, "SCHEMA"]
+## The constant that holds the release's version: a new value of it is a note, not a break.
+const RELEASE_VERSION: String = "BustleInfo.VERSION"
 
 
 ## The comparison: [code]breaking[/code] (fails the check), [code]deprecated[/code] (breaking
@@ -58,6 +62,10 @@ static func compare(baseline: Dictionary, current: Dictionary, deprecations: Var
 			if SAVE_VERSIONS.has(symbol.get_slice(".", 1)) and _version_of(new[symbol]) > _version_of(old[symbol]):
 				(result["notes"] as Array).append("%s: save format raised (%s -> %s); import_state() must still read the older shape" % [
 					symbol, old[symbol], new[symbol]])
+				continue
+			if symbol == RELEASE_VERSION and _is_release_version(str(old[symbol])) and _is_release_version(str(new[symbol])):
+				(result["notes"] as Array).append("%s: release version changed (%s -> %s)" % [symbol,
+					_release_value(str(old[symbol])), _release_value(str(new[symbol]))])
 				continue
 			if _first_call(str(old[symbol]), str(new[symbol])):
 				(result["notes"] as Array).append("%s: call recorded: %s" % [symbol,
@@ -176,6 +184,18 @@ static func _held_back(symbol: String, since: String, version: String, how: Stri
 	if now[0] <= was[0]:
 		return "%s: %s in %s; %ss need a major release after the minor that deprecated it (since %s)" % [symbol, how, version, what, since]
 	return ""
+
+
+# True when [param line] is the release version's flattened signature with an x.y.z value:
+# [code]const VERSION = "1.2.3"[/code] and nothing else.
+static func _is_release_version(line: String) -> bool:
+	if not (line.begins_with("const VERSION = \"") and line.ends_with("\"")):
+		return false
+	return not _semver(_release_value(line)).is_empty()
+
+
+static func _release_value(line: String) -> String:
+	return line.trim_prefix("const VERSION = \"").trim_suffix("\"")
 
 
 static func _gone(symbol: String, current: Dictionary) -> String:
