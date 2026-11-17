@@ -7,6 +7,7 @@ Inherits: `RefCounted`
 A board of posted, one-off work that agents claim. An employer posts a [BustleWorkType](BustleWorkType.md); an agent that passes its gates (role, skill level, tags) can claim it; the claim is exclusive and lasts until the work is completed, released, cancelled or expired. Standing jobs stay roles and schedules: the board doesn't touch them.
 An agent takes the open posting it wants most (`BustleWorkType.score()`) among those it can do, ties going to the earlier posting id. When several agents want one posting at the same time, `assign()` gives it to the highest score, ties going to the lower agent id. Nothing is random: the same postings, agents and clock give the same claims. Install it as `society.ports.work.board`.
 **With a brain.** `advertise()` offers an agent's postings to its brain as options, so a job goal weighs them against its other goals. The board only ranks: it never leaves out work an agent dislikes, it just makes that work less appealing. When a brain picks a posting, the host calls `request()`; `settle()`, at the end of the tick, gives each requested posting to the highest score, ties going to the lower agent id. `work()` then adds the work done, with practice through the skill port, and completes the posting once its type's minutes are done, paying the wage through the trade port.
+**Health.** A work type may name `BustleWorkType.min_capacities`: an agent the health port shows below any of them can't do that work (`can_do()`), so it isn't offered it and can't claim it (`refusal()` says why), and one holding a claim lets go of it at the next `settle()` or `work()` (`release_unfit()`), with the usual `released`.
 
 ## Signals
 
@@ -44,7 +45,7 @@ The need a job advertisement relieves (see `advertise()`).
 var ports: BustlePorts
 ```
 
-The ports it reads: `roles` and `skills` for the gates, `skills` for practice and `trade` for wages. Null (or a null port): no roles are held, every skill is 0, nothing is practised and no wage is paid.
+The ports it reads: `roles` and `skills` for the gates, `skills` for practice, `trade` for wages and `health` for capacity minimums. Null (or a null port): no roles are held, every skill is 0, nothing is practised, no wage is paid and every capacity is full.
 
 ### `appeal_base`
 
@@ -110,7 +111,23 @@ The posting `agent` has claimed, or empty.
 func can_do(seeker: BustleJobSeeker, job: StringName) -> bool
 ```
 
-True when `seeker` passes `job`'s gates: it holds the required role, has at least the minimum skill level, and has every required tag. Says nothing about whether the posting is open.
+True when `seeker` passes `job`'s gates: it holds the required role, has at least the minimum skill level, has every required tag, and has at least each minimum capacity (`BustleWorkType.min_capacities`). Says nothing about whether the posting is open.
+
+### `refusal`
+
+```gdscript
+func refusal(seeker: BustleJobSeeker, job: StringName) -> StringName
+```
+
+Why `seeker` couldn't claim `job` now, or empty when it could: `no_seeker`, `unknown_job`, `taken` (someone holds it), `holds_claim` (the seeker holds another), `role`, `skill`, `tags`, or `capacity:<name>` for the first capacity it is below the minimum of.
+
+### `release_unfit`
+
+```gdscript
+func release_unfit() -> StringName[]
+```
+
+Releases every claim whose holder is now below one of its work type's `BustleWorkType.min_capacities` (by the health port), with `changed` saying `released` as `release()` does. Returns the released postings, in `job_ids()` order. `settle()` and `work()` call it, so a claim is let go at the next update.
 
 ### `eligible`
 
@@ -174,7 +191,7 @@ Marks `job` done by its claimant, takes it off the board and pays its type's wag
 func work(seeker: BustleJobSeeker, minutes: int) -> bool
 ```
 
-Adds `minutes` of work by `seeker` on the posting it holds. Practice goes to the skill port when it can take it (`add_xp(id, skill, xp, personality)`, as the skills module does): `BustleWorkType.xp_per_hour` for each hour. Only minutes the type still needs count, never fewer than none (a save may hold more progress than a type now needs). Once the work done reaches the type's minutes, the posting is completed (`complete()`). False (and no change) when the seeker holds no claim or `minutes` isn't positive.
+Adds `minutes` of work by `seeker` on the posting it holds. Practice goes to the skill port when it can take it (`add_xp(id, skill, xp, personality)`, as the skills module does): `BustleWorkType.xp_per_hour` for each hour. Only minutes the type still needs count, never fewer than none (a save may hold more progress than a type now needs). Once the work done reaches the type's minutes, the posting is completed (`complete()`). False (and no change) when the seeker holds no claim or `minutes` isn't positive. False too when the seeker is now below one of the type's minimum capacities: it lets go of the claim (`release()`) and no work is added.
 
 ### `appeal`
 
@@ -206,7 +223,7 @@ Asks for `job` on behalf of `seeker`, whose brain picked it this tick. The claim
 func settle(now: int) -> Dictionary[StringName, StringName]
 ```
 
-Decides this tick's `request()`s at game minute `now`: each requested posting goes to the requester with the highest score, ties going to the lower agent id, if it can still claim it. The others keep no claim and choose again next tick. Returns agent id → the posting it claimed.
+Decides this tick's `request()`s at game minute `now`: each requested posting goes to the requester with the highest score, ties going to the lower agent id, if it can still claim it. The others keep no claim and choose again next tick. First it lets go of claims held by agents now below a minimum capacity (`release_unfit()`). Returns agent id → the posting it claimed.
 
 ### `cancel`
 

@@ -20,6 +20,11 @@ extends RefCounted
 ## the highest score, ties going to the lower agent id. [method work] then adds the work done, with
 ## practice through the skill port, and completes the posting once its type's minutes are done,
 ## paying the wage through the trade port.
+## [br][br]
+## [b]Health.[/b] A work type may name [member BustleWorkType.min_capacities]: an agent the health
+## port shows below any of them can't do that work ([method can_do]), so it isn't offered it and
+## can't claim it ([method refusal] says why), and one holding a claim lets go of it at the next
+## [method settle] or [method work] ([method release_unfit]), with the usual [code]released[/code].
 
 ## Every board change: [param job] was posted, claimed, released, completed, cancelled or expired,
 ## or its wage was paid or couldn't be ([param what]); [param agent] is the claimant, if any.
@@ -31,8 +36,9 @@ const TAG := &"job"
 const NEED := &"job"
 
 ## The ports it reads: [code]roles[/code] and [code]skills[/code] for the gates, [code]skills[/code]
-## for practice and [code]trade[/code] for wages. Null (or a null port): no roles are held, every
-## skill is 0, nothing is practised and no wage is paid.
+## for practice, [code]trade[/code] for wages and [code]health[/code] for capacity minimums. Null
+## (or a null port): no roles are held, every skill is 0, nothing is practised, no wage is paid and
+## every capacity is full.
 var ports: BustlePorts
 ## The appeal of a posting an agent scores 0 for (see [method appeal]).
 var appeal_base: float = 0.5
@@ -108,8 +114,8 @@ func claimed_of(agent: StringName) -> StringName:
 
 
 ## True when [param seeker] passes [param job]'s gates: it holds the required role, has at least
-## the minimum skill level, and has every required tag. Says nothing about whether the posting is
-## open.
+## the minimum skill level, has every required tag, and has at least each minimum capacity
+## ([member BustleWorkType.min_capacities]). Says nothing about whether the posting is open.
 func can_do(seeker: BustleJobSeeker, job: StringName) -> bool:
 	var posting: BustleJobPosting = _postings.get(job)
 	if posting == null or seeker == null or seeker.id == &"":
@@ -124,7 +130,57 @@ func can_do(seeker: BustleJobSeeker, job: StringName) -> bool:
 	for tag: StringName in def.required_tags:
 		if not seeker.tags.has(tag):
 			return false
-	return true
+	return def.short_capacity(seeker.id, _health()) == &""
+
+
+## Why [param seeker] couldn't claim [param job] now, or empty when it could: [code]no_seeker[/code],
+## [code]unknown_job[/code], [code]taken[/code] (someone holds it), [code]holds_claim[/code] (the
+## seeker holds another), [code]role[/code], [code]skill[/code], [code]tags[/code], or
+## [code]capacity:<name>[/code] for the first capacity it is below the minimum of.
+## @experimental: Added after 1.0 with capacity minimums.
+func refusal(seeker: BustleJobSeeker, job: StringName) -> StringName:
+	var posting: BustleJobPosting = _postings.get(job)
+	if seeker == null or seeker.id == &"":
+		return &"no_seeker"
+	if posting == null:
+		return &"unknown_job"
+	if not posting.is_open():
+		return &"taken"
+	if claimed_of(seeker.id) != &"":
+		return &"holds_claim"
+	var def: BustleWorkType = _types[posting.type]
+	var roles: BustleRolesPort = ports.roles if ports != null else null
+	if def.required_role != &"" and (roles == null or not roles.roles_of(seeker.id).has(String(def.required_role))):
+		return &"role"
+	var skills: BustleSkillSet = ports.skills if ports != null else null
+	if def.min_skill > 0.0 and (skills == null or skills.level(seeker.id, def.skill) < def.min_skill):
+		return &"skill"
+	for tag: StringName in def.required_tags:
+		if not seeker.tags.has(tag):
+			return &"tags"
+	var short := def.short_capacity(seeker.id, _health())
+	return StringName("capacity:" + String(short)) if short != &"" else &""
+
+
+## Releases every claim whose holder is now below one of its work type's
+## [member BustleWorkType.min_capacities] (by the health port), with [signal changed] saying
+## [code]released[/code] as [method release] does. Returns the released postings, in
+## [method job_ids] order. [method settle] and [method work] call it, so a claim is let go at the
+## next update.
+## @experimental: Added after 1.0 with capacity minimums.
+func release_unfit() -> Array[StringName]:
+	var out: Array[StringName] = []
+	var health := _health()
+	if health == null:
+		return out
+	for agent: StringName in _claims:
+		var job: StringName = _claims[agent]
+		if _types[_postings[job].type].short_capacity(agent, health) != &"":
+			out.append(job)
+	out = _sorted(out)
+	for job: StringName in out:
+		release(job)
+	return out
 
 
 ## True when [param seeker] could claim [param job] now: the posting is open, the seeker holds no
@@ -236,13 +292,18 @@ func complete(job: StringName) -> bool:
 ## module does): [member BustleWorkType.xp_per_hour] for each hour. Only minutes the type still
 ## needs count, never fewer than none (a save may hold more progress than a type now needs). Once
 ## the work done reaches the type's minutes, the posting is completed ([method complete]). False
-## (and no change) when the seeker holds no claim or [param minutes] isn't positive.
+## (and no change) when the seeker holds no claim or [param minutes] isn't positive. False too when
+## the seeker is now below one of the type's minimum capacities: it lets go of the claim
+## ([method release]) and no work is added.
 func work(seeker: BustleJobSeeker, minutes: int) -> bool:
 	var job := claimed_of(seeker.id) if seeker != null else &""
 	if job == &"" or minutes <= 0:
 		return false
 	var posting: BustleJobPosting = _postings[job]
 	var def: BustleWorkType = _types[posting.type]
+	if def.short_capacity(seeker.id, _health()) != &"":
+		release(job)
+		return false
 	var done := clampi(def.minutes - posting.progress, 0, minutes)
 	posting.progress += done
 	var skills: BustleSkillSet = ports.skills if ports != null else null
@@ -293,9 +354,11 @@ func request(seeker: BustleJobSeeker, job: StringName) -> void:
 
 ## Decides this tick's [method request]s at game minute [param now]: each requested posting goes to
 ## the requester with the highest score, ties going to the lower agent id, if it can still claim
-## it. The others keep no claim and choose again next tick. Returns agent id → the posting it
+## it. The others keep no claim and choose again next tick. First it lets go of claims held by
+## agents now below a minimum capacity ([method release_unfit]). Returns agent id → the posting it
 ## claimed.
 func settle(now: int) -> Dictionary[StringName, StringName]:
+	release_unfit()
 	var winners: Dictionary[StringName, BustleJobSeeker] = {}
 	for id: StringName in _sorted(_requests.keys()):
 		var seeker: BustleJobSeeker = _requests[id][0]
@@ -379,6 +442,11 @@ func import_state(saved: Variant) -> bool:
 		if not _postings[job].is_open():
 			_claims[_postings[job].claimed_by] = job
 	return true
+
+
+# The health port, or null.
+func _health() -> BustleHealthPort:
+	return ports.health if ports != null else null
 
 
 func _remove(job: StringName) -> void:

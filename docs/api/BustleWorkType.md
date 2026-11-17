@@ -104,6 +104,14 @@ var place: StringName = &""
 
 Where the work is done, unless a posting names another place. Empty: not tied to a place.
 
+### `min_capacities`
+
+```gdscript
+var min_capacities: Dictionary[StringName, float] = {}
+```
+
+Capacity name → the least amount, 0 to 1, a taker must have of it (read through `BustleHealthPort.capacity()`; names are the host's, for example `moving`). An agent below any of them isn't offered the work, can't claim it, and lets go of a claim it holds (see `BustleJobBoard.release_unfit()`). Empty (the default): no health gate.
+
 ## Methods
 
 ### `is_valid`
@@ -112,7 +120,15 @@ Where the work is done, unless a posting names another place. Empty: not tied to
 func is_valid() -> bool
 ```
 
-True when it can be used: an id, finite numbers, known sliders, a non-negative skill minimum and wage, and a positive duration.
+True when it can be used: an id, finite numbers, known sliders, a non-negative skill minimum and wage, a positive duration, and capacity minimums with names between 0 and 1.
+
+### `short_capacity`
+
+```gdscript
+func short_capacity(id: StringName, health: BustleHealthPort) -> StringName
+```
+
+The first capacity in `min_capacities` (in name order) that `id` has less of than its minimum, by `health`; empty when it has enough of each, or with no port. A reading that isn't a number counts as full, as [BustleHealthBehaviour](BustleHealthBehaviour.md) reads it.
 
 ### `score`
 

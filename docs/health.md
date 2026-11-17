@@ -153,6 +153,23 @@ They act for different agents:
 - **A patient who is up and urgent** (at or above `urgent_at`) may be fetched for by a bystander, and may also seek care itself. With `rest.seek_care` set, it seeks care before resting; otherwise it rests, and the fetched healer comes to it.
 - **A healer** is never a bystander for a patient it could tend, and a bystander's errand ends once the healer is told.
 
+## Work that needs a minimum capacity
+
+A posted work type can name the least of each capacity a taker needs (`BustleWorkType.min_capacities`, experimental; see [work.md](work.md)), for example `{&"moving": 0.5}` for hauling. The job board reads `capacity()` through the health port:
+
+- an agent below a minimum isn't offered the work and can't claim it (`refusal()` gives `capacity:<name>`);
+- an agent who drops below one while holding a claim lets go of it at the next `settle()` or `work()`, with the usual `released`.
+
+No type has minimums by default, and the default port reports everyone fully able, so nothing changes until the host sets them.
+
+### With the three goals
+
+The health gates on work and the three goals read the same port, each for its own purpose:
+
+- **Resting when sick** keeps an ill agent away from work in the brain's bands. Its `capacity_lines` (PROPOSED: `consciousness` below 0.5) are separate from a work type's minimums. An agent can be well enough not to rest but still below a heavy job's minimum: it isn't offered that job, and takes lighter work or other goals. An agent who rests without dropping below a minimum keeps its claim and comes back to it. One who drops below a minimum loses the claim at the next update.
+- **A downed agent** (for example `consciousness` 0) keeps a claim only if its work type names no minimum it fails. To have downed agents let go of all work, give work types a minimum on the capacity the host lowers when an agent is downed.
+- **Seeking care and fetching a healer** don't touch the board. A healer who holds a claim still answers a summons or tends through its tend goal, by band, and keeps its claim unless its own capacities drop below a minimum.
+
 ## Config defaults
 
 `BustleHealthConfig.defaults()`, which `BustleHealthBehaviour` uses when it is given no config. A new `BustleHealthConfig` resource starts empty instead: no effects and no thoughts, so health changes nothing until the host adds some. Change any of these values.

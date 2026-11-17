@@ -33,10 +33,16 @@ extends Resource
 @export var minutes: int = 60
 ## Where the work is done, unless a posting names another place. Empty: not tied to a place.
 @export var place: StringName = &""
+## Capacity name → the least amount, 0 to 1, a taker must have of it (read through
+## [method BustleHealthPort.capacity]; names are the host's, for example [code]moving[/code]). An
+## agent below any of them isn't offered the work, can't claim it, and lets go of a claim it holds
+## (see [method BustleJobBoard.release_unfit]). Empty (the default): no health gate.
+## @experimental: Added after 1.0 for the health module. No minimums are set by default; any a host sets are its own.
+@export var min_capacities: Dictionary[StringName, float] = {}
 
 
 ## True when it can be used: an id, finite numbers, known sliders, a non-negative skill minimum
-## and wage, and a positive duration.
+## and wage, a positive duration, and capacity minimums with names between 0 and 1.
 func is_valid() -> bool:
 	if id == &"" or not is_finite(min_skill) or min_skill < 0.0 or not is_finite(priority):
 		return false
@@ -48,7 +54,27 @@ func is_valid() -> bool:
 	for input: StringName in need_weights:
 		if input == &"" or not is_finite(need_weights[input]):
 			return false
+	for capacity: StringName in min_capacities:
+		var least := min_capacities[capacity]
+		if capacity == &"" or not is_finite(least) or least < 0.0 or least > 1.0:
+			return false
 	return true
+
+
+## The first capacity in [member min_capacities] (in name order) that [param id] has less of than
+## its minimum, by [param health]; empty when it has enough of each, or with no port. A reading
+## that isn't a number counts as full, as [BustleHealthBehaviour] reads it.
+## @experimental: Added after 1.0 for the health module.
+func short_capacity(id: StringName, health: BustleHealthPort) -> StringName:
+	if min_capacities.is_empty() or health == null:
+		return &""
+	var names: Array[StringName] = min_capacities.keys()
+	names.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
+	for capacity: StringName in names:
+		var amount := health.capacity(id, capacity)
+		if is_finite(amount) and clampf(amount, 0.0, 1.0) < min_capacities[capacity]:
+			return capacity
+	return &""
 
 
 ## How much [param seeker] wants this work: [member priority], plus the slider and input terms.

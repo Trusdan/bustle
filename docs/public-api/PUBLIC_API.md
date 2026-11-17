@@ -390,7 +390,7 @@ Usable, but not frozen: they may change in any minor release.
 | `BustleUtilityScorer` | `addons/bustle/core/brain/utility_scorer.gd` | Internal to `BustleBrain`: hosts shape scores through goals, considerations and the brain's hooks. |
 | `BustleWitnessJudge` | `addons/bustle/core/crime/witness_judge.gd` | The default witness decision; its scoring terms may change. Hosts replace it with `BustleCrimeWatch.should_report`. |
 
-## Experimental members (11)
+## Experimental members (15)
 
 Members of frozen classes that are not frozen yet.
 
@@ -402,11 +402,15 @@ Members of frozen classes that are not frozen yet.
 | `BustleCrimeWatch.judge` | Its type, `BustleWitnessJudge`, is internal and may change in any minor release. |
 | `BustleCrimeWatch.prune` | Added before 1.0; it may be frozen in a later minor release. |
 | `BustleFetchHelpAction.approach` | Added after 1.0, when fetching a healer started to reuse this rule. |
+| `BustleJobBoard.refusal` | Added after 1.0 with capacity minimums. |
+| `BustleJobBoard.release_unfit` | Added after 1.0 with capacity minimums. |
 | `BustleMentalConfig.validate` | Added before 1.0; it may be frozen in a later minor release. |
 | `BustleModifierSet.fill_context` | Its type, `BustleScoreContext`, is internal and may change in any minor release. |
 | `BustlePerceptionProfile.validate` | Added before 1.0; it may be frozen in a later minor release. |
 | `BustleRelationshipRules.validate` | Added before 1.0; it may be frozen in a later minor release. |
 | `BustleStealthRules.validate` | Added before 1.0; it may be frozen in a later minor release. |
+| `BustleWorkType.min_capacities` | Added after 1.0 for the health module. No minimums are set by default; any a host sets are its own. |
+| `BustleWorkType.short_capacity` | Added after 1.0 for the health module. |
 
 ## Deprecated (0)
 
