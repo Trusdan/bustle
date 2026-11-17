@@ -50,20 +50,20 @@ A frozen symbol is retired in two steps.
    A symbol is a class (`BustleExample`, which covers all its members) or a member (`BustleExample.old_name`). `since` is the release that deprecated it. `replacement` and `note` are optional.
 2. **Remove it, only in a major release.** A deprecated symbol must ship, with its deprecation warning, in at least one minor release before the major release that removes it. For example, a symbol deprecated in `1.3.0` can be removed in `2.0.0` at the earliest. The deprecations.json entry stays: it's what lets the check accept the removal, and only in such a major release. The CHANGELOG lists the removal under `### Removed` and "Breaking changes".
 
-A signature change goes the same way: add the new form, deprecate the old one, and remove it in the next major release. The removal needs its deprecations.json entry too.
+A signature change goes the same way: add the new form, deprecate the old one, and remove it in the next major release. The removal needs its deprecations.json entry too. Changing a deprecated symbol's signature in place follows the same rule as removing it: it needs the entry, and it can land only in a major release after the minor release that deprecated it.
 
 ## The check
 
 `tools/public_api.sh` regenerates the manifest from the `##` doc comments (with Godot's doctool) and compares it with the committed `docs/public-api/public_api.json`. In CI it also compares it with the manifest on the pull request's base branch.
 
 - It **fails** when a frozen symbol is removed, renamed or changed, or stops being frozen, and deprecations.json has no entry for it or its class. It also fails when deprecations.json is malformed, or when PUBLIC_API.md doesn't match the manifest.
-- It **fails a covered removal** too (a symbol removed, renamed or moved back to `@experimental`, with an entry for it or its class) unless both of these hold:
+- It **fails a covered removal or a covered signature change** too (a symbol removed, renamed, moved back to `@experimental` or given a changed signature, with an entry for it or its class) unless both of these hold:
   - the current version's major is above the major of the entry's `since`;
   - `since` is a minor release (`x.y.0` or a later patch, with `y` of 1 or more), so the warning shipped in a minor release before the major.
 
-  The current version is the manifest's `version`, which `tools/public_api.sh` takes from `addons/bustle/VERSION`. A `since` of `X.0.0` names a major release with no minor after it, so a removal under it always fails. For example, with `since` 1.3.0, removing the symbol fails at 1.4.0 or 1.3.1 and passes at 2.0.0 or later. Each failure names the symbol, the current version and `since`. A covered signature change is not held to this rule.
-- **When a removal can land.** `addons/bustle/VERSION` holds the last released version until the release-prep pull request bumps it. So a removal lands in the pull request that bumps the major version, or after it.
-- It **fails a changed hook call**, like any other signature change: an argument added, removed, renamed or retyped, or a changed return type. It also fails a call that disappears from a hook's doc comment. A deprecations.json entry for the hook or its class covers a changed call, as it does any covered signature change.
+  The current version is the manifest's `version`, which `tools/public_api.sh` takes from `addons/bustle/VERSION`. A `since` of `X.0.0` names a major release with no minor after it, so a removal or signature change under it always fails. For example, with `since` 1.3.0, removing the symbol or changing its signature fails at 1.4.0 or 1.3.1 and passes at 2.0.0 or later. Each failure names the symbol, the current version and `since`; a signature change also shows the old and new signatures.
+- **When a removal or signature change can land.** `addons/bustle/VERSION` holds the last released version until the release-prep pull request bumps it. So a covered removal or signature change lands in the pull request that bumps the major version, or after it.
+- It **fails a changed hook call**, like any other signature change: an argument added, removed, renamed or retyped, or a changed return type. It also fails a call that disappears from a hook's doc comment. A deprecations.json entry for the hook or its class covers a changed call under the same version rule as any covered signature change.
 - It **notes** a call recorded for the first time on a hook whose baseline had none. That documents an existing contract; it doesn't change it.
 - It **passes** on new symbols, and notes that the manifest is behind the code.
 - CI also runs `tools/save_fixtures.sh --check`: the golden save fixtures of each release must be exactly what that tag writes, and `tests/save/test_save_fixtures.gd` loads every one into the current code ([saves.md](../saves.md)).
@@ -75,10 +75,11 @@ tools/public_api.sh --check --base origin/main # also against the base branch, a
 tools/public_api.sh --write                   # record the current surface (refuses a breaking change with no entry)
 ```
 
-`tests/api/test_public_api_check.gd`, `tests/api/test_public_api_removals.gd` and `tests/api/test_public_api_hook_calls.gd` prove the rules on fixtures in `tests/api/fixtures/`:
+`tests/api/test_public_api_check.gd`, `tests/api/test_public_api_removals.gd`, `tests/api/test_public_api_signature_changes.gd` and `tests/api/test_public_api_hook_calls.gd` prove the rules on fixtures in `tests/api/fixtures/`:
 - a removal fails, and the same removal with a deprecation entry passes in the next major release;
 - a covered removal in the same major, or one whose `since` was a major release, fails;
-- a changed or dropped hook call fails, a covered one passes, and a first-recorded call is a note. Every frozen hook has a call.
+- a covered signature change follows the same rule: it fails in the same major or when `since` was a major release, and passes in the next major;
+- a changed or dropped hook call fails, a covered one passes in the next major, and a first-recorded call is a note. Every frozen hook has a call.
 
 ## Marking what isn't frozen
 
