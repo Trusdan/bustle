@@ -26,7 +26,7 @@ Bustle is a **generic addon for living non-player populations in Godot 4.7.x**: 
 - **Static typing everywhere**: variables, parameters and return types.
 - Public classes use the **`Bustle` prefix** (`class_name BustleInfo`). File names are **`snake_case`**.
 - Indent with **tabs**.
-- Every public class and method gets a **`##` doc comment**. API before 1.0 is marked **`@experimental`**.
+- Every public class and method gets a **`##` doc comment**. New API is marked **`@experimental`** until it's frozen.
 - Put logic in plain **`RefCounted`** classes so GUT can test it headless. **`plugin.gd` stays thin.**
 
 ## Errors and bad input
