@@ -296,6 +296,34 @@ func reconsider(agent: StringName, id: int, now: int) -> StringName:
 	return _decide(row, agent, saw, source, now)
 
 
+## Removes the closed records whose last event was before minute [param before_minute], and
+## returns them (copies, by id) for the host to archive or drop. A record is closed when it is a
+## witnessed theft, or a deed already found or recovered ([method notice_losses]), and no errand
+## refers to it any more (delivered, forgotten or dropped). Its last event is the latest of
+## [code]at[/code], [code]found_at[/code] and [code]recovered_at[/code]. Open deeds and records an
+## errand still refers to are never removed, and ids are never reused.
+## [br][br]
+## Nothing calls it: without a call, every record is kept for good, as before. A long game can call
+## it now and then (for example once a game day, keeping the last week) so the save stops growing.
+## A pruned record is gone for [method question], [method reconsider], [method known_by] and
+## [method stolen_goods_of].
+## @experimental: Added before 1.0; it may be frozen in a later minor release.
+func prune(before_minute: int) -> Array[Dictionary]:
+	var referenced := {}
+	for errand: Dictionary in _errands:
+		referenced[int(errand["record"])] = true
+	var out: Array[Dictionary] = []
+	for id: int in _sorted_ids():
+		var row := _records[id]
+		if referenced.has(id) or (row["deed"] and int(row["found_at"]) < 0 and not row.has("recovered_at")):
+			continue
+		if _last_event(row) >= before_minute:
+			continue
+		out.append(record(id))
+		_records.erase(id)
+	return out
+
+
 ## The records as plain data, by id.
 func export_state() -> Dictionary:
 	return {"next_id": _next_id, "records": records(), "errands": _errands.duplicate(true)}
@@ -305,7 +333,8 @@ func export_state() -> Dictionary:
 func import_state(saved: Variant) -> bool:
 	if not BustleSaveFormat._readable(saved):
 		return false
-	if not saved is Dictionary or not saved.get("next_id") is int or not saved.get("records") is Array:
+	if not saved is Dictionary or not saved.get("next_id") is int or int(saved["next_id"]) <= 0 \
+			or not saved.get("records") is Array:
 		return false
 	var staged: Dictionary[int, Dictionary] = {}
 	for row: Variant in saved["records"]:
@@ -461,6 +490,11 @@ func _report(row: Dictionary, reporter: StringName, knows_thief: bool, source: S
 	crime_reported.emit(reporter, authority_role, report)
 
 
+# The minute of a record's last event: the theft, its deed found, or its deed recovered.
+static func _last_event(row: Dictionary) -> int:
+	return maxi(maxi(int(row["at"]), int(row["found_at"])), int(row.get("recovered_at", -1)))
+
+
 func _sorted_ids() -> Array[int]:
 	var ids: Array[int] = _records.keys()
 	ids.sort()
@@ -493,6 +527,10 @@ static func _valid_record(row: Variant) -> bool:
 		if not agent is String or not BustleWitnessJudge.OUTCOMES.has(StringName(str(row["decisions"][agent]))) \
 				or not row["decisions"][agent] is String:
 			return false
+	# found_at is -1 until a deed is found; a witnessed theft is never found.
+	if row.get("found_at") is int and (int(row["found_at"]) < -1
+			or (row.get("deed") is bool and not bool(row["deed"]) and int(row["found_at"]) != -1)):
+		return false
 	# recovered_at is only on a deed closed as recovered, which was never found.
 	if row.has("recovered_at") and (not row["recovered_at"] is int or not row.get("deed") is bool
 			or not bool(row["deed"]) or not row.get("found_at") is int or int(row["found_at"]) >= 0):
