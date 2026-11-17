@@ -69,6 +69,14 @@
 			"purpose": "What the scorer knows about one agent at one moment: its input values, the options it knows of, its need weights and tag multipliers, and how to check preconditions it doesn't know itself.",
 			"reason": "Internal to `BustleBrain`: the scorer's per-tick view. The brain's own hooks are the frozen way in."
 		},
+		"BustleStuckWatch": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/debug/stuck_watch.gd",
+			"purpose": "Tells a stuck agent from one in a legitimate long activity, from one observation per agent per step.",
+			"reason": "Development tool. The bound, the epsilon and the loop count are proposed defaults, not tuning, and the rule may change in any minor release."
+		},
 		"BustleUtilityScorer": {
 			"addon": "bustle",
 			"extends": "RefCounted",

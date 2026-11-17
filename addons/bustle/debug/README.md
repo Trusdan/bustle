@@ -5,4 +5,5 @@ Tools for inspecting a running population while developing. They run only in deb
 - `BustleInspector`: reads an agent's state from what its brain already holds: the scorer's own candidates from the last tick, the last intent, the step and the order queue. Parts that need modules not installed yet (rings, memory, schedules, needs) are marked unavailable rather than made up; for needs it shows the raw need inputs the brain was given.
 - `BustleDebugConsole`: `help`, `agents`, `why <agent> [goal] [option]`, `need <agent>`, `order <agent> [<sequence> [forced] | cancel <order>]`.
 - `BustleDebugOverlay`: a label above each agent's body. Off, it stops processing and frees its labels.
+- `BustleStuckWatch`: tells a stuck agent from one in a legitimate long activity, from observations a host, soak or bench feeds it (`docs/perf.md`, "Stuck watch"). It isn't behind the gate: it does nothing until fed, and a soak may run it in any build.
 - `BustleDebug.is_available()`: the gate.

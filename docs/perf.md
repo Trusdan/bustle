@@ -57,7 +57,7 @@ What keeps it cheap:
 
 ## Demo soak
 
-**Checks:** no agent stuck (by the stuck watch's rule, `demo/README.md`) and the same timeline hash when the same seed runs again. These are deterministic, so they fail the run, not just report.
+**Checks:** no agent stuck (by the rule of `BustleStuckWatch`, the addon's stuck watch in `addons/bustle/debug/stuck_watch.gd`, which the demo harness uses) and the same timeline hash when the same seed runs again. These are deterministic, so they fail the run, not just report.
 
 **Bench:** `bench/soak.gd` runs the house (2 residents) and the colony (4 settlers, every module on, the cold snap included) from seed 1 for a number of game days, twice each. It prints the seed, the engine version and build commit, the population, the simulated days, the wall time (and per day), the static memory, the timeline's size and SHA-256, the replay result, the stuck spells and each agent's longest run with no legitimate activity and no progress. It exits 1 on a stuck agent, a different replay hash or a short run.
 
@@ -77,14 +77,22 @@ soak colony: 4 agents, 30 days in 14216 ms (473.9 ms a day), static memory 36.2 
 
 These are the small demos' numbers, not the 40 Full / 40 Light / 200 Off-screen budgets; those are the population bench's, below.
 
+## Stuck watch
+
+`BustleStuckWatch` (`addons/bustle/debug/stuck_watch.gd`, experimental) tells a stuck agent from one in a legitimate long activity. A host, a soak or a bench feeds it one observation per agent per step, with `observe()` (what the caller saw) or `observe_agent()` (read from a `BustleNpcState`, with `travel_hook` and `offscreen_progress_hook` for what the state can't show). It only reads, makes no rolls, and keeps one small row per agent watched plus one entry per stuck spell.
+
+- **Rule:** more than `bound_minutes` (120) with no legitimate activity and no progress, the same goal failing `fail_loop` (3) steps in a row, or a mental state past its end. Moving more than `move_epsilon` (0.5 m) is progress. All three are proposed defaults, not tuning.
+- **Off-screen:** catch-up still advancing within `ring_config.offscreen_interval_game_minutes` is legitimate by default. With `check_offscreen_progress`, an off-screen agent needs a new goal or step, a new place, a hop pending, something consumed or the progress hook instead.
+- **Cost:** it does nothing until fed. Measured (2026-11-16, Godot 4.7.2 headless, Linux cloud machine): `observe_agent()` for 80 agents in view and 200 off-screen, every game minute for a game day, took about 6 µs a call, so about 1.6 to 1.8 ms for each minute's 280 calls. That is a debugging cost: watch every few game minutes, or a sample of agents, rather than every frame. No number here is a claim about a minimum machine.
+
 ## Population
 
-**Budgets:** FULL brains and sequences ≤ 1.0 ms average and ≤ 2.0 ms p99 per frame at 60 fps (on top of perception's), LIGHT ≤ 0.3 ms a frame for 40 at 1 Hz, OFF_SCREEN ≤ 0.5 ms a frame amortised for 200 per game hour, and a save of ≤ 2 KB per agent. No agent stuck (the stuck watch's rule) over a game day.
+**Budgets:** FULL brains and sequences ≤ 1.0 ms average and ≤ 2.0 ms p99 per frame at 60 fps (on top of perception's), LIGHT ≤ 0.3 ms a frame for 40 at 1 Hz, OFF_SCREEN ≤ 0.5 ms a frame amortised for 200 per game hour, and a save of ≤ 2 KB per agent. No agent stuck (`BustleStuckWatch`'s rule) over a game day.
 
 **Bench:** `bench/population_bench.gd` builds a synthetic, neutral town of 40 FULL agents (indoors in the player's area), 40 LIGHT (next door) and 200 OFF_SCREEN (elsewhere), run through `BustleSimRings`. Every agent has six goals, each a two-step sequence of timed waits, scored from three needs that rise and fall on a fixed per-agent cycle from the seed, so choices and sequences keep changing with no rolls.
 
 - **Timing:** one game hour at 60 frames a second and 30× game speed (7,200 frames). It reports each ring's average and p99 per frame from `last_timings`, the whole `tick` (which also re-sorts the rings when something calls for it), the static memory the town takes and the save size per agent (the society's export as JSON).
-- **Stuck at scale:** then a game day, one game minute a tick (the real seconds a minute takes at 30×). Each minute every agent is watched: a step still inside its wait (plus the ring's think interval), or off-screen catch-up still advancing, is legitimate; anything else needs a new goal or step.
+- **Stuck at scale:** then a game day, one game minute a tick (the real seconds a minute takes at 30×). Each minute every agent is watched: a step still inside its wait (plus the ring's think interval), or off-screen catch-up still advancing within the rings' `offscreen_interval_game_minutes`, is legitimate; anything else needs a new goal or step. That is the rule as written: an off-screen agent the rings keep caught up is never stuck here. `BustleStuckWatch.check_offscreen_progress` holds off-screen agents to goal, step or place progress instead (see "Stuck watch" below); the bench doesn't turn it on.
 
 It exits 1 when an average or the FULL p99 is over budget, the save is over budget, or an agent was stuck. CI runs it as a report at the budget (`continue-on-error`): shared runners' timings vary, and **no number here is a claim about a minimum machine**. The CI gate judges it at twice the timing budgets, and at the save budget and no stuck agent exactly.
 

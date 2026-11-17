@@ -366,7 +366,7 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleTradePort.export_state()` | `addons/bustle/ports/trade_port.gd` | The default's balances as plain data (ids → amounts). |
 | `BustleTradePort.import_state()` | `addons/bustle/ports/trade_port.gd` | Restores `export_state()`. |
 
-## Experimental classes (10)
+## Experimental classes (11)
 
 Usable, but not frozen: they may change in any minor release.
 
@@ -380,6 +380,7 @@ Usable, but not frozen: they may change in any minor release.
 | `BustleFindPerson` | `addons/bustle/core/memory/find_person.gd` | A search helper whose steps and hooks may still change; the guides document its current order. |
 | `BustleInspector` | `addons/bustle/debug/inspector.gd` | Development tool. The snapshot's keys follow the brain's internals and may change in any minor release. |
 | `BustleScoreContext` | `addons/bustle/core/brain/score_context.gd` | Internal to `BustleBrain`: the scorer's per-tick view. The brain's own hooks are the frozen way in. |
+| `BustleStuckWatch` | `addons/bustle/debug/stuck_watch.gd` | Development tool. The bound, the epsilon and the loop count are proposed defaults, not tuning, and the rule may change in any minor release. |
 | `BustleUtilityScorer` | `addons/bustle/core/brain/utility_scorer.gd` | Internal to `BustleBrain`: hosts shape scores through goals, considerations and the brain's hooks. |
 | `BustleWitnessJudge` | `addons/bustle/core/crime/witness_judge.gd` | The default witness decision; its scoring terms may change. Hosts replace it with `BustleCrimeWatch.should_report`. |
 
