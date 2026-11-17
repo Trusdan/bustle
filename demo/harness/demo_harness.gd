@@ -46,7 +46,6 @@ extends RefCounted
 
 const Timeline := preload("res://demo/harness/demo_timeline.gd")
 const UseAction := preload("res://demo/harness/demo_use_action.gd")
-const StuckWatch := preload("res://demo/harness/demo_stuck_watch.gd")
 ## The goal an agent pursues while it is away (off site, so out of company at home).
 const AWAY_GOAL := &"work"
 
@@ -93,7 +92,7 @@ var conversation: BustleConversation = null
 ## Who notices whom, with perception on.
 var perception: BustlePerceptionWorld = null
 ## Watches every agent for being stuck (its bound and epsilon are experimental defaults).
-var stuck := StuckWatch.new()
+var stuck := BustleStuckWatch.new()
 var _aspirations: Dictionary[StringName, BustleAspirations] = {}
 ## Events that started this step, passed to aspirations as their events.
 var _started: Array[StringName] = []
