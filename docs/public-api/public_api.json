@@ -61,6 +61,22 @@
 			"purpose": "Reads an agent's state for debugging, from what the brain already holds: the scorer's own candidates from the last tick (never recomputed), the last intent, the runner and the order queue.",
 			"reason": "Development tool. The snapshot's keys follow the brain's internals and may change in any minor release."
 		},
+		"BustleRestSick": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/modules/health/rest_sick.gd",
+			"purpose": "The rest-when-sick goal, opt-in: an agent who is ill rests instead of working or running errands until the health port says it is better.",
+			"reason": "Added after 1.0 for the health module. The tags, lines, weights and band are PROPOSED defaults, not tuning."
+		},
+		"BustleRestSickAction": {
+			"addon": "bustle",
+			"extends": "BustleActionHandler",
+			"kind": "class",
+			"path": "addons/bustle/modules/health/rest_sick_action.gd",
+			"purpose": "`rest_sick`: the agent rests while it is ill (`BustleRestSick.wants_rest()`).",
+			"reason": "Added after 1.0 for the health module."
+		},
 		"BustleScoreContext": {
 			"addon": "bustle",
 			"extends": "RefCounted",

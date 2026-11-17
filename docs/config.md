@@ -948,6 +948,18 @@ Public variables on runtime objects that change behaviour, set in code rather th
 | --- | --- | --- | --- | --- |
 | `enabled` | `bool` | `true` | true or false | False: no state starts, and an active one ends (the host's own switch). |
 
+### BustleRestSick
+
+`bustle/modules/health/rest_sick.gd`
+
+| Variable | Type | Default | Range | Effect |
+| --- | --- | --- | --- | --- |
+| `sick_tags` | `Array[StringName]` | `[&"sick"]` | — | The visible tags that mean ill enough to rest. PROPOSED: `sick`. |
+| `capacity_lines` | `Dictionary[StringName, float]` | `{&"consciousness": 0.5}` | each line above 0, at most 1 (outside it, warns once and is skipped) | Capacity name → line, 0 to 1: below the line, the agent rests. PROPOSED: `consciousness` below 0.5. |
+| `tag_weight` | `float` | `1.0` | 0 to 1 (clamped; not a number: warns once, uses 1) | How ill a sick tag counts as, 0 to 1. PROPOSED: 1. |
+| `capacity_weight` | `float` | `1.0` | 0 to 1 (clamped; not a number: warns once, uses 1) | How ill a capacity at 0 counts as, 0 to 1; at its line it counts as 0, in a straight line. PROPOSED: 1. |
+| `bed_need` | `StringName` | `&""` | — | The need a bed relieves (`relieves` in a `BustlePropertyPort` item), or empty for no bed: the agent rests where it stands. |
+
 ### BustleSeekCare
 
 `bustle/modules/health/seek_care.gd`
