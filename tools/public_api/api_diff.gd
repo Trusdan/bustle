@@ -6,8 +6,9 @@ extends RefCounted
 ## Every frozen symbol of the baseline must still be frozen, with the same signature, in the
 ## current manifest. A removed, renamed or changed symbol is breaking unless deprecations.json has
 ## an entry for it (or for its class). A covered removal (removed, renamed, or moved back to
-## [code]@experimental[/code]) also has to come in a major release after the minor release that
-## deprecated it: see [method removal_problem]. New symbols never fail. A raised save version
+## [code]@experimental[/code]) or a covered signature change also has to come in a major release
+## after the minor release that deprecated it: see [method removal_problem] and
+## [method change_problem]. New symbols never fail. A raised save version
 ## ([code]STATE_VERSION[/code], or the society's [code]SCHEMA[/code]) is a save-format change and is reported, not failed: the policy
 ## requires [code]import_state()[/code] to migrate the older shape.
 ##
@@ -67,9 +68,14 @@ static func compare(baseline: Dictionary, current: Dictionary, deprecations: Var
 			continue
 		var entry: Variant = covered.get(symbol, covered.get(owner, null))
 		var too_early: String = ""
-		if entry != null and not new.has(symbol):
-			var how: String = "no longer frozen" if problem.ends_with("(now @experimental)") else "removed"
-			too_early = removal_problem(symbol, str((entry as Dictionary)["since"]), str(current.get("version", "")), how)
+		if entry != null:
+			var since: String = str((entry as Dictionary)["since"])
+			var version: String = str(current.get("version", ""))
+			if not new.has(symbol):
+				var how: String = "no longer frozen" if problem.ends_with("(now @experimental)") else "removed"
+				too_early = removal_problem(symbol, since, version, how)
+			else:
+				too_early = change_problem(symbol, since, version, str(old[symbol]), str(new[symbol]))
 		if entry != null and too_early == "":
 			(result["deprecated"] as Array).append("%s (deprecated in %s)" % [problem, (entry as Dictionary)["since"]])
 		elif too_early != "":
@@ -93,15 +99,19 @@ static func compare(baseline: Dictionary, current: Dictionary, deprecations: Var
 ## [code]X.0.0[/code] was a major release with no minor after it, so it never can. [param how] is
 ## [code]"removed"[/code] or [code]"no longer frozen"[/code].
 static func removal_problem(symbol: String, since: String, version: String, how: String = "removed") -> String:
-	var was: PackedInt32Array = _semver(since)
-	var now: PackedInt32Array = _semver(version)
-	if now.is_empty():
-		return "%s: %s, but the current version (\"%s\") isn't x.y.z, so the removal can't be checked (since %s)" % [symbol, how, version, since]
-	if was[1] < 1:
-		return "%s: %s in %s; it was deprecated in a major release, so its warning never shipped in a minor release (since %s)" % [symbol, how, version, since]
-	if now[0] <= was[0]:
-		return "%s: %s in %s; removals need a major release after the minor that deprecated it (since %s)" % [symbol, how, version, since]
-	return ""
+	return _held_back(symbol, since, version, how, "removal")
+
+
+## Why a covered signature change of [param symbol] can't happen yet, or [code]""[/code] when it
+## can. The rule is the one [method removal_problem] applies: [param version] (the current
+## release) needs a higher major than [param since], and [param since] has to be a minor release.
+## The answer is one line, then the [param was] and [param now] signatures on their own lines, as
+## an uncovered change reports them.
+static func change_problem(symbol: String, since: String, version: String, was: String, now: String) -> String:
+	var why: String = _held_back(symbol, since, version, "signature changed", "signature change")
+	if why == "":
+		return ""
+	return "%s\n    was: %s\n    now: %s" % [why, was, now]
 
 
 ## True when the comparison found nothing that fails the check.
@@ -152,6 +162,20 @@ static func report(result: Dictionary, label: String) -> String:
 	if out.is_empty():
 		out.append("No changes to the public API against %s." % label)
 	return "\n".join(out)
+
+
+## The line for a covered [param how] of [param symbol] that comes too early, or [code]""[/code].
+## [param what] names the kind of change ([code]"removal"[/code]) in the message.
+static func _held_back(symbol: String, since: String, version: String, how: String, what: String) -> String:
+	var was: PackedInt32Array = _semver(since)
+	var now: PackedInt32Array = _semver(version)
+	if now.is_empty():
+		return "%s: %s, but the current version (\"%s\") isn't x.y.z, so the %s can't be checked (since %s)" % [symbol, how, version, what, since]
+	if was[1] < 1:
+		return "%s: %s in %s; it was deprecated in a major release, so its warning never shipped in a minor release (since %s)" % [symbol, how, version, since]
+	if now[0] <= was[0]:
+		return "%s: %s in %s; %ss need a major release after the minor that deprecated it (since %s)" % [symbol, how, version, what, since]
+	return ""
 
 
 static func _gone(symbol: String, current: Dictionary) -> String:

@@ -61,17 +61,17 @@ func test_a_changed_call_fails() -> void:
 		assert_eq(result["breaking"], [_changed_line(CALL, call)], call)
 
 
-func test_a_changed_call_with_an_entry_for_the_hook_passes_in_a_minor() -> void:
+func test_a_changed_call_with_an_entry_for_the_hook_passes_in_the_next_major() -> void:
 	var call := "func(id: StringName, now: int) -> float"
-	var result := ApiDiff.compare(_with_call(), _call_changed(call, "1.4.0"), _load("deprecations_hook_call.json"))
+	var result := ApiDiff.compare(_with_call(), _call_changed(call, "2.0.0"), _load("deprecations_hook_call.json"))
 	assert_true(ApiDiff.passes(result))
 	assert_eq(result["breaking"], [])
 	assert_eq(result["deprecated"], [_changed_line(CALL, call) + " (deprecated in 1.3.0)"])
 
 
-func test_a_changed_call_with_an_entry_for_its_class_passes_in_a_minor() -> void:
+func test_a_changed_call_with_an_entry_for_its_class_passes_in_the_next_major() -> void:
 	var call := "func(id: StringName) -> int"
-	var result := ApiDiff.compare(_with_call(), _call_changed(call, "1.4.0"), _load("deprecations_hook_class.json"))
+	var result := ApiDiff.compare(_with_call(), _call_changed(call, "2.0.0"), _load("deprecations_hook_class.json"))
 	assert_true(ApiDiff.passes(result))
 	assert_eq(result["breaking"], [])
 	assert_eq(result["deprecated"], [_changed_line(CALL, call) + " (deprecated in 1.3.0)"])
