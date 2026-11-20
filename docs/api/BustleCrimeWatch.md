@@ -296,7 +296,8 @@ Only the item id is followed. An item the host splits, merges or replaces under 
 func stolen_goods_held_by(agent: StringName) -> Dictionary[]
 ```
 
-The stolen goods `agent` owns now, whoever stole them, as records by id: its own thefts (`stolen_goods_of()`) and goods passed on to it by sale, gift or trade. A record counts while the property port shows `agent` as the owner of its item (`BustlePropertyPort.owner_of()`), `agent` isn't the owner it was stolen from, and it isn't a deed closed as recovered. Witnessed thefts and found deeds count. An item stolen more than once can be in more than one record. Empty when `agent` is empty or holds none. This only reads: what a host does with the goods (questioning, taking them back) is the host's.
+The stolen goods `agent` owns now, whoever stole them, as records by id: its own thefts (`stolen_goods_of()`) and goods passed on to it by sale, gift or trade. A record counts while the property port shows `agent` as the owner of its item (`BustlePropertyPort.owner_of()`), `agent` isn't the owner it was stolen from, and it isn't a deed closed as recovered. Witnessed thefts and found deeds count. An item stolen more than once can be in more than one record. Empty when `agent` is empty or holds none.
+Only a deed closed as recovered (its goods were back with their owner when the owner looked, `notice_losses()`) ends the trace. A witnessed theft or a found deed keeps listing its goods for any holder other than the owner they were stolen from until it is pruned, even after the goods went back to that owner and the owner sold or gave them on. A host that returns goods filters out the records it has dealt with, by id, or prunes them (`prune()`). This only reads: what a host does with the goods (questioning, taking them back) is the host's.
 
 ### `notice_losses`
 
@@ -363,7 +364,7 @@ func prune(before_minute: int) -> Dictionary[]
 ```
 
 Removes the closed records whose last event was before minute `before_minute`, and returns them (copies, by id) for the host to archive or drop. A record is closed when it is a witnessed theft, or a deed already found or recovered (`notice_losses()`), and no errand refers to it any more (delivered, forgotten or dropped). Its last event is the latest of `at`, `found_at` and `recovered_at`. Open deeds and records an errand still refers to are never removed, and ids are never reused.
-Nothing calls it: without a call, every record is kept for good, as before. A long game can call it now and then (for example once a game day, keeping the last week) so the save stops growing. A pruned record is gone for `question()`, `reconsider()`, `known_by()` and `stolen_goods_of()`.
+Nothing calls it: without a call, every record is kept for good, as before. A long game can call it now and then (for example once a game day, keeping the last week) so the save stops growing. A pruned record is gone for `question()`, `reconsider()`, `known_by()`, `stolen_goods_of()`, `deed_of_item()` and `stolen_goods_held_by()`.
 
 ### `export_state`
 

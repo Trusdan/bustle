@@ -117,6 +117,28 @@ func test_an_item_stolen_twice_gives_the_earliest_open_deed() -> void:
 	assert_eq(int(_watch.deed_of_item(&"loaf")["id"]), 2, "then the drifter's")
 
 
+# Pins today's behaviour: only a deed closed as recovered ends the trace. A witnessed theft whose
+# goods went back to the owner and on again still lists them for the new holder.
+func test_a_witnessed_theft_returned_and_sold_on_still_lists_its_goods() -> void:
+	_watch.perceives = func(agent: StringName, _thief: StringName, _place: StringName) -> bool: return agent == &"smith"
+	_deed_witnessed()
+	assert_true(_society.ports.property.transfer(&"loaf", &"drifter", &"baker"), "given back")
+	assert_true(_society.ports.property.transfer(&"loaf", &"baker", &"cook"), "the baker sells it on")
+	assert_eq(_ids(_watch.stolen_goods_held_by(&"cook")), [1] as Array[int], "the record still lists it")
+	assert_eq(_watch.stolen_goods_held_by(&"baker"), [] as Array[Dictionary])
+
+
+# Pins today's behaviour: a found deed whose goods went back to the owner and on again still lists
+# them for the new holder; the host filters the records it has dealt with, or prunes them.
+func test_a_found_deed_returned_and_given_on_still_lists_its_goods() -> void:
+	_deed()
+	assert_true(_society.ports.property.transfer(&"loaf", &"drifter", &"cook"))
+	assert_eq(_watch.notice_losses(&"baker", &"market", 30), [1] as Array[int], "the baker finds it gone")
+	assert_true(_society.ports.property.transfer(&"loaf", &"cook", &"baker"), "the cook gives it back")
+	assert_true(_society.ports.property.transfer(&"loaf", &"baker", &"smith"), "the baker gives it on")
+	assert_eq(_ids(_watch.stolen_goods_held_by(&"smith")), [1] as Array[int], "the record still lists it")
+	assert_eq(_watch.deed_of_item(&"loaf"), {}, "the found deed isn't open")
+
 func test_empty_and_unknown_ids_give_nothing() -> void:
 	_deed()
 	assert_eq(_watch.deed_of_item(&""), {})
