@@ -2,14 +2,17 @@
 
 How to cut a Bustle release, for example `v0.1.0`. **The maintainer creates the tag and the GitHub release.** Contributors and agents prepare everything up to step 5 in a pull request.
 
-A release has **two zips**:
+A release has **three zips**:
 
 | Zip | Contents | For |
 | --- | --- | --- |
 | `bustle-<version>.zip` | `addons/bustle/` and `LICENSE` | every project |
 | `bustle-wyrd-bridge-<version>.zip` | `addons/bustle_wyrd/` and `LICENSE` | projects that also use Wyrd (optional) |
+| `bustle-example-<version>.zip` | one folder, `bustle-example-<version>/`: the example project (`examples/village/`) with `addons/bustle/` and `LICENSE` in it | trying Bustle: unzip, open `project.godot` in Godot 4.7.x, press Play |
 
-Neither zip contains `addons/wyrd/` (a test-only copy), `addons/gut/`, `demo/`, `tests/`, `docs/`, `tools/` or the dev `project.godot`.
+Neither addon zip contains `addons/wyrd/` (a test-only copy), `addons/gut/`, `demo/`, `examples/`, `tests/`, `docs/`, `tools/` or the dev `project.godot`.
+
+The example zip's `addons/bustle/` and `LICENSE` are byte for byte the addon zip's entries, under the example's folder. It leaves out the example's `.gitignore` (which ignores `addons/` in the repository, where the addon isn't copied in) and, like the addon zips, everything else in the repository. A commit without `examples/village/` (v0.9.0 and earlier) builds no example zip.
 
 Each addon folder also carries its own `LICENSE` (an exact copy of the root one) and a short `README.md` (what the addon is, the Godot version, the license and a link to the docs), so a project that copies only the folder keeps them. From the first release after 0.9.0, each zip therefore holds the license twice: at the top and inside the folder. `tools/check_license_copies.sh` fails when a copy drifts from the root `LICENSE` or a folder's README is missing, and CI runs it with its self-test. **If the root `LICENSE` changes** (a new copyright year, say), copy it into both folders in the same pull request:
 
@@ -20,7 +23,7 @@ tools/check_license_copies.sh
 
 ## Building the zips
 
-`tools/build_release.sh` builds both zips the same way every time:
+`tools/build_release.sh` builds the zips the same way every time:
 
 ```bash
 tools/build_release.sh                # from HEAD, into build/release/ (ignored by git)
@@ -29,10 +32,10 @@ tools/build_release.sh --check --list # build twice, fail unless byte-identical,
 tools/build_release.sh --ref v0.9.0 --expect tools/release/published.sha256  # fail unless it gives the published hashes
 ```
 
-- **Committed files only.** It takes the files from the commit (`git archive`), never the working tree, so local changes or untracked files can't get in.
+- **Committed files only.** It takes the files from the commit, never the working tree, so local changes or untracked files can't get in: the addon zips through `git archive`, and the example zip from the commit's files directly (`git ls-tree` and `git cat-file`), since `.gitattributes` keeps `examples/` out of archives. `tools/release/write_zip.py` writes every zip the same way.
 - **Same bytes every time, on any machine.** Entries are sorted by path, every entry gets the commit's own time and the same permissions, and the compression is pinned. The same commit gives byte-identical zips; the script prints each zip's SHA-256.
 - **A pinned compressor.** The system's zlib is not used to compress: its output depends on its build, and zlib-ng (which some systems ship as their zlib) compresses the same file to different (equally valid) bytes from classic zlib. `tools/release/zlib_deflate.py`, a pure-Python port of classic zlib's level-9 deflate, compresses every entry instead, so the bytes are classic zlib's wherever the script runs. Each zip is read back with the system's zlib and checked against the committed files. It needs only Python 3; a build takes a few seconds.
-- **Checked contents.** It refuses to build when `addons/bustle/VERSION` and `addons/bustle_wyrd/VERSION` disagree. It fails if a zip holds anything but its addon folder and `LICENSE`.
+- **Checked contents.** It refuses to build when `addons/bustle/VERSION` and `addons/bustle_wyrd/VERSION` disagree. It fails if an addon zip holds anything but its addon folder and `LICENSE`, or if the example zip holds anything but the example's committed files (but its `.gitignore`) and the addon zip's entries, all under its folder, or if its addon differs from the addon zip's.
 
 CI checks on every pull request that the build works and is reproducible:
 
@@ -41,8 +44,9 @@ CI checks on every pull request that the build works and is reproducible:
   - it compares the pinned compressor with the system's zlib, byte for byte, on every tracked file and on edge cases (on Linux, where the runner's zlib is classic; `--require-classic` makes a different zlib an error there, not a skip);
   - it rebuilds v0.9.0 and fails unless both zips match `tools/release/published.sha256`;
   - it checks that a wrong expected hash fails the build.
+- `tools/test_example_zip.sh` runs on Linux and Windows: it builds the zips twice (byte-identical, the example zip included), unpacks the example zip into a fresh folder, and loads that project headless with `tools/example.sh --check --project`: the import, its two-day check, the main scene for 300 frames and the editor, with no error or warning.
 
-The published hashes of each release go in `tools/release/published.sha256` (one `<sha256>  <zip name>` line per zip).
+The published hashes of each release go in `tools/release/published.sha256` (one `<sha256>  <zip name>` line per zip). `--expect` needs the two addon zips listed, and checks the example zip's hash when it's listed (v0.9.0 had no example zip).
 
 ## The source archive
 
@@ -105,7 +109,7 @@ The listing text is drafted in [asset-library/listing.md](asset-library/listing.
    tools/build_release.sh --ref v0.1.0 --check --list
    ```
 
-8. Create the GitHub release from the tag. Attach the two zips from `build/release/`, and use the release notes (or the changelog section) as its text.
-9. Add the two zips' SHA-256 lines to `tools/release/published.sha256` in a pull request, so CI keeps checking that the release can be rebuilt byte for byte.
+8. Create the GitHub release from the tag. Attach the three zips from `build/release/`, and use the release notes (or the changelog section) as its text.
+9. Add the three zips' SHA-256 lines to `tools/release/published.sha256` in a pull request, so CI keeps checking that the release can be rebuilt byte for byte.
 
 A project that vendors Bustle pins the tag and its commit, so a tag must never move once pushed.

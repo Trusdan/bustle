@@ -7,6 +7,9 @@
 #                             two-day check (check.gd), run the main scene for 300 frames, and open
 #                             it in the editor. Fails on a non-zero exit or any ERROR, WARNING or
 #                             SCRIPT ERROR line.
+#   tools/example.sh --check --project DIR
+#                             the same checks on the example project in DIR as it is, with its own
+#                             addons/ (an unpacked example release zip), copying nothing
 # Needs the pinned Godot (tools/pins.env) on PATH as `godot` for --check.
 set -euo pipefail
 
@@ -14,19 +17,33 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 example="$root/examples/village"
 
 check=0
-if [[ "${1:-}" == "--check" ]]; then
-	check=1
-elif [[ -n "${1:-}" ]]; then
-	echo "usage: tools/example.sh [--check]" >&2
+project=""
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--check) check=1; shift ;;
+		--project) project="${2:-}"; shift 2 ;;
+		*) echo "usage: tools/example.sh [--check [--project DIR]]" >&2; exit 2 ;;
+	esac
+done
+if [[ -n "$project" && $check -eq 0 ]]; then
+	echo "--project needs --check" >&2
 	exit 2
 fi
 
-rm -rf "$example/addons"
-mkdir -p "$example/addons"
-cp -R "$root/addons/bustle" "$example/addons/bustle"
-echo "Copied addons/bustle/ into examples/village/addons/. Open examples/village/project.godot in Godot 4.7.x."
-if [[ $check -eq 0 ]]; then
-	exit 0
+if [[ -n "$project" ]]; then
+	if [[ ! -f "$project/project.godot" || ! -f "$project/addons/bustle/plugin.cfg" ]]; then
+		echo "$project has no project.godot or no addons/bustle/plugin.cfg" >&2
+		exit 1
+	fi
+	example="$(cd "$project" && pwd)"
+else
+	rm -rf "$example/addons"
+	mkdir -p "$example/addons"
+	cp -R "$root/addons/bustle" "$example/addons/bustle"
+	echo "Copied addons/bustle/ into examples/village/addons/. Open examples/village/project.godot in Godot 4.7.x."
+	if [[ $check -eq 0 ]]; then
+		exit 0
+	fi
 fi
 
 if ! command -v godot >/dev/null 2>&1; then

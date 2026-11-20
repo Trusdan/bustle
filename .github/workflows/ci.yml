@@ -65,6 +65,11 @@ jobs:
       - name: Example project loads headless
         run: tools/example.sh --check
 
+      # The example release zip (docs/RELEASE.md): built twice byte for byte, unpacked into a fresh
+      # folder, and loaded headless there with the addon it carries.
+      - name: Example release zip builds and loads headless
+        run: tools/test_example_zip.sh
+
       # The release zips come out byte-identical on Windows too: v0.9.0 gives its published hashes.
       - name: Release zips reproduce the published hashes
         run: tools/test_build_release.sh
@@ -302,6 +307,11 @@ jobs:
       # addon: import, its two-day check, the main scene and the editor, with no errors or warnings.
       - name: Example project loads headless
         run: tools/example.sh --check
+
+      # The example release zip (docs/RELEASE.md): built twice byte for byte, unpacked into a fresh
+      # folder, and loaded headless there with the addon it carries.
+      - name: Example release zip builds and loads headless
+        run: tools/test_example_zip.sh
 
       # Proves the hygiene check itself with made-up terms: an added term fails, a removed one
       # passes, vendored folders are skipped, and the term is never printed.
