@@ -14,7 +14,8 @@ extends RefCounted
 ## [br][br]
 ## A fulfilled want also earns its [member BustleWantDef.points]. Points only accumulate: the host
 ## spends them ([method spend_points]), for example from [member on_points]. Bustle defines no
-## rewards. An active want may boost the goals it names ([method boost]), never past
+## rewards. A host that may not spend them can cap what's earned
+## ([member BustleAspirationConfig.max_points]); there's no cap by default. An active want may boost the goals it names ([method boost]), never past
 ## [member BustleAspirationConfig.max_want_boost] and never a [code]never_boost[/code] goal.
 ## [br][br]
 ## [b]Fears.[/b] An event passed to [method update] forms each fear it triggers, or renews one already
@@ -163,11 +164,18 @@ func points() -> int:
 	return _points
 
 
-## Adds [param amount] points for [param reason], then calls [member on_points]. False (and no
-## change) unless [param amount] is positive.
+## Adds [param amount] points for [param reason], then calls [member on_points]. With a cap
+## ([member BustleAspirationConfig.max_points]), it adds only what reaches the cap: both
+## [signal points_changed] and [member on_points] get the amount actually added. False (and no
+## change, no signal) unless [param amount] is positive and at least one point could be added, so
+## also when the points are at or above the cap.
 func add_points(amount: int, reason: StringName) -> bool:
 	if amount <= 0:
 		return false
+	if config.max_points >= 0:
+		amount = mini(amount, config.max_points - _points)
+		if amount <= 0:
+			return false
 	_points += amount
 	points_changed.emit(agent_id, amount, reason, _points)
 	if on_points.is_valid():
@@ -263,6 +271,8 @@ func export_state() -> Dictionary:
 
 ## Restores [method export_state], replacing everything. False (and nothing changes) when malformed
 ## or naming a want or fear the config doesn't have. A save without [code]points[/code] has none.
+## Points above [member BustleAspirationConfig.max_points] load as saved: the cap only limits
+## earning, so they're kept until spent, and the agent earns none until then.
 func import_state(saved: Variant) -> bool:
 	if not BustleSaveFormat._readable(saved):
 		return false

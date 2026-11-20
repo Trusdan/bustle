@@ -56,6 +56,14 @@ var never_boost: StringName[] = [...]
 
 Goals a want never boosts, whatever its table says (as for ambitions).
 
+### `max_points`
+
+```gdscript
+var max_points: int = -1
+```
+
+The most aspiration points an agent can earn up to (`BustleAspirations.add_points()` adds no more than reaches it), or a negative number for no cap (the default, -1). The cap only limits earning: points already above it (from a save, or a cap lowered later) are kept, and the agent earns none until spending takes it below. What points buy stays the host's call.
+
 ## Methods
 
 ### `find_want`

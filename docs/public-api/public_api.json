@@ -151,6 +151,7 @@
 		}
 	},
 	"experimental_members": {
+		"BustleAspirationConfig.max_points": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleAspirationConfig.validate": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleBrain.keeper": "Its type, `BustleChoiceKeeper`, is internal and may change in any minor release.",
 		"BustleBrain.last_candidates": "Its type, `BustleCandidate`, is internal and may change in any minor release.",

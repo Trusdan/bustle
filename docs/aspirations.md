@@ -80,6 +80,15 @@ Fulfilling a want earns its `points`. Points only accumulate, and Bustle defines
 - **`on_points`**, the host's reward hook, is `func(agent, amount, reason)`. It is called after points are earned, with the new total already counted, and it may spend them to grant whatever reward the game has. It must not call `add_points`, which calls the hook again and would recurse. Unset, points just accumulate.
 - **`points_changed(agent, amount, reason, total)`** fires on every change; `amount` is negative for spending.
 
+### An optional cap
+
+A host that never spends points (or not often) can cap what's earned with `BustleAspirationConfig.max_points` (`@experimental`). It's unset by default (-1, or any negative), and then points grow without limit as before. What points buy stays the host's call.
+
+- **Earning stops at the cap.** `add_points` adds only what reaches it: with a cap of 10 and 7 held, adding 5 adds 3. `points_changed` and `on_points` both get the amount actually added (3). The same goes for a fulfilled want.
+- **At the cap, nothing is added.** `add_points` returns false, with no signal and no `on_points` call, as for any call that changes nothing. A cap of 0 means no points are ever earned.
+- **The cap never takes points away.** Points above it, from a save or because the host lowered the cap, are kept. The agent earns none until spending takes it below the cap, and then earns up to it again. A save always loads exactly as saved, and a lower cap can't erase what a host may already have promised.
+- `spend_points` is unaffected.
+
 ## Fears
 
 `BustleFearDef`:
@@ -111,7 +120,7 @@ Fulfilling a want earns its `points`. Points only accumulate, and Bustle defines
 
 ## Saving
 
-`export_state()` gives `{wants, fears, ended, points}`. Expiry and end times are absolute game minutes, so a want saved with an hour left expires an hour after the load. `import_state` refuses malformed data, a want or fear the config doesn't have, or negative points, and changes nothing. A save without `points` has none.
+`export_state()` gives `{wants, fears, ended, points}`. Expiry and end times are absolute game minutes, so a want saved with an hour left expires an hour after the load. `import_state` refuses malformed data, a want or fear the config doesn't have, or negative points, and changes nothing. A save without `points` has none. Points above `max_points` load as saved (see [An optional cap](#an-optional-cap)).
 
 ## In the demo
 

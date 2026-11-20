@@ -6,7 +6,7 @@ Inherits: `RefCounted`
 
 The aspirations module, for one agent: short-lived wants and event-formed fears. It is separate from ambitions, which keep working the same with it on or off.
 **Wants.** Each `update()`, an active want whose `BustleWantDef.is_done()` holds is fulfilled: its satisfaction thought goes to the mood. One that has reached its expiry minute instead expires, with no thought. Then, while fewer than `BustleAspirationConfig.auto_wants` automatic wants are active, the eligible want with the highest score is taken (ties to the lower id). The host may also post wants (`post_want()`); all wants together stay within `BustleAspirationConfig.want_cap`.
-A fulfilled want also earns its `BustleWantDef.points`. Points only accumulate: the host spends them (`spend_points()`), for example from `on_points`. Bustle defines no rewards. An active want may boost the goals it names (`boost()`), never past `BustleAspirationConfig.max_want_boost` and never a `never_boost` goal.
+A fulfilled want also earns its `BustleWantDef.points`. Points only accumulate: the host spends them (`spend_points()`), for example from `on_points`. Bustle defines no rewards. A host that may not spend them can cap what's earned (`BustleAspirationConfig.max_points`); there's no cap by default. An active want may boost the goals it names (`boost()`), never past `BustleAspirationConfig.max_want_boost` and never a `never_boost` goal.
 **Fears.** An event passed to `update()` forms each fear it triggers, or renews one already formed. While formed, a fear multiplies the scores of the goals and options it avoids (`avoidance()`, for `BustleBrain.score_boost`); it only lowers scores. It ends after its duration, or when its clearing fact is true.
 Nothing is random: wants and fears come only from causes and state.
 
@@ -142,7 +142,7 @@ The agent's aspiration points.
 func add_points(amount: int, reason: StringName) -> bool
 ```
 
-Adds `amount` points for `reason`, then calls `on_points`. False (and no change) unless `amount` is positive.
+Adds `amount` points for `reason`, then calls `on_points`. With a cap (`BustleAspirationConfig.max_points`), it adds only what reaches the cap: both `points_changed` and `on_points` get the amount actually added. False (and no change, no signal) unless `amount` is positive and at least one point could be added, so also when the points are at or above the cap.
 
 ### `spend_points`
 
@@ -222,4 +222,4 @@ Active wants, formed fears, when each want last ended and the points, as plain d
 func import_state(saved: Variant) -> bool
 ```
 
-Restores `export_state()`, replacing everything. False (and nothing changes) when malformed or naming a want or fear the config doesn't have. A save without `points` has none.
+Restores `export_state()`, replacing everything. False (and nothing changes) when malformed or naming a want or fear the config doesn't have. A save without `points` has none. Points above `BustleAspirationConfig.max_points` load as saved: the cap only limits earning, so they're kept until spent, and the agent earns none until then.

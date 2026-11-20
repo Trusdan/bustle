@@ -167,6 +167,7 @@ BustleScheduleDef.late_minutes	0 or more; clamped
 BustleAspirationConfig.auto_wants	0 to want_cap; warned
 BustleAspirationConfig.want_cap	0 or more (0: no wants), at least auto_wants; warned
 BustleAspirationConfig.max_want_boost	1 or more; clamped to at least 1
+BustleAspirationConfig.max_points	0 or more (negative: no cap; points above it are kept, not earned past); unchecked
 BustleWitnessConfig.kind_weights	relationship kind → any finite; unchecked
 BustleWitnessConfig.threshold	any finite; unchecked
 BustleScheduleBlock.late_minutes	-1 or more (-1: the schedule's own); checked
