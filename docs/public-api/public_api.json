@@ -13,6 +13,14 @@
 			"purpose": "One scored choice: a goal, and the option it would use (empty for a goal without advertisements).",
 			"reason": "Internal to `BustleBrain` and `BustleInspector`: the scorer's working record. Hosts read choices through the brain."
 		},
+		"BustleCareerPeriod": {
+			"addon": "bustle",
+			"extends": "Resource",
+			"kind": "class",
+			"path": "addons/bustle/modules/careers/career_period.gd",
+			"purpose": "How a rank is reviewed in one host-defined period, as data: a full set of review rules that replaces the rank's own while a review window is judged in that period (see `BustleCareerRank.periods` and `BustleCareers.update_in_period()`).",
+			"reason": "Added after 1.0; it may be frozen in a later minor release."
+		},
 		"BustleChoiceKeeper": {
 			"addon": "bustle",
 			"extends": "RefCounted",
@@ -146,6 +154,9 @@
 		"BustleAspirationConfig.validate": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleBrain.keeper": "Its type, `BustleChoiceKeeper`, is internal and may change in any minor release.",
 		"BustleBrain.last_candidates": "Its type, `BustleCandidate`, is internal and may change in any minor release.",
+		"BustleCareerRank.periods": "Added after 1.0; it may be frozen in a later minor release.",
+		"BustleCareers.update_in_period": "Added after 1.0; it may be frozen in a later minor release.",
+		"BustleCareers.window_period": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleCrimeWatch.judge": "Its type, `BustleWitnessJudge`, is internal and may change in any minor release.",
 		"BustleCrimeWatch.prune": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleFetchHelpAction.approach": "Added after 1.0, when fetching a healer started to reuse this rule.",
@@ -826,7 +837,7 @@
 			},
 			"purpose": "The careers module: ranks on standing jobs.",
 			"save": {
-				"export_state": "Every career as plain data: `{agent: {career, rank, since, closed, window, promoted}}`.",
+				"export_state": "Every career as plain data: `{agent: {career, rank, since, closed, window, promoted}}`, plus `period` on a career whose window is judged in a period (`window_period()`); no other row has it.",
 				"import_state": "Restores `export_state()`, replacing every career."
 			},
 			"signals": {

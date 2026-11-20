@@ -75,7 +75,8 @@ var late_credit: float = 0.5
 var neutral_mood: float = 0.5
 
 var _defs: Dictionary[StringName, BustleCareerDef] = {}
-## Agent id → {career, rank, since, closed (last day closed), window (performances), promoted}.
+## Agent id → {career, rank, since, closed (last day closed), window (performances), promoted,
+## and period (the window's period, only while one is pinned)}.
 var _careers: Dictionary[StringName, Dictionary] = {}
 
 
@@ -225,7 +226,21 @@ func performance(id: StringName) -> float:
 ## reviewed at the end of the last one, and the next window starts. Call it at least every few game days (the schedule keeps 7 days of
 ## attendance). Given the same mood, skill and attendance, one long call gives the same reviews as
 ## many short ones. Returns one [code]{at, performance, outcome, rank}[/code] per review.
+## [br][br]
+## It is [method update_in_period] with no period: a window keeps the period it started in, so a
+## window begun with a period is still judged by that period's rules.
 func update(id: StringName, now: int, mood: Object = null) -> Array[Dictionary]:
+	return update_in_period(id, now, &"", mood)
+
+
+## [method update] in host-defined period [param period] (any id, or empty for none): a review window
+## that starts in this call is judged by the rules [member BustleCareerRank.periods] gives for that
+## period, or by the rank's own rules when it lists none. A window starts in a call when the call
+## closes its first working day, and keeps that period until it is reviewed, whatever later calls
+## pass ([method window_period]); a change of period takes effect from the next window. Bustle
+## defines no periods and assumes no calendar.
+## @experimental: Added after 1.0; it may be frozen in a later minor release.
+func update_in_period(id: StringName, now: int, period: StringName, mood: Object = null) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var schedule := roster.schedule_of(id)
 	while _careers.has(id) and schedule != null:
@@ -248,11 +263,20 @@ func update(id: StringName, now: int, mood: Object = null) -> Array[Dictionary]:
 		var skill := NAN
 		if def.skill != &"":
 			skill = _skill(id, def) / skill_full if skill_full > 0.0 else 1.0
+		if (info["window"] as Array).is_empty() and period != &"":
+			info["period"] = period
 		(info["window"] as Array).append(day_performance(_mood(mood), skill, attendance))
-		var rank: BustleCareerRank = def.ranks[def.rank_index(info["rank"])]
-		if (info["window"] as Array).size() >= rank.review_days:
-			out.append(_review(id, (day + 1) * 1440, mood))
+		var rules := _rules(def.ranks[def.rank_index(info["rank"])], info.get("period", &""))
+		if (info["window"] as Array).size() >= int(rules["review_days"]):
+			out.append(_review(id, (day + 1) * 1440, mood, rules))
 	return out
+
+
+## The period [param id]'s current review window is judged in ([method update_in_period]), or empty
+## when it has none (no career, an empty window, or a window started without a period).
+## @experimental: Added after 1.0; it may be frozen in a later minor release.
+func window_period(id: StringName) -> StringName:
+	return _careers.get(id, {}).get("period", &"")
 
 
 ## Sets [constant PROMOTION_GRANTED] to true in [param inputs] (an ambition's facts) from a granted
@@ -263,20 +287,25 @@ func fill_inputs(id: StringName, inputs: Dictionary) -> void:
 
 
 ## Every career as plain data:
-## [code]{agent: {career, rank, since, closed, window, promoted}}[/code].
+## [code]{agent: {career, rank, since, closed, window, promoted}}[/code], plus [code]period[/code]
+## on a career whose window is judged in a period ([method window_period]); no other row has it.
 func export_state() -> Dictionary:
 	var out := {}
 	for id: StringName in agent_ids():
 		var info: Dictionary = _careers[id]
 		out[String(id)] = {"career": String(info["career"]), "rank": String(info["rank"]), "since": info["since"],
 			"closed": info["closed"], "window": (info["window"] as Array).duplicate(), "promoted": info["promoted"]}
+		if info.has("period"):
+			out[String(id)]["period"] = String(info["period"])
 	return out
 
 
 ## Restores [method export_state], replacing every career. False (and nothing changes) when the data
 ## is malformed or names a track or rank there's no def for. A save without the review clock
 ## ([code]closed[/code], [code]window[/code], [code]promoted[/code]) starts it afresh from
-## [code]since[/code]. It doesn't check who holds which role: restore the roles first.
+## [code]since[/code]. A [code]period[/code] must be a non-empty string on a row whose window has
+## at least one day; a save without one has no pinned period. It doesn't check who holds which role:
+## restore the roles first.
 func import_state(saved: Variant) -> bool:
 	if not BustleSaveFormat._readable(saved):
 		return false
@@ -302,6 +331,10 @@ func import_state(saved: Variant) -> bool:
 			values.append(float(value))
 		restored[StringName(id)] = {"career": def.id, "rank": StringName(row["rank"]), "since": int(since),
 			"closed": int(closed), "window": values, "promoted": row.get("promoted", false)}
+		if row.has("period"):
+			if not row["period"] is String or String(row["period"]).is_empty() or values.is_empty():
+				return false
+			restored[StringName(id)]["period"] = StringName(row["period"])
 	for id: StringName in _careers:
 		var schedule := roster.schedule_of(id)
 		if schedule != null:
@@ -312,7 +345,15 @@ func import_state(saved: Variant) -> bool:
 	return true
 
 
-func _review(id: StringName, at: int, mood: Object) -> Dictionary:
+# The review rules for [param rank] in [param period]: the period's, or the rank's own.
+static func _rules(rank: BustleCareerRank, period: StringName) -> Dictionary:
+	var rules: Variant = rank.periods.get(period) if period != &"" else null
+	if rules is BustleCareerPeriod:
+		return {"review_days": rules.review_days, "promote_if": rules.promote_if, "demote_if": rules.demote_if}
+	return {"review_days": rank.review_days, "promote_if": rank.promote_if, "demote_if": rank.demote_if}
+
+
+func _review(id: StringName, at: int, mood: Object, rules: Dictionary) -> Dictionary:
 	var info: Dictionary = _careers[id]
 	var def: BustleCareerDef = _defs[info["career"]]
 	var index := def.rank_index(info["rank"])
@@ -320,15 +361,16 @@ func _review(id: StringName, at: int, mood: Object) -> Dictionary:
 	var value := performance(id)
 	info["window"] = [] as Array[float]
 	info["promoted"] = false
+	info.erase("period")
 	var outcome := STEADY
-	if value >= rank.promote_if:
+	if value >= float(rules["promote_if"]):
 		outcome = GOOD_REVIEW
 		var next := def.ranks[index + 1].id if index + 1 < def.ranks.size() else &""
 		if next != &"" and can_hold(id, def.id, next) and _decide(id, def, rank.id, next, PROMOTED):
 			_set_rank(id, def, rank.id, next, at, info["closed"])
 			_careers[id]["promoted"] = true
 			outcome = PROMOTED
-	elif value <= rank.demote_if:
+	elif value <= float(rules["demote_if"]):
 		outcome = POOR_REVIEW
 		if index > 0 and _decide(id, def, rank.id, def.ranks[index - 1].id, DEMOTED):
 			_set_rank(id, def, rank.id, def.ranks[index - 1].id, at, info["closed"])

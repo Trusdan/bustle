@@ -21,11 +21,23 @@ extends Resource
 @export var promote_if: float = 0.75
 ## A window's performance at or below this makes a demotion due.
 @export var demote_if: float = 0.35
+## Period id → the review rules ([member BustleCareerPeriod.review_days],
+## [member BustleCareerPeriod.promote_if] and [member BustleCareerPeriod.demote_if]) used instead of
+## this rank's when a window is judged in that period ([method BustleCareers.update_in_period]).
+## A period not listed here uses this rank's own. Empty: every period uses them.
+## @experimental: Added after 1.0; it may be frozen in a later minor release.
+@export var periods: Dictionary[StringName, BustleCareerPeriod] = {}
 
 
 ## True when it can be used: an id, a wage of at least 0, a finite, non-negative skill minimum, a
-## review window of at least one day, and finite thresholds with [member demote_if] below
-## [member promote_if].
+## review window of at least one day, finite thresholds with [member demote_if] below
+## [member promote_if], and every entry of [member periods] a non-empty id with a valid
+## [BustleCareerPeriod].
 func is_valid() -> bool:
-	return id != &"" and wage >= 0 and is_finite(min_skill) and min_skill >= 0.0 and review_days >= 1 \
-			and is_finite(promote_if) and is_finite(demote_if) and demote_if < promote_if
+	if not (id != &"" and wage >= 0 and is_finite(min_skill) and min_skill >= 0.0 and review_days >= 1 \
+			and is_finite(promote_if) and is_finite(demote_if) and demote_if < promote_if):
+		return false
+	for period: StringName in periods:
+		if period == &"" or periods[period] == null or not periods[period].is_valid():
+			return false
+	return true

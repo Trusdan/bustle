@@ -276,6 +276,23 @@ func update(id: StringName, now: int, mood: Object = null) -> Dictionary[]
 ```
 
 Brings `id`'s career up to game minute `now`. Each whole game day with a career block is closed, once its career blocks have all ended, into a `day_performance()` from `mood` (anything with a `mood` number, such as a `BustleMood`; null: `neutral_mood`), the skill level now and that day's attendance at the career block. A day with no career block (a day off) is skipped: it adds no score and doesn't count toward the window. Each time a window has `BustleCareerRank.review_days` working days, the agent is reviewed at the end of the last one, and the next window starts. Call it at least every few game days (the schedule keeps 7 days of attendance). Given the same mood, skill and attendance, one long call gives the same reviews as many short ones. Returns one `{at, performance, outcome, rank}` per review.
+It is `update_in_period()` with no period: a window keeps the period it started in, so a window begun with a period is still judged by that period's rules.
+
+### `update_in_period`
+
+```gdscript
+func update_in_period(id: StringName, now: int, period: StringName, mood: Object = null) -> Dictionary[]
+```
+
+`update()` in host-defined period `period` (any id, or empty for none): a review window that starts in this call is judged by the rules `BustleCareerRank.periods` gives for that period, or by the rank's own rules when it lists none. A window starts in a call when the call closes its first working day, and keeps that period until it is reviewed, whatever later calls pass (`window_period()`); a change of period takes effect from the next window. Bustle defines no periods and assumes no calendar.
+
+### `window_period`
+
+```gdscript
+func window_period(id: StringName) -> StringName
+```
+
+The period `id`'s current review window is judged in (`update_in_period()`), or empty when it has none (no career, an empty window, or a window started without a period).
 
 ### `fill_inputs`
 
@@ -291,7 +308,7 @@ Sets `PROMOTION_GRANTED` to true in `inputs` (an ambition's facts) from a grante
 func export_state() -> Dictionary
 ```
 
-Every career as plain data: `{agent: {career, rank, since, closed, window, promoted}}`.
+Every career as plain data: `{agent: {career, rank, since, closed, window, promoted}}`, plus `period` on a career whose window is judged in a period (`window_period()`); no other row has it.
 
 ### `import_state`
 
@@ -299,4 +316,4 @@ Every career as plain data: `{agent: {career, rank, since, closed, window, promo
 func import_state(saved: Variant) -> bool
 ```
 
-Restores `export_state()`, replacing every career. False (and nothing changes) when the data is malformed or names a track or rank there's no def for. A save without the review clock (`closed`, `window`, `promoted`) starts it afresh from `since`. It doesn't check who holds which role: restore the roles first.
+Restores `export_state()`, replacing every career. False (and nothing changes) when the data is malformed or names a track or rank there's no def for. A save without the review clock (`closed`, `window`, `promoted`) starts it afresh from `since`. A `period` must be a non-empty string on a row whose window has at least one day; a save without one has no pinned period. It doesn't check who holds which role: restore the roles first.
