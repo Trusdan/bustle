@@ -136,7 +136,7 @@ func records() -> Array[Dictionary]:
 func open_deeds() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id: int in _sorted_ids():
-		if _records[id]["deed"] and int(_records[id]["found_at"]) < 0 and not _records[id].has("recovered_at"):
+		if _is_open_deed(_records[id]):
 			out.append(record(id))
 	return out
 
@@ -174,6 +174,51 @@ func stolen_goods_of(agent: StringName) -> Array[Dictionary]:
 	for id: int in _sorted_ids():
 		var row := _records[id]
 		if StringName(row["thief"]) == agent and crime.society.ports.property.owner_of(StringName(row["item"])) == agent:
+			out.append(record(id))
+	return out
+
+
+## The open deed [param item] is from, whoever holds it now: the thief, someone it was sold, given
+## or traded on to, or nobody (used up). Returns the record (a copy, as [method record]) of the
+## earliest deed in [method open_deeds] whose item is [param item], or empty when there is none or
+## [param item] is empty. A witnessed theft isn't a deed, and a deed found or recovered isn't open,
+## so neither is returned; [method stolen_goods_held_by] still lists found and witnessed goods.
+## [br][br]
+## Only the item id is followed. An item the host splits, merges or replaces under a new id doesn't
+## carry the trace; one it removes and registers again under the same id does. A pruned record
+## ([method prune]) is gone. This only reads: it moves, makes and destroys nothing.
+## @experimental: Added after 1.0; it may be frozen in a later minor release.
+func deed_of_item(item: StringName) -> Dictionary:
+	if item == &"":
+		return {}
+	for id: int in _sorted_ids():
+		if StringName(_records[id]["item"]) == item and _is_open_deed(_records[id]):
+			return record(id)
+	return {}
+
+
+## The stolen goods [param agent] owns now, whoever stole them, as records by id: its own thefts
+## ([method stolen_goods_of]) and goods passed on to it by sale, gift or trade. A record counts
+## while the property port shows [param agent] as the owner of its item
+## ([method BustlePropertyPort.owner_of]), [param agent] isn't the owner it was stolen from, and it
+## isn't a deed closed as recovered. Witnessed thefts and found deeds count. An item stolen more
+## than once can be in more than one record. Empty when [param agent] is empty or holds none.
+## [br][br]
+## Only a deed closed as recovered (its goods were back with their owner when the owner looked,
+## [method notice_losses]) ends the trace. A witnessed theft or a found deed keeps listing its goods
+## for any holder other than the owner they were stolen from until it is pruned, even after the
+## goods went back to that owner and the owner sold or gave them on. A host that returns goods
+## filters out the records it has dealt with, by id, or prunes them ([method prune]). This only
+## reads: what a host does with the goods (questioning, taking them back) is the host's.
+## @experimental: Added after 1.0; it may be frozen in a later minor release.
+func stolen_goods_held_by(agent: StringName) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if agent == &"":
+		return out
+	for id: int in _sorted_ids():
+		var row := _records[id]
+		if StringName(row["owner_id"]) != agent and not row.has("recovered_at") \
+				and crime.society.ports.property.owner_of(StringName(row["item"])) == agent:
 			out.append(record(id))
 	return out
 
@@ -305,8 +350,8 @@ func reconsider(agent: StringName, id: int, now: int) -> StringName:
 ## [br][br]
 ## Nothing calls it: without a call, every record is kept for good, as before. A long game can call
 ## it now and then (for example once a game day, keeping the last week) so the save stops growing.
-## A pruned record is gone for [method question], [method reconsider], [method known_by] and
-## [method stolen_goods_of].
+## A pruned record is gone for [method question], [method reconsider], [method known_by],
+## [method stolen_goods_of], [method deed_of_item] and [method stolen_goods_held_by].
 ## @experimental: Added before 1.0; it may be frozen in a later minor release.
 func prune(before_minute: int) -> Array[Dictionary]:
 	var referenced := {}
@@ -488,6 +533,11 @@ func _report(row: Dictionary, reporter: StringName, knows_thief: bool, source: S
 	report["source"] = String(source)
 	report["reported_at"] = now
 	crime_reported.emit(reporter, authority_role, report)
+
+
+# True for a deed nobody has found and that wasn't recovered.
+static func _is_open_deed(row: Dictionary) -> bool:
+	return bool(row["deed"]) and int(row["found_at"]) < 0 and not row.has("recovered_at")
 
 
 # The minute of a record's last event: the theft, its deed found, or its deed recovered.

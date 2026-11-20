@@ -391,7 +391,7 @@ Usable, but not frozen: they may change in any minor release.
 | `BustleUtilityScorer` | `addons/bustle/core/brain/utility_scorer.gd` | Internal to `BustleBrain`: hosts shape scores through goals, considerations and the brain's hooks. |
 | `BustleWitnessJudge` | `addons/bustle/core/crime/witness_judge.gd` | The default witness decision; its scoring terms may change. Hosts replace it with `BustleCrimeWatch.should_report`. |
 
-## Experimental members (19)
+## Experimental members (21)
 
 Members of frozen classes that are not frozen yet.
 
@@ -404,8 +404,10 @@ Members of frozen classes that are not frozen yet.
 | `BustleCareerRank.periods` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleCareers.update_in_period` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleCareers.window_period` | Added after 1.0; it may be frozen in a later minor release. |
+| `BustleCrimeWatch.deed_of_item` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleCrimeWatch.judge` | Its type, `BustleWitnessJudge`, is internal and may change in any minor release. |
 | `BustleCrimeWatch.prune` | Added before 1.0; it may be frozen in a later minor release. |
+| `BustleCrimeWatch.stolen_goods_held_by` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleFetchHelpAction.approach` | Added after 1.0, when fetching a healer started to reuse this rule. |
 | `BustleJobBoard.refusal` | Added after 1.0 with capacity minimums. |
 | `BustleJobBoard.release_unfit` | Added after 1.0 with capacity minimums. |
