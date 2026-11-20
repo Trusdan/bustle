@@ -18,6 +18,12 @@ extends Resource
 @export var max_want_boost: float = 1.25
 ## Goals a want never boosts, whatever its table says (as for ambitions).
 @export var never_boost: Array[StringName] = [&"steal", &"insult", &"quarrel", &"fight", &"attack"]
+## The most aspiration points an agent can earn up to ([method BustleAspirations.add_points]
+## adds no more than reaches it), or a negative number for no cap (the default, -1). The cap only
+## limits earning: points already above it (from a save, or a cap lowered later) are kept, and the
+## agent earns none until spending takes it below. What points buy stays the host's call.
+## @experimental: Added after 1.0; it may be frozen in a later minor release.
+@export var max_points: int = -1
 
 
 ## The want [param id], or null.
