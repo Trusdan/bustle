@@ -141,6 +141,9 @@ BustleCareerRank.wage	0 or more; checked
 BustleCareerRank.min_skill	0 or more (above 0 needs the track's skill); checked
 BustleCareerRank.review_days	1 or more; checked
 BustleCareerRank.promote_if	any finite (performance is 0 to 1), above demote_if; checked
+BustleCareerPeriod.review_days	1 or more; checked
+BustleCareerPeriod.promote_if	any finite (performance is 0 to 1), above demote_if; checked
+BustleCareerPeriod.demote_if	any finite, below promote_if; checked
 BustleCareerRank.demote_if	any finite, below promote_if; checked
 BustleAffordanceDef.relief	need → 0 or more; checked
 BustleAffordanceDef.adds	need → 0 or more; checked
