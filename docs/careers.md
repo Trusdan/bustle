@@ -11,7 +11,7 @@ var careers := BustleCareers.new(career_defs, roster, society.ports)
 careers.assign(&"clerk_1", &"office", &"junior", now)
 ```
 
-Each tick (or at least every few game days), call `careers.update(id, now, mood)` for every agent with a career, where `mood` is its `BustleMood` (or null). After the role changes and loading, the module keeps itself in step with the roster.
+Each tick (or at least every few game days), call `careers.update(id, now, mood)` for every agent with a career, where `mood` is its `BustleMood` (or null). After the role changes and loading, the module keeps itself in step with the roster. To review by different rules in a host-defined period, call `careers.update_in_period(id, now, period, mood)` instead (see [Periods](#periods)).
 
 Only the host puts an agent on a track. A new holder of a role is not enrolled automatically. An agent can hold one career at a time.
 
@@ -38,6 +38,7 @@ Only the host puts an agent on a track. A new holder of a role is not enrolled a
 | `review_days` | 7 | Working days (days with a career block) in each review window. Days off don't count. |
 | `promote_if` | 0.75 | A window's performance at or above this makes a promotion due. |
 | `demote_if` | 0.35 | At or below this, a demotion is due. Must be below `promote_if`. |
+| `periods` | empty | Period id → `BustleCareerPeriod`: the review rules used instead of the three above in that period (see [Periods](#periods)). |
 
 ## The career block
 
@@ -93,6 +94,25 @@ A new window starts after every review. After a change of rank, it starts the ne
 
 **Thoughts.** With the needs_mood module, set `thoughts` (outcome → a timed `BustleThoughtDef`) and pass the agent's mood to `update`. A review then adds the thought for its outcome, with the career and rank in its reason. Without the module, leave `thoughts` empty and pass no mood; only the signals fire.
 
+## Periods
+
+A host can review careers by different rules in periods it defines: a season, a busy month, a quiet spell. Bustle defines no periods and assumes no calendar; a period is any id the host chooses. Both the API and the data are `@experimental`.
+
+**The rules, as data.** A rank's `periods` maps a period id to a `BustleCareerPeriod`. That's a full set of review rules (`review_days` 7, `promote_if` 0.75 and `demote_if` 0.35 by default, valid by the same rules as a rank's) used instead of the rank's own in that period. Wages and skill minimums stay the rank's. A period the rank doesn't list uses the rank's own rules, so a host can name one period everywhere and give rules only where they differ. A rank with a period entry that's invalid, null or has an empty id is invalid, and its track is refused.
+
+```gdscript
+var busy := BustleCareerPeriod.new()
+busy.review_days = 3      # reviewed every 3 working days, not 7
+busy.promote_if = 0.85    # and harder to promote
+rank.periods[&"harvest"] = busy
+```
+
+**Passing the period.** `update_in_period(id, now, period, mood)` does what `update` does, in `period`. `update(id, now, mood)` is the same call with no period, and gives exactly what it always gave. (`update` keeps its signature: an added parameter would break the frozen API, so the period comes through a new method.)
+
+**A window keeps the period it started in.** A review window starts when a call closes its first working day, in the period that call gives. Until it's reviewed, the window is judged by that period's rules (its `review_days`, `promote_if` and `demote_if`), whatever later calls pass, including `update` with no period. A change of period takes effect from the next window, and so does a window started after a change of rank. `window_period(id)` gives the period the current window is judged in, or empty.
+
+Pinning the window means its length and thresholds never change under it. Days already scored are never judged by a period they weren't worked in, and a window can't be cut short or stretched by a change of period. Like the mood, the period is the one passed at the call: a long catch-up starts every window it closes in the period it's given.
+
 ## Catch-up
 
 A day closes only once its career blocks have ended, so its attendance can't change afterwards. Reviews happen at day boundaries, whenever `update` is called. Given the same mood, skill and attendance, one long `update` over a window gives the same reviews and state as daily or hourly ones.
@@ -104,14 +124,15 @@ Two limits apply:
 
 ## Saving
 
-`export_state()` gives `{agent: {career, rank, since, closed, window, promoted}}`, which covers the rank and the review clock (the last closed day, the window so far, and whether a promotion was just granted).
+`export_state()` gives `{agent: {career, rank, since, closed, window, promoted}}`, which covers the rank and the review clock (the last closed day, the window so far, and whether a promotion was just granted). A career whose window is judged in a period also has `period`; no other row has it, so a save made without periods is exactly as before.
 
 `import_state(saved)` replaces every career and puts the rank wages back on the career blocks. It refuses (returns false, changing nothing) data that:
 
 - is malformed;
 - names an unknown track or rank;
-- has a window value outside 0 to 1.
+- has a window value outside 0 to 1;
+- has a `period` that isn't a non-empty string, or one on an empty window.
 
-A save without the review clock starts it afresh from `since`.
+A save without the review clock starts it afresh from `since`. A save without `period` has no pinned period, as every save from before periods.
 
 Import doesn't check who holds which role or skill minimums, and emits no signals. Restore the roles and roster first, then careers, then tick.

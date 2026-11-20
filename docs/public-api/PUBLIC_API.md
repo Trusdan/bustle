@@ -313,7 +313,7 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleAwareness.import_state()` | `addons/bustle/modules/perception/awareness.gd` | Restores `export_state()`'s data, making each meter with `profile`. |
 | `BustleBrain.export_state()` | `addons/bustle/core/brain/brain.gd` | The brain's whole state as plain data: the generator, the keeper, the runner and which goal the runner is running. |
 | `BustleBrain.import_state()` | `addons/bustle/core/brain/brain.gd` | Restores `export_state()`'s state into a brain made for the same agent and library. |
-| `BustleCareers.export_state()` | `addons/bustle/modules/careers/careers.gd` | Every career as plain data: `{agent: {career, rank, since, closed, window, promoted}}`. |
+| `BustleCareers.export_state()` | `addons/bustle/modules/careers/careers.gd` | Every career as plain data: `{agent: {career, rank, since, closed, window, promoted}}`, plus `period` on a career whose window is judged in a period (`window_period()`); no other row has it. |
 | `BustleCareers.import_state()` | `addons/bustle/modules/careers/careers.gd` | Restores `export_state()`, replacing every career. |
 | `BustleConflict.export_state()` | `addons/bustle/core/conflict/conflict.gd` | The conflicts in progress as plain data, by agent id in order. |
 | `BustleConflict.import_state()` | `addons/bustle/core/conflict/conflict.gd` | Restores `export_state()`. |
@@ -366,13 +366,14 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleTradePort.export_state()` | `addons/bustle/ports/trade_port.gd` | The default's balances as plain data (ids → amounts). |
 | `BustleTradePort.import_state()` | `addons/bustle/ports/trade_port.gd` | Restores `export_state()`. |
 
-## Experimental classes (17)
+## Experimental classes (18)
 
 Usable, but not frozen: they may change in any minor release.
 
 | Class | File | Why it stays experimental |
 | --- | --- | --- |
 | `BustleCandidate` | `addons/bustle/core/brain/candidate.gd` | Internal to `BustleBrain` and `BustleInspector`: the scorer's working record. Hosts read choices through the brain. |
+| `BustleCareerPeriod` | `addons/bustle/modules/careers/career_period.gd` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleChoiceKeeper` | `addons/bustle/core/brain/choice_keeper.gd` | Internal to `BustleBrain`: its hysteresis bookkeeping may change. Its save data is part of the brain's. |
 | `BustleDebug` | `addons/bustle/debug/debug_gate.gd` | Development tool. The debug gate may gain or change switches along with the debug tools. |
 | `BustleDebugConsole` | `addons/bustle/debug/debug_console.gd` | Development tool. Its commands and their output may change in any minor release. |
@@ -390,7 +391,7 @@ Usable, but not frozen: they may change in any minor release.
 | `BustleUtilityScorer` | `addons/bustle/core/brain/utility_scorer.gd` | Internal to `BustleBrain`: hosts shape scores through goals, considerations and the brain's hooks. |
 | `BustleWitnessJudge` | `addons/bustle/core/crime/witness_judge.gd` | The default witness decision; its scoring terms may change. Hosts replace it with `BustleCrimeWatch.should_report`. |
 
-## Experimental members (15)
+## Experimental members (18)
 
 Members of frozen classes that are not frozen yet.
 
@@ -399,6 +400,9 @@ Members of frozen classes that are not frozen yet.
 | `BustleAspirationConfig.validate` | Added before 1.0; it may be frozen in a later minor release. |
 | `BustleBrain.keeper` | Its type, `BustleChoiceKeeper`, is internal and may change in any minor release. |
 | `BustleBrain.last_candidates` | Its type, `BustleCandidate`, is internal and may change in any minor release. |
+| `BustleCareerRank.periods` | Added after 1.0; it may be frozen in a later minor release. |
+| `BustleCareers.update_in_period` | Added after 1.0; it may be frozen in a later minor release. |
+| `BustleCareers.window_period` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleCrimeWatch.judge` | Its type, `BustleWitnessJudge`, is internal and may change in any minor release. |
 | `BustleCrimeWatch.prune` | Added before 1.0; it may be frozen in a later minor release. |
 | `BustleFetchHelpAction.approach` | Added after 1.0, when fetching a healer started to reuse this rule. |

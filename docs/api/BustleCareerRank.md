@@ -56,6 +56,14 @@ var demote_if: float = 0.35
 
 A window's performance at or below this makes a demotion due.
 
+### `periods`
+
+```gdscript
+var periods: Dictionary[StringName, BustleCareerPeriod] = {}
+```
+
+Period id → the review rules (`BustleCareerPeriod.review_days`, `BustleCareerPeriod.promote_if` and `BustleCareerPeriod.demote_if`) used instead of this rank's when a window is judged in that period (`BustleCareers.update_in_period()`). A period not listed here uses this rank's own. Empty: every period uses them.
+
 ## Methods
 
 ### `is_valid`
@@ -64,4 +72,4 @@ A window's performance at or below this makes a demotion due.
 func is_valid() -> bool
 ```
 
-True when it can be used: an id, a wage of at least 0, a finite, non-negative skill minimum, a review window of at least one day, and finite thresholds with `demote_if` below `promote_if`.
+True when it can be used: an id, a wage of at least 0, a finite, non-negative skill minimum, a review window of at least one day, finite thresholds with `demote_if` below `promote_if`, and every entry of `periods` a non-empty id with a valid [BustleCareerPeriod](BustleCareerPeriod.md).
