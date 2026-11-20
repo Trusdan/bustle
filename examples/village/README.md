@@ -6,7 +6,9 @@ It is separate from the demo (`demo/`) and the tests, and uses Bustle's public A
 
 ## Open it
 
-The example needs a copy of the addon in its own `addons/` folder. That copy isn't committed (the one copy lives in the repository's `addons/bustle/`), so make it first, from the repository root:
+**From a release:** `bustle-example-<version>.zip` holds this project with the addon already in it. Unzip it, open `bustle-example-<version>/project.godot` in Godot 4.7.x and press Play.
+
+**From the repository:** the example needs a copy of the addon in its own `addons/` folder. That copy isn't committed (the one copy lives in the repository's `addons/bustle/`), so make it first, from the repository root:
 
 ```
 tools/example.sh
