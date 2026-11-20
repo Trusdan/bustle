@@ -281,6 +281,23 @@ func stolen_goods_of(agent: StringName) -> Dictionary[]
 
 The stolen goods `agent` still owns, as records by id: evidence the host can find on it.
 
+### `deed_of_item`
+
+```gdscript
+func deed_of_item(item: StringName) -> Dictionary
+```
+
+The open deed `item` is from, whoever holds it now: the thief, someone it was sold, given or traded on to, or nobody (used up). Returns the record (a copy, as `record()`) of the earliest deed in `open_deeds()` whose item is `item`, or empty when there is none or `item` is empty. A witnessed theft isn't a deed, and a deed found or recovered isn't open, so neither is returned; `stolen_goods_held_by()` still lists found and witnessed goods.
+Only the item id is followed. An item the host splits, merges or replaces under a new id doesn't carry the trace; one it removes and registers again under the same id does. A pruned record (`prune()`) is gone. This only reads: it moves, makes and destroys nothing.
+
+### `stolen_goods_held_by`
+
+```gdscript
+func stolen_goods_held_by(agent: StringName) -> Dictionary[]
+```
+
+The stolen goods `agent` owns now, whoever stole them, as records by id: its own thefts (`stolen_goods_of()`) and goods passed on to it by sale, gift or trade. A record counts while the property port shows `agent` as the owner of its item (`BustlePropertyPort.owner_of()`), `agent` isn't the owner it was stolen from, and it isn't a deed closed as recovered. Witnessed thefts and found deeds count. An item stolen more than once can be in more than one record. Empty when `agent` is empty or holds none. This only reads: what a host does with the goods (questioning, taking them back) is the host's.
+
 ### `notice_losses`
 
 ```gdscript
