@@ -107,7 +107,7 @@ So an agent kept in for ten hours wants to go out (outdoors 0.5), and an hour ou
 The conditions apply whenever they're passed, asleep or awake. The demo harness passes them while an agent sleeps too. A host that wants sleep to pause these needs leaves the environment conditions out while the agent is asleep:
 
 ```gdscript
-var conditions: Array[StringName] = [&"asleep"] if asleep else [&"awake"]
+var conditions: Array[StringName] = [&"asleep" if asleep else &"awake"]
 if not asleep:
 	conditions.append_array(BustleEnvironmentPort.conditions_of(society.ports.environment, id))
 needs.advance(minutes, conditions, modifiers)

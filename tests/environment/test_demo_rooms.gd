@@ -100,11 +100,13 @@ func test_leaving_the_conditions_out_while_asleep_holds_both_needs_still() -> vo
 	var needs := BustleNeedSet.new()
 	needs.add_need(INDOORS_NEED.duplicate())
 	needs.add_need(OUTDOORS_NEED.duplicate())
+	needs.set_pressure(&"indoors", 0.5)
+	needs.set_pressure(&"outdoors", 0.5)
 	var before := [needs.pressure(&"indoors"), needs.pressure(&"outdoors")]
 	var asleep: Array[StringName] = [&"asleep"]
 	needs.advance(8 * 60, asleep)
 	assert_eq([needs.pressure(&"indoors"), needs.pressure(&"outdoors")], before,
-		"eight hours asleep without the environment conditions: neither need moves")
+		"eight hours asleep without the environment conditions: neither need rises or falls")
 	var awake: Array[StringName] = [&"awake"]
 	awake.append_array(BustleEnvironmentPort.conditions_of(_env, &"baker"))
 	needs.advance(60, awake)
