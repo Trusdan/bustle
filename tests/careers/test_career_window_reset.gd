@@ -159,6 +159,14 @@ func test_closed_days_are_not_scored_again() -> void:
 	assert_eq((_state()["window"] as Array).size(), 1, "only day 2, not days 0 and 1 again")
 
 
+# Only closed days are dropped: a host brings the career up to the break before resetting.
+func test_days_not_yet_closed_are_scored_into_the_new_window() -> void:
+	for day: int in 2:
+		_roster.schedule_of(&"agent_a").attend(day * DAY + START, &"work")
+	assert_true(_careers.reset_window(&"agent_a"), "no update yet: nothing closed")
+	_careers.update(&"agent_a", 2 * DAY, _mood(90.0))
+	assert_eq((_state()["window"] as Array).size(), 2, "both days close into the new window")
+
 func test_a_reset_clears_the_pinned_period() -> void:
 	_days(0, 1, false, &"long")
 	assert_eq(_careers.window_period(&"agent_a"), &"long")

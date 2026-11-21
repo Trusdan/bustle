@@ -288,9 +288,10 @@ func window_period(id: StringName) -> StringName:
 ## that call's period). Nothing is reviewed and no signal fires. The career, rank, wage,
 ## [method since_of], the last closed day (so no closed day is scored again) and a granted
 ## promotion's [constant PROMOTION_GRANTED] are kept. Bustle never calls this itself and has no
-## length of break: without it, days off pause the window, as [method update] says. True when
-## [param id] has a career, including when its window is already empty; false, changing nothing,
-## when it has none.
+## length of break: without it, days off pause the window, as [method update] says. Only closed
+## days are dropped: call [method update] up to the break first, or working days before it that
+## weren't closed yet are scored into the new window. True when [param id] has a career,
+## including when its window is already empty; false, changing nothing, when it has none.
 ## @experimental: Added after 1.0; it may be frozen in a later minor release.
 func reset_window(id: StringName) -> bool:
 	var info: Dictionary = _careers.get(id, {})

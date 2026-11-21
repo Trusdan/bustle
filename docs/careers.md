@@ -87,6 +87,8 @@ Everything else stays:
 - **The same career.** The rank, its wage, `since_of(id)`, the job and `promotion_granted` after a granted promotion (a reset isn't a review) are all kept.
 - **The last closed day.** It's kept, so a later catch-up never scores an already-closed day again.
 
+Only closed days are dropped. Bring the career up to the break with `update` before the reset. Otherwise, working days before the break that no call has closed yet are scored into the new window when they close.
+
 It returns true when the agent has a career, even if the window is already empty, and false, changing nothing, when it has none.
 
 ## Reviews
