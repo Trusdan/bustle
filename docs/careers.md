@@ -67,6 +67,28 @@ All of these are configurable properties of `BustleCareers`. For example, at ski
 
 `performance(id)` is the mean of the current window so far.
 
+### After a break
+
+Days off pause the window, however many there are. After a long leave or a closed season, the working days before the break and those after it still count together in one window. That is the default, and a host that does nothing keeps it.
+
+A host that wants a fresh window after a break calls `reset_window(id)` (`@experimental`). Bustle has no calendar and no length of break, so it never resets a window on its own: the host decides when a break is long enough.
+
+```gdscript
+# The clerk is back from a long leave: judge only the days from here on.
+careers.reset_window(&"clerk_1")
+careers.update(&"clerk_1", now, mood)
+```
+
+A reset drops the current window's scored days and its pinned period (see Periods). `performance(id)` is NAN and `window_period(id)` is empty until the next working day `update` or `update_in_period` closes. That day starts a new window, in the period of that call, and the agent is reviewed after a full `review_days` working days from there.
+
+Everything else stays:
+
+- **No review.** The partial window isn't reviewed, and no signal fires.
+- **The same career.** The rank, its wage, `since_of(id)`, the job and `promotion_granted` after a granted promotion (a reset isn't a review) are all kept.
+- **The last closed day.** It's kept, so a later catch-up never scores an already-closed day again.
+
+It returns true when the agent has a career, even if the window is already empty, and false, changing nothing, when it has none.
+
 ## Reviews
 
 When a window has `review_days` working days, the agent is reviewed at the end of the last one. The window's mean is compared with the rank's thresholds:
@@ -124,7 +146,7 @@ Two limits apply:
 
 ## Saving
 
-`export_state()` gives `{agent: {career, rank, since, closed, window, promoted}}`, which covers the rank and the review clock (the last closed day, the window so far, and whether a promotion was just granted). A career whose window is judged in a period also has `period`; no other row has it, so a save made without periods is exactly as before.
+`export_state()` gives `{agent: {career, rank, since, closed, window, promoted}}`, which covers the rank and the review clock (the last closed day, the window so far, and whether a promotion was just granted). A career whose window is judged in a period also has `period`; no other row has it, so a save made without periods is exactly as before. A reset adds nothing to save: the row keeps the same keys, with an empty `window` and no `period`.
 
 `import_state(saved)` replaces every career and puts the rank wages back on the career blocks. It refuses (returns false, changing nothing) data that:
 
