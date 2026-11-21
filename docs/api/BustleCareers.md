@@ -275,7 +275,7 @@ The mean performance of `id`'s current review window so far, or NAN with no clos
 func update(id: StringName, now: int, mood: Object = null) -> Dictionary[]
 ```
 
-Brings `id`'s career up to game minute `now`. Each whole game day with a career block is closed, once its career blocks have all ended, into a `day_performance()` from `mood` (anything with a `mood` number, such as a `BustleMood`; null: `neutral_mood`), the skill level now and that day's attendance at the career block. A day with no career block (a day off) is skipped: it adds no score and doesn't count toward the window. Each time a window has `BustleCareerRank.review_days` working days, the agent is reviewed at the end of the last one, and the next window starts. Call it at least every few game days (the schedule keeps 7 days of attendance). Given the same mood, skill and attendance, one long call gives the same reviews as many short ones. Returns one `{at, performance, outcome, rank}` per review.
+Brings `id`'s career up to game minute `now`. Each whole game day with a career block is closed, once its career blocks have all ended, into a `day_performance()` from `mood` (anything with a `mood` number, such as a `BustleMood`; null: `neutral_mood`), the skill level now and that day's attendance at the career block. A day with no career block (a day off) is skipped: it adds no score and doesn't count toward the window, so a stretch of days off pauses it (`reset_window()` starts it afresh instead). Each time a window has `BustleCareerRank.review_days` working days, the agent is reviewed at the end of the last one, and the next window starts. Call it at least every few game days (the schedule keeps 7 days of attendance). Given the same mood, skill and attendance, one long call gives the same reviews as many short ones. Returns one `{at, performance, outcome, rank}` per review.
 It is `update_in_period()` with no period: a window keeps the period it started in, so a window begun with a period is still judged by that period's rules.
 
 ### `update_in_period`
@@ -293,6 +293,14 @@ func window_period(id: StringName) -> StringName
 ```
 
 The period `id`'s current review window is judged in (`update_in_period()`), or empty when it has none (no career, an empty window, or a window started without a period).
+
+### `reset_window`
+
+```gdscript
+func reset_window(id: StringName) -> bool
+```
+
+Starts `id`'s review window afresh without reviewing it, for a host that decides a break (a long leave, a closed season) should not join the working days before it to those after it. The days scored in the current window and its pinned period are dropped: `performance()` is NAN and `window_period()` is empty until the next working day `update()` or `update_in_period()` closes, which starts a new window (and may pin that call's period). Nothing is reviewed and no signal fires. The career, rank, wage, `since_of()`, the last closed day (so no closed day is scored again) and a granted promotion's `PROMOTION_GRANTED` are kept. Bustle never calls this itself and has no length of break: without it, days off pause the window, as `update()` says. Only closed days are dropped: call `update()` up to the break first, or working days before it that weren't closed yet are scored into the new window. True when `id` has a career, including when its window is already empty; false, changing nothing, when it has none.
 
 ### `fill_inputs`
 

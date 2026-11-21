@@ -156,6 +156,7 @@
 		"BustleBrain.keeper": "Its type, `BustleChoiceKeeper`, is internal and may change in any minor release.",
 		"BustleBrain.last_candidates": "Its type, `BustleCandidate`, is internal and may change in any minor release.",
 		"BustleCareerRank.periods": "Added after 1.0; it may be frozen in a later minor release.",
+		"BustleCareers.reset_window": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleCareers.update_in_period": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleCareers.window_period": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleCrimeWatch.deed_of_item": "Added after 1.0; it may be frozen in a later minor release.",

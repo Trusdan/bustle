@@ -222,7 +222,8 @@ func performance(id: StringName) -> float:
 ## [param mood] (anything with a [code]mood[/code] number, such as a [code]BustleMood[/code]; null:
 ## [member neutral_mood]), the skill level now and that day's attendance at the career block. A day
 ## with no career block (a day off) is skipped: it adds no score and doesn't count toward the
-## window. Each time a window has [member BustleCareerRank.review_days] working days, the agent is
+## window, so a stretch of days off pauses it ([method reset_window] starts it afresh instead).
+## Each time a window has [member BustleCareerRank.review_days] working days, the agent is
 ## reviewed at the end of the last one, and the next window starts. Call it at least every few game days (the schedule keeps 7 days of
 ## attendance). Given the same mood, skill and attendance, one long call gives the same reviews as
 ## many short ones. Returns one [code]{at, performance, outcome, rank}[/code] per review.
@@ -277,6 +278,28 @@ func update_in_period(id: StringName, now: int, period: StringName, mood: Object
 ## @experimental: Added after 1.0; it may be frozen in a later minor release.
 func window_period(id: StringName) -> StringName:
 	return _careers.get(id, {}).get("period", &"")
+
+
+## Starts [param id]'s review window afresh without reviewing it, for a host that decides a break
+## (a long leave, a closed season) should not join the working days before it to those after it.
+## The days scored in the current window and its pinned period are dropped:
+## [method performance] is NAN and [method window_period] is empty until the next working day
+## [method update] or [method update_in_period] closes, which starts a new window (and may pin
+## that call's period). Nothing is reviewed and no signal fires. The career, rank, wage,
+## [method since_of], the last closed day (so no closed day is scored again) and a granted
+## promotion's [constant PROMOTION_GRANTED] are kept. Bustle never calls this itself and has no
+## length of break: without it, days off pause the window, as [method update] says. Only closed
+## days are dropped: call [method update] up to the break first, or working days before it that
+## weren't closed yet are scored into the new window. True when [param id] has a career,
+## including when its window is already empty; false, changing nothing, when it has none.
+## @experimental: Added after 1.0; it may be frozen in a later minor release.
+func reset_window(id: StringName) -> bool:
+	var info: Dictionary = _careers.get(id, {})
+	if info.is_empty():
+		return false
+	info["window"] = [] as Array[float]
+	info.erase("period")
+	return true
 
 
 ## Sets [constant PROMOTION_GRANTED] to true in [param inputs] (an ambition's facts) from a granted

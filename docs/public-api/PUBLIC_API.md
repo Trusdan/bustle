@@ -391,7 +391,7 @@ Usable, but not frozen: they may change in any minor release.
 | `BustleUtilityScorer` | `addons/bustle/core/brain/utility_scorer.gd` | Internal to `BustleBrain`: hosts shape scores through goals, considerations and the brain's hooks. |
 | `BustleWitnessJudge` | `addons/bustle/core/crime/witness_judge.gd` | The default witness decision; its scoring terms may change. Hosts replace it with `BustleCrimeWatch.should_report`. |
 
-## Experimental members (21)
+## Experimental members (22)
 
 Members of frozen classes that are not frozen yet.
 
@@ -402,6 +402,7 @@ Members of frozen classes that are not frozen yet.
 | `BustleBrain.keeper` | Its type, `BustleChoiceKeeper`, is internal and may change in any minor release. |
 | `BustleBrain.last_candidates` | Its type, `BustleCandidate`, is internal and may change in any minor release. |
 | `BustleCareerRank.periods` | Added after 1.0; it may be frozen in a later minor release. |
+| `BustleCareers.reset_window` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleCareers.update_in_period` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleCareers.window_period` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleCrimeWatch.deed_of_item` | Added after 1.0; it may be frozen in a later minor release. |
