@@ -129,7 +129,7 @@ Life stages are opt-in as well. `Colony.build(..., Colony.life_stage_rules())` t
 
 `aspirations/` holds test wants (sharing a meal, tidying up) and a fear of fire, plus the colony fixture: a hearty meal at the stove and a warm evening at the hearth, with points and boosts, and a fear of the cold formed by the cold snap. `Colony.build(..., Colony.aspirations())` wires the fixture in, and `tests/demo/test_aspirations_demo.gd` checks the wants, fears and points it shows. See `docs/aspirations.md`.
 
-`environment/` holds an `outdoors` need, which rises indoors and falls outside, and an `indoors` need, which does the reverse. They are data only; a host or test installs them. See `docs/environment.md`.
+`environment/` holds an `outdoors` need, which rises indoors and falls outside, and an `indoors` need, which does the reverse. It also holds `demo_rooms.gd`: three example rooms (a house room, a workshop and a cellar) with room scores. They are experimental demo data, not canon, and data only; a host or test installs them, and a host replaces them with its own. See `docs/environment.md`.
 
 `jobs/` holds three neutral work types: a harvest (diligence, practises farming), an errand (curiosity) and mending (needs the `mender` role). See `docs/work.md`.
 
