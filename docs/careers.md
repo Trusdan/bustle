@@ -69,6 +69,8 @@ All of these are configurable properties of `BustleCareers`. For example, at ski
 
 ### After a break
 
+A host snippet for this and for periods is in [host-hooks.md](host-hooks.md#career-reviews-by-period-and-a-window-reset-after-a-break).
+
 Days off pause the window, however many there are. After a long leave or a closed season, the working days before the break and those after it still count together in one window. That is the default, and a host that does nothing keeps it.
 
 A host that wants a fresh window after a break calls `reset_window(id)` (`@experimental`). Bustle has no calendar and no length of break, so it never resets a window on its own: the host decides when a break is long enough.

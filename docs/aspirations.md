@@ -82,6 +82,8 @@ Fulfilling a want earns its `points`. Points only accumulate, and Bustle defines
 
 ### An optional cap
 
+A host snippet is in [host-hooks.md](host-hooks.md#a-cap-on-aspiration-points).
+
 A host that never spends points (or not often) can cap what's earned with `BustleAspirationConfig.max_points` (`@experimental`). It's unset by default (-1, or any negative), and then points grow without limit as before. What points buy stays the host's call.
 
 - **Earning stops at the cap.** `add_points` adds only what reaches it: with a cap of 10 and 7 held, adding 5 adds 3. `points_changed` and `on_points` both get the amount actually added (3). The same goes for a fulfilled want.

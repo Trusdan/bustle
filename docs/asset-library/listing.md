@@ -20,7 +20,7 @@ The form takes one Godot version per entry. Bustle supports Godot 4.7.x and CI t
 
 ## Version
 
-1.0.0 (the release's version from `addons/bustle/VERSION`; check it against the tag at submission).
+1.1.0 (the release's version from `addons/bustle/VERSION`; check it against the tag at submission).
 
 ## Repository host
 
@@ -55,7 +55,7 @@ Plain text (the form doesn't render Markdown):
 ```text
 Bustle gives a Godot game a living population: the people of a place and their daily life. Each person has needs, a mood, a personality, memories, opinions of others and a daily schedule, and picks what to do next from what the world offers. It runs headless, so it works in 2D or 3D and with any movement, animation or dialogue system.
 
-Optional modules, each switched on or off on its own: perception (sight, hearing and awareness), jobs and wages, skills and careers, social life and conversations, romance, life stages, ambitions, rooms and indoors, reactions to health, cause-driven conflict, theft with witnesses and reporting, and a storyteller that fires the game's own events when the story needs them.
+Optional modules, each switched on or off on its own: perception (sight, hearing and awareness), jobs and wages, skills and careers, social life and conversations, romance, life stages, ambitions, rooms and indoors, reactions to health (seeking care, resting when sick and fetching a healer), cause-driven conflict, theft with witnesses and reporting, and a storyteller that fires the game's own events when the story needs them.
 
 The game connects Bustle to its world through small ports (the clock, the map, roles, combat, trade and others). A walkthrough, a guide to every port and a standalone example project are in the repository. A society saves and loads as plain data.
 

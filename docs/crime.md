@@ -56,6 +56,8 @@ The watch then finds witnesses as usual: the agents who perceived the theft, by 
 
 ## After a theft (`BustleCrimeWatch`)
 
+A host snippet for tracing stolen goods after they change hands is in [host-hooks.md](host-hooks.md#stolen-goods-after-they-change-hands).
+
 `BustleCrimeWatch.new(crime)` follows every `theft` and keeps a record of it: `{id, thief, owner_id, item, place, at, witnesses, known_by, decisions, reporters, deed, found_at}`, plus `recovered_at` on a deed closed as recovered (below). Every theft is witnessed and remembered, or it leaves a deed. Everyone who knows of it then decides what to do about it (see "What a witness does").
 
 - **Witnesses.** An agent witnesses a theft only if `perceives(agent, thief, place)` says it perceived it. By default that's every other agent in the place who isn't incapacitated. There are no made-up witnesses.

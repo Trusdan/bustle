@@ -30,6 +30,8 @@ Every number is configurable. The score uses the same slider scale as ambitions 
 
 ## The board
 
+A host snippet for work with minimum capacities, refusals and releases is in [host-hooks.md](host-hooks.md#work-that-needs-a-minimum-capacity).
+
 ```gdscript
 var board := BustleJobBoard.new(work_types, society.ports)
 society.ports.work.board = board

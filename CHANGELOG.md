@@ -4,8 +4,17 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-23
+
+The first minor release on the stable API. Everything new is opt-in, and a 1.0.0 host that turns nothing on runs exactly as before: careers can be reviewed by host-defined period and their review window reset after a break, stolen goods stay traceable after they change hands, aspiration points can be capped, work can name minimum health capacities, and the health module gains three goals (seek care, rest when sick, fetch a healer). The demo gains a small room set and an opt-in demo of these hooks, releases gain an example-project zip, and six members that were experimental are now frozen. New API is `@experimental` ([docs/public-api/PUBLIC_API.md](docs/public-api/PUBLIC_API.md)). Nothing is random.
+
+### Breaking changes since 1.0.0
+
+None. No port, public class, method, signal or setting was removed or renamed, and no frozen signature or default changed (`tools/public_api.sh --check` against 1.0.0 passes). Every save written by 0.8.0, 0.9.0 or 1.0.0 still loads, and the demo and soak hashes are unchanged. The upgrade guide is in [docs/upgrading.md](docs/upgrading.md).
+
 ### Added
 
+- Golden save fixtures from 1.0.0 (`tests/save_fixtures/v1.0.0/`), generated from the tag and loaded by CI with the 0.8.0 and 0.9.0 ones, so a 1.0.0 save is proven to load in later releases. See `docs/saves.md`.
 - An opt-in demo of the hooks added after 1.0: `House.NEW_HOOKS` (off by default, not in `House.MODULES`) wires `demo/hooks/demo_hooks.gd` into the house session. Aspiration points stop at a cap, and the demo rooms are installed. Small side scenes on the same clock call career periods and `reset_window`, `deed_of_item` and `stolen_goods_held_by`, capacity `refusal` and `release_unfit`, and fetching a healer by the shared fetch-help rule, each logging `hook` entries. With it off, the demo, its pinned hashes and the soak are unchanged. Demo only; no addon change. See `demo/README.md`.
 - A host can reset a career's review window after a break (`@experimental`): `BustleCareers.reset_window(id)` drops the current window's scored days and pinned period, without reviewing it, so the next working day starts a full new window. Rank, wage, start, the last closed day and a granted promotion are kept, and no signal fires. Days off still pause the window by default, and `update()` is unchanged. Saves keep their shape. See `docs/careers.md`.
 - A small demo room set, as experimental demo data rather than addon canon: `demo/environment/demo_rooms.gd` has three example rooms (`house_room`, `workshop`, `cellar`) with room scores and an `install(port)` that sets their scores and places nobody. Nothing in the addon loads it, and the demos don't install it by default, so behaviour and hashes are unchanged. `docs/environment.md` now states the settled behaviour (one room per agent; an unplaced agent counts as outdoors with the default port; no goal acts on the indoors and outdoors needs) and shows how a host pauses those needs while an agent sleeps, with the existing API.

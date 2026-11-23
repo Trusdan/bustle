@@ -2,6 +2,29 @@
 
 One section per release, newest first: what a host has to check or change when it moves up. The full list of changes is in `CHANGELOG.md`. What counts as breaking, and how deprecations work from 1.0 on, is in [public-api/VERSIONING.md](public-api/VERSIONING.md).
 
+## 1.0 to 1.1
+
+**Nothing to change.** No port, public class, method, signal or setting was removed or renamed, no frozen signature or default changed, and every save written by 0.8.0, 0.9.0 or 1.0.0 still loads (CI loads golden saves from all three). Everything new is opt-in: a 1.0 host that doesn't call it runs exactly as before, and the demo and soak hashes are unchanged.
+
+**Check one thing:** a host class that extends `BustleCareers`, `BustleCrimeWatch`, `BustleJobBoard`, `BustleWorkType`, `BustleCareerRank`, `BustleAspirationConfig` or `BustleFetchHelpAction`, and declares a member with one of the names below, must rename it. The new members would clash with it.
+
+**New, all `@experimental`** ([public-api/PUBLIC_API.md](public-api/PUBLIC_API.md)). Each has a snippet in [host-hooks.md](host-hooks.md):
+
+- **Careers:**
+  - `BustleCareerRank.periods`, `BustleCareerPeriod`, `BustleCareers.update_in_period()` and `BustleCareers.window_period()` review by a period the host names. `update()` is unchanged.
+  - `BustleCareers.reset_window()` starts a fresh review window after a break. Days off still pause the window by default.
+- **Crime:** `BustleCrimeWatch.deed_of_item()` and `BustleCrimeWatch.stolen_goods_held_by()` follow stolen goods after they change hands. `stolen_goods_of()` is unchanged.
+- **Aspirations:** `BustleAspirationConfig.max_points` caps points. It's unset (-1) by default.
+- **Work:**
+  - `BustleWorkType.min_capacities` (empty by default) and `BustleWorkType.short_capacity()` name and test minimum health capacities.
+  - `BustleJobBoard.refusal()` says why a claim would be refused.
+  - `BustleJobBoard.release_unfit()` lets go of claims held below a minimum. `settle()` and `work()` call it, and with no minimums it releases nothing.
+- **Health:** three opt-in goals, `BustleSeekCare`, `BustleRestSick` and `BustleFetchHealer`, with their actions. Fetching a healer moves by the conflict's fetch-help rule, now shared as `BustleFetchHelpAction.approach()`; the conflict's own fetch-help is unchanged. `BustleFetchHealer` saves its errands (version 1).
+
+**Now frozen.** `validate()` on `BustleAspirationConfig`, `BustleMentalConfig`, `BustlePerceptionProfile`, `BustleRelationshipRules` and `BustleStealthRules`, and `BustleCrimeWatch.prune()`, were experimental in 1.0. They now follow the frozen rules, with the same behaviour.
+
+**Demo and releases.** The demo has a small room set (`demo/environment/demo_rooms.gd`) and an opt-in demo of the new hooks (`demo/hooks/demo_hooks.gd`). Neither is part of the addon. A release adds an example-project zip beside the two addon zips ([RELEASE.md](RELEASE.md)).
+
 ## 0.9.x to 1.0
 
 There was no 0.9.1, so this covers everything since 0.9.0. **No port, public class, method, signal or setting was removed or renamed, no port signature changed, and every save written by 0.8.0 or 0.9.0 still loads.** What changes is mostly what Bustle says about bad input, and that the API now makes promises.
