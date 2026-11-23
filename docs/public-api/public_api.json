@@ -161,16 +161,11 @@
 		"BustleCareers.window_period": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleCrimeWatch.deed_of_item": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleCrimeWatch.judge": "Its type, `BustleWitnessJudge`, is internal and may change in any minor release.",
-		"BustleCrimeWatch.prune": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleCrimeWatch.stolen_goods_held_by": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleFetchHelpAction.approach": "Added after 1.0, when fetching a healer started to reuse this rule.",
 		"BustleJobBoard.refusal": "Added after 1.0 with capacity minimums.",
 		"BustleJobBoard.release_unfit": "Added after 1.0 with capacity minimums.",
-		"BustleMentalConfig.validate": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleModifierSet.fill_context": "Its type, `BustleScoreContext`, is internal and may change in any minor release.",
-		"BustlePerceptionProfile.validate": "Added before 1.0; it may be frozen in a later minor release.",
-		"BustleRelationshipRules.validate": "Added before 1.0; it may be frozen in a later minor release.",
-		"BustleStealthRules.validate": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleWorkType.min_capacities": "Added after 1.0 for the health module. No minimums are set by default; any a host sets are its own.",
 		"BustleWorkType.short_capacity": "Added after 1.0 for the health module."
 	},
@@ -1294,6 +1289,7 @@
 				"notice_losses": "func notice_losses(owner_id: StringName, place: StringName, now: int) -> int[]",
 				"open_deeds": "func open_deeds() -> Dictionary[]",
 				"position_of": "func position_of(id: StringName) -> Variant",
+				"prune": "func prune(before_minute: int) -> Dictionary[]",
 				"question": "func question(agent: StringName, now: int) -> Dictionary[]",
 				"reconsider": "func reconsider(agent: StringName, id: int, now: int) -> StringName",
 				"record": "func record(id: int) -> Dictionary",
@@ -2590,7 +2586,8 @@
 			"methods": {
 				"allowed": "static func allowed() -> bool",
 				"catharsis_def": "func catharsis_def() -> BustleThoughtDef",
-				"default_states": "static func default_states() -> BustleMentalStateDef[]"
+				"default_states": "static func default_states() -> BustleMentalStateDef[]",
+				"validate": "func validate() -> String"
 			},
 			"path": "addons/bustle/modules/needs_mood/mental_config.gd",
 			"properties": {
@@ -3059,7 +3056,9 @@
 			"extends": "Resource",
 			"hooks": {},
 			"kind": "class",
-			"methods": {},
+			"methods": {
+				"validate": "func validate() -> String"
+			},
 			"path": "addons/bustle/modules/perception/perception_profile.gd",
 			"properties": {
 				"alert_at": "var alert_at: float",
@@ -3287,7 +3286,9 @@
 			"extends": "Resource",
 			"hooks": {},
 			"kind": "class",
-			"methods": {},
+			"methods": {
+				"validate": "func validate() -> String"
+			},
 			"path": "addons/bustle/society/relationship_rules.gd",
 			"properties": {
 				"friend_at": "var friend_at: float",
@@ -4116,7 +4117,8 @@
 				"movement_factor": "func movement_factor(movement: int) -> float",
 				"posture_factor": "func posture_factor(posture: int) -> float",
 				"skill_noise_multiplier": "func skill_noise_multiplier(skill: float) -> float",
-				"skill_visibility_multiplier": "func skill_visibility_multiplier(skill: float) -> float"
+				"skill_visibility_multiplier": "func skill_visibility_multiplier(skill: float) -> float",
+				"validate": "func validate() -> String"
 			},
 			"path": "addons/bustle/modules/perception/stealth_rules.gd",
 			"properties": {

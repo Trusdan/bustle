@@ -85,7 +85,6 @@ func skill_noise_multiplier(skill: float) -> float:
 
 ## Why the visibility bounds are out of order, or empty: [member min_visibility] above
 ## [member max_visibility]. The visibility model warns once about it and uses the values as they are.
-## @experimental: Added before 1.0; it may be frozen in a later minor release.
 func validate() -> String:
 	if min_visibility > max_visibility:
 		return "min_visibility is above max_visibility"

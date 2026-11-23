@@ -28,7 +28,6 @@ extends Resource
 ## Why the lines are out of order, or empty: [member friend_release] above [member friend_at], or
 ## [member rival_release] below [member rival_at]. Several problems are joined with
 ## [code]"; "[/code]. The social store warns once about each and uses the values as they are.
-## @experimental: Added before 1.0; it may be frozen in a later minor release.
 func validate() -> String:
 	var out: PackedStringArray = []
 	if friend_release > friend_at:
