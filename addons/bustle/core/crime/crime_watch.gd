@@ -352,7 +352,6 @@ func reconsider(agent: StringName, id: int, now: int) -> StringName:
 ## it now and then (for example once a game day, keeping the last week) so the save stops growing.
 ## A pruned record is gone for [method question], [method reconsider], [method known_by],
 ## [method stolen_goods_of], [method deed_of_item] and [method stolen_goods_held_by].
-## @experimental: Added before 1.0; it may be frozen in a later minor release.
 func prune(before_minute: int) -> Array[Dictionary]:
 	var referenced := {}
 	for errand: Dictionary in _errands:

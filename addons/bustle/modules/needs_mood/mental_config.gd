@@ -107,7 +107,6 @@ func catharsis_def() -> BustleThoughtDef:
 ## [member high_spirits_above], [member inspired_exit] above [member inspired_above]), or a negative
 ## [member recover_margin] (a low state's exit below its entry). Several problems are joined with
 ## [code]"; "[/code]. Mental states warn once about each and use the values as they are.
-## @experimental: Added before 1.0; it may be frozen in a later minor release.
 func validate() -> String:
 	var out: PackedStringArray = []
 	if extreme_fraction > major_fraction:
