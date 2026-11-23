@@ -44,7 +44,6 @@ func find_fear(id: StringName) -> BustleFearDef:
 
 ## Why the numbers are out of order, or empty: [member auto_wants] above [member want_cap].
 ## Aspirations warn once about it and use the values as they are.
-## @experimental: Added before 1.0; it may be frozen in a later minor release.
 func validate() -> String:
 	if auto_wants > want_cap:
 		return "auto_wants is above want_cap"

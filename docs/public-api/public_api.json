@@ -152,7 +152,6 @@
 	},
 	"experimental_members": {
 		"BustleAspirationConfig.max_points": "Added after 1.0; it may be frozen in a later minor release.",
-		"BustleAspirationConfig.validate": "Added before 1.0; it may be frozen in a later minor release.",
 		"BustleBrain.keeper": "Its type, `BustleChoiceKeeper`, is internal and may change in any minor release.",
 		"BustleBrain.last_candidates": "Its type, `BustleCandidate`, is internal and may change in any minor release.",
 		"BustleCareerRank.periods": "Added after 1.0; it may be frozen in a later minor release.",
@@ -519,7 +518,8 @@
 			"kind": "class",
 			"methods": {
 				"find_fear": "func find_fear(id: StringName) -> BustleFearDef",
-				"find_want": "func find_want(id: StringName) -> BustleWantDef"
+				"find_want": "func find_want(id: StringName) -> BustleWantDef",
+				"validate": "func validate() -> String"
 			},
 			"path": "addons/bustle/modules/aspirations/aspiration_config.gd",
 			"properties": {

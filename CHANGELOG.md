@@ -19,7 +19,7 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ### Changed
 
-- Five members are no longer experimental and are now frozen public API ([docs/public-api/VERSIONING.md](docs/public-api/VERSIONING.md)): `BustleMentalConfig.validate`, `BustlePerceptionProfile.validate`, `BustleRelationshipRules.validate`, `BustleStealthRules.validate` and `BustleCrimeWatch.prune`. Their behaviour and signatures are unchanged.
+- Six members are no longer experimental and are now frozen public API ([docs/public-api/VERSIONING.md](docs/public-api/VERSIONING.md)): `BustleAspirationConfig.validate`, `BustleMentalConfig.validate`, `BustlePerceptionProfile.validate`, `BustleRelationshipRules.validate`, `BustleStealthRules.validate` and `BustleCrimeWatch.prune`. Their behaviour and signatures are unchanged.
 
 ## [1.0.0] - 2026-11-17
 
