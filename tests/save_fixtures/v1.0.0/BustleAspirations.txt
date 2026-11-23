@@ -1,0 +1,18 @@
+{
+"ended": {
+"visit_the_well": 700
+},
+"fears": Array[Dictionary]([{
+"id": "dark_lanes",
+"since": 800,
+"target": "",
+"until": 5120
+}]),
+"points": 17,
+"wants": Array[Dictionary]([{
+"expires": 1320,
+"id": "bake_bread",
+"since": 600,
+"source": "posted"
+}])
+}

@@ -1,0 +1,18 @@
+{
+"insulted": {
+"baker": {
+&"smith": 1
+}
+},
+"states": {
+"baker": {
+"active": {
+"id": "withdraw",
+"kind": "low",
+"since": 600,
+"tier": "extreme",
+"until": 1080
+}
+}
+}
+}

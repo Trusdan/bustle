@@ -1,0 +1,8 @@
+{
+"agents": {
+"baker": 610
+},
+"pairs": {
+"5:baker|5:smith": 720
+}
+}

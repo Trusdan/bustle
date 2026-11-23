@@ -1,0 +1,6 @@
+{
+"tolerance": {
+"music": 0.5,
+"stroll": 0.25
+}
+}

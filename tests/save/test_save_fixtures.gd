@@ -8,8 +8,8 @@ extends GutTest
 
 const Builder := preload("res://tools/save_fixtures/save_builder.gd")
 const ROOT := "res://tests/save_fixtures/"
-const TAGS: Array[String] = ["v0.8.0", "v0.9.0"]
-const COUNTS := {"v0.8.0": 22, "v0.9.0": 31}
+const TAGS: Array[String] = ["v0.8.0", "v0.9.0", "v1.0.0"]
+const COUNTS := {"v0.8.0": 22, "v0.9.0": 31, "v1.0.0": 31}
 
 var _builder := Builder.new()
 

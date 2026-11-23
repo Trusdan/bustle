@@ -21,17 +21,17 @@ A save whose `"version"` holds a Dictionary is read as data, not as a version. S
 
 ## What each save is
 
-| Save | Version key | Current | Reads | 0.8.0 wrote | 0.9.0 wrote |
-| --- | --- | --- | --- | --- | --- |
-| `BustleSociety` | `"schema"` | 1 | 1 | 1 | 1 |
-| `BustleBrain` (inside the society's agents) | `"version"` | 1 | 1 | 1 | 1 |
-| `BustleDirector` | `"version"` | 1 | 1 | not present | 1 |
-| `BustleLifeStages` | `"version"` | 2 | 1, 2 (a 1 → 2 step) | not present | 2 |
-| `BustleFetchHealer` (experimental) | `"version"` | 1 | 1 | not present | not present |
-| `BustleAffordance`, `BustleAffordanceSet`, `BustleAmbitions`, `BustleAwareness`, `BustleConflict`, `BustleCrimeWatch`, `BustleDetectionMeter`, `BustleLeisure`, `BustleMemory`, `BustleMentalBehaviour`, `BustleMentalState`, `BustleMood`, `BustleNeedSet`, `BustlePersonality`, `BustlePropertyPort`, `BustleSchedule`, `BustleScheduleRoster`, `BustleSequenceRunner`, `BustleSocialInteractions`, `BustleSocialStore`, `BustleTradePort` | `"version"`, missing = 1 | 1 | 1 | 1 (no key) | 1 (no key) |
-| `BustleAspirations`, `BustleCareers`, `BustleEnvironmentPort`, `BustleJobBoard`, `BustleRomance`, `BustleRoomThoughts`, `BustleSkills` | `"version"`, missing = 1 | 1 | 1 | not present | 1 (no key) |
+| Save | Version key | Current | Reads | 0.8.0 wrote | 0.9.0 wrote | 1.0.0 wrote |
+| --- | --- | --- | --- | --- | --- | --- |
+| `BustleSociety` | `"schema"` | 1 | 1 | 1 | 1 | 1 |
+| `BustleBrain` (inside the society's agents) | `"version"` | 1 | 1 | 1 | 1 | 1 |
+| `BustleDirector` | `"version"` | 1 | 1 | not present | 1 | 1 |
+| `BustleLifeStages` | `"version"` | 2 | 1, 2 (a 1 → 2 step) | not present | 2 | 2 |
+| `BustleFetchHealer` (experimental) | `"version"` | 1 | 1 | not present | not present | not present |
+| `BustleAffordance`, `BustleAffordanceSet`, `BustleAmbitions`, `BustleAwareness`, `BustleConflict`, `BustleCrimeWatch`, `BustleDetectionMeter`, `BustleLeisure`, `BustleMemory`, `BustleMentalBehaviour`, `BustleMentalState`, `BustleMood`, `BustleNeedSet`, `BustlePersonality`, `BustlePropertyPort`, `BustleSchedule`, `BustleScheduleRoster`, `BustleSequenceRunner`, `BustleSocialInteractions`, `BustleSocialStore`, `BustleTradePort` | `"version"`, missing = 1 | 1 | 1 | 1 (no key) | 1 (no key) | 1 (no key) |
+| `BustleAspirations`, `BustleCareers`, `BustleEnvironmentPort`, `BustleJobBoard`, `BustleRomance`, `BustleRoomThoughts`, `BustleSkills` | `"version"`, missing = 1 | 1 | 1 | not present | 1 (no key) | 1 (no key) |
 
-The save code of every class above is the same in 0.8.0, 0.9.0 and this release, so their saves load as they are. Life stages' version 1 was written only between those releases. It still loads through its 1 → 2 step, which anchors each age at minute 0, sets now to 0 and records nobody dead.
+The save code of every class above is the same in 0.8.0, 0.9.0, 1.0.0 and this release, so their saves load as they are. 1.0.0 wrote exactly what 0.9.0 wrote for every class: its fixtures differ only in the tag and commit in `index.json`. Life stages' version 1 was written only between the 0.8.0 and 0.9.0 releases. It still loads through its 1 → 2 step, which anchors each age at minute 0, sets now to 0 and records nobody dead.
 
 ## Changing a save format
 
@@ -68,7 +68,11 @@ tools/save_fixtures.sh --tag v0.9.0   # regenerate tests/save_fixtures/v0.9.0/ f
 tools/save_fixtures.sh --check        # regenerate every tag's fixtures into a temp dir; fail on any difference
 ```
 
-Each run checks the tag out in a temporary git worktree outside the repo, imports it, runs the generator there and removes the worktree. It never creates a tag. CI runs `--check`. Add a fixture directory for each release: a format change needs a fixture from a release that wrote the old shape (step 3 above).
+Each run checks the tag out in a temporary git worktree outside the repo, imports it, runs the generator there and removes the worktree. It never creates a tag. CI runs `--check`.
+
+The fixtures cover 0.8.0 (22 saved classes), 0.9.0 (31) and 1.0.0 (31). A class that a release doesn't have gets no file for that release. `BustleFetchHealer` came after 1.0.0, so it has no fixture yet.
+
+Add a fixture directory for each release, and its tag and class count to `TAGS` and `COUNTS` in `tests/save/test_save_fixtures.gd`: a format change needs a fixture from a release that wrote the old shape (step 3 above).
 
 ## Tests
 

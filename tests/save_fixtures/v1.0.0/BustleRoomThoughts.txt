@@ -1,0 +1,6 @@
+{
+"baker": {
+"room": "bakehouse",
+"thoughts": []
+}
+}
