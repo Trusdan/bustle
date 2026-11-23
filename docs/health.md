@@ -66,6 +66,8 @@ A doctor is just a role the host gives. To keep tending to certain agents, give 
 
 ## The seek-care goal
 
+Host snippets for this goal, resting when sick and fetching a healer are in [host-hooks.md](host-hooks.md#seeking-care-and-resting-when-sick).
+
 `BustleSeekCare.new(health, care_roles)` (experimental) lets an agent who needs care go to someone, or somewhere, that can give it. Bustle names where. The host moves the body, gives the care and owns the recovery. Nothing about health is kept: every answer comes from the ports each time.
 
 - **Who seeks care:** an agent whose `needs_care` is at or above `threshold` (0.5), who isn't downed and who has somewhere to go. `fill_inputs(patient, inputs)` sets `fact.seek_care` to its need, so the goal scores higher the more urgent the care. A threshold outside 0 to 1 warns once and 0.5 is used.
