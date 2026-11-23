@@ -1,0 +1,9 @@
+{
+"active": {
+"id": "withdraw",
+"kind": "low",
+"since": 600,
+"tier": "extreme",
+"until": 1080
+}
+}

@@ -1,0 +1,28 @@
+{
+"errands": Array[Dictionary]([{
+"agent": "smith",
+"kind": "report",
+"knows_thief": true,
+"record": 1,
+"since": 600,
+"source": "eyewitness",
+"to": ""
+}]),
+"next_id": 2,
+"records": Array[Dictionary]([{
+"at": 600,
+"decisions": {
+"smith": "report"
+},
+"deed": false,
+"found_at": -1,
+"id": 1,
+"item": "loaf",
+"known_by": ["smith"],
+"owner_id": "baker",
+"place": "market",
+"reporters": [],
+"thief": "miller",
+"witnesses": Array[String](["smith"])
+}])
+}

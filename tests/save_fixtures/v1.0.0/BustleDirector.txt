@@ -1,0 +1,7 @@
+{
+"history": [["cold_snap", 600]],
+"last": {
+"cold_snap": 600
+},
+"version": 1
+}

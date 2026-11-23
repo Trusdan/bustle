@@ -1,0 +1,6 @@
+{
+"balances": {
+"baker": 40,
+"smith": 15
+}
+}

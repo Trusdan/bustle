@@ -1,0 +1,20 @@
+{
+"emotion": "",
+"mood": 52.0,
+"now": 120,
+"thoughts": [{
+"expires": 1440,
+"id": "warm_meal",
+"reason": {
+"kind": "event"
+},
+"started": 0
+}, {
+"expires": 1440,
+"id": "cold_morning",
+"reason": {
+"kind": "event"
+},
+"started": 0
+}]
+}

@@ -1,0 +1,15 @@
+{
+"baker|smith": {
+"a": "baker",
+"armed": true,
+"b": "smith",
+"history": [{
+"at": 600,
+"reason": "formed",
+"status": "courting"
+}],
+"since": 600,
+"status": "courting"
+},
+"jealousy": Array[String](["baker>smith>miller"])
+}

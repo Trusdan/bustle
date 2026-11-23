@@ -1,0 +1,6 @@
+{
+"pressures": {
+"hunger": 0.35,
+"thirst": 0.6
+}
+}
