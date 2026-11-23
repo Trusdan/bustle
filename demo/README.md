@@ -38,6 +38,34 @@ Every number is a starting point, not tuning (see `house/house.gd`). The same ru
 
 `tests/demo/test_house_session.gd` runs it headless for seven days against a pinned timeline hash. It checks that the stuck watch stays clean, that each module leaves its own trace (`thought`, `talk`, `job`, `want`, `romance`, `stage`, `director`), and that the week still holds with each module left out in turn and with all of them out. `House.build()` stays as it was.
 
+### Opt-in: the hooks added after 1.0
+
+`House.NEW_HOOKS` is an opt-in module, off by default and not in `House.MODULES`. Add it to a session's modules to see the hooks Bustle added after 1.0 called on the house's clock. It's wired in `hooks/demo_hooks.gd`, and every number there is demo data, not tuning.
+
+- **In the run:** aspiration points stop at a cap of 12 (`max_points`), and the demo rooms are installed: a resident at home is in `house_room`, and one away at work is outdoors.
+- **Side scenes**, with the same two residents at fixed minutes:
+  - a career judged in a busy period and reset after closed days (`periods`, `update_in_period`, `window_period`, `reset_window`);
+  - a stolen lamp traced after it's sold on (`deed_of_item`, `stolen_goods_held_by`);
+  - work that needs moving at 0.5, refused and then released (`min_capacities`, `refusal`, `release_unfit`);
+  - a bystander fetching a healer, moved by the shared fetch-help rule (`BustleFetchHealer`, `BustleFetchHealerAction`, `BustleFetchHelpAction.approach`).
+
+Each logs a `hook` entry on the timeline, with the hook's name under `"hook"`:
+
+```gdscript
+const House := preload("res://demo/house/house.gd")
+
+
+func show_new_hooks() -> void:
+	var modules: Array[StringName] = House.MODULES.duplicate()
+	modules.append(House.NEW_HOOKS)
+	var run := House.session(1, modules)
+	run.run(7 * 1440)
+	for entry: Dictionary in run.timeline.of(&"hook"):
+		print(entry["t"], " ", entry["agent"], " ", entry["payload"])
+```
+
+With the opt-in off, nothing is attached: the week, its pinned hash and the soak are as before. `tests/demo/test_demo_new_hooks.gd` checks both. With it on, it checks each hook's entries against a pinned hash of its own.
+
 ## Colony
 
 `colony/` is four settlers with a bed each, a stove, a crate of stores and a field plot. To run it, press **Colony** on the start screen, or open `demo/colony/colony.tscn` and press F6. Each second of real time is an hour of game time, and the screen shows what each settler is doing, its needs, its mood and any mental state.

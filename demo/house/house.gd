@@ -20,6 +20,7 @@ extends RefCounted
 
 const Harness := preload("res://demo/harness/demo_harness.gd")
 const Colony := preload("res://demo/colony/colony.gd")
+const DemoHooks := preload("res://demo/hooks/demo_hooks.gd")
 const LONER := preload("res://demo/traits/loner.tres")
 const OUTGOING := preload("res://demo/traits/outgoing.tres")
 
@@ -59,6 +60,9 @@ const ROMANCE := &"romance"
 const LIFE_STAGES := &"life_stages"
 const DIRECTOR := &"director"
 const MODULES: Array[StringName] = [NEEDS_MOOD, SOCIAL, JOBS, ASPIRATIONS, ROMANCE, LIFE_STAGES, DIRECTOR]
+## Opt-in, not in [constant MODULES]: the hooks added after 1.0, called on the session's clock
+## ([code]demo/hooks/demo_hooks.gd[/code]). Add it to the modules to see them used.
+const NEW_HOOKS := &"new_hooks"
 ## Each resident's age in years, with life stages on.
 const AGES: Dictionary[StringName, float] = {RESIDENT_A: 29.0, RESIDENT_B: 31.0}
 ## A host event: bad news on the evening of the third day, a day long, felt by everyone with a
@@ -73,7 +77,8 @@ const ERRANDS := 3
 ## the residents of [method build] (resident B also low-spirited, so it can be comforted), plus a mood with need and meal thoughts, conversations and a
 ## friendship, a job board with errands for their free time, wants and fears, a courtship, ages and
 ## life stages, a small story deck, and one host event ([constant BAD_NEWS]). The data comes from [code]demo/colony/[/code] where the two
-## demos share it. Without any module it runs like [method build].
+## demos share it. Without any module it runs like [method build]. [constant NEW_HOOKS] is
+## opt-in, off unless [param modules] includes it.
 static func session(world_seed: int = 1, modules: Array[StringName] = MODULES) -> Harness:
 	var house := Harness.new(world_seed)
 	if modules.has(LIFE_STAGES):
@@ -99,6 +104,8 @@ static func session(world_seed: int = 1, modules: Array[StringName] = MODULES) -
 	if board != null:
 		library.goals.append(Colony.job_goal())
 	var routine := work_routine()
+	if modules.has(NEW_HOOKS):
+		DemoHooks.attach(house, RESIDENT_A, RESIDENT_B, AREA, routine)
 	house.add_agent(RESIDENT_A, library, needs(), [LONER] as Array[BustleTraitDef], routine)
 	house.add_agent(RESIDENT_B, library, needs(), [OUTGOING, Colony.LOW_SPIRITED] as Array[BustleTraitDef], routine)
 	if house.life_stages != null:
