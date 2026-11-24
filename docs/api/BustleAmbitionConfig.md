@@ -72,7 +72,8 @@ The default library, with its circumstance, input and fact names:
 - `court_someone`: sociability 1.0, boldness 0.3; needs `has_court_target`; done when `court_opinion` reaches 75 and `court_friend` holds; moot on `court_target_gone`. 
 - `settle_feud`: honesty 1.0, sociability 0.4; needs `has_rival`; done when `rival_opinion` reaches 50 and `rival_cleared` holds, or on `feud_settled`; moot on `rival_gone`. 
 - `leave_settlement`: curiosity 0.8, boldness 0.6, greed −0.3; done on `left_settlement`; moot on `cannot_leave`. 
-Boosts: saving and promotion ×1.5 to `work` (saving ×1.3 to `trade`); courting ×2 to `visit`, `converse` and `gift` toward the one courted (`court_target`); settling ×2 to `help`, `gift` and `converse` toward the rival (`rival`); leaving ×1.5 to `explore`.
+- `learn_trade` (off by default, `enabled` false; experimental): curiosity 1.0, diligence 0.4, curiosity at least 50; needs `has_trade_target`; done when `skill_level` reaches 5 (of a skill's default top level, 20), or on `trade_learned`; moot on `trade_skill_gone` or `trade_unlearnable`; the skill is kept from `trade_skill` (`BustleAmbitionDef.subject_input`). [BustleTradeTargets](BustleTradeTargets.md) fills these from the installed skills. 
+Boosts: saving and promotion ×1.5 to `work` (saving ×1.3 to `trade`); courting ×2 to `visit`, `converse` and `gift` toward the one courted (`court_target`); settling ×2 to `help`, `gift` and `converse` toward the rival (`rival`); leaving ×1.5 to `explore`; learning a trade ×1.5 to `work` and ×2 to `train`, toward any option.
 
 ### `allowed`
 

@@ -35,6 +35,12 @@ extends Resource
 ## The input naming the person the ambition is about (for example [code]court_target[/code]).
 ## With one, only candidates whose option is that person are boosted. Empty: no target.
 @export var target_input: StringName = &""
+## The input naming what the ambition is about when that isn't a person to single out (for
+## example [code]trade_skill[/code]). It's kept as the target in [method BustleAmbitions.active],
+## for progress and saves, but boosts aren't narrowed to it, as they are by [member target_input].
+## Used only when [member target_input] is empty. Empty: none.
+## @experimental: Added after 1.0; it may be frozen in a later minor release.
+@export var subject_input: StringName = &""
 ## The template to take next after it's completed, when that one is eligible and enabled. Empty:
 ## score the library again.
 @export var next: StringName = &""

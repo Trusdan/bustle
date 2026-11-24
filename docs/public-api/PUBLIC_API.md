@@ -366,7 +366,7 @@ What `export_state()` returns is a save format: changing it without `import_stat
 | `BustleTradePort.export_state()` | `addons/bustle/ports/trade_port.gd` | The default's balances as plain data (ids → amounts). |
 | `BustleTradePort.import_state()` | `addons/bustle/ports/trade_port.gd` | Restores `export_state()`. |
 
-## Experimental classes (18)
+## Experimental classes (19)
 
 Usable, but not frozen: they may change in any minor release.
 
@@ -388,15 +388,17 @@ Usable, but not frozen: they may change in any minor release.
 | `BustleSeekCare` | `addons/bustle/modules/health/seek_care.gd` | Added after 1.0 for the health module. The threshold, the reach and the wait are proposed defaults, not tuning. |
 | `BustleSeekCareAction` | `addons/bustle/modules/health/seek_care_action.gd` | Added after 1.0 for the health module. |
 | `BustleStuckWatch` | `addons/bustle/debug/stuck_watch.gd` | Development tool. The bound, the epsilon and the loop count are proposed defaults, not tuning, and the rule may change in any minor release. |
+| `BustleTradeTargets` | `addons/bustle/modules/ambitions/trade_targets.gd` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleUtilityScorer` | `addons/bustle/core/brain/utility_scorer.gd` | Internal to `BustleBrain`: hosts shape scores through goals, considerations and the brain's hooks. |
 | `BustleWitnessJudge` | `addons/bustle/core/crime/witness_judge.gd` | The default witness decision; its scoring terms may change. Hosts replace it with `BustleCrimeWatch.should_report`. |
 
-## Experimental members (16)
+## Experimental members (17)
 
 Members of frozen classes that are not frozen yet.
 
 | Member | Why it stays experimental |
 | --- | --- |
+| `BustleAmbitionDef.subject_input` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleAspirationConfig.max_points` | Added after 1.0; it may be frozen in a later minor release. |
 | `BustleBrain.keeper` | Its type, `BustleChoiceKeeper`, is internal and may change in any minor release. |
 | `BustleBrain.last_candidates` | Its type, `BustleCandidate`, is internal and may change in any minor release. |

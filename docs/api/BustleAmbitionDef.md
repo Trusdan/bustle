@@ -104,6 +104,14 @@ var target_input: StringName = &""
 
 The input naming the person the ambition is about (for example `court_target`). With one, only candidates whose option is that person are boosted. Empty: no target.
 
+### `subject_input`
+
+```gdscript
+var subject_input: StringName = &""
+```
+
+The input naming what the ambition is about when that isn't a person to single out (for example `trade_skill`). It's kept as the target in `BustleAmbitions.active()`, for progress and saves, but boosts aren't narrowed to it, as they are by `target_input`. Used only when `target_input` is empty. Empty: none.
+
 ### `next`
 
 ```gdscript

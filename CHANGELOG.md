@@ -4,6 +4,10 @@ All notable changes to Bustle. The format follows [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+
+- A `learn_trade` ambition template in the default library, off by default (`enabled` false; experimental). Once a host turns it on, a curious agent (curiosity at least 50; weights curiosity 1.0, diligence 0.4) with an installed skill below a line sets out to raise it: done when its level reaches 5 (configurable) or on `trade_learned`, and moot only when the skill is no longer installed or on `trade_unlearnable`. It boosts `work` ×1.5 and `train` ×2 toward any option, and has no `next`. `BustleTradeTargets` fills its inputs from the skills module: the agent's passion if it qualifies, else its lowest skill, ties by id; the current skill is kept while it's installed; and a host can pin one with `trade_skill`. `BustleAmbitionDef.subject_input` keeps what an ambition is about without narrowing its boosts. Nothing is random, and with the template off nothing changes. See `docs/ambitions.md`.
+
 ## [1.1.0] - 2026-11-23
 
 The first minor release on the stable API. Everything new is opt-in, and a 1.0.0 host that turns nothing on runs exactly as before: careers can be reviewed by host-defined period and their review window reset after a break, stolen goods stay traceable after they change hands, aspiration points can be capped, work can name minimum health capacities, and the health module gains three goals (seek care, rest when sick, fetch a healer). The demo gains a small room set and an opt-in demo of these hooks, releases gain an example-project zip, and six members that were experimental are now frozen. New API is `@experimental` ([docs/public-api/PUBLIC_API.md](docs/public-api/PUBLIC_API.md)). Nothing is random.

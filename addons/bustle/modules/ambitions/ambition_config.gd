@@ -36,10 +36,17 @@ const SETTING := "bustle/simulation/ambitions"
 ## [code]feud_settled[/code]; moot on [code]rival_gone[/code].
 ## [br]- [code]leave_settlement[/code]: curiosity 0.8, boldness 0.6, greed −0.3; done on
 ## [code]left_settlement[/code]; moot on [code]cannot_leave[/code].
+## [br]- [code]learn_trade[/code] (off by default, [code]enabled[/code] false; experimental): curiosity
+## 1.0, diligence 0.4, curiosity at least 50; needs [code]has_trade_target[/code]; done when
+## [code]skill_level[/code] reaches 5 (of a skill's default top level, 20), or on
+## [code]trade_learned[/code]; moot on [code]trade_skill_gone[/code] or [code]trade_unlearnable[/code];
+## the skill is kept from [code]trade_skill[/code] ([member BustleAmbitionDef.subject_input]).
+## [BustleTradeTargets] fills these from the installed skills.
 ## [br]Boosts: saving and promotion ×1.5 to [code]work[/code] (saving ×1.3 to [code]trade[/code]);
 ## courting ×2 to [code]visit[/code], [code]converse[/code] and [code]gift[/code] toward the one
 ## courted ([code]court_target[/code]); settling ×2 to [code]help[/code], [code]gift[/code] and
-## [code]converse[/code] toward the rival ([code]rival[/code]); leaving ×1.5 to [code]explore[/code].
+## [code]converse[/code] toward the rival ([code]rival[/code]); leaving ×1.5 to [code]explore[/code];
+## learning a trade ×1.5 to [code]work[/code] and ×2 to [code]train[/code], toward any option.
 static func default_templates() -> Array[BustleAmbitionDef]:
 	var save := BustleAmbitionDef.make(&"save_money", {&"greed": 1.0, &"diligence": 0.4}, [], &"wallet", 2000.0)
 	save.min_sliders = {&"greed": 50.0}
@@ -65,7 +72,15 @@ static func default_templates() -> Array[BustleAmbitionDef]:
 	leave.done_fact = &"left_settlement"
 	leave.moot_facts = [&"cannot_leave"]
 	leave.boosts = {&"explore": 1.5}
-	return [save, promote, court, feud, leave]
+	var learn := BustleAmbitionDef.make(&"learn_trade", {&"curiosity": 1.0, &"diligence": 0.4}, [&"has_trade_target"],
+		&"skill_level", 5.0)
+	learn.enabled = false
+	learn.min_sliders = {&"curiosity": 50.0}
+	learn.done_fact = &"trade_learned"
+	learn.moot_facts = [&"trade_skill_gone", &"trade_unlearnable"]
+	learn.boosts = {&"work": 1.5, &"train": 2.0}
+	learn.subject_input = &"trade_skill"
+	return [save, promote, court, feud, leave, learn]
 
 
 ## True unless a developer or a test turned [constant SETTING] off.
