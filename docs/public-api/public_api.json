@@ -133,6 +133,14 @@
 			"purpose": "Tells a stuck agent from one in a legitimate long activity, from one observation per agent per step.",
 			"reason": "Development tool. The bound, the epsilon and the loop count are proposed defaults, not tuning, and the rule may change in any minor release."
 		},
+		"BustleTradeTargets": {
+			"addon": "bustle",
+			"extends": "RefCounted",
+			"kind": "class",
+			"path": "addons/bustle/modules/ambitions/trade_targets.gd",
+			"purpose": "Which skill the `learn_trade` ambition is about, from the installed skills: fills the inputs `BustleAmbitions` reads for it.",
+			"reason": "Added after 1.0; it may be frozen in a later minor release."
+		},
 		"BustleUtilityScorer": {
 			"addon": "bustle",
 			"extends": "RefCounted",
@@ -151,6 +159,7 @@
 		}
 	},
 	"experimental_members": {
+		"BustleAmbitionDef.subject_input": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleAspirationConfig.max_points": "Added after 1.0; it may be frozen in a later minor release.",
 		"BustleBrain.keeper": "Its type, `BustleChoiceKeeper`, is internal and may change in any minor release.",
 		"BustleBrain.last_candidates": "Its type, `BustleCandidate`, is internal and may change in any minor release.",

@@ -105,7 +105,7 @@ Optional: where the achieved deed is recorded.
 func active() -> Dictionary
 ```
 
-The current ambition as `{id, since, progress, target, last_target}` (a copy), or empty. `progress` is the last value of its progress input seen; `target` is who it's about right now, for a template with a `BustleAmbitionDef.target_input` (empty while nobody qualifies), and `last_target` the last one it had.
+The current ambition as `{id, since, progress, target, last_target}` (a copy), or empty. `progress` is the last value of its progress input seen; `target` is who or what it's about right now, for a template with a `BustleAmbitionDef.target_input` or `BustleAmbitionDef.subject_input` (empty while nothing qualifies), and `last_target` the last one it had.
 
 ### `update`
 

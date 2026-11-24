@@ -70,8 +70,9 @@ func _init(p_agent: StringName = &"", p_config: BustleAmbitionConfig = null, p_s
 
 ## The current ambition as [code]{id, since, progress, target, last_target}[/code] (a copy), or
 ## empty. [code]progress[/code] is the last value of its progress input seen; [code]target[/code] is
-## who it's about right now, for a template with a [member BustleAmbitionDef.target_input] (empty
-## while nobody qualifies), and [code]last_target[/code] the last one it had.
+## who or what it's about right now, for a template with a [member BustleAmbitionDef.target_input]
+## or [member BustleAmbitionDef.subject_input] (empty while nothing qualifies), and
+## [code]last_target[/code] the last one it had.
 func active() -> Dictionary:
 	return _active.duplicate()
 
@@ -232,7 +233,8 @@ func _set_target(target: String) -> void:
 
 
 static func _target(def: BustleAmbitionDef, inputs: Dictionary) -> String:
-	return str(inputs.get(def.target_input, "")) if def.target_input != &"" else ""
+	var input := def.target_input if def.target_input != &"" else def.subject_input
+	return str(inputs.get(input, "")) if input != &"" else ""
 
 
 static func _slider(personality: BustlePersonality, slider: StringName) -> float:
