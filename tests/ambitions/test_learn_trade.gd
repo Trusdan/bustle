@@ -224,7 +224,7 @@ func test_the_same_inputs_give_the_same_run() -> void:
 func test_the_default_library_is_unchanged_with_it_off() -> void:
 	var library := BustleAmbitionConfig.new()
 	assert_eq(library.templates.map(func(d: BustleAmbitionDef) -> StringName: return d.id),
-		[&"save_money", &"get_promoted", &"court_someone", &"settle_feud", &"leave_settlement", &"learn_trade"])
+		[&"save_money", &"get_promoted", &"court_someone", &"settle_feud", &"leave_settlement", &"learn_trade", &"open_business"])
 	var plain := BustleAmbitions.new(&"baker", library)
 	var inputs := {}
 	BustleTradeTargets.new(_skills, library).fill(&"baker", {}, inputs, _curious)
