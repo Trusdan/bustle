@@ -62,7 +62,7 @@ The ambition library and its numbers, for `BustleAmbitions`. A starting point, n
 
 | Field | Type | Default | Range | Effect |
 | --- | --- | --- | --- | --- |
-| `templates` | `Array[BustleAmbitionDef]` | `[BustleAmbitionDef(&"save_money"), BustleAmbitionDef(&"get_promoted"), BustleAmbitionDef(&"court_someone"), BustleAmbitionDef(&"settle_feud"), BustleAmbitionDef(&"leave_settlement"), BustleAmbitionDef(&"learn_trade")]` | — | The templates. |
+| `templates` | `Array[BustleAmbitionDef]` | `[BustleAmbitionDef(&"save_money"), BustleAmbitionDef(&"get_promoted"), BustleAmbitionDef(&"court_someone"), BustleAmbitionDef(&"settle_feud"), BustleAmbitionDef(&"leave_settlement"), BustleAmbitionDef(&"learn_trade"), BustleAmbitionDef(&"open_business")]` | — | The templates. |
 | `cooldown_days` | `float` | `7.0` | 0 or more; unchecked | After a template is completed, how long (game days) before the same agent can be given it again. Only after completion: an ambition that ends moot can be given again at once. |
 | `never_boost` | `Array[StringName]` | `[&"steal", &"insult", &"quarrel", &"fight", &"attack"]` | — | Goals an ambition never boosts, whatever its table says: theft stays with the crime module, and no aim makes anyone pick a fight. |
 | `like_line` | `float` | `60.0` | 0 to 100 (the opinion scale); unchecked | Courting: the least opinion of someone to court them. |

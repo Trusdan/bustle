@@ -1,6 +1,6 @@
 # Ambitions
 
-`addons/bustle/modules/ambitions/` gives each agent a long-term aim, one at a time: save money, get promoted, court someone, settle a feud, leave or (when a host turns it on) learn a trade. An ambition never acts on its own: it multiplies the scores of the short-term goals it names.
+`addons/bustle/modules/ambitions/` gives each agent a long-term aim, one at a time: save money, get promoted, court someone, settle a feud, leave or (when a host turns them on) learn a trade or open a business. An ambition never acts on its own: it multiplies the scores of the short-term goals it names.
 
 Everything follows from the agent's personality and circumstances. There's no chance, no limit shared between agents, and an ambition is never given up: it stays until it's achieved or can no longer happen.
 
@@ -36,6 +36,7 @@ The defaults, all configurable:
 | `settle_feud` | honesty 1.0, sociability 0.4 | `has_rival` | `rival_opinion` ≥ 50 and `rival_cleared`, or `feud_settled` | `rival_gone` |
 | `leave_settlement` | curiosity 0.8, boldness 0.6, greed −0.3 | | `left_settlement` | `cannot_leave` |
 | `learn_trade` (off by default) | curiosity 1.0, diligence 0.4 | curiosity ≥ 50, `has_trade_target` | `skill_level` ≥ 5, or `trade_learned` | `trade_skill_gone`, `trade_unlearnable` |
+| `open_business` (off by default) | greed 1.0, boldness 0.4 | greed ≥ 50, `can_open_business` | `business_opened` | `cannot_open_business` |
 
 Default boosts, also configurable:
 
@@ -47,6 +48,7 @@ Default boosts, also configurable:
 | `settle_feud` | `help`, `gift`, `converse` ×2, toward `rival` |
 | `leave_settlement` | `explore` ×1.5 |
 | `learn_trade` | `work` ×1.5, `train` ×2, toward any option |
+| `open_business` | `work` ×1.5, `trade` ×1.3, toward any option |
 
 `save_money`'s 2000 is abstract units; a host sets real amounts. A host that doesn't want anyone leaving turns `leave_settlement` off.
 
@@ -76,6 +78,23 @@ config.find(&"learn_trade").enabled = true
 - **Nothing else is needed:** no job, teacher or way to practise. Practice stays the host's: it reports XP to `BustleSkills` (see [skills](skills.md)), and the job board already adds XP for work done. The `train` boost only matters to a host with a `train` goal; Bustle ships none.
 - **No age gate:** a host that wants one adds a circumstance to `requires`.
 - **No `next`:** after it, the library is scored again. A host can set `next` in its own data.
+
+## Opening a business
+
+`open_business` (experimental) is an aim to open a business of one's own. It's in the default library but **off** (`enabled` false), so a host turns it on in data:
+
+```gdscript
+var config := BustleAmbitionConfig.new()
+config.find(&"open_business").enabled = true
+```
+
+Everything about the business itself stays the host's. Bustle opens no shop, takes no money, assigns no property and checks no rules. Stock stays on the trade port. The template reads three host facts from the update's inputs, as `get_promoted` and `leave_settlement` do, so it needs no filler:
+
+- **`can_open_business`:** the host says this agent could open one now (its own rules: money, a place, a licence). It's required, with greed at least 50.
+- **`business_opened`:** the host says it has opened one. That completes the ambition, and then the 7-day cooldown applies as for any template. While the host leaves the fact true, the template isn't given again (see Notes for hosts). If the host clears it, it can start again after the cooldown.
+- **`cannot_open_business`:** the host says it can't. That ends the ambition moot, with no cooldown, and it can be given again once the fact is lifted.
+
+It has no progress, so `active()["progress"]` stays 0, and no subject: its boosts (`work` ×1.5, `trade` ×1.3) apply toward any option, as saving's do. The `trade` boost only matters to a host with a `trade` goal. It has no `next`: after it, the library is scored again.
 
 ## Assigning
 
@@ -132,7 +151,7 @@ Set the agent's brain's `score_boost` to `ambitions.boost`. The scorer multiplie
 
 - **Fallback:** with the default library, an agent with greed under 50 and no role, rival or court target gets `leave_settlement`, the only template with no requirements. A host that turns it off leaves such agents with no ambition.
 - **Negative scores:** a best score below zero is still assigned; there's no minimum score.
-- **A fact held true:** a done fact the host leaves true (`trade_learned`, say) keeps the template from being given again, since a template is never eligible while it's already done.
+- **A fact held true:** a done fact the host leaves true (`trade_learned` or `business_opened`, say) keeps the template from being given again, since a template is never eligible while it's already done.
 - **Unknown templates:** a saved ambition whose template is no longer in the library ends at the next update with `ended_moot(..., &"unknown_template")`.
 
 ## Switching off and saving
