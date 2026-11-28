@@ -258,6 +258,24 @@ godot --headless --path . -s res://bench/perf_median.gd -- --label "Default load
 
 A shared runner's timings vary from run to run and from one runner to the next, which is why the reference is the median of several runs, with their range beside it. It isn't one run.
 
+**First measurement** (not yet ratified as a baseline): run 46184382243 on 2026-11-28, on the pull request that added the workflow (build `0b475b4d`). Machine: Windows 10.0.26100, INTEL(R) XEON(R) PLATINUM 8573C, 4 logical processors, Godot 4.7.2-stable (official); image `windows-2025-vs2026` 20261123.321.1.
+
+| Number | Default load: median (min–max) | 1.1 load: median (min–max) | Budget |
+| --- | --- | --- | --- |
+| perception average ms | 0.481 (0.477–0.573) | 0.478 (0.463–0.502) | 1.0 |
+| perception p99 ms | 0.785 (0.743–1.598) | 0.750 (0.711–0.800) | 2.0 |
+| rings LIGHT average ms | 0.126 (0.123–0.141) | 0.122 (0.120–0.137) | 0.3 |
+| rings OFF_SCREEN average ms | 0.215 (0.214–0.247) | 0.212 (0.210–0.226) | 0.5 |
+| population FULL average ms | 0.239 (0.236–0.257) | 0.597 (0.573–0.699) | 1.0 |
+| population FULL p99 ms | 0.530 (0.526–0.673) | 1.352 (1.286–1.969) | 2.0 |
+| population LIGHT average ms | 0.129 (0.128–0.138) | 0.308 (0.296–0.357) | 0.3 |
+| population OFF_SCREEN average ms | 0.216 (0.213–0.231) | 0.228 (0.226–0.257) | 0.5 |
+| population save B per agent | 546 | 872 | 2048 |
+| population stuck spells | 0 | 0 | 0 |
+
+- **Default load:** every median is within budget on this runner, perception and OFF_SCREEN included. They were over budget on the previous reference machine.
+- **1.1 load:** the population LIGHT median, 0.308 ms, is just over its 0.3 ms budget. It's within the gate and reported only. Everything else is within budget.
+
 ### Previous reference machine
 
 Until 2026-11-28 the reference machine was the maintainer's own Windows PC. This was its one measurement, recorded exactly as the maintainer reported it. It was run on commit `6a29f01e` with the same commands as `tools/perf_bench.sh`, from PowerShell. The `machine:` line is the OS, processor and Godot build as Godot reports them. "build unknown" is the population bench's own wording when it can't read the commit.

@@ -93,6 +93,9 @@ jobs:
 
       - name: Median table
         run: |
+          # The runner's bash has -e on; it's turned off here so that each table's exit code is read
+          # from PIPESTATUS, and only the default load's decides the step.
+          set +e
           set -uo pipefail
           out=build/perf-runs
           godot --headless --path . -s res://bench/perf_median.gd -- --label "Default load" "$out"/default-[0-9]* 2>&1 \
