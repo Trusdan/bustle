@@ -70,28 +70,42 @@ jobs:
       - name: Import
         run: godot --headless --path . --import > /dev/null 2>&1 || true
 
-      # Each run is the whole of tools/perf_bench.sh; its own gate verdict is kept in the log, and the
-      # medians below are what's judged.
+      # Each run is the whole of tools/perf_bench.sh. Its own gate verdict is report only: the runner's
+      # bash has -e on, so it's turned off here, each run's exit code is noted, and every run goes
+      # ahead. The medians below make the only pass or fail decision.
       - name: Run the default load
         run: |
+          set +e
           set -uo pipefail
           mkdir -p build/perf-runs
           for i in $(seq 1 "$RUNS"); do
             echo "::group::default load, run $i of $RUNS"
             tools/perf_bench.sh --out "build/perf-runs/default-$i" 2>&1 | tr -d '\r' | tee -a build/perf-runs/default.log
+            code="${PIPESTATUS[0]}"
             echo "::endgroup::"
+            if [[ "$code" != "0" ]]; then
+              echo "::warning title=Default load, run $i::perf_bench.sh exited $code (report only; the medians decide)."
+            fi
           done
 
       - name: Run the opt-in 1.1 load
+        if: always()
         run: |
+          set +e
           set -uo pipefail
+          mkdir -p build/perf-runs
           for i in $(seq 1 "$RUNS"); do
             echo "::group::1.1 load, run $i of $RUNS"
             tools/perf_bench.sh --load 1.1 --out "build/perf-runs/load-1.1-$i" 2>&1 | tr -d '\r' | tee -a build/perf-runs/load-1.1.log
+            code="${PIPESTATUS[0]}"
             echo "::endgroup::"
+            if [[ "$code" != "0" ]]; then
+              echo "::warning title=1.1 load, run $i::perf_bench.sh exited $code (report only)."
+            fi
           done
 
       - name: Median table
+        if: always()
         run: |
           # The runner's bash has -e on; it's turned off here so that each table's exit code is read
           # from PIPESTATUS, and only the default load's decides the step.
