@@ -199,7 +199,7 @@ tools/perf_bench.sh
 
 ## Opt-in: the 1.1 load
 
-`tools/perf_bench.sh --load 1.1` measures what the hooks added after 1.0 cost on top of the population bench. Without `--load`, the script, its benches and its output are exactly as above. The opt-in changes no budget, isn't run by CI, and isn't the reference-machine run.
+`tools/perf_bench.sh --load 1.1` measures what the hooks added after 1.0 cost on top of the population bench. Without `--load`, the script, its benches and its output are exactly as above. The opt-in changes no budget and isn't part of the main CI. The [reference run](#reference-machine) runs it beside the default load and reports it separately, without judging it.
 
 **What it runs.** The perception and rings benches run as they do by default. The population bench is replaced by `bench/population_1_1_bench.gd`: the same town of 40 FULL, 40 LIGHT and 200 OFF_SCREEN agents, the same game hour and stuck day, and the same budgets. On top, each time an agent thinks, the host's calls for the 1.1 hooks go through the rings' senses provider, so their cost lands in each ring's timing:
 
@@ -240,7 +240,27 @@ Every number passed the gate. LIGHT was over its 0.3 ms budget in one 1.1 run (0
 
 ## Reference machine
 
-One measurement on a named reference machine, the maintainer's own Windows PC, recorded exactly as the maintainer reported it. It was run on commit `6a29f01e` with the same commands as `tools/perf_bench.sh`, from PowerShell. The `machine:` line is the OS, processor and Godot build as Godot reports them. "build unknown" is the population bench's own wording when it can't read the commit.
+**The reference machine is a GitHub-hosted `windows-latest` runner,** run by `.github/workflows/perf-windows.yml`. The maintainer's PC is no longer needed: anyone with access to the repository can start a reference run.
+
+- **What it runs:** the whole of `tools/perf_bench.sh` five times with the default load, then five times with the opt-in [1.1 load](#opt-in-the-11-load). It uses the pinned Godot from `tools/pins.env`, headless.
+- **What it reports:** `bench/perf_median.gd` takes each load's five runs and reports, for every number the gate judges, the **median of 5** with the lowest and highest, so the noise is visible. Each median is compared with its budget in `bench/perf_budgets.gd`.
+- **Where the results go:** both tables go to the run's job summary, with the runner's machine line and image version. The raw bench lines and logs are kept as the `perf-windows-results` artifact.
+- **Pass or fail:** the job fails when a default-load median is over budget or a run is missing a line. The 1.1 load is reported only, since it has no budgets of its own.
+- **Not a required check:** a miss shows on the pull request but doesn't block a merge. It can become required once the maintainer ratifies a baseline from these runs. The budgets stay as ratified on 2026-11-16 until then.
+- **When it runs:** on demand, and on a pull request that changes the benches (`bench/`, `tools/perf_bench.sh`), this page, the addon (`addons/bustle/`) or the workflow itself. It doesn't run on every push.
+
+**Running it.** In GitHub, open Actions, choose "Perf reference (Windows)" and use "Run workflow". The number of runs of each load is an input; the default is 5. The same tables can be made locally from runs of `tools/perf_bench.sh`:
+
+```bash
+for i in 1 2 3 4 5; do tools/perf_bench.sh --out build/perf-runs/default-$i; done
+godot --headless --path . -s res://bench/perf_median.gd -- --label "Default load" build/perf-runs/default-*
+```
+
+A shared runner's timings vary from run to run and from one runner to the next, which is why the reference is the median of several runs, with their range beside it. It isn't one run.
+
+### Previous reference machine
+
+Until 2026-11-28 the reference machine was the maintainer's own Windows PC. This was its one measurement, recorded exactly as the maintainer reported it. It was run on commit `6a29f01e` with the same commands as `tools/perf_bench.sh`, from PowerShell. The `machine:` line is the OS, processor and Godot build as Godot reports them. "build unknown" is the population bench's own wording when it can't read the commit.
 
 ```text
 machine: Windows 10.0.26200, Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz, 8 logical processors, Godot 4.7.2-stable (official)
@@ -250,13 +270,11 @@ population bench: 40 FULL, 40 LIGHT, 200 OFF_SCREEN, seed 1, 7200 frames (60 gam
 perf gate (timings at 2.0x budget): OK
 ```
 
-**Perception and OFF_SCREEN are over budget on the reference machine:**
+**Perception and OFF_SCREEN were over budget on that machine:**
 
 - Perception: average 1.569 ms against 1.0 ms, and p99 3.394 ms against 2.0 ms.
 - OFF_SCREEN: average 0.678 ms in the rings bench and 0.746 ms in the population bench, against 0.5 ms.
 
-Both are within the 2× CI gate, so the gate passes. FULL, LIGHT, the save size and stuck agents are within budget.
+Both were within the 2× CI gate, so the gate passed. FULL, LIGHT, the save size and stuck agents were within budget.
 
-Optimising perception and OFF_SCREEN is tracked as a follow-up. The budgets stay as ratified.
-
-**Re-run pending:** perception and OFF_SCREEN ticking have since been optimised with no change in behaviour. A re-run of `tools/perf_bench.sh` on the reference machine is pending; the run above stays the recorded one until then.
+Perception and OFF_SCREEN ticking were optimised afterwards, with no change in behaviour. The reference moved to the GitHub runner above instead of a re-run on that PC.
