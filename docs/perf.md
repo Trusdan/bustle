@@ -258,23 +258,31 @@ godot --headless --path . -s res://bench/perf_median.gd -- --label "Default load
 
 A shared runner's timings vary from run to run and from one runner to the next, which is why the reference is the median of several runs, with their range beside it. It isn't one run.
 
-**First measurement** (not yet ratified as a baseline): run 46184382243 on 2026-11-28, on the pull request that added the workflow (build `0b475b4d`). Machine: Windows 10.0.26100, INTEL(R) XEON(R) PLATINUM 8573C, 4 logical processors, Godot 4.7.2-stable (official); image `windows-2025-vs2026` 20261123.321.1.
+**The runner's hardware isn't fixed.** GitHub can hand `windows-latest` a different processor from one run to the next, and timings move with it. The job summary prints each run's `machine:` line, so compare runs on the same processor. A baseline ratified from these runs should name the processor, or leave room for the spread below.
 
-| Number | Default load: median (min–max) | 1.1 load: median (min–max) | Budget |
-| --- | --- | --- | --- |
-| perception average ms | 0.481 (0.477–0.573) | 0.478 (0.463–0.502) | 1.0 |
-| perception p99 ms | 0.785 (0.743–1.598) | 0.750 (0.711–0.800) | 2.0 |
-| rings LIGHT average ms | 0.126 (0.123–0.141) | 0.122 (0.120–0.137) | 0.3 |
-| rings OFF_SCREEN average ms | 0.215 (0.214–0.247) | 0.212 (0.210–0.226) | 0.5 |
-| population FULL average ms | 0.239 (0.236–0.257) | 0.597 (0.573–0.699) | 1.0 |
-| population FULL p99 ms | 0.530 (0.526–0.673) | 1.352 (1.286–1.969) | 2.0 |
-| population LIGHT average ms | 0.129 (0.128–0.138) | 0.308 (0.296–0.357) | 0.3 |
-| population OFF_SCREEN average ms | 0.216 (0.213–0.231) | 0.228 (0.226–0.257) | 0.5 |
-| population save B per agent | 546 | 872 | 2048 |
-| population stuck spells | 0 | 0 | 0 |
+**Measurements so far** (not yet ratified as a baseline). Medians of 5; the ranges are in each run's job summary.
 
-- **Default load:** every median is within budget on this runner, perception and OFF_SCREEN included. They were over budget on the previous reference machine.
-- **1.1 load:** the population LIGHT median, 0.308 ms, is just over its 0.3 ms budget. It's within the gate and reported only. Everything else is within budget.
+- **Run 1:** run 46184382243, 2026-11-28, build `0b475b4d`. Intel(R) Xeon(R) Platinum 8573C, 4 logical processors.
+- **Run 2:** run 46185596860, 2026-11-28, build `cb683504`, the same bench code. AMD EPYC 9V45 96-Core Processor, 4 logical processors.
+
+Both ran Windows 10.0.26100, image `windows-2025-vs2026` 20261123.321.1 and Godot 4.7.2-stable (official).
+
+| Number | Run 1 default | Run 1 1.1 load | Run 2 default | Run 2 1.1 load | Budget |
+| --- | --- | --- | --- | --- | --- |
+| perception average ms | 0.481 | 0.478 | 0.323 | 0.338 | 1.0 |
+| perception p99 ms | 0.785 | 0.750 | 0.519 | 0.533 | 2.0 |
+| rings LIGHT average ms | 0.126 | 0.122 | 0.074 | 0.074 | 0.3 |
+| rings OFF_SCREEN average ms | 0.215 | 0.212 | 0.125 | 0.126 | 0.5 |
+| population FULL average ms | 0.239 | 0.597 | 0.135 | 0.367 | 1.0 |
+| population FULL p99 ms | 0.530 | 1.352 | 0.310 | 0.868 | 2.0 |
+| population LIGHT average ms | 0.129 | **0.308** | 0.076 | 0.193 | 0.3 |
+| population OFF_SCREEN average ms | 0.216 | 0.228 | 0.127 | 0.134 | 0.5 |
+| population save B per agent | 546 | 872 | 546 | 872 | 2048 |
+| population stuck spells | 0 | 0 | 0 | 0 | 0 |
+
+- **Default load:** every median is within budget on both machines, perception and OFF_SCREEN included. They were over budget on the previous reference machine.
+- **The two processors:** run 2's timings are about 40% lower than run 1's.
+- **1.1 load:** the population LIGHT median was just over its 0.3 ms budget on run 1's processor (0.308 ms, within the gate) and within it on run 2's. It's reported only.
 
 ### Previous reference machine
 
