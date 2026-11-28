@@ -197,6 +197,47 @@ A stored-baseline gate (a percentage over a recorded CI median) would catch smal
 tools/perf_bench.sh
 ```
 
+## Opt-in: the 1.1 load
+
+`tools/perf_bench.sh --load 1.1` measures what the hooks added after 1.0 cost on top of the population bench. Without `--load`, the script, its benches and its output are exactly as above. The opt-in changes no budget, isn't run by CI, and isn't the reference-machine run.
+
+**What it runs.** The perception and rings benches run as they do by default. The population bench is replaced by `bench/population_1_1_bench.gd`: the same town of 40 FULL, 40 LIGHT and 200 OFF_SCREEN agents, the same game hour and stuck day, and the same budgets. On top, each time an agent thinks, the host's calls for the 1.1 hooks go through the rings' senses provider, so their cost lands in each ring's timing:
+
+- **Ambitions:** `learn_trade` and `open_business` are on, with the trade filler (`BustleTradeTargets`) and `BustleAmbitions.update`. The ambition's boost is the brain's `score_boost`.
+- **Aspirations:** points under a cap (`max_points` 20).
+- **Careers:** one career per agent, reviewed by period (`update_in_period` with a `busy` period on even days, and `window_period`).
+- **Crime trace:** `deed_of_item` and `stolen_goods_held_by` over thefts sold on (every seventh agent's goods).
+- **Job board:** `refusal` for capacity-gated work (moving 0.5; one agent in five is at 0.3), and `release_unfit` once a game minute.
+- **Health goals:** seeking care, resting when sick and fetching a healer, in every brain's library, with their inputs filled. Nobody is ill, downed or in need of care, so they're scored but never chosen.
+
+The agents choose exactly as on the plain bench (the same state hash after the stuck day), so the load adds cost, not behaviour. Every number is fixed by the seed and the agent: no rolls. The save size adds the 1.1 modules' saves to the society's.
+
+**Running it.** Every line it prints starts with `1.1 load:`, and the population line also says `1.1 load` after the game minutes. The lines go to `build/perf-1.1/` (or `--out DIR`), so a default run in `build/perf/` can sit beside it, and the gate judges them the same way:
+
+```bash
+tools/perf_bench.sh                 # the default load, in build/perf/
+tools/perf_bench.sh --load 1.1      # the 1.1 load, in build/perf-1.1/
+```
+
+**Measured** (2026-11-28, Godot 4.7.2 headless, a 2-vCPU Linux cloud machine, three runs of each, median and range; a report, not a claim about other machines):
+
+| Population bench | Default | 1.1 load |
+| --- | --- | --- |
+| FULL average | 0.201 ms (0.190–0.203) | 0.518 ms (0.493–0.618) |
+| FULL p99 | 0.554 ms (0.524–0.586) | 1.674 ms (1.461–1.832) |
+| LIGHT average | 0.107 ms (0.102–0.109) | 0.263 ms (0.248–0.307) |
+| OFF_SCREEN average | 0.165 ms (0.163–0.168) | 0.185 ms (0.171–0.212) |
+| Save per agent | 546 B | 872 B |
+
+Every number passed the gate. LIGHT was over its 0.3 ms budget in one 1.1 run (0.307 ms), within the gate. Where the cost goes, per agent think, each hook timed alone:
+
+- the crime trace queries: about 51 µs;
+- the trade filler and ambition update: about 46 µs;
+- the career update: about 8 µs;
+- the health inputs: about 7 µs;
+- the board's refusal: about 6 µs;
+- the aspiration award: about 1 µs.
+
 ## Reference machine
 
 One measurement on a named reference machine, the maintainer's own Windows PC, recorded exactly as the maintainer reported it. It was run on commit `6a29f01e` with the same commands as `tools/perf_bench.sh`, from PowerShell. The `machine:` line is the OS, processor and Godot build as Godot reports them. "build unknown" is the population bench's own wording when it can't read the commit.
